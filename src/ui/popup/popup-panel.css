@@ -1,0 +1,174 @@
+/* Receipts' popup as a made object (the owner asked for wider margins, softer
+   edges and nothing generic). Loaded last by Receipts' popup, after the looks and the life sheet, so it wins the
+   ties; Off does not load it yet. Every colour comes from the look's own tokens, so teal, cobalt and graphite each get
+   their own frame, in light and in dark, and the look's corner scale (--pop-r-scale) shapes every radius here.
+
+   Chrome draws the popup window's outer edge square and sharp, and nothing on the page can change it. So the page is
+   a mat a shade off the background, tinted by the look's accent, and the popup is a rounded panel set into it: a fine
+   accent hairline, a faint halo just outside it and a soft glow below. The detached window (body.fw-detached) keeps
+   its own centred frame from popup-frame.css.
+
+   He chose another frame the same day (frame 2, at the end of this file): it lays a fine line inside the edge over
+   these rules and drops the mat, so the mat and halo below now show only where frame 2 does not reach. */
+
+:root { --pop-mat: color-mix(in oklch, var(--fw-bg) 84%, var(--fw-teal)); }
+:root[data-theme="light"] { --pop-mat: color-mix(in oklch, var(--fw-bg) 88%, var(--fw-teal)); }
+html:has(body:not(.fw-detached)) { background: var(--pop-mat); }
+body:not(.fw-detached) { padding: 8px; background: var(--pop-mat); }
+body:not(.fw-detached) .fw-popup {
+  /* The popup fills the window (popup-design.css); inside the mat that is the window less the mat on both sides, or
+     the page would be 16 px taller than the window and Chrome would grow it to its 600 px limit with a scrollbar. */
+  min-height: calc(100vh - 16px);
+  border: 1px solid color-mix(in oklch, var(--fw-teal) 36%, var(--fw-border-light));
+  border-radius: calc(14px * var(--pop-r-scale, 1));
+  overflow: clip;
+  box-shadow:
+    0 0 0 4px color-mix(in oklch, var(--fw-teal) 7%, transparent),
+    0 14px 30px -16px color-mix(in oklch, var(--fw-teal) 55%, transparent),
+    inset 0 1px 0 color-mix(in oklch, white 7%, transparent);
+}
+:root[data-theme="light"] body:not(.fw-detached) .fw-popup {
+  box-shadow:
+    0 0 0 4px color-mix(in oklch, var(--fw-teal) 9%, transparent),
+    0 12px 26px -16px color-mix(in oklch, var(--fw-teal) 45%, transparent),
+    inset 0 1px 0 rgb(255 255 255 / 0.7);
+}
+
+/* ─── The tab strip: one track with the chosen tab raised in it, not two boxed buttons ───────────────────────── */
+.fw-popup .pop-tabbar {
+  margin: 8px 16px 2px; padding: 3px; gap: 2px;
+  border: 1px solid var(--fw-border-light);
+  border-radius: calc(10px * var(--pop-r-scale, 1));
+  background: color-mix(in oklch, var(--fw-text) 5%, var(--fw-bg));
+}
+.fw-popup .pop-tab {
+  padding: 6px 0; border: 1px solid transparent; background: transparent; color: var(--fw-text-secondary);
+  border-radius: calc(7px * var(--pop-r-scale, 1));
+}
+.fw-popup .pop-tab:hover:not(.active) { color: var(--fw-text); background: color-mix(in oklch, var(--fw-text) 6%, transparent); }
+.fw-popup .pop-tab.active {
+  background: var(--fw-card); color: var(--fw-teal);
+  border-color: color-mix(in oklch, var(--fw-teal) 40%, transparent);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.22), 0 0 12px -6px color-mix(in oklch, var(--fw-teal) 70%, transparent);
+}
+
+/* ─── Home: four things ──────────────────────────────────────────────────────────────────────────────────────── */
+/* 1. The page in one line, led by a dot that says the state before the words do. */
+.fw-popup .home-status {
+  display: flex; align-items: center; gap: 9px;
+  margin: 14px 16px 0; padding: 0 2px;
+  font-size: 12.5px; font-weight: 600; line-height: 1.4; color: var(--fw-text);
+}
+.fw-popup .home-status-dot {
+  flex-shrink: 0; width: 8px; height: 8px; border-radius: 50%; background: var(--fw-muted);
+}
+.fw-popup .home-status.on .home-status-dot {
+  background: var(--fw-green); box-shadow: 0 0 0 3px color-mix(in oklch, var(--fw-green) 22%, transparent);
+}
+.fw-popup .home-status.limited .home-status-dot {
+  background: var(--fw-amber); box-shadow: 0 0 0 3px color-mix(in oklch, var(--fw-amber) 22%, transparent);
+}
+.fw-popup .home-status.idle { font-weight: 500; color: var(--fw-text-secondary); }
+.fw-popup .home-status.idle .home-status-dot { background: transparent; border: 1.5px solid var(--fw-muted); width: 7px; height: 7px; }
+
+/* 2. Today: the card gets room to breathe and the figure the size of the one thing it is. */
+.fw-popup .today-card { margin-top: 12px; padding: 14px 14px 12px; }
+.fw-popup .today-card .pop-hero { padding: 6px 4px 4px; }
+.fw-popup .today-card .pop-hero-value { font-size: 44px; font-variant-numeric: tabular-nums; }
+.fw-popup .today-card .pop-count-line { margin-top: 6px; padding: 8px 4px 0; border-top: 1px solid var(--fw-border-light); }
+
+/* 3. The record button, and the reading beside it when there is one. */
+.fw-popup .home-actions { display: flex; gap: 8px; margin: 14px 16px 16px; }
+.fw-popup .home-actions .pop-cta { flex: 1 1 0; width: auto; margin: 0; }
+.fw-popup .home-actions .pop-cta-second {
+  flex: 0 1 auto; background: transparent; color: var(--fw-teal);
+  border-color: color-mix(in oklch, var(--fw-teal) 50%, transparent);
+}
+html.fw-life-depth .fw-popup .home-actions .pop-cta-second { box-shadow: none; }
+
+/* 4. The bottom row: version at the left, privacy at the right, the style dots, the theme and contact between. It
+   sits at the window's foot as every tab's footer does (design scout, 9 Oct 2026, fix 9: a fixed 16 px here left Home's
+   row under its content and the other tabs' at the bottom); the button above keeps the 16 px as its own space below. */
+.fw-popup .home-foot { margin-top: auto; padding: 8px 12px 8px 16px; border-top-color: var(--fw-border-light); gap: 8px; }
+.fw-popup .foot-version { font-variant-numeric: tabular-nums; }
+.fw-popup .foot-mid { display: inline-flex; align-items: center; gap: 2px; }
+.fw-popup .home-foot .look-row { margin: 0; }
+.fw-popup .foot-sep { width: 1px; height: 14px; margin: 0 4px; background: var(--fw-border-light); }
+.fw-popup .home-foot .theme-icon-btn { width: 26px; height: 26px; }
+.fw-popup .home-foot .look-btn { width: 24px; height: 24px; }
+.fw-popup .contact { position: relative; display: inline-flex; }
+.fw-popup .contact-menu {
+  position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); z-index: 5;
+  display: flex; flex-direction: column; min-width: 220px; padding: 4px;
+  background: var(--fw-card); border: 1px solid var(--fw-border-light);
+  border-radius: calc(10px * var(--pop-r-scale, 1));
+  box-shadow: 0 10px 28px -10px rgb(0 0 0 / 0.55), 0 0 0 1px color-mix(in oklch, var(--fw-teal) 18%, transparent);
+}
+.fw-popup .contact-menu[hidden] { display: none; }
+.fw-popup .contact-menu a {
+  padding: 8px 10px; border-radius: calc(6px * var(--pop-r-scale, 1));
+  color: var(--fw-text); text-decoration: none; font-size: 12px; white-space: nowrap;
+}
+.fw-popup .contact-menu a:hover,
+.fw-popup .contact-menu a:focus-visible { background: color-mix(in oklch, var(--fw-teal) 12%, transparent); outline: none; }
+
+/* ─── Settings: a locked switch says why in its tooltip and its (i) fold ─────────────────────────────────────── */
+.fw-popup .fr-ctl { display: inline-flex; flex-shrink: 0; }
+.fw-popup .fr-desc.fr-state { color: var(--fw-text-secondary); font-weight: 500; }
+
+/* ─── Today by site: a bar split by where Receipts looked, and a legend of names and numbers ─────────────────── */
+.fw-popup .fw-vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.fw-popup .site-read { margin-top: 8px; padding: 10px 4px 0; border-top: 1px solid var(--fw-border-light); }
+.fw-popup .site-bar {
+  display: flex; gap: 2px; height: 6px; border-radius: 999px; overflow: hidden;
+  background: color-mix(in oklch, var(--fw-text) 8%, transparent);
+}
+.fw-popup .site-seg { min-width: 6px; flex-basis: 0; }
+.fw-popup .site-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 8px; font-size: 11.5px; color: var(--fw-text-secondary); }
+.fw-popup .site-key { display: inline-flex; align-items: center; gap: 6px; }
+.fw-popup .site-read-line { font-size: 12px; color: var(--fw-text-secondary); line-height: 1.5; margin-bottom: 8px; }
+.fw-popup .site-dot { width: 7px; height: 7px; border-radius: 2px; font-style: normal; }
+/* Tints of the accent by rank, largest first (stage 3, 10 Oct 2026). A colour per site made YouTube's alarm red fill the
+   whole bar on a YouTube-only day; the names are in the legend, so the colour only has to tell the parts apart. */
+.fw-popup .site-seg.rank-0, .fw-popup .site-dot.rank-0 { background: var(--fw-teal); }
+.fw-popup .site-seg.rank-1, .fw-popup .site-dot.rank-1 { background: color-mix(in srgb, var(--fw-teal) 78%, transparent); }
+.fw-popup .site-seg.rank-2, .fw-popup .site-dot.rank-2 { background: color-mix(in srgb, var(--fw-teal) 58%, transparent); }
+.fw-popup .site-seg.rank-3, .fw-popup .site-dot.rank-3 { background: color-mix(in srgb, var(--fw-teal) 42%, transparent); }
+.fw-popup .site-seg.rank-4, .fw-popup .site-dot.rank-4 { background: color-mix(in srgb, var(--fw-teal) 30%, transparent); }
+.fw-popup .set-pin-card { margin-top: 14px; }
+
+/* The header's three icon buttons drawn as plain icons: two fresh judges, shown only this Home beside Ghostery's
+   (9 Oct 2026), each named the row of boxed buttons as the one template habit left. A wash on hover and focus keeps
+   the target visible; the 28px target stays. */
+html .fw-popup .pop-header .hdr-iconbtn {
+  background: transparent; border-color: transparent; box-shadow: none;
+}
+html .fw-popup .pop-header .hdr-iconbtn:hover,
+html .fw-popup .pop-header .hdr-iconbtn:focus-visible {
+  background: color-mix(in oklch, var(--fw-text) 8%, transparent); color: var(--fw-text);
+}
+
+/* Today's handled count over the all-time total, both small, at the right of the figure. */
+html .fw-popup .today-card .pop-hero-total { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; text-align: right; }
+
+/* The frame he chose, 9 Oct 2026: frame 2, a fine accent line drawn inside the popup's edge (his own drawing). It is laid
+   over the panel rules above exactly as on the sheet he picked from (crew shots, frame2-sheet.png): no mat, the page is
+   the popup's own background to Chrome's edge, and the line runs 1 px inside it with a faint inner glow. On the built
+   popup the line still left some space. It sat a scrollbar strip plus 6 px in from each
+   side (about 17 px) and 8 px from the bottom. It is now drawn on a layer fixed to the window, so it hugs Chrome's edge
+   on all four sides whether the page scrolls or not; the popup keeps no scrollbar strip on its sides and shows no bar
+   over the line (the wheel, the touchpad and the keys still scroll). The content keeps its own inner padding. */
+html:has(body:not(.fw-detached)) { background: var(--fw-bg); scrollbar-gutter: auto; scrollbar-width: none; }
+body:not(.fw-detached) { padding: 0; background: var(--fw-bg); }
+body:not(.fw-detached) .fw-popup,
+:root[data-theme="light"] body:not(.fw-detached) .fw-popup {
+  width: 396px; border: none; border-radius: 0; box-shadow: none; padding: 8px 0 6px; overflow: visible;
+}
+body:not(.fw-detached) .fw-popup::after {
+  content: ""; position: fixed; inset: 1px; pointer-events: none; z-index: 4;
+  border: 1px solid color-mix(in oklch, var(--fw-teal) 48%, transparent);
+  border-radius: calc(12px * var(--pop-r-scale, 1));
+  box-shadow: inset 0 0 18px -8px color-mix(in oklch, var(--fw-teal) 60%, transparent);
+}
+body:not(.fw-detached) .fw-popup .pop-header { margin: 0 6px; border-radius: calc(10px * var(--pop-r-scale, 1)) calc(10px * var(--pop-r-scale, 1)) 0 0; }
+body:not(.fw-detached) .fw-popup .foot { margin-left: 6px; margin-right: 6px; }

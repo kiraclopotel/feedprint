@@ -1,0 +1,24 @@
+{
+  "note": "Throwaway test key, generated for these fixtures with Web Crypto (ECDSA P-256) in commit 9e1e4b1e; it signs only the small example export (landing/example-export.html, built by scripts/build-demo-export.ts), made-up records shown on the site, and was never used for a real record.",
+  "publicJwk": {
+    "key_ops": [
+      "verify"
+    ],
+    "ext": true,
+    "kty": "EC",
+    "x": "lVi5x_-hWnCB_A3TBmsofEpsZwQ1w5YiMtBjEM9vU_0",
+    "y": "1F6efbumJuz1Nk5GYABoSO6WZKM4463m0lEb0Aygabs",
+    "crv": "P-256"
+  },
+  "privateJwk": {
+    "key_ops": [
+      "sign"
+    ],
+    "ext": true,
+    "kty": "EC",
+    "x": "lVi5x_-hWnCB_A3TBmsofEpsZwQ1w5YiMtBjEM9vU_0",
+    "y": "1F6efbumJuz1Nk5GYABoSO6WZKM4463m0lEb0Aygabs",
+    "crv": "P-256",
+    "d": "7z1ArAKyOpKZId1mTGg-hPKS813rTRps6ntWpqxIT6o"
+  }
+}

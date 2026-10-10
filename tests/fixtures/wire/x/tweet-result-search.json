@@ -1,0 +1,57 @@
+{
+  "data": {
+    "search_by_raw_query": {
+      "search_timeline": {
+        "timeline": {
+          "instructions": [
+            {
+              "type": "TimelineAddEntries",
+              "entries": [
+                {
+                  "entryId": "tweet-7000000000000000001",
+                  "content": {
+                    "entryType": "TimelineTimelineItem",
+                    "itemContent": {
+                      "itemType": "TimelineTweet",
+                      "tweet_results": {
+                        "result": {
+                          "__typename": "Tweet",
+                          "rest_id": "7000000000000000001",
+                          "core": {
+                            "user_results": {
+                              "result": {
+                                "__typename": "User",
+                                "legacy": {
+                                  "name": "Synthetic Search",
+                                  "screen_name": "searchauthor"
+                                },
+                                "is_blue_verified": false
+                              }
+                            }
+                          },
+                          "legacy": {
+                            "full_text": "Search result tweet body.",
+                            "created_at": "Sat May 17 20:00:00 +0000 2026",
+                            "favorite_count": 7,
+                            "reply_count": 1,
+                            "retweet_count": 2,
+                            "quote_count": 0,
+                            "bookmark_count": 1,
+                            "user_id_str": "1000000000000000004"
+                          },
+                          "views": {
+                            "count": "789"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  }
+}

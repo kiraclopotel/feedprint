@@ -1,0 +1,52 @@
+#!/bin/sh
+# FeelingWise: the outbox gate, rule 2 of the eight.
+#
+# "His list holds three acts: one note in OUTBOX/ is one act with one verb, and the commit hook
+# counts them."
+#
+# The limit is his attention, not tidiness. He has minutes a week for the acts only he can do, and
+# the last small one is the one he stalls on, so a fourth waiting act does not get done faster: it
+# makes the other three less likely. When the count is full the honest move is to close one, merge
+# two into one act, or do one in the session.
+#
+# It counts notes carrying a `**Your act:` line, which is the convention every note in that folder
+# already uses. A briefing or a fact sheet carries no such line and is not an act: on 2026-09-21 the
+# folder held seven dated notes and exactly three acts, and a gate counting files would have refused
+# every commit for no reason a reader could act on.
+#
+# It only speaks when the commit changes the product, so the way out is never blocked: sorting the
+# outbox is a prose commit and always passes.
+#
+# This is a separate file rather than a block inside pre-commit for one reason found by writing the
+# test: tests/repo/commit-gates.test.ts drives it, and driving the whole pre-commit hook meant
+# running the entire suite inside a suite, once per case. A gate has to be cheap to test or it gets
+# tested by belief.
+#
+# Exit 0 to allow, 1 to refuse. Says why on stderr either way.
+set -eu
+
+say() { printf 'FeelingWise pre-commit: %s\n' "$1" >&2; }
+
+staged_product="$(git diff --cached --name-only -- 'src/' 'worker/src/' 'landing/' 2>/dev/null || true)"
+[ -n "$staged_product" ] || exit 0
+[ -d OUTBOX ] || exit 0
+
+acts=''
+for note in $(git ls-files -- 'OUTBOX/*.md' 2>/dev/null || true); do
+  case "$note" in
+    OUTBOX/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-*.md) ;;
+    *) continue ;;
+  esac
+  [ -f "$note" ] || continue
+  if grep -q '\*\*Your act:' "$note"; then acts="$acts$note
+"; fi
+done
+
+count="$(printf '%s' "$acts" | grep -c . || true)"
+[ "$count" -le 3 ] && exit 0
+
+say "his list holds $count acts and the limit is three:"
+printf '%s' "$acts" | sed 's/^/  /' >&2
+say 'Close one to OUTBOX/sent or OUTBOX/superseded, merge two into one act, or do one here.'
+say 'BLOCKED - a fourth act is waiting (rule 2). Emergency bypass: git commit --no-verify'
+exit 1

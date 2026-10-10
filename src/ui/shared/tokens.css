@@ -1,0 +1,354 @@
+/* FeelingWise — Color + Type tokens
+ *
+ * Single canonical source. The codebase today carries 4 uncoordinated
+ * palettes (per A7 §8 #2); this file is the consolidation target. Tokens
+ * are exposed as CSS custom properties on :root (dark) with a
+ * `prefers-color-scheme: light` override. The popup resolves theme once
+ * at module load (theme.ts) — the dashboard does not currently swap on
+ * OS-theme change; for now we bind to prefers-color-scheme so designs
+ * read identically in either runtime. JS surfaces still mirror these
+ * via the C palette object in src/ui/popup/theme.ts.
+ *
+ * Source: ui/popup/theme.ts (DARK + LIGHT) and ui/dashboard/Dashboard.tsx
+ * design-tokens block (TECHNIQUE_COLORS, PLATFORM_COLORS).
+ */
+
+:root {
+  /* --- Surface --- */
+  --fw-bg:           #0e0f13;
+  --fw-card:         #17191f;
+  --fw-card-hover:   #1c1f25;
+  /* A contrast check against this card measured 1.16:1 (dark), so a card
+     edge, input outline or divider drawn in this color does not read as a
+     line at all. Lightened to 3.30:1, the 3:1 a UI component boundary needs. */
+  --fw-border:       #696b72;
+  --fw-border-light: #30333b;
+
+  /* --- Text --- */
+  --fw-text:           #f0f0f0;
+  --fw-text-secondary: #cccccc;
+  /* Measured 4.06:1 against --fw-surface-2, under the 4.5:1 body text needs.
+     Lightened to 4.51:1. */
+  --fw-muted:          #909090;
+
+  /* --- Brand + Semantic --- */
+  --fw-teal:    #00bcd4;  /* primary, "FW is active" */
+  --fw-amber:   #ffab40;  /* warning, recoverable, BETA */
+  /* Measured 4.08:1 as text on --fw-red-soft (same hue, both derived from
+     this token), under the 4.5:1 text needs. Brightened to 4.63:1; the plain
+     red-on-card use (5.04:1 before) only gains from the same change. */
+  --fw-red:     #f56b66;  /* alarm, broken, error */
+  --fw-green:   #4caf50;  /* OK, verified, success */
+  /* Measured 3.65:1 as plain text on card and 3.08:1 on its own soft tint,
+     both under 4.5:1. Brightened to 5.95:1 on card and 4.54:1 on the tint. */
+  --fw-purple:  #c878d6;  /* secondary stat, blocked counts */
+
+  /* --- Marker dot severity ramp (locked — content-script source of truth) --- */
+  /* low and mid darkened: a contrast check against the light-theme card
+     (#f6f6f8) measured 2.33:1 and 2.02:1, under the 3:1 a graphic needs to
+     read as a distinct mark rather than noise. Darkened to 3.10:1 and
+     3.11:1, same hue, same ramp position. Both already clear 3:1 on the
+     dark card so one value serves both themes. */
+  --fw-marker-low:    #449a91;  /* severity 1-4 */
+  --fw-marker-mid:    #b38346;  /* severity 5-7 */
+  --fw-marker-high:   #e53935;  /* severity 8-10 */
+
+  /* --- Technique colors (Material 400-series; JS mirror = TECHNIQUE_COLORS in
+         src/ui/dashboard/components/color-maps.ts — the Technique frequency
+         chart + Activity record dot read the JS map; keep the two in sync.
+         --fw-tech-combined is the dedicated "multiple techniques" mix color. --- */
+  --fw-tech-fear-appeal:        #7c83ff;
+  --fw-tech-repeat-exposure:    #8a8f98;
+  --fw-tech-anger-trigger:      #ef5350;
+  --fw-tech-shame-attack:       #ab47bc;
+  --fw-tech-false-urgency:      #ffab40;
+  --fw-tech-bandwagon:          #42a5f5;
+  --fw-tech-scapegoating:       #ec407a;
+  --fw-tech-fomo:               #ff7043;
+  --fw-tech-toxic-positivity:   #66bb6a;
+  --fw-tech-misleading-format:  #90a4ae;
+  --fw-tech-combined:           #5c6bc0;
+  --fw-tech-ai-content-block:   #7b1fa2;
+  --fw-tech-profanity:          #bdbdbd;
+  --fw-tech-body-comparison:    #f06292;
+  --fw-tech-parasocial:         #26c6da;
+  --fw-tech-consumer-rapid:     #9ccc65;
+  --fw-tech-hyperreal-trauma:   #8d6e63;
+  --fw-tech-combined-stack:     #5c6bc0;
+  --fw-tech-sexual:             #d81b60;
+  --fw-tech-violence-graphic:   #c62828;
+  --fw-tech-self-harm:          #ad1457;
+  --fw-tech-drug-promotion:     #6d4c41;
+  --fw-tech-unsafe-health-experiment: #ff8f00;
+  --fw-tech-extreme-toxicity:   #b71c1c;
+
+  /* --- Platform colors (mirror brand colors of host platforms) --- */
+  --fw-platform-twitter:   #1da1f2;
+  --fw-platform-facebook:  #4267b2;
+  --fw-platform-instagram: #e1306c;
+  --fw-platform-tiktok:    #69c9d0;
+  --fw-platform-youtube:   #ff0000;
+
+  /* --- Type: families --- */
+  --fw-font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --fw-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* --- Type: scale (popup is dense; dashboard scales up modestly) --- */
+  --fw-text-9:  9px;     /* micro labels (severity tags) */
+  --fw-text-10: 10px;    /* uppercase eyebrow */
+  --fw-text-11: 11px;    /* helper / hint */
+  --fw-text-12: 12px;    /* secondary body */
+  --fw-text-13: 13px;    /* base body — popup */
+  --fw-text-14: 14px;    /* prominent body — dashboard */
+  --fw-text-15: 15px;    /* setup tagline */
+  --fw-text-16: 16px;    /* section header (popup) */
+  --fw-text-18: 18px;    /* PIN digit */
+  --fw-text-20: 20px;    /* dashboard sub-h */
+  --fw-text-24: 24px;    /* dashboard h1 */
+  --fw-text-32: 32px;    /* KPI value */
+
+  /* --- Type: weights --- */
+  --fw-w-regular:  400;
+  --fw-w-medium:   500;
+  --fw-w-semibold: 600;
+  --fw-w-bold:     700;
+
+  /* --- Spacing (4-base) --- */
+  --fw-s-1:  4px;
+  --fw-s-2:  6px;
+  --fw-s-3:  8px;
+  --fw-s-4:  10px;
+  --fw-s-5:  12px;
+  --fw-s-6:  14px;
+  --fw-s-7:  16px;
+  --fw-s-8:  20px;
+  --fw-s-9:  24px;
+  --fw-s-10: 32px;
+
+  /* --- Radius --- */
+  --fw-r-xs: 3px;   /* tag chips */
+  --fw-r-sm: 5px;   /* inline buttons */
+  --fw-r-md: 10px;  /* primary buttons, inputs */
+  --fw-r-lg: 14px;  /* cards, drawers */
+  --fw-r-xl: 18px;  /* PIN overlay, tier pill */
+  --fw-r-pill: 999px;
+
+  /* --- Shadow / Elevation --- */
+  /* The system runs almost entirely flat; the only shadow used in the
+     codebase is a teal-tinted hover glow on primary buttons. Other
+     elevation comes from card-on-bg contrast, not drop-shadow. */
+  --fw-shadow-hover: 0 2px 8px rgba(0, 188, 212, 0.2);
+  --fw-shadow-overlay: 0 0 0 100vmax rgba(0, 0, 0, 0.85);
+  /* Card elevation (design finding, 2026-06-21 — the flat surfaces read "bland"). A soft
+     drop that lifts cards off the bg without heavy gloss; dark default, lighter
+     in the light-theme overrides below. Used by popup + dashboard solid cards. */
+  --fw-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.22), 0 12px 26px -12px rgba(0, 0, 0, 0.62);
+
+  /* --- Border --- */
+  --fw-border-width: 1px;
+
+  /* ─── Ship #26 — Dashboard redesign tokens ─── */
+  /* Accent (used by buttons, focus rings, active-tab underlines). */
+  --fw-accent:    var(--fw-teal);
+  --fw-on-accent: #0a0a0a;
+
+  /* Two-step surface ramp (panels on bg, controls on panels). */
+  --fw-surface:   #1d2026;
+  --fw-surface-2: #262a31;
+
+  /* Stronger border for hover / accent / active states (was --fw-border-light).
+     Measured 1.54:1 against card (dark), weaker than the plain border once
+     that was corrected. Lightened to 4.40:1. */
+  --fw-border-strong: #7d7f88;
+
+  /* Soft semantic tints (18% in dark; 12% in light). Used by chips, rails,
+     KPI tile haloes. color-mix keeps them token-derived. */
+  --fw-green-soft:  color-mix(in oklch, var(--fw-green)  18%, transparent);
+  --fw-amber-soft:  color-mix(in oklch, var(--fw-amber)  18%, transparent);
+  --fw-red-soft:    color-mix(in oklch, var(--fw-red)    18%, transparent);
+  --fw-purple-soft: color-mix(in oklch, var(--fw-purple) 18%, transparent);
+  --fw-teal-soft:   color-mix(in oklch, var(--fw-teal)   18%, transparent);
+
+  /* Radius aliases — CSS in the bundle uses --fw-radius-*, code in the rest
+     of the repo uses --fw-r-*. Aliases let both coexist while the rename
+     migrates. */
+  --fw-radius-xs:   var(--fw-r-xs);
+  --fw-radius-sm:   var(--fw-r-sm);
+  --fw-radius-md:   var(--fw-r-md);
+  --fw-radius-lg:   var(--fw-r-lg);
+  --fw-radius-xl:   var(--fw-r-xl);
+  --fw-radius-pill: var(--fw-r-pill);
+
+  /* Elevation: shadow-3 is the modal / popover drop. shadow-hover stays as-is. */
+  --fw-shadow-3: 0 10px 30px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(0, 0, 0, 0.35);
+
+  /* ─── Social-feed redesign tokens (dark default) ─── */
+  /* The recorded-feed surfaces: a slightly recessed page bg behind elevated
+     record cards, plus the structural rails (thread / quote), the AI
+     "machine" surface, the video tile, and the small chip backings the
+     trust-arithmetic bar / kind tags / gap pills / session rules use. */
+  --fw-feed-bg:      #0b0c0e;   /* page behind the feed (slightly above --fw-bg) */
+  --fw-record-card:  #181b21;   /* one social item = one elevated card */
+  --fw-thread-rail:  #2e323b;   /* vertical rail comments hang from */
+  --fw-quote-rail:   #3a3f49;   /* solid left rail on verbatim quote blocks */
+  --fw-ai-bg:        #181b21;   /* dashed machine-surface fill (AI summary) */
+  --fw-ai-border:    #363b45;   /* dashed machine-surface border */
+  --fw-ai-text:      #b8b8c0;   /* mono interpretation text on the AI surface */
+  --fw-trust-bar-bg: #1a1d23;   /* trust-arithmetic inventory bar backing */
+  --fw-kind-tag-bg:  #23272e;   /* mono kind-tag chip backing */
+  --fw-kind-tag-text:#9a9aa3;   /* mono kind-tag chip text */
+  --fw-gap-pill-bg:  #1c1f25;   /* serve-order / platform-switch gap pill */
+  --fw-session-rule: #2a2e36;   /* session-divider hairline */
+
+  /* ─── Chart-kit tokens (fwc-) — turn-13 re-skin, mockup 2026-07-17 ─── */
+  /* Neutral = the benign majority (pass segments, column bases): recedes so
+     status hues never crowd. Grid = recessive track/hover wash. */
+  --fwc-neutral: #3a3d46;
+  --fwc-grid:    rgba(255, 255, 255, 0.06);
+  --fwc-tip-bg:  #2a2d35;
+  --fwc-tip-text:#f0f0f0;
+}
+
+/* OS-preference fallback for surfaces that don't set data-theme explicitly
+   (popup paints before JS runs; old surfaces that never opted into the
+   data-theme system). The dashboard sets data-theme on <html> via Dashboard.tsx
+   mount, so the [data-theme] selectors below win there by higher specificity. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    --fw-bg:           #f1f2f5;
+    --fw-card:         #f6f6f8;
+    --fw-card-hover:   #eeeef2;
+    /* Measured 1.22:1 against card (light); see the data-theme="light"
+       block below for the full set of contrast fixes this mirrors. */
+    --fw-border:       #8c8c90;
+    --fw-border-light: #cbcbd0;
+    --fw-text:           #1a1a1a;
+    --fw-text-secondary: #2a2a2a;
+    --fw-muted:          #626262;
+    --fw-teal:   #00707f;
+    --fw-amber:  #9a5200;
+    --fw-red:    #c02020;
+    --fw-green:  #2a7530;
+    --fw-purple: #7b1fa2;
+    --fw-on-accent: #ffffff;
+    --fw-shadow-card: 0 1px 2px rgba(15, 23, 42, 0.06), 0 10px 22px -12px rgba(15, 23, 42, 0.20);
+    --fwc-neutral: #c9cbd2;
+    --fwc-grid:    rgba(0, 0, 0, 0.06);
+    --fwc-tip-bg:  #26282e;
+    --fwc-tip-text:#ffffff;
+  }
+}
+
+/* Explicit dashboard theme override. JS sets data-theme="light" | "dark" on
+   <html> from settings.dashboardTheme; 'system' is resolved to one of those
+   at mount time via matchMedia. Specificity (0,0,1,1) beats the plain
+   :root (0,0,0,1), so an explicit choice always wins over the @media rule.
+   Severity / technique / platform colors stay constant — they're semantic. */
+:root[data-theme="light"] {
+  --fw-bg:           #f1f2f5;
+  --fw-card:         #f6f6f8;
+  --fw-card-hover:   #eeeef2;
+  /* Measured 1.22:1 against card (light), where 3:1 is what an input
+     outline or card edge needs to read as a line. Darkened to 3.10:1. */
+  --fw-border:       #8c8c90;
+  --fw-border-light: #cbcbd0;
+  --fw-text:           #1a1a1a;
+  --fw-text-secondary: #2a2a2a;
+  /* Measured 4.29:1 against --fw-surface-2, under the 4.5:1 body text
+     needs. Darkened to 4.55:1. */
+  --fw-muted:          #626262;
+  /* Measured 3.85:1 against card and 3.71:1 against bg, both under 4.5:1;
+     this single pair of link/CTA colors carries six failing rows at once
+     (link text, active popup tab, primary CTA, wizard step number, tab
+     count pill, has-issues badge). Darkened to 5.37:1 / 5.18:1. */
+  --fw-teal:   #00707f;
+  /* Measured 3.63:1 against card and 3.50:1 against bg, under 4.5:1; shares
+     the warning-banner title and BETA pill with the pair above. Darkened to
+     5.43:1 / 5.24:1. */
+  --fw-amber:  #9a5200;
+  /* Measured 4.31:1 as text on --fw-red-soft (same hue, derived from this
+     token), under 4.5:1. Darkened to 4.61:1. */
+  --fw-red:    #c02020;
+  /* Measured 4.06:1 as text on --fw-green-soft, under 4.5:1. Darkened to
+     4.51:1. */
+  --fw-green:  #2a7530;
+  --fw-purple: #7b1fa2;
+  /* Ship #26 — light-theme overrides for the new tokens. */
+  --fw-on-accent:      #ffffff;
+  --fw-surface:        #ececf0;
+  --fw-surface-2:      #dedee4;
+  /* Measured 1.83:1 against card (light), weaker than the plain border
+     once that was corrected above. Darkened to 4.06:1. */
+  --fw-border-strong:  #78787e;
+  --fw-shadow-card:    0 1px 2px rgba(15, 23, 42, 0.06), 0 10px 22px -12px rgba(15, 23, 42, 0.20);
+  --fw-green-soft:  color-mix(in oklch, var(--fw-green)  12%, transparent);
+  --fw-amber-soft:  color-mix(in oklch, var(--fw-amber)  12%, transparent);
+  --fw-red-soft:    color-mix(in oklch, var(--fw-red)    12%, transparent);
+  --fw-purple-soft: color-mix(in oklch, var(--fw-purple) 12%, transparent);
+  --fw-teal-soft:   color-mix(in oklch, var(--fw-teal)   12%, transparent);
+  /* Social-feed redesign tokens — light theme (the design's hero theme). */
+  --fw-feed-bg:      #f1f2f5;
+  --fw-record-card:  #ffffff;
+  --fw-thread-rail:  #dcdde2;
+  --fw-quote-rail:   #c9c9d2;
+  --fw-ai-bg:        #f4f4f7;
+  --fw-ai-border:    #b3b4be;
+  --fw-ai-text:      #3f3f46;
+  --fw-trust-bar-bg: #fafafc;
+  --fw-kind-tag-bg:  #ecedf2;
+  /* Measured 4.31:1 against --fw-gap-pill-bg, under the 4.5:1 body text
+     needs. Darkened to 4.57:1. */
+  --fw-kind-tag-text:#676771;
+  --fw-gap-pill-bg:  #e7e8ee;
+  --fw-session-rule: #e0e0e4;
+  --fwc-neutral: #c9cbd2;
+  --fwc-grid:    rgba(0, 0, 0, 0.06);
+  --fwc-tip-bg:  #26282e;
+  --fwc-tip-text:#ffffff;
+}
+
+:root[data-theme="dark"] {
+  --fw-bg:           #0e0f13;
+  --fw-card:         #17191f;
+  --fw-card-hover:   #1c1f25;
+  /* Mirrors the base :root fix above: measured 1.16:1 against card,
+     lightened to 3.30:1. */
+  --fw-border:       #696b72;
+  --fw-border-light: #30333b;
+  --fw-text:           #f0f0f0;
+  --fw-text-secondary: #cccccc;
+  /* Mirrors the base :root fix: measured 4.06:1 against --fw-surface-2,
+     lightened to 4.51:1. */
+  --fw-muted:          #909090;
+  --fw-teal:    #00bcd4;
+  --fw-amber:   #ffab40;
+  /* Mirrors the base :root fix: measured 4.08:1 as text on its own soft
+     tint, lightened to 4.63:1. */
+  --fw-red:     #f56b66;
+  --fw-green:   #4caf50;
+  /* Mirrors the base :root fix: measured 3.65:1 on card and 3.08:1 on its
+     own soft tint, lightened to 5.95:1 and 4.54:1. */
+  --fw-purple:  #c878d6;
+  /* Social-feed redesign tokens — explicit dark theme (mirrors bare :root). */
+  --fw-feed-bg:      #0b0c0e;
+  --fw-record-card:  #181b21;
+  --fw-thread-rail:  #2e323b;
+  --fw-quote-rail:   #3a3f49;
+  --fw-ai-bg:        #181b21;
+  --fw-ai-border:    #363b45;
+  --fw-ai-text:      #b8b8c0;
+  --fw-trust-bar-bg: #1a1d23;
+  --fw-kind-tag-bg:  #23272e;
+  --fw-kind-tag-text:#9a9aa3;
+  --fw-gap-pill-bg:  #1c1f25;
+  --fw-session-rule: #2a2e36;
+  --fwc-neutral: #3a3d46;
+  --fwc-grid:    rgba(255, 255, 255, 0.06);
+  --fwc-tip-bg:  #2a2d35;
+  --fwc-tip-text:#f0f0f0;
+}
+
+/* ─── Animations (mirrors Popup.tsx style.textContent) ─── */
+@keyframes fw-pulse        { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+@keyframes fw-active-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+@keyframes fw-shake        { 0%,100% { transform: translateX(0); } 20%,60% { transform: translateX(-6px); } 40%,80% { transform: translateX(6px); } }

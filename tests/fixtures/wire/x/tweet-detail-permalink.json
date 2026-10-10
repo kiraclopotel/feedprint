@@ -1,0 +1,101 @@
+{
+  "data": {
+    "threaded_conversation_with_injections_v2": {
+      "instructions": [
+        {
+          "type": "TimelineAddEntries",
+          "entries": [
+            {
+              "entryId": "tweet-9100000000000000001",
+              "content": {
+                "entryType": "TimelineTimelineItem",
+                "itemContent": {
+                  "itemType": "TimelineTweet",
+                  "tweet_results": {
+                    "result": {
+                      "__typename": "Tweet",
+                      "rest_id": "9100000000000000001",
+                      "core": {
+                        "user_results": {
+                          "result": {
+                            "__typename": "User",
+                            "legacy": {
+                              "name": "Synthetic Origin",
+                              "screen_name": "example_origin"
+                            },
+                            "is_blue_verified": true
+                          }
+                        }
+                      },
+                      "legacy": {
+                        "full_text": "Original post body text here.",
+                        "created_at": "Sat May 17 18:13:42 +0000 2026",
+                        "favorite_count": 1234,
+                        "reply_count": 56,
+                        "retweet_count": 78,
+                        "quote_count": 9,
+                        "bookmark_count": 12,
+                        "user_id_str": "1000000000000000001"
+                      },
+                      "views": {
+                        "count": "98765"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "entryId": "conversationthread-9100000000000000001",
+              "content": {
+                "entryType": "TimelineTimelineModule",
+                "items": [
+                  {
+                    "entryId": "conversationthread-9100000000000000001-tweet-9100000000000000002",
+                    "item": {
+                      "itemContent": {
+                        "itemType": "TimelineTweet",
+                        "tweet_results": {
+                          "result": {
+                            "__typename": "Tweet",
+                            "rest_id": "9100000000000000002",
+                            "core": {
+                              "user_results": {
+                                "result": {
+                                  "__typename": "User",
+                                  "legacy": {
+                                    "name": "Synthetic Reply",
+                                    "screen_name": "replier1"
+                                  },
+                                  "is_blue_verified": false
+                                }
+                              }
+                            },
+                            "legacy": {
+                              "full_text": "Reply one body.",
+                              "created_at": "Sat May 17 18:14:42 +0000 2026",
+                              "favorite_count": 4,
+                              "reply_count": 1,
+                              "retweet_count": 0,
+                              "quote_count": 0,
+                              "bookmark_count": 0,
+                              "in_reply_to_status_id_str": "9100000000000000001",
+                              "user_id_str": "1000000000000000002"
+                            },
+                            "views": {
+                              "count": "321"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

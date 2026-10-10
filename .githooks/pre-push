@@ -1,0 +1,63 @@
+#!/bin/sh
+set -eu
+
+# Work is local (owner, 2026-09-06). Every push is his act, taken deliberately.
+# To push: FW_ALLOW_PUSH=1 git push ...   The checks below still apply.
+if [ "${FW_ALLOW_PUSH:-0}" != "1" ]; then
+  echo "FeelingWise: push blocked - commits stay local." >&2
+  echo "  The owner authorises each push. Re-run with FW_ALLOW_PUSH=1 if he said yes." >&2
+  exit 1
+fi
+
+remote_url="$2"
+public_root_input="$(git config --get feelingwise.publicRoot || true)"
+zero="0000000000000000000000000000000000000000"
+
+case "$remote_url" in
+  https://github.com/kiraclopotel/FeelingWise-Alpha.git) ;;
+  *)
+    echo "FeelingWise: push blocked - unknown destination: $remote_url" >&2
+    exit 1
+    ;;
+esac
+
+if [ -z "$public_root_input" ]; then
+  echo "FeelingWise: push blocked - sanitized public root is not configured." >&2
+  exit 1
+fi
+
+if ! public_root="$(git rev-parse --verify "$public_root_input^{commit}" 2>/dev/null)"; then
+  echo "FeelingWise: push blocked - sanitized public root is not a commit." >&2
+  exit 1
+fi
+
+while read -r local_ref local_oid remote_ref remote_oid
+do
+  if [ "$local_oid" = "$zero" ]; then
+    echo "FeelingWise: remote ref deletion is blocked." >&2
+    exit 1
+  fi
+
+  case "$remote_ref" in
+    refs/heads/main)
+      echo "FeelingWise: legacy remote main is protected." >&2
+      exit 1
+      ;;
+    refs/heads/*) ;;
+    *)
+      echo "FeelingWise: only branch pushes are allowed." >&2
+      exit 1
+      ;;
+  esac
+
+  if ! git merge-base --is-ancestor "$public_root" "$local_oid"; then
+    echo "FeelingWise: legacy or unrelated history cannot be pushed." >&2
+    exit 1
+  fi
+
+  history_roots="$(GIT_NO_REPLACE_OBJECTS=1 git rev-list --max-parents=0 "$local_oid")"
+  if [ "$history_roots" != "$public_root" ]; then
+    echo "FeelingWise: push blocked - branch history must have only the sanitized public root." >&2
+    exit 1
+  fi
+done

@@ -1,0 +1,9 @@
+{
+  "receiptsName": { "message": "Feedprint - Guarda lo que te mostró tu feed" },
+  "receiptsShortName": { "message": "Feedprint" },
+  "receiptsDescription": { "message": "Registro firmado de lo que mostró tu feed en X, Facebook, Instagram, TikTok y YouTube, en tu equipo. Cualquiera puede comprobarlo." },
+  "receiptsActionTitle": { "message": "Feedprint de FeelingWise" },
+  "offName": { "message": "Off - Oculta palabrotas, me gusta, Reels, Shorts y anuncios" },
+  "offDescription": { "message": "Apaga palabrotas, contadores de me gusta, Reels, Shorts y anuncios en Facebook, Instagram, X, TikTok y YouTube. Gratis, sin cuenta." },
+  "offActionTitle": { "message": "Off" }
+}

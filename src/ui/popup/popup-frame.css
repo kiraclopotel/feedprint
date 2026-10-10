@@ -1,0 +1,23 @@
+/* The popup page when it is wider than the popup (PH, PAINT-2 P2-1 and P2-2).
+ *
+ * popup.html?detached=1 is the page the install opens as a tab, and the page a detached popup window shows.
+ * popup-design.css lets it fill the window, so at 1280 px a text line ran about 1,240 px, the level cards
+ * were 407 px each and "Continue" was 1,208 px wide. Here it is one centred frame instead: the window
+ * still resizes up to the frame's width, and past it the page keeps its shape. The popup at 380 px is not
+ * touched (no fw-detached class). Loaded after popup-design.css, so these rules win the ties.
+ * popup-design.css is not edited: it is maker 2's file. */
+body.fw-detached .fw-popup {
+  max-width: 480px;
+  margin: 0 auto;
+  border-left: 1px solid var(--fw-border);
+  border-right: 1px solid var(--fw-border);
+}
+
+/* The setup step's main button lines up with the text and cards above it. .pop-cta is width calc(100% - 32px)
+   with a 16 px side margin (right for Home, whose cards sit 16 px in); the setup step has its own 20 px
+   padding, so there the button stood 16 px inside the cards on both sides. */
+.setup-step > .pop-cta {
+  width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+}

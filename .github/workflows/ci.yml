@@ -1,0 +1,89 @@
+name: CI
+
+# The public repository's own check. That repository follows the project's work: each update is one
+# commit holding the public half of the source at one commit (named in SOURCE-COMMIT), and each upload
+# to the Chrome Web Store is a tag v<version> on the commit holding that upload's source. So it is
+# checked two ways:
+#
+#   checks   on every change, and on pull requests: the gates the project runs before each of its
+#            own commits (both type checks, lint, both test projects).
+#   release  on a pushed tag v<version>: the extension that tag was uploaded as, rebuilt and
+#            compared with its row in docs/spec/RELEASES.tsv, file by file and as a zip. An update
+#            between uploads built nothing that was uploaded, and a pull request changes the source,
+#            so neither is asked to match. The comparison needs SOURCE-COMMIT too: the same file is
+#            tracked in the private repository, which has no such file, so there it only says so.
+#
+# Windows with Git's Windows line-ending default, because that is where the match has been proven.
+# Linux and macOS have not been. The Node version is the exact one uploads are built with (.nvmrc).
+# Actions are pinned by commit, so a moved tag cannot change what runs here.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: windows-2025
+    timeout-minutes: 60
+    steps:
+      - name: Line endings as a default Windows clone has them
+        run: git config --global core.autocrlf true
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # The release-list test reads the ancestry of every recorded upload.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install dependencies from the lockfile
+        run: npm ci
+
+      - name: Type-check
+        run: npx tsc --noEmit
+
+      - name: Type-check the tests and scripts
+        run: npx tsc -p tsconfig.tests.json --noEmit
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Tests
+        run: npx vitest run --project unit
+
+      - name: Tests that start processes or build temporary repositories
+        run: npx vitest run --project tooling
+
+  release:
+    if: github.event_name != 'pull_request'
+    runs-on: windows-2025
+    timeout-minutes: 60
+    steps:
+      - name: Line endings as a default Windows clone has them
+        run: git config --global core.autocrlf true
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install dependencies from the lockfile
+        run: npm ci
+
+      - name: The upload this tag is the source of, rebuilt and compared
+        if: hashFiles('SOURCE-COMMIT') != '' && startsWith(github.ref, 'refs/tags/v')
+        run: node scripts/reproducible-build.mjs --expect-release
+
+      - name: Not an upload's tag, so there is no upload to compare with
+        if: hashFiles('SOURCE-COMMIT') == '' || !startsWith(github.ref, 'refs/tags/v')
+        run: echo "Not a tag v<version> of the public copy, so this commit is not an upload's source; nothing to compare."

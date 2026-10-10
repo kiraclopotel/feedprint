@@ -1,0 +1,2723 @@
+﻿/* dashboard-design.css â€” social-media-style FeelingWise dashboard.
+   Surface-ID comments map every block to inventory IDs.
+   Uses only --fw-* tokens; platform/technique/blocked colors come in via inline style. */
+
+/* Reset the user-agent body margin. Without this, the browser's default 8px
+   body margin leaves a gutter on all four sides where the page's light default
+   canvas shows through — a thin white frame just below the bookmarks bar and
+   down the sides (reported 2026-06-16: white line below bookmarks, present on
+   all sides). Painting html/body with --fw-bg also kills any light flash before
+   the React app mounts. */
+html, body { margin: 0; padding: 0; background: var(--fw-bg); }
+
+.dash-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--fw-bg);
+  color: var(--fw-text);
+  font-family: var(--fw-font-sans);
+  font-size: 14px;
+  line-height: 1.45;
+  /* Was `clip`: it removes horizontal overflow WITHOUT becoming a scroll
+     container, so the sticky header / tabs / radar keep working (unlike
+     overflow:hidden, which would break them). But clip does not scroll, it
+     cuts, so anything wider than the viewport at a narrow width was destroyed
+     with no way to reach it. The comments at :32-40, :925 and :2441 in this
+     file are three separate fixes for that same symptom (a card losing its
+     right edge, a label truncating, a row needing more room) without ever
+     removing the cause. `auto` keeps content reachable; nothing below still
+     needs the sticky elements to survive an overflow:hidden ancestor, so the
+     tradeoff clip existed for no longer applies. */
+  overflow-x: auto;
+}
+
+.dash-shell {
+  max-width: 1320px;
+  margin: 0 auto;
+  width: 100%;
+  /* Measured 2026-09-17: without this, `width:100%` plus the 32px of padding on
+     each side made the shell 64px wider than the window on EVERY tab except
+     Activity, which carries its own border-box rule further down. The page does
+     not scroll sideways (`overflow-x: clip` on .dash-root, 2026-06-14), so the
+     64px was not a scrollbar: it was content cut off at the right edge, which
+     is how the third card of the Export tab's row of three lost its right side
+     and nobody could reach it. */
+  box-sizing: border-box;
+  padding: 0 28px 80px;
+}
+
+/* A measure for the prose.
+   Measured 2026-09-17, at 1280 and at 1100: explanatory paragraphs on six of the
+   eight tabs ran the whole width of the shell, which is 219 characters a line on
+   Feed behaviour and 225 on Issues and on Export. Somewhere past about a hundred
+   the eye loses the start of the next line, and the tabs already had the answer
+   in them: the Export tab's first paragraph has always wrapped at about 510px,
+   and the paragraphs under it did not, which is why that card reads as a
+   mistake. 78ch is that same measure, stated once. Tables, charts and the rows
+   that carry numbers are untouched: this is only for text a person reads. */
+/* A field is not a paragraph, but it has the same problem when it is left to
+   fill a 1,000px card: a passphrase box as wide as the screen beside 430px of
+   prose reads as two different pages. These are the ones that had no width of
+   their own (2026-09-17). */
+.dash-shell input[type="password"],
+.dash-shell input[type="text"]:not([class]) { max-width: 520px; }
+
+.dash-shell p,
+.dash-shell .stats-sub,
+.dash-shell .fb-card-sub,
+.dash-shell .ov-card-sub,
+.dash-shell .ov-footnote,
+.dash-shell .expo-footnote,
+.dash-shell .export-note { max-width: 78ch; }
+
+/* ============================================================ dash-header */
+.dash-header {
+  position: sticky; top: 0; z-index: 30;
+  background: color-mix(in oklch, var(--fw-bg) 88%, transparent);
+  backdrop-filter: saturate(140%) blur(10px);
+  border-bottom: 1px solid var(--fw-border);
+}
+/* Compact, single-row header (reported 2026-06-14: too big, logo too small,
+   wanted more elegant). Tight vertical padding, a larger brand mark, and every
+   control on ONE line (the tier + record count no longer stack). */
+.dash-header-inner {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 5px 24px;
+  display: flex; align-items: center; gap: 14px;
+}
+.dash-wordmark { display: flex; align-items: center; gap: 11px; font-weight: 600; letter-spacing: -0.01em; }
+.dash-wordmark-mark { flex-shrink: 0; display: block; }
+.dash-wordmark-text { font-size: 15px; line-height: 1.1; }
+.dash-wordmark-text small { display: block; font-size: 12px; font-weight: 600; color: var(--fw-muted); letter-spacing: 0.08em; text-transform: none; margin-top: 1px; }
+
+.dash-header-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.dash-last-record { display: flex; align-items: center; gap: 6px; color: var(--fw-text-secondary); font-size: 12px; font-family: var(--fw-font-mono); }
+.dash-last-record svg { opacity: .7; }
+.dash-older-months-counting { font-family: var(--fw-font-sans, inherit); font-size: 12px; color: var(--fw-text-secondary); }
+
+.dash-integrity-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 500;
+  padding: 3px 10px 3px 7px;
+  border-radius: 0;
+  border: 1px solid var(--fw-border);
+  background: var(--fw-card);
+}
+.dash-integrity-pill .dot { width: 8px; height: 8px; border-radius: 0; }
+.dash-integrity-pill.ok    .dot { background: var(--fw-green); }
+.dash-integrity-pill.warn  .dot { background: var(--fw-amber); }
+/* `err` shares amber with `warn` per a standing product decision, 2026-05-25: chain issues should
+   read as "needs attention" (yellow), not "catastrophic" (red). The
+   ChainBanner inside the Forensics tab still surfaces deep-dive context
+   when the chain is truly broken. */
+.dash-integrity-pill.err   .dot { background: var(--fw-amber); }
+
+/* Healthy state: an ECG/vital-signs heartbeat trace instead of a static dot
+   (reported 2026-06-09: like the lines at a hospital that beep). A faint full
+   trace sits under a brighter segment that sweeps along it, reading as a live
+   monitor. Visual only â€” no audio. Honours prefers-reduced-motion. */
+.dash-integrity-pill .dash-ecg { display: block; overflow: visible; }
+.dash-integrity-pill .dash-ecg polyline {
+  fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
+}
+.dash-integrity-pill .dash-ecg .ecg-base { stroke: var(--fw-green); opacity: .22; }
+.dash-integrity-pill .dash-ecg .ecg-beam {
+  stroke: var(--fw-green);
+  stroke-dasharray: 14 86;          /* lit 14 of 100 path units â†’ a travelling blip */
+  filter: drop-shadow(0 0 2px var(--fw-green));
+}
+@keyframes dash-ecg-sweep {
+  from { stroke-dashoffset: 100; }
+  to   { stroke-dashoffset: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dash-integrity-pill .dash-ecg .ecg-beam {
+    animation: none; opacity: .6; stroke-dasharray: none; filter: none;
+  }
+}
+
+/* Record-management buttons inline in the header (Verify / Fix / Reset
+   + help). Compact ghost-button style so they don't compete with the
+   integrity pill or the tier chip for visual weight. */
+.dash-record-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px;
+  background: var(--fw-bg);
+  border: 1px solid var(--fw-border);
+  border-radius: var(--fw-r-1);
+}
+.dash-record-btn {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 9px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  color: var(--fw-text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s ease, color 0.15s ease;
+  /* Under the 24x24 CSS px minimum a pointer target needs (measured: 3px 9px
+     padding on 11px text lands well short). */
+  min-height: 24px; min-width: 24px;
+}
+.dash-record-btn:hover:not(:disabled) {
+  background: color-mix(in oklch, var(--fw-text-secondary) 12%, transparent);
+  color: var(--fw-text);
+}
+.dash-record-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.dash-record-btn.danger:hover:not(:disabled) {
+  background: color-mix(in oklch, var(--fw-red) 15%, transparent);
+  color: var(--fw-red);
+}
+.dash-record-help {
+  width: 18px;
+  height: 18px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 0;
+  background: transparent;
+  border: 1px solid var(--fw-border);
+  color: var(--fw-text-secondary);
+  cursor: help;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 2px;
+}
+.dash-record-help:hover { color: var(--fw-text); border-color: var(--fw-text-secondary); }
+
+.dash-tier-pill {
+  text-transform: none; letter-spacing: 0.06em;
+  font-size: 12px; font-weight: 700;
+  padding: 3px 8px; border-radius: 0;
+  background: var(--fw-accent); color: var(--fw-on-accent);
+}
+
+/* Tier + record-count + last-record on ONE line (reported 2026-06-14: the stacked
+   second line made the bar tall). DEV chip · 3.2K posts · last record. */
+.dash-tier-stack {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 9px;
+}
+.dash-tier-stack .dash-last-record {
+  font-size: 12px;
+  opacity: 0.82;
+}
+.dash-tier-stack .dash-last-record svg { width: 11px; height: 11px; }
+
+/* Verify-result toast. Appears below the header after the parent clicks
+   Verify; success auto-dismisses after 6s, failure persists until the
+   user clicks the close (X) button. Slide-in animation from the right. */
+.dash-verify-toast {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 24px;
+  z-index: 50;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 1.4;
+  border-radius: var(--fw-r-1);
+  background: var(--fw-card);
+  border: 1px solid var(--fw-border);
+  box-shadow: var(--fw-shadow-3);
+  max-width: min(440px, calc(100vw - 48px));
+}
+.dash-verify-toast.ok {
+  border-left: 3px solid var(--fw-green);
+  color: var(--fw-text);
+  /* Slide in (0.22s) + hold ~5s + fade out (0.7s). Total 6s matches
+     the JS unmount timer in DashHeader.tsx. Parent gets a soft drift-
+     away instead of an instant disappear. */
+  animation:
+    dash-verify-toast-in 0.22s ease,
+    dash-verify-toast-out 0.7s ease 5.3s forwards;
+}
+.dash-verify-toast.ok svg { color: var(--fw-green); }
+.dash-verify-toast.warn {
+  border-left: 3px solid var(--fw-amber);
+  color: var(--fw-text);
+  animation: dash-verify-toast-in 0.22s ease;
+}
+.dash-verify-toast.err {
+  border-left: 3px solid var(--fw-amber);
+  color: var(--fw-text);
+  /* Failure toast: slide in only â€” no fade-out. Stays until the parent
+     clicks the close (X) button. Failure is action-required, not noise
+     to dismiss. */
+  animation: dash-verify-toast-in 0.22s ease;
+}
+.dash-verify-toast-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 0;
+  background: var(--fw-amber);
+  color: var(--fw-on-accent);
+  font-weight: 700;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.dash-verify-toast-close {
+  margin-left: 4px;
+  width: 22px;
+  height: 22px;
+  /* 22px is under the 24x24 CSS px minimum; min- clamps the used size up
+     without touching the 22px most browsers already render at. */
+  min-height: 24px; min-width: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  color: var(--fw-text-secondary);
+  cursor: pointer;
+}
+.dash-verify-toast-close:hover {
+  background: color-mix(in oklch, var(--fw-text-secondary) 12%, transparent);
+  color: var(--fw-text);
+}
+@keyframes dash-verify-toast-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes dash-verify-toast-out {
+  to   { opacity: 0; transform: translateY(-6px); }
+}
+
+/* Make .dash-header position:relative so the toast can absolute-position
+   under it without escaping the header bounds. */
+.dash-header { position: relative; }
+
+/* Help popover for the ? button. Click-to-toggle replaces the native
+   title-tooltip which didn't render across all browsers consistently.
+   Anchored under the ? button via .dash-record-help-wrap (position:
+   relative); click-outside dismiss handled in DashHeader.tsx. */
+.dash-record-help-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.dash-record-help-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 280px;
+  padding: 10px 12px;
+  background: var(--fw-card);
+  border: 1px solid var(--fw-border);
+  border-radius: var(--fw-r-1);
+  box-shadow: var(--fw-shadow-3);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--fw-text);
+  z-index: 50;
+  animation: dash-verify-toast-in 0.18s ease;
+}
+.dash-record-help-popover p { margin: 0 0 8px; }
+.dash-record-help-popover p:last-child { margin: 0; }
+.dash-record-help-popover strong { color: var(--fw-text); }
+
+.dash-icon-btn {
+  width: 28px; height: 28px; border-radius: 0;
+  border: 1px solid var(--fw-border); background: var(--fw-card);
+  display: grid; place-items: center; cursor: pointer; color: var(--fw-text-secondary);
+  transition: background .12s, color .12s, border-color .12s;
+}
+.dash-icon-btn:hover { background: var(--fw-surface); color: var(--fw-text); border-color: var(--fw-border-strong); }
+
+/* ============================================================ chain-banner */
+.chain-banner {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 20px;
+  align-items: center;
+  padding: 16px 22px;
+  margin-top: 18px;
+  border-radius: var(--fw-radius-lg);
+  background: var(--fw-card);
+  border: 1px solid var(--fw-border);
+  position: relative;
+  overflow: hidden;
+}
+.chain-banner::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+  background: var(--fw-green);
+}
+.chain-banner.warn::before { background: var(--fw-amber); }
+.chain-banner.err::before  { background: var(--fw-red); }
+
+.chain-banner-shield {
+  width: 48px; height: 48px; border-radius: var(--fw-r-1);
+  display: grid; place-items: center;
+  background: var(--fw-green-soft); color: var(--fw-green);
+}
+.chain-banner.warn .chain-banner-shield { background: var(--fw-amber-soft); color: var(--fw-amber); }
+.chain-banner.err  .chain-banner-shield { background: var(--fw-red-soft);   color: var(--fw-red); }
+
+.chain-banner-title { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+.chain-banner-desc { font-size: 12.5px; color: var(--fw-text-secondary); margin-top: 2px; max-width: 60ch; }
+
+.chain-banner-stats { display: flex; gap: 22px; }
+.chain-banner-stat { text-align: right; }
+.chain-banner-stat-value { font-family: var(--fw-font-mono); font-size: 16px; font-weight: 500; letter-spacing: -0.02em; }
+.chain-banner-stat-label { font-size: 12px; color: var(--fw-muted); text-transform: none; letter-spacing: 0.08em; margin-top: 2px; }
+
+/* ============================================================ dash-tabs */
+/* Sticky just under the sticky header so navigation never scrolls away â€”
+   the tab bar is the dashboard's primary control surface. */
+.dash-tabs {
+  display: flex;
+  gap: 4px;
+  /* Centered horizontally: the shell is screen-centered, so margin:auto puts the
+     tab bar in the middle of the screen (per a layout decision, 2026-06-14) instead of hugging the
+     left edge of the content column. */
+  margin: 12px auto 0;
+  padding: 4px;
+  background: var(--fw-card);
+  border: 1px solid var(--fw-border);
+  border-radius: var(--fw-radius-md);
+  width: fit-content;
+  position: sticky; top: 50px; z-index: 25;
+}
+.dash-tab {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 14px;
+  font-size: 13px; font-weight: 500;
+  color: var(--fw-text-secondary);
+  background: transparent;
+  border: 0;
+  border-radius: var(--fw-radius-sm);
+  cursor: pointer;
+  transition: background .12s, color .12s;
+}
+.dash-tab:hover { color: var(--fw-text); background: var(--fw-surface); }
+.dash-tab.active { background: var(--fw-bg); color: var(--fw-text); }
+.dash-tab .count-pill {
+  font-size: 12px; font-weight: 600; min-width: 18px;
+  padding: 2px 6px; border-radius: 0;
+  background: var(--fw-surface-2); color: var(--fw-text-secondary);
+}
+.dash-tab.active .count-pill { background: var(--fw-accent); color: var(--fw-on-accent); }
+.dash-tab.has-issues .count-pill { background: var(--fw-amber-soft); color: var(--fw-amber); }
+.dash-tab.has-issues::before { content: '\26A0'; opacity: .9; color: var(--fw-amber); }
+
+/* The dead `activity-kpi-row` block (`.kpi-row`, `.kpi-tile` and its label /
+   value / delta / colour modifiers) was removed here on 2026-08-21. Nothing in
+   src/ has rendered those class names for some time; they were found while
+   grep-verifying the shipped bundle after the Overview hero landed, and they
+   were shipping to every user in the stylesheet. Dead CSS that looks
+   load-bearing is worse than no CSS. */
+
+/* ============================================================ activity layout */
+.activity-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 24px;
+  margin-top: 22px;
+}
+
+/* ============================================================ activity-feed */
+.feed-panel {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
+}
+
+.feed-controls { display: flex; flex-direction: column; gap: 12px; padding: 16px 18px; background: var(--fw-card); border: 1px solid var(--fw-border); border-radius: var(--fw-radius-lg); }
+.feed-controls-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 13px;
+  font-size: 12px; font-weight: 500;
+  border-radius: 0;
+  border: 1px solid var(--fw-border);
+  background: var(--fw-card);
+  color: var(--fw-text-secondary);
+  cursor: pointer;
+  transition: background .12s, color .12s, border-color .12s;
+  /* nowrap removed: a chip label is a filter axis value, and Romanian and
+     Portuguese run 1.2x to 3x the English label the chip was sized for
+     (measured on the shipped locale strings). A chip is free to grow to a
+     second line instead of running past its row. */
+}
+.chip:hover { background: var(--fw-surface); color: var(--fw-text); border-color: var(--fw-border-strong); }
+.chip.active { background: var(--fw-surface-2); color: var(--fw-text); border-color: var(--fw-border-strong); }
+.chip .chip-count { font-size: 12px; font-weight: 600; opacity: .75; }
+.chip .chip-x { opacity: .55; margin-left: 2px; }
+.chip .chip-x:hover { opacity: 1; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 14px;
+  font-size: 13px; font-weight: 500;
+  border-radius: var(--fw-r-1);
+  border: 1px solid var(--fw-border);
+  background: var(--fw-card);
+  color: var(--fw-text);
+  cursor: pointer;
+  font-family: var(--fw-font-sans);
+  transition: background .12s, border-color .12s;
+}
+.btn:hover { background: var(--fw-surface); border-color: var(--fw-border-strong); }
+.btn.primary { background: var(--fw-accent); color: var(--fw-on-accent); border-color: transparent; }
+.btn.primary:hover { background: color-mix(in oklch, var(--fw-accent) 88%, white); }
+.btn.danger { background: var(--fw-red); color: white; border-color: transparent; }
+.btn.ghost { background: transparent; border-color: transparent; color: var(--fw-text-secondary); }
+.btn.ghost:hover { background: var(--fw-surface); color: var(--fw-text); }
+.btn.sm { padding: 5px 10px; font-size: 12px; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn:disabled:hover { background: var(--fw-card); border-color: var(--fw-border); }
+.dash-input {
+  box-sizing: border-box;
+  background: var(--fw-surface);
+  border: 1px solid var(--fw-border);
+  border-radius: var(--fw-radius-md);
+  color: var(--fw-text);
+  font-family: var(--fw-font-sans); font-size: var(--fw-text-13);
+  padding: var(--fw-s-2) var(--fw-s-3);
+}
+.dash-input:focus { border-color: var(--fw-accent); outline: 0; box-shadow: 0 0 0 2px var(--fw-accent); }
+.dash-input::placeholder { color: var(--fw-muted); }
+
+/* Feed order — two-state segmented control on the platform-tabs row. */
+.feed-sort {
+  display: inline-flex; align-items: center;
+  border: 1px solid var(--fw-border);
+  border-radius: var(--fw-r-1);
+  padding: 2px;
+  background: var(--fw-surface);
+  flex: 0 0 auto;
+}
+.feed-sort-btn {
+  border: 0; background: transparent;
+  color: var(--fw-text-secondary);
+  font-family: var(--fw-font-sans); font-size: 12px; font-weight: 500;
+  padding: 5px 12px; border-radius: 0;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease, box-shadow .15s ease;
+}
+.feed-sort-btn:hover { color: var(--fw-text); }
+/* Active must be unmistakable in BOTH themes — card-on-surface alone was
+   near-invisible in light mode (live report, 2026-08-01). Accent text +
+   accent-tinted fill carries the state; the shadow is secondary. */
+.feed-sort-btn.active {
+  background: var(--fw-card);
+  color: var(--fw-accent);
+  font-weight: 600;
+  box-shadow: none;
+}
+
+/* ============================================================ activity filter rail
+   Redesign 2026-08-01 (mockup B — docs/redesign/mockups/2026-08-01/). Grouped,
+   collapsible axes on the left of the feed; every option carries its live
+   click-through count. Existing token vocabulary only: hairlines, teal active,
+   150ms transitions. */
+.feed-layout { display: flex; gap: 16px; align-items: flex-start; }
+.feed-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.filter-rail {
+  flex: 0 0 232px;
+  position: sticky; top: 16px;
+  background: var(--fw-card);
+  border: 1px solid var(--fw-border);
+  border-radius: var(--fw-radius-lg);
+  padding: 12px;
+  /* The rail itself still does not scroll, because a scroll container clips on
+     BOTH axes and the "?" popover lives in the head. What scrolls is the group
+     list below the head (.frail-groups), which is where the height comes from.
+     The note this replaces said "groups are collapsible, so the rail stays
+     short"; on a real record that is not true. Reported 2026-09-17 from an
+     install with 3,278 records: opening one group put the rail past the bottom
+     of the window, and a sticky element taller than the window pins at the top
+     with its bottom off screen for ever, so the last two groups could not be
+     reached at all. */
+  display: flex;
+  flex-direction: column;
+  /* border-box, or the 24px of padding and 2px of border sit OUTSIDE the
+     max-height and the rail is 26px taller than the cap it was given, which is
+     exactly the fault the shell had (M175). Measured: 894px against a cap of
+     868px, in a 900px window. */
+  box-sizing: border-box;
+  max-height: calc(100vh - 32px);
+}
+/* The scrolling part. min-height:0 is what lets a flex child shrink below its
+   content and actually scroll. */
+.frail-groups {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  margin: 0 -12px -12px;
+  padding: 0 12px 12px;
+}
+/* A thin scrollbar, so the rail does not lose 15px of its 232px to it. */
+.frail-groups::-webkit-scrollbar { width: 8px; }
+.frail-groups::-webkit-scrollbar-thumb {
+  background: var(--fw-border); border-radius: 0;
+}
+.frail-groups::-webkit-scrollbar-track { background: transparent; }
+.frail-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
+}
+.frail-head > span {
+  font-size: 12px; font-weight: 600; text-transform: none;
+  letter-spacing: .05em; color: var(--fw-muted);
+}
+.frail-search { margin-bottom: 10px; }
+.frail-search input {
+  width: 100%; box-sizing: border-box;
+  background: var(--fw-surface);
+  border: 1px solid var(--fw-border);
+  border-radius: var(--fw-radius-md);
+  color: var(--fw-text);
+  font-family: var(--fw-font-sans); font-size: 13px;
+  padding: 6px 10px;
+}
+.frail-search input:focus { border-color: var(--fw-accent); outline: 0; background: var(--fw-card); }
+.frail-search input::placeholder { color: var(--fw-muted); }
+.frail-grp { border-top: 1px solid var(--fw-border); }
+.frail-grp summary {
+  list-style: none; cursor: pointer;
+  padding: 10px 2px;
+  font-size: 13px; font-weight: 500;
+  color: var(--fw-text-secondary);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.frail-grp summary::-webkit-details-marker { display: none; }
+.frail-grp summary::after {
+  content: "▾"; font-size: 12px; color: var(--fw-muted);
+  transition: transform .15s ease;
+}
+.frail-grp:not([open]) summary::after { transform: rotate(-90deg); }
+.frail-grp summary:hover { color: var(--fw-text); }
+.frail-opt {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  width: 100%; box-sizing: border-box;
+  padding: 6px 8px; margin: 0 0 2px;
+  border: 0; border-radius: var(--fw-radius-sm);
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--fw-font-sans); font-size: 13px; text-align: left;
+  color: var(--fw-text-secondary);
+  transition: background .15s ease, color .15s ease;
+}
+.frail-opt:hover { background: var(--fw-surface); color: var(--fw-text); }
+.frail-opt.on { color: var(--fw-accent); font-weight: 500; background: var(--fw-teal-soft); }
+/* A filter option's label is the name of the thing you are about to filter by,
+   so it is read, not glanced at. Romanian lost 15px of one to the ellipsis in a
+   232px rail (measured 2026-09-17); it takes a second line instead, and the
+   row grows to fit rather than cutting the word. */
+.frail-opt { align-items: flex-start; }
+.frail-opt .frail-opt-label { min-width: 0; overflow-wrap: anywhere; }
+.frail-opt .frail-count { padding-top: 1px; }
+.frail-opt .frail-count { font-size: 12px; font-family: var(--fw-font-mono); color: var(--fw-muted); flex: none; }
+
+/* "?" guidance — amber circled hint with a slow ping; opt-in popover, never
+   modal, never open by default. Ping stops on hover/open. */
+.frail-hint { position: relative; }
+.frail-hint > button {
+  width: 20px; height: 20px;
+  /* 20px is under the 24x24 CSS px minimum a pointer target needs. */
+  min-height: 24px; min-width: 24px;
+  border-radius: 0;
+  border: 1px solid color-mix(in oklch, var(--fw-amber) 55%, transparent);
+  background: transparent;
+  color: var(--fw-amber);
+  font-size: 12px; line-height: 1; cursor: pointer;
+  transition: color .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+@keyframes fw-hint-ping {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklch, var(--fw-amber) 0%, transparent); }
+  50%      { box-shadow: 0 0 0 4px color-mix(in oklch, var(--fw-amber) 18%, transparent); }
+}
+.frail-hint > button:hover, .frail-hint.open > button {
+  border-color: var(--fw-amber);
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .frail-hint > button { animation: none; }
+}
+.frail-pop {
+  position: absolute; top: calc(100% + 6px); right: 0; z-index: 20;
+  width: 260px;
+  background: var(--fw-card);
+  border: 1px solid var(--fw-border-strong);
+  border-radius: var(--fw-radius-lg);
+  padding: 12px;
+  font-size: 12px; line-height: 1.5; color: var(--fw-text-secondary);
+}
+.frail-pop h4 {
+  margin: 0 0 4px;
+  font-size: 12px; font-weight: 600; text-transform: none;
+  letter-spacing: .05em; color: var(--fw-muted);
+}
+.frail-pop p { margin: 0 0 8px; }
+.frail-pop p:last-child { margin-bottom: 0; }
+
+/* Showing line — the single trust anchor above the feed. */
+.feed-showing {
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+  font-size: 12px; color: var(--fw-muted);
+}
+.feed-showing b { color: var(--fw-text); font-weight: 600; }
+/* Each note under the count is its own line: in the wider feed the count and
+   "The live record runs ..." sat on one row with no break between them. */
+.feed-showing-archived, .feed-showing-archived-older { flex-basis: 100%; }
+.feed-tok {
+  display: inline-flex; align-items: center; gap: 4px;
+  border: 1px solid color-mix(in oklch, var(--fw-accent) 40%, transparent);
+  background: var(--fw-teal-soft);
+  color: var(--fw-accent);
+  border-radius: 0;
+  padding: 2px 4px 2px 10px;
+  font-size: 12px;
+  /* A filter-token label is the value being filtered on, so cutting it with
+     an ellipsis hides the one thing the token exists to show. Wraps to a
+     second line instead of truncating; the clamp stops a very long value
+     from growing the showing-line without bound. */
+  max-width: 260px; overflow: hidden; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.feed-tok button {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: none; border: 0; color: inherit; cursor: pointer;
+  padding: 2px 6px; border-radius: 0;
+  /* Under the 24x24 CSS px minimum a pointer target needs. */
+  min-height: 24px; min-width: 24px;
+  transition: background .15s ease;
+}
+.feed-tok button:hover { background: color-mix(in oklch, var(--fw-accent) 20%, transparent); }
+/* Drill filters that arrived from OTHER tabs are purple, so the parent can
+   tell "I picked this here" from "another tab sent me here". */
+.feed-tok.drill {
+  border-color: color-mix(in oklch, var(--fw-purple) 45%, transparent);
+  background: var(--fw-purple-soft);
+  color: var(--fw-purple);
+}
+.feed-tok.drill button:hover { background: color-mix(in oklch, var(--fw-purple) 20%, transparent); }
+.feed-showing-clear {
+  background: none; border: 0; padding: 2px 4px;
+  font-family: var(--fw-font-sans); font-size: 12px;
+  color: var(--fw-muted); text-decoration: underline; cursor: pointer;
+  transition: color .15s ease;
+  /* Under the 24x24 CSS px minimum a pointer target needs. */
+  display: inline-flex; align-items: center;
+  min-height: 24px; min-width: 24px;
+}
+.feed-showing-clear:hover { color: var(--fw-text); }
+@media (max-width: 939px) {
+  .feed-layout { flex-direction: column; }
+  .filter-rail { position: static; flex: none; width: 100%; box-sizing: border-box; }
+}
+
+/* ============================================================ feed body */
+/* No inner scroll window — the feed grows to its natural height and the page
+   owns the single scrollbar, so the feed reads as one continuous column and
+   comments expand inline instead of inside a cropped box. */
+.feed-body { padding: 18px 0 28px; display: flex; flex-direction: column; gap: 18px; }
+.post-group-children[hidden], .fc-drawer[hidden] { display: none; }
+
+.feed-empty { padding: 60px 20px; text-align: center; color: var(--fw-muted); font-size: 13px; }
+.feed-empty svg { opacity: .4; margin-bottom: 8px; }
+
+/* ============================================================ post-group-card */
+.post-group {
+  border: 1px solid var(--fw-border);
+  border-radius: var(--fw-radius-lg);
+  background: var(--fw-card);
+  overflow: hidden;
+  transition: border-color .15s;
+}
+.post-group:hover { border-color: var(--fw-border-strong); }
+.post-group .fc-platform-shell { border: 0; background: transparent; border-radius: 0; }
+.aggregate-pill {
+  font-size: 12px; font-weight: 600;
+  padding: 2px 7px; border-radius: 0;
+  letter-spacing: 0.02em;
+}
+.aggregate-pill.flagged { background: var(--fw-amber-soft); color: var(--fw-amber); }
+.aggregate-pill.blocked { background: var(--fw-purple-soft); color: var(--fw-purple); }
+
+/* Single centered "N comments" control — the comment button that expands the
+   thread inline (replaces the old trust-bar chips + the separate toggle). */
+.pg-comments-btn {
+  display: flex; align-items: center; gap: 8px;
+  margin: 12px auto 4px;
+  padding: 7px 18px;
+  background: var(--fw-surface);
+  border: 1px solid var(--fw-border-strong);
+  border-radius: var(--fw-radius-pill);
+  color: var(--fw-text-secondary);
+  font-size: 13px; font-family: inherit;
+  cursor: pointer;
+  transition: background .12s, border-color .12s, color .12s;
+}
+.pg-comments-btn:hover { background: var(--fw-surface-2); color: var(--fw-text); border-color: var(--fw-accent); }
+.pg-comments-btn strong { color: var(--fw-text); font-family: var(--fw-font-mono); }
+
+.pg-inventory {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: -7px 0 12px 0;
+  color: var(--fw-muted);
+  font-size: 12px;
+  font-family: var(--fw-font-mono);
+}
+
+.post-group-children {
+  display: flex; flex-direction: column;
+  background: color-mix(in oklch, var(--fw-bg) 60%, var(--fw-card));
+  padding: 4px 0 4px 0;
+  border-top: 1px solid var(--fw-border);
+}
+
+/* ============================================================ feed-card */
+.feed-card {
+  display: flex; flex-direction: column; gap: 14px;
+  padding: 18px 20px;
+  background: var(--fw-card);
+  border: 1px solid transparent;
+  border-radius: var(--fw-radius-md);
+  position: relative;
+}
+.feed-card.standalone { border-color: var(--fw-border); }
+.feed-card.standalone:hover { border-color: var(--fw-border-strong); }
+.feed-card.in-group { background: transparent; padding: 14px 16px; border-radius: var(--fw-radius-sm); }
+.feed-card.in-group:hover { background: var(--fw-card); }
+
+/* Platform accent â€” subtle 3px left strip on standalone cards */
+.feed-card.standalone::before {
+  content: ''; position: absolute; left: 0; top: 12px; bottom: 12px; width: 3px;
+  background: var(--platform-color, var(--fw-border-strong));
+  border-radius: 0;
+  opacity: .5;
+}
+
+.fc-avatar {
+  width: 40px; height: 40px; border-radius: 0;
+  display: grid; place-items: center;
+  color: white; font-weight: 600; font-size: 14px;
+  flex-shrink: 0;
+  background: var(--avatar-color, var(--fw-muted));
+}
+.fc-avatar.sm { width: 32px; height: 32px; font-size: 12px; }
+
+.fc-handle { font-weight: 600; color: var(--fw-text); }
+.fc-handle.recidivist { background: linear-gradient(90deg, var(--fw-amber-soft), transparent); padding: 1px 6px 1px 4px; border-radius: 0; }
+/* Was `content: '\B7 frequent'`. "frequent" is English baked into CSS, so it
+   shipped unchanged to the Spanish, Portuguese and Romanian builds. The word
+   has to become markup the handle's own component renders (a translated
+   string), not CSS content; this rule now supplies only the middot, which
+   is punctuation, not a word, and keeps the spacing/color/size a future
+   label span next to it would still want. */
+.fc-handle.recidivist::after { content: '\B7'; margin-left: 6px; font-size: 12px; font-weight: 600; color: var(--fw-amber); text-transform: none; letter-spacing: 0.06em; }
+
+.fc-time { color: var(--fw-muted); font-size: 12px; font-family: var(--fw-font-mono); }
+.fc-serial { color: var(--fw-muted); font-size: 12px; font-family: var(--fw-font-mono); border: 1px solid var(--fw-border); border-radius: 0; padding: 0 4px; cursor: help; }
+.fc-kind-tag { color: var(--fw-muted); font-size: 12px; font-family: var(--fw-font-mono); text-transform: none; letter-spacing: 0.03em; border: 1px solid var(--fw-border); border-radius: 0; padding: 0 5px; }
+.fc-platform-name { color: var(--platform-color, var(--fw-muted)); font-size: 12px; font-weight: 500; }
+.fc-action-label {
+  font-size: 12px; font-weight: 600;
+  text-transform: none; letter-spacing: 0.08em;
+  padding: 2px 7px; border-radius: 0;
+}
+.fc-action-label.flagged   { background: var(--fw-amber-soft); color: var(--fw-amber); }
+.fc-action-label.blocked   { background: var(--fw-purple-soft); color: var(--fw-purple); }
+.fc-action-label.hidden    { background: var(--fw-red-soft);   color: var(--fw-red); }
+.fc-action-label.manual    { background: var(--fw-teal-soft);  color: var(--fw-teal); }
+.fc-action-label.rewritten { background: var(--fw-amber-soft); color: var(--fw-amber); }
+.fc-action-label.passed    { background: var(--fw-green-soft); color: var(--fw-green); }
+
+.fc-body { display: flex; flex-direction: column; gap: 10px; }
+.feed-card.in-group .fc-body { margin-left: 44px; }
+
+.fc-original {
+  font-size: 14px;
+  color: var(--fw-text);
+  padding: 4px 0 4px 12px;
+  border-left: 3px solid var(--fw-border);
+  font-feature-settings: 'ss01';
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+.fc-original-label { font-size: 12px; font-weight: 600; text-transform: none; letter-spacing: 0.08em; color: var(--fw-muted); margin-bottom: 4px; display: block; }
+.fc-text-capture { display: block; margin-top: 6px; font-size: 12px; line-height: 1.4; color: var(--fw-muted); }
+/* "Judged by its comments": the verdict on this card was read from the room
+   under a text-less item (ForensicRecord.verdictOrigin === 'room'). Same
+   quiet weight as the text-capture note above it; it states a fact about the
+   record, it is not a warning. */
+.fc-room-verdict { display: block; margin-top: 6px; font-size: 12px; line-height: 1.4; color: var(--fw-muted); }
+.fc-video-no-audio { color: var(--fw-muted); font-style: italic; }
+
+.beta-pill {
+  font-size: 12px; font-weight: 700;
+  letter-spacing: 0.12em;
+  padding: 2px 6px;
+  border-radius: 0;
+  background: var(--fw-surface-2);
+  color: var(--fw-muted);
+  text-transform: none;
+}
+
+/* Action buttons */
+.fc-action-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 12px;
+  font-size: 12px; font-weight: 500;
+  background: transparent; border: 1px solid transparent;
+  color: var(--fw-text-secondary);
+  border-radius: 0;
+  cursor: pointer;
+  font-family: var(--fw-font-sans);
+}
+.fc-action-btn:hover { background: var(--fw-surface); color: var(--fw-text); }
+.fc-action-btn:disabled { opacity: .4; cursor: not-allowed; }
+.fc-action-btn.muted { color: var(--fw-muted); }
+.fc-action-btn:disabled:hover { background: transparent; border-color: transparent; color: var(--fw-muted); }
+.fc-action-btn.confirm.on  { background: var(--fw-green-soft); color: var(--fw-green); }
+.fc-action-btn.dispute.on  { background: var(--fw-red-soft); color: var(--fw-red); }
+.fc-action-btn.forensic.on { background: var(--fw-surface); color: var(--fw-text); }
+.fc-action-btn.recheck.busy { color: var(--fw-text-secondary); cursor: default; }
+.fc-action-btn.recheck.done { background: var(--fw-green-soft); color: var(--fw-green); }
+.fc-action-btn.recheck.failed { background: var(--fw-red-soft); color: var(--fw-red); }
+.fc-action-btn.comments.on { background: var(--fw-teal-soft); color: var(--fw-teal); }
+.fc-spin { animation: fw-spin 0.8s linear infinite; transform-origin: center; }
+@keyframes fw-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .fc-spin { animation: none; } }
+
+/* Forensic-detail drawer — the load-bearing evidence surface. A video record's
+   eyes/ears readings + chain provenance live here, OFF the card face, opened by
+   the "forensic detail" action. Mirrors the approved calm-feed mockup. */
+/* Drawer wrapper: always mounted, height-collapsed when closed. Avoids
+   mount/unmount scroll jumps — the card's height stays stable until the user
+   explicitly opens the drawer, then it transitions smoothly. */
+.fc-drawer-wrap { overflow: hidden; max-height: 0; opacity: 0; transition: max-height 0.2s ease-out, opacity 0.15s ease-out; }
+.fc-drawer-wrap.open { max-height: 2000px; opacity: 1; transition: max-height 0.3s ease-in, opacity 0.15s ease-in; }
+.fc-drawer { margin-top: 9px; }
+.feed-card.in-group .fc-drawer { margin-left: 44px; }
+.fc-drawer-body {
+  border: 1px solid var(--fw-border); border-radius: var(--fw-radius-md);
+  background: var(--fw-bg); padding: 11px 13px;
+}
+.fc-layers { display: flex; flex-direction: column; gap: 7px; margin-bottom: 12px; }
+.fc-layer { border-left: 3px solid var(--fw-border-strong); padding-left: 11px; }
+.fc-layer-label {
+  display: flex; gap: 6px; align-items: center;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: none;
+  color: var(--fw-muted); margin-bottom: 3px;
+}
+.fc-layer-text { font-size: 13px; line-height: 1.5; color: var(--fw-text); white-space: pre-wrap; word-wrap: break-word; }
+.fc-layer-text.muted { color: var(--fw-muted); font-style: italic; }
+.fc-layer.ai-layer {
+  border-left: none; border: 1px dashed var(--fw-border); border-radius: 0;
+  padding: 7px 10px; background: var(--fw-surface);
+}
+.fc-layer.ai-layer .fc-layer-text { font-family: var(--fw-font-mono); font-size: 12px; color: var(--fw-text-secondary); }
+.fc-drawer-facts { display: flex; flex-direction: column; }
+.fc-drawer-row { display: flex; gap: 10px; padding: 4px 0; font-size: 12px; align-items: baseline; }
+.fc-drawer-k { width: 130px; flex-shrink: 0; color: var(--fw-muted); }
+.fc-drawer-v { color: var(--fw-text-secondary); font-family: var(--fw-font-mono); font-size: 12px; word-break: break-all; }
+/* Room block — the comment-section combined reading folded into the drawer. */
+.fc-room { margin-bottom: 12px; }
+.fc-room > .fc-layer.ai-layer { margin-bottom: 8px; }
+.fc-room .fc-drawer-v { font-family: var(--fw-font-sans); }
+
+/* synthetic-post-header */
+.synthetic-post-header {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 14px 18px;
+  background: var(--fw-card);
+  border-radius: var(--fw-radius-lg) var(--fw-radius-lg) 0 0;
+  position: relative;
+  border-left: 3px solid var(--platform-color, var(--fw-border-strong));
+}
+.sph-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sph-caption { font-size: 13px; color: var(--fw-text-secondary); margin-top: 2px; }
+.sph-footer { font-style: italic; font-size: 12px; color: var(--fw-muted); }
+
+/* ============================================================ activity-side panels (right column) */
+.side-rail { display: flex; flex-direction: column; gap: 16px; }
+.side-panel {
+  background: var(--fw-card);
+  border: 1px solid var(--fw-border);
+  border-radius: var(--fw-radius-lg);
+  padding: 14px 16px;
+}
+/* Wraps with a gap: at 1280 px the 12 px hint ran into "Safety categories" with nothing between them. */
+.side-panel-header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 12px; margin-bottom: 10px; }
+.side-panel-header h3 { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: -0.005em; }
+/* A hint is a quiet caption beside the card title, not a second shouted label. */
+.side-panel-header .hint { font-size: 12px; color: var(--fw-muted); }
+
+.bar-row {
+  /* 34% truncated the Romanian "Reels și shorts" by 5px (measured 2026-09-17).
+     The label is the name of the row; the bar beside it keeps whatever is left. */
+  display: grid; grid-template-columns: minmax(90px, 40%) 1fr 40px;
+  align-items: center; gap: 10px;
+  padding: 6px 8px;
+  margin: 0 -8px;
+  border-radius: var(--fw-r-1);
+  cursor: pointer;
+  font-size: 12px;
+  transition: background .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+/* Elevation on hover — the row lifts off the card the way the export cards do
+   (translateY + soft shadow), signalling "pressable" on rows that previously
+   only changed a label color. Shadow appears on interaction only; cards at
+   rest stay shadowless per the design system. */
+.bar-row:hover {
+  background: var(--fw-surface);
+  transform: translateY(-1px);
+  box-shadow: none;
+}
+.bar-row:hover .bar-label { color: var(--fw-text); }
+.bar-row:hover .bar-count { color: var(--fw-text); }
+.bar-row:hover .bar-fill { filter: brightness(1.12); }
+.bar-row.active { background: var(--fw-surface-2); }
+.bar-label {
+  color: var(--fw-text-secondary); font-family: var(--fw-font-mono); font-size: 12px;
+  overflow: hidden; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+/* A contrast check measured this track's fill against its card at 1.09:1
+   (light) and 1.08:1 (dark): an empty or lightly-filled track has no edge a
+   sighted user can see at all. The border reuses --fw-border-strong now
+   that it clears 3:1 against card, giving the track a visible boundary in
+   both themes without changing its resting fill color. */
+.bar-track { height: 8px; border-radius: 0; background: var(--fw-surface); border: 1px solid var(--fw-border-strong); overflow: hidden; }
+.bar-fill { height: 100%; background: var(--bar-color, var(--fw-accent)); border-radius: 0; transition: width .25s, filter .15s ease; }
+.bar-count { font-family: var(--fw-font-mono); font-size: 12px; color: var(--fw-text-secondary); text-align: right; }
+
+/* Recidivist authors panel (NEW â€” solves Part 7 #4) */
+/* Flaggers — calm-feed mockup design: hover rows (no divider lines), 30px avatar,
+   a red pill count, technique chips. A row holds four lines (handle, chips, two rows of
+   facts), so the avatar and the count sit at its top. */
+.recidivist-row {
+  display: flex; align-items: flex-start; gap: 9px;
+  width: 100%; padding: 8px 6px;
+  border: 0; border-radius: var(--fw-r-1); background: transparent;
+  cursor: pointer; text-align: left; font-family: inherit;
+  transition: background .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+.recidivist-row:hover {
+  background: var(--fw-surface);
+  transform: translateY(-1px);
+  box-shadow: none;
+}
+.recidivist-row + .recidivist-row { margin-top: 2px; }
+.recidivist-row .fc-avatar { width: 30px; height: 30px; font-size: 12px; color: #fff; flex-shrink: 0; }
+.recidivist-meta { flex: 1; min-width: 0; }
+.recidivist-handle {
+  font-size: 13px; font-weight: 600; color: var(--fw-text);
+  overflow: hidden; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.recidivist-platforms {
+  font-size: 12px; color: var(--fw-text-secondary); margin-top: 3px;
+  overflow: hidden; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+/* Technique chips in the colour the Technique frequency card gives the same technique. The colour is on the
+   dot, the tint and the edge; the words stay in the theme's text colour, which is what keeps them readable on
+   both themes whatever the technique's colour is. */
+.recid-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.recid-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12px; line-height: 1.3; color: var(--fw-text);
+  padding: 1px 8px 1px 6px; border-radius: 0;
+  background: color-mix(in oklch, var(--chip-color) 16%, var(--fw-card));
+  border: 1px solid color-mix(in oklch, var(--chip-color) 55%, var(--fw-border));
+}
+.recid-chip::before {
+  content: ''; width: 7px; height: 7px; border-radius: 0; flex-shrink: 0;
+  background: var(--chip-color);
+}
+/* The ledger's facts in two short rows: recorded and passed first and larger, then how the account arrived. */
+.recid-facts {
+  display: flex; flex-wrap: wrap; gap: 2px 10px; margin-top: 4px;
+  font-size: 12px; line-height: 1.45; color: var(--fw-text-secondary);
+}
+.recid-facts.primary { font-size: 13px; margin-top: 6px; }
+.recid-fact b { font-weight: 700; color: var(--fw-text); font-variant-numeric: tabular-nums; }
+.recid-fact.zero, .recid-fact.zero b { color: var(--fw-muted); font-weight: 500; }
+.recidivist-count {
+  flex-shrink: 0; font-size: 12px; font-weight: 700;
+  color: var(--fw-red); background: var(--fw-red-soft);
+  padding: 1px 8px; border-radius: 0;
+}
+
+/* ============================================================ statistics tab (NEW â€” Part 7 #6) */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 18px;
+  margin-top: 22px;
+}
+.stats-card {
+  grid-column: span 6;
+  background: var(--fw-card);
+  border: 1px solid var(--fw-border);
+  border-radius: var(--fw-radius-lg);
+  padding: 20px;
+}
+.stats-card.full { grid-column: span 12; }
+
+/* Below the width where the rails stop being columns, a half-width card is
+   410px of chart with a hole beside it wherever a full-width card follows one.
+   The Overview grid and the Feed behaviour grid have collapsed to a single
+   column there since they were written; the Statistics grid was left behind, so
+   it alone was ragged at a 900px window, with five gaps down the page and the
+   charts squeezed into half the room they were drawn for (measured
+   2026-09-17). */
+@media (max-width: 980px) {
+  .stats-grid > .stats-card { grid-column: span 12; }
+}
+.stats-card.third { grid-column: span 4; }
+.stats-card h3 { margin: 0 0 4px; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+.stats-card .stats-sub { font-size: 12px; color: var(--fw-muted); margin-bottom: 18px; }
+.stat-label  { font-size: 12px; text-transform: none; letter-spacing: 0.08em; color: var(--fw-muted); margin-top: 6px; }
+
+/* ============================================================ usage-time-panel */
+.usage-frames { display: flex; gap: 6px; margin: 14px 0 18px; }
+
+.usage-summary {
+  display: flex; gap: 24px; flex-wrap: wrap;
+  margin-bottom: 18px; padding: 12px 14px;
+  background: var(--fw-surface);
+  border-radius: var(--fw-radius-md);
+}
+.usage-summary-item { display: flex; flex-direction: column; }
+.usage-summary-item .v { font-family: var(--fw-font-mono); font-size: 18px; font-weight: 500; }
+.usage-summary-item .l { font-size: 12px; text-transform: none; letter-spacing: 0.08em; color: var(--fw-muted); margin-top: 2px; }
+
+.usage-chart {
+  display: flex; align-items: flex-end; gap: 3px;
+  height: 180px;
+  padding: 8px 0;
+  border-top: 1px solid var(--fw-border);
+  border-bottom: 1px solid var(--fw-border);
+}
+.usage-bar { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; min-height: 4px; cursor: pointer; position: relative; }
+.usage-bar .seg { width: 100%; min-height: 2px; }
+.usage-bar .seg.pass { background: var(--fw-teal); }
+.usage-bar .seg.flagged { background: var(--fw-amber); }
+.usage-bar .seg.blocked { background: var(--fw-purple); }
+.usage-bar.idle { background: var(--fw-surface-2); }
+/* An empty slot that carries a signed gap marker: the chain's own statement
+   that the recorder stopped in that window. It must read differently from
+   an hour nobody browsed, and it must do so WITHOUT a tooltip, because a
+   title attribute reaches a mouse on a desktop and nothing else (M247,
+   closed 2026-09-18). A raised amber tick on the baseline: visible on a
+   phone, present in a screenshot, and it survives printing. */
+.usage-bar.idle.gap { background: var(--fw-surface-2); }
+.usage-bar-gap-mark { position: absolute; left: 0; right: 0; bottom: 0; height: 3px;
+  background: var(--fw-amber); border-radius: 0; }
+.usage-legend .sw.usage-legend-gap { background: var(--fw-amber); height: 3px; border-radius: 0; }
+.usage-legend { display: flex; gap: 18px; margin-top: 12px; font-size: 12px; color: var(--fw-text-secondary); }
+.usage-legend .sw { width: 10px; height: 10px; border-radius: 0; display: inline-block; margin-right: 6px; vertical-align: middle; }
+
+/* ============================================================ forensic-entries-table */
+.entries-table-wrap { background: var(--fw-card); border: 1px solid var(--fw-border); border-radius: var(--fw-radius-lg); overflow: hidden; }
+/* The same inner room as the cards above it on the Record tab, so the headings do not sit on the border. */
+.entries-table-wrap { padding: var(--fw-s-7); }
+
+/* ============================================================ chain-anchor-grid */
+.anchor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 22px; }
+.anchor-row { display: grid; grid-template-columns: 36px 1fr 1fr; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--fw-border); }
+.anchor-row:last-child { border-bottom: 0; }
+.anchor-row .anchor-num { font-family: var(--fw-font-mono); font-size: 14px; color: var(--fw-muted); }
+.anchor-row .anchor-data .anchor-label { font-size: 12px; text-transform: none; letter-spacing: 0.08em; color: var(--fw-muted); margin-bottom: 4px; }
+.anchor-row .anchor-data .anchor-value { font-family: var(--fw-font-mono); font-size: 13px; }
+.anchor-row .anchor-explainer { font-size: 12px; color: var(--fw-text-secondary); line-height: 1.6; }
+
+/* ============================================================ export tab */
+.export-intro { margin-top: 22px; max-width: 70ch; color: var(--fw-text-secondary); font-size: 13.5px; line-height: 1.6; }
+.export-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 20px; }
+.export-grid.two { grid-template-columns: repeat(2, 1fr); margin-top: 10px; }
+.export-choose { margin-top: 16px; }
+.export-choose-q { font-size: 14px; font-weight: 600; }
+.export-partial-note { margin: 12px 0 0; font-size: 12px; line-height: 1.55; color: var(--fw-muted); }
+details.export-other { margin-top: 14px; }
+/* Under the 24x24 CSS px minimum a pointer target needs (a bare summary
+   line's box is only as tall as its 12.5px text). min-height/min-width
+   alone, not a display change: <summary> renders its own disclosure
+   triangle only in its default list-item box. */
+details.export-other > summary { cursor: pointer; font-size: 12.5px; color: var(--fw-text-secondary); min-height: 24px; min-width: 24px; }
+details.export-other > summary:hover { color: var(--fw-text); }
+details.export-other .export-grid { margin-top: 12px; }
+.export-card { background: var(--fw-card); border: 1px solid var(--fw-border); border-radius: var(--fw-radius-lg); padding: 18px; display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: border-color .15s, transform .15s; color: var(--fw-text); font-family: inherit; text-align: left; }
+.export-card:hover { border-color: var(--fw-border-strong); transform: translateY(-1px); }
+.export-card:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.export-card:disabled:hover { border-color: var(--fw-border); transform: none; }
+.export-card.primary { border-color: var(--fw-teal); background: linear-gradient(180deg, var(--fw-teal-soft) 0%, var(--fw-card) 70%); }
+.export-card-head { display: flex; align-items: center; justify-content: space-between; }
+.export-card-icon { width: 36px; height: 36px; border-radius: var(--fw-r-1); background: var(--fw-surface); display: grid; place-items: center; color: var(--fw-text); }
+.export-card.primary .export-card-icon { background: var(--fw-teal); color: var(--fw-on-accent); }
+.export-card h4 { margin: 0; font-size: 14px; font-weight: 600; }
+.export-card p { margin: 0; font-size: 12.5px; color: var(--fw-text-secondary); line-height: 1.5; }
+.export-card-pill {
+  font-size: 12px; font-weight: 700; letter-spacing: 0.08em;
+  padding: 2px 7px; border-radius: 0;
+  text-transform: none;
+}
+.export-card-pill.recommended { background: var(--fw-teal); color: var(--fw-on-accent); }
+.export-card-pill.locked { background: var(--fw-surface-2); color: var(--fw-muted); }
+
+/* ============================================================ modals */
+.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: grid; place-items: center; z-index: 100; }
+.modal {
+  width: min(440px, 92vw);
+  background: var(--fw-card);
+  border: 1px solid var(--fw-border);
+  border-radius: var(--fw-radius-lg);
+  padding: 22px;
+  box-shadow: var(--fw-shadow-3);
+}
+.modal h2 { margin: 0 0 8px; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+.modal p { margin: 0 0 12px; font-size: 13px; color: var(--fw-text-secondary); line-height: 1.55; }
+.modal .pin-row { display: flex; gap: 8px; justify-content: center; margin: 18px 0; }
+.modal .pin-input {
+  width: 52px; height: 60px; text-align: center;
+  font-size: 22px; font-family: var(--fw-font-mono);
+  background: var(--fw-surface); border: 1px solid var(--fw-border); border-radius: var(--fw-r-1);
+  color: var(--fw-text);
+}
+.modal .pin-input:focus { outline: 0; border-color: var(--fw-accent); }
+/* Q3 (29 Sep 2026): the reset word field takes .key-input, which only the popup's sheet defines, so on the
+   dashboard it drew the browser's own white box with light text. Same look as the PIN boxes above. */
+.modal .key-input {
+  width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 13px; font-family: var(--fw-font-mono);
+  background: var(--fw-surface); color: var(--fw-text);
+  border: 1px solid var(--fw-border); border-radius: var(--fw-r-1);
+}
+.modal .key-input:focus { outline: 0; border-color: var(--fw-accent); }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+
+/* ============================================================ Recent activity polish (NEW) */
+
+/* Synthetic post header â€” restructured for visual hierarchy */
+.synthetic-post-header {
+  padding: 16px 22px 14px;
+  background: var(--fw-card);
+  border-radius: var(--fw-radius-lg) var(--fw-radius-lg) 0 0;
+  position: relative;
+  border-left: 3px solid var(--platform-color, var(--fw-border-strong));
+}
+.sph-orphan-tag {
+  font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: none;
+  padding: 2px 6px; border-radius: 0;
+  background: var(--fw-surface-2); color: var(--fw-muted);
+}
+.sph-caption { font-size: 13px; color: var(--fw-text-secondary); margin-top: 5px; line-height: 1.45; }
+.aggregate-pill.stranger { background: var(--fw-red-soft); color: var(--fw-red); }
+.aggregate-pill.escalating { background: var(--fw-red-soft); color: var(--fw-red); }
+
+.muted { color: var(--fw-muted); }
+.text-secondary { color: var(--fw-text-secondary); }
+
+/* Disputed-card visual treatment â€” make scroll-glance reveal "you overrode this" */
+.feed-card.disputed-by-parent { background: color-mix(in oklch, var(--fw-red-soft) 25%, var(--fw-card)); }
+.feed-card.disputed-by-parent .fc-original { opacity: .55; }
+/* Was `content: 'you disputed this'`, baked English with no way to
+   translate it and, unlike :405's warning triangle, no symbol to fall back
+   to. The badge has to become real markup a component renders (a
+   translated string) for the disputed-card treatment to say anything in
+   Spanish, Portuguese or Romanian. `content: none` stops this rule from
+   generating a box at all; position/padding/background/color stay so
+   whatever element the component adds for the label can carry this class
+   and get the same treatment. */
+.feed-card.disputed-by-parent::after {
+  content: none;
+  position: absolute; top: 14px; right: 14px;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: none;
+  padding: 3px 8px; border-radius: 0;
+  background: var(--fw-red-soft); color: var(--fw-red);
+}
+
+/* Sticky right rail */
+.side-rail { position: sticky; top: 24px; align-self: flex-start; max-height: calc(100vh - 60px); overflow-y: auto; padding-right: 4px; }
+.side-rail::-webkit-scrollbar { width: 6px; }
+.side-rail::-webkit-scrollbar-thumb { background: var(--fw-surface-2); border-radius: 0; }
+
+/* ============================================================ Alignment polish */
+.dash-shell { padding: 0 32px 80px; }
+/* `.kpi-row` / `.kpi-tile` / `.kpi-tile-value` deleted 2026-08-21. They were
+   already dead before the Overview rewrite: nothing in src/ has rendered those
+   class names for some time (the Overview used `.ov-kpi*`, now itself gone in
+   favour of the hero). Found while grep-verifying the shipped bundle, removed
+   in the same pass rather than left to look load-bearing. */
+.activity-grid { gap: 28px; margin-top: 26px; }
+.feed-controls { padding: 16px 22px; gap: 12px; }
+.feed-body { padding: 18px 22px 22px; gap: 14px; }
+.side-panel { padding: 16px 18px; }
+.feed-card.standalone { padding: 18px 22px; }
+.feed-card.in-group { padding: 14px 16px; }
+.fc-body { gap: 12px; }
+.feed-card.in-group .fc-body { margin-left: 48px; }
+
+.dash-tabs { margin-top: 22px; padding: 5px; gap: 4px; }
+.dash-tab { padding: 9px 16px; font-size: 13px; }
+
+.btn.sm { padding: 5px 10px; font-size: 12px; }
+
+/* ============================================================================
+   SOCIAL-FEED REDESIGN — new classes for the recorded-feed dashboard.
+   Token-driven (light + dark via tokens.css). Existing classes above are
+   untouched; everything here is additive.
+
+   This comment had no closing marker until 2026-09-18, and the parser
+   therefore ate the three rules immediately below it, including the
+   inline-flex base that .pg-records-chip relies on for its gap. The header
+   chip read "RECORDS14". A comment that swallows code fails nothing and
+   compiles clean, which is why it survived from the redesign to here.
+   ============================================================================ */
+.pg-trust-chip {
+  display: inline-flex; align-items: baseline; gap: 6px; white-space: nowrap;
+  background: var(--fw-card);
+  border: 1px solid var(--fw-border-strong);
+  border-radius: var(--fw-radius-pill);
+  padding: 4px 12px;
+  font-family: inherit;
+  color: var(--fw-text-secondary);
+}
+.pg-trust-chip-count { font-family: var(--fw-font-mono); font-size: 13px; font-weight: 700; color: var(--fw-text); }
+.pg-trust-chip-label { font-size: 12px; color: var(--fw-text-secondary); }
+/* Header records-count chip — relabelled "RECORDS" + count, lightly accent-tinted
+   so the running total reads as the dashboard's headline number without shouting
+   (reported 2026-06-16). Rides the .pg-trust-chip base; label sits before the count. */
+.pg-records-chip {
+  border-color: color-mix(in oklch, var(--fw-accent) 40%, var(--fw-border-strong));
+  background: color-mix(in oklch, var(--fw-accent) 9%, var(--fw-card));
+  padding: 3px 12px; gap: 7px;
+}
+.pg-records-chip .pg-trust-chip-label {
+  font-size: 12px; font-weight: 700; letter-spacing: 0.09em;
+  text-transform: none; color: var(--fw-muted);
+}
+.pg-records-chip .pg-trust-chip-count { font-size: 14px; font-weight: 800; }
+
+/* ---------------------------------------------------------------- AI-summary dashed block
+   The "machine" surface. No avatar, ever — square dashed glyph, mono type,
+   so it can never read as something a person wrote. */
+.fc-ai-block {
+  display: flex; gap: 12px;
+  background: var(--fw-ai-bg);
+  border: 1.5px dashed var(--fw-ai-border);
+  border-radius: var(--fw-radius-md);
+  padding: 12px 14px;
+}
+.fc-ai-glyph {
+  width: 26px; height: 26px; flex-shrink: 0;
+  display: grid; place-items: center;
+  background: var(--fw-card);
+  border: 1.5px dashed var(--fw-ai-border);
+  border-radius: var(--fw-radius-md);
+  color: var(--fw-muted);
+}
+.fc-ai-main { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1; }
+.fc-ai-head { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; }
+.fc-ai-label {
+  font-family: var(--fw-font-mono); font-size: 12px; font-weight: 700;
+  letter-spacing: 0.09em; text-transform: none; color: var(--fw-muted);
+}
+.fc-ai-tags { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.fc-ai-tag {
+  font-family: var(--fw-font-mono); font-size: 12px; font-weight: 600;
+  padding: 1px 7px; border-radius: var(--fw-radius-sm);
+  background: var(--fw-kind-tag-bg); color: var(--fw-kind-tag-text);
+}
+.fc-ai-tag.neg { background: var(--fw-red-soft); color: var(--fw-red); }
+.fc-ai-sample { font-family: var(--fw-font-mono); font-size: 12px; color: var(--fw-muted); }
+
+/* ---------------------------------------------------------------- reveal-toggle buttons
+   "see what the child saw" / "show verbatim record" / AI-reading toggle.
+   Quiet ghost buttons under a record. */
+.fc-reveal-row { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.fc-reveal-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: transparent; border: 0; padding: 0;
+  font-family: inherit; font-size: 12px; color: var(--fw-text-secondary);
+  cursor: pointer;
+  /* Under the 24x24 CSS px minimum a pointer target needs. */
+  min-height: 24px; min-width: 24px;
+}
+.fc-reveal-btn:hover { color: var(--fw-accent); }
+.fc-reveal-btn.on { color: var(--fw-accent); font-weight: 600; }
+.fc-reveal-caret { opacity: .6; font-size: 12px; }
+.fc-reveal-panel {
+  margin-top: 8px;
+  background: var(--fw-surface);
+  border: 1px solid var(--fw-border);
+  border-radius: var(--fw-radius-md);
+  padding: 9px 12px;
+}
+.fc-reveal-panel-label {
+  font-size: 12px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: none; color: var(--fw-muted); margin-bottom: 4px; display: block;
+}
+
+/* ---------------------------------------------------------------- "shown to the child as" rewrite block */
+.fc-shown-block {
+  background: var(--fw-surface);
+  border: 1px solid var(--fw-border);
+  border-radius: var(--fw-radius-md);
+  padding: 9px 12px;
+  display: flex; flex-direction: column; gap: 5px;
+}
+.fc-shown-head { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.fc-shown-label {
+  font-size: 12px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: none; color: var(--fw-muted);
+}
+.fc-shown-text { font-size: 13px; line-height: 1.5; color: var(--fw-text); }
+
+/* ---------------------------------------------------------------- harm-floor chip
+   On hidden records: machine-readable justification ("hidden — too harmful
+   to rewrite"). */
+.fc-harm-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.fc-harm-chip {
+  font-family: var(--fw-font-mono); font-size: 12px; font-weight: 600;
+  padding: 1px 7px; border-radius: var(--fw-radius-sm);
+  background: var(--fw-red-soft); color: var(--fw-red);
+}
+.fc-harm-note { font-size: 12px; color: var(--fw-text-secondary); }
+
+/* ---------------------------------------------------------------- reply elbow + depth indents
+   Comments hang from a thread rail;
+
+/* ---------------------------------------------------------------- platform-mode shells
+   The structural shell changes per platform; record anatomy + trust bar stay
+   constant. Identity is the metadata dot + domain only — no trade dress. */
+.fc-platform-shell {
+  background: var(--fw-record-card);
+  border: 1px solid var(--fw-border);
+  border-radius: var(--fw-radius-lg);
+  overflow: hidden;
+}
+/* Mode hooks — each mode tweaks layout via these shell modifiers. */
+.fc-platform-tiktok    { --platform-color: var(--fw-platform-tiktok); }
+.fc-platform-youtube   { --platform-color: var(--fw-platform-youtube); }
+.fc-platform-facebook  { --platform-color: var(--fw-platform-facebook); }
+.fc-platform-x         { --platform-color: var(--fw-platform-twitter); }
+.fc-platform-instagram { --platform-color: var(--fw-platform-instagram); }
+/* X / text-thread mode is compact; TikTok / IG narrow + vertical-video first. */
+.fc-platform-x .fc-original { font-size: 13.5px; }
+.fc-platform-tiktok, .fc-platform-instagram { max-width: 520px; margin-left: auto; margin-right: auto; }
+
+/* (Removed 2026-06-28) The on-card video/media placeholder tile (.fc-video-tile +
+   .fc-play / .fc-video-tag / .fc-video-foot / .fc-video-caption / .fc-video-placeholder)
+   was deleted: FW stores no frames, so the empty "video" frame only wasted ~480px of
+   height and drove the Activity-feed scroll jump (known-issues M34). Media records are
+   marked by the "media record" kind badge; evidence lives in the forensic-detail drawer. */
+
+/* ---------------------------------------------------------------- per-platform metric rows
+   Per-platform engagement counters (display-only, never buttons) stacked above
+   the "Update Metrics" growth readout. */
+.fc-metric-obscured { font-style: italic; color: var(--fw-muted); }
+/* Growth delta line — "↑ +1.3K likes · +400 views since 2026-06-10". */
+.fc-metric-growth {
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  font-family: var(--fw-font-mono); font-size: 12px; color: var(--fw-green);
+}
+.fc-metric-growth-arrow { font-weight: 700; }
+.fc-metric-growth-since { color: var(--fw-muted); }
+
+/* ---------------------------------------------------------------- forensics ledger columns
+   8-column evidence ledger (serial / time / gap / platform / kind / record /
+   sev / verdict) with session + gap + platform rows. */
+.fx-ledger {
+  background: var(--fw-card);
+  border: 1px solid var(--fw-border);
+  border-radius: var(--fw-radius-lg);
+  overflow: hidden;
+}
+.fx-ledger-head,
+.fx-ledger-row {
+  display: grid;
+  grid-template-columns: 58px 72px 56px 104px 80px minmax(0, 1fr) 56px 130px;
+  gap: 10px; align-items: center;
+  padding: 8px 16px;
+}
+.fx-ledger-head {
+  background: var(--fw-surface);
+  border-bottom: 1px solid var(--fw-border);
+  font-size: 12px; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: none; color: var(--fw-muted);
+}
+.fx-ledger-body { max-height: 560px; overflow-y: auto; }
+.fx-ledger-body::-webkit-scrollbar { width: 8px; }
+.fx-ledger-body::-webkit-scrollbar-thumb { background: var(--fw-surface-2); border-radius: 0; }
+.fx-ledger-row {
+  border-bottom: 1px solid var(--fw-border);
+  font-size: 12px; cursor: pointer;
+}
+.fx-ledger-row:last-child { border-bottom: 0; }
+.fx-ledger-row:hover { background: var(--fw-surface); }
+.fx-ledger-row.ai-row { background: color-mix(in oklch, var(--fw-surface) 50%, var(--fw-card)); }
+.fx-ledger-serial { font-family: var(--fw-font-mono); font-size: 12px; color: var(--fw-text-secondary); }
+.fx-ledger-time { font-family: var(--fw-font-mono); font-size: 12px; color: var(--fw-muted); }
+.fx-ledger-gap { font-family: var(--fw-font-mono); font-size: 12px; color: var(--fw-muted); text-align: right; }
+.fx-ledger-platform { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--fw-text-secondary); }
+.fx-ledger-platform .dot { width: 6px; height: 6px; border-radius: 0; background: var(--platform-color, var(--fw-muted)); }
+.fx-ledger-kind {
+  font-family: var(--fw-font-mono); font-size: 12px; font-weight: 700;
+  letter-spacing: 0.07em; color: var(--fw-kind-tag-text);
+}
+.fx-ledger-kind.ai {
+  border: 1px dashed var(--fw-ai-border); border-radius: var(--fw-radius-xs);
+  padding: 1px 5px; width: fit-content;
+}
+.fx-ledger-record {
+  min-width: 0; color: var(--fw-text);
+  overflow: hidden; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.fx-ledger-record strong { color: var(--fw-text); }
+.fx-ledger-record.muted, .fx-ledger-record.muted strong { color: var(--fw-muted); }
+.fx-ledger-sev { display: flex; align-items: center; gap: 5px; font-family: var(--fw-font-mono); font-size: 12px; color: var(--fw-text-secondary); }
+.fx-ledger-sev .dot { width: 7px; height: 7px; border-radius: 0; }
+.fx-ledger-verdict {
+  font-size: 12px; font-weight: 700; letter-spacing: 0.08em;
+  padding: 2px 7px; border-radius: var(--fw-radius-xs); width: fit-content;
+}
+.fx-ledger-verdict.flagged   { background: var(--fw-amber-soft); color: var(--fw-amber); }
+.fx-ledger-verdict.passed    { background: var(--fw-green-soft); color: var(--fw-green); }
+.fx-ledger-verdict.rewritten { background: var(--fw-amber-soft); color: var(--fw-amber); }
+.fx-ledger-verdict.hidden    { background: var(--fw-red-soft); color: var(--fw-red); }
+.fx-ledger-verdict.blocked   { background: var(--fw-purple-soft); color: var(--fw-purple); }
+.fx-ledger-verdict.skipped,
+.fx-ledger-verdict.cancelled { background: var(--fw-surface-2); color: var(--fw-muted); }
+/* Under the 24x24 CSS px minimum a pointer target needs; inline-flex so
+   min-height/min-width take effect (a plain inline box ignores them). */
+.fx-ledger-expand { font-size: 12px; color: var(--fw-accent); cursor: pointer; display: inline-flex; align-items: center; min-height: 24px; min-width: 24px; }
+/* Session header / platform-switch / quiet-gap rows inside the ledger. */
+.fx-ledger-session {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 16px; background: var(--fw-trust-bar-bg);
+  border-bottom: 1px solid var(--fw-border);
+}
+.fx-ledger-session-label {
+  font-family: var(--fw-font-mono); font-size: 12px; font-weight: 700;
+  color: var(--fw-text-secondary);
+}
+.fx-ledger-session-rule { flex: 1; border-top: 1px solid var(--fw-session-rule); }
+.fx-ledger-switch {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 16px; border-bottom: 1px solid var(--fw-border);
+}
+.fx-ledger-switch-pill {
+  font-family: var(--fw-font-mono); font-size: 12px; color: var(--fw-kind-tag-text);
+  background: var(--fw-gap-pill-bg); border-radius: var(--fw-radius-pill);
+  padding: 2px 10px; white-space: nowrap;
+}
+.fx-ledger-gap-rule {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 16px; background: var(--fw-trust-bar-bg);
+  border-bottom: 1px solid var(--fw-border);
+}
+.fx-ledger-gap-rule .rule { flex: 1; border-top: 1px dashed var(--fw-border-strong); }
+.fx-ledger-gap-rule .label { font-family: var(--fw-font-mono); font-size: 12px; color: var(--fw-muted); }
+.fx-ledger-foot {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px; background: var(--fw-trust-bar-bg);
+  font-size: 12px; color: var(--fw-muted);
+}
+
+/* ---------------------------------------------------------------- Feed log (the first tab, 10 Oct 2026)
+   Five columns a person reads at a glance: when, platform, what Feedprint did, severity, why. */
+.fl-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 4px 0 10px; }
+.fl-title { margin: 0; font-size: 18px; font-weight: 650; }
+.fl-sub { font-size: 13px; color: var(--fw-text-secondary); }
+.fl-chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 8px; }
+.fl-chips .chip b { font-weight: 650; margin-left: 4px; font-variant-numeric: tabular-nums; }
+.fl-note { font-size: 12px; color: var(--fw-muted); margin: 0 0 8px; }
+.fl-row {
+  display: grid;
+  grid-template-columns: 64px 112px 120px 64px minmax(0, 1fr);
+  gap: 12px; align-items: center;
+  padding: 9px 16px; border-bottom: 1px solid var(--fw-border);
+  font-size: 13px; cursor: pointer;
+}
+.fl-row:hover { background: var(--fw-surface); }
+.fl-row-head {
+  cursor: default; background: var(--fw-surface);
+  font-size: 12px; font-weight: 700; color: var(--fw-muted);
+}
+.fl-row-head:hover { background: var(--fw-surface); }
+.fl-why { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fw-text-secondary); }
+.fl-day {
+  padding: 10px 16px 6px; font-size: 12px; font-weight: 650; color: var(--fw-text-secondary);
+  background: var(--fw-card); border-bottom: 1px solid var(--fw-border);
+}
+.fl-open { padding: 12px 16px; background: var(--fw-card); border-bottom: 1px solid var(--fw-border); font-size: 13px; line-height: 1.6; }
+.fl-open-meta { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; color: var(--fw-muted); font-size: 12px; }
+.fl-open-block { margin-bottom: 8px; }
+.fl-open-label { color: var(--fw-muted); font-size: 12px; margin-bottom: 2px; }
+.fl-text { white-space: pre-wrap; }
+.fl-muted { font-style: italic; color: var(--fw-muted); font-size: 12px; }
+.fl-link { color: var(--fw-teal); font-size: 12px; }
+.fl-open-actions { margin-top: 10px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+@media (max-width: 640px) {
+  .fl-row { grid-template-columns: 52px 1fr auto; }
+  .fl-row > :nth-child(4), .fl-row > :nth-child(5) { display: none; }
+}
+
+/* Withhold one record (register item 20 part 1): a quiet control in the
+   expanded ledger row, never a primary action. */
+.fx-withhold {
+  font: inherit; font-size: 12px; padding: 4px 10px; border-radius: 0;
+  border: 1px solid var(--fw-border); background: transparent; color: var(--fw-muted); cursor: pointer;
+  /* Under the 24x24 CSS px minimum a pointer target needs. */
+  min-height: 24px; min-width: 24px;
+}
+.fx-withhold:hover { color: var(--fw-text); border-color: var(--fw-text); }
+
+/* ---------------------------------------------------------------- first-run welcome */
+.feed-welcome {
+  margin: 40px auto;
+  max-width: 56ch;
+  padding: 40px;
+  text-align: center;
+  color: var(--fw-text-secondary);
+}
+.feed-welcome h3 { margin: 8px 0 12px; font-size: 22px; font-weight: 600; color: var(--fw-text); letter-spacing: -0.02em; }
+.feed-welcome p { font-size: 13.5px; line-height: 1.6; margin: 0 auto 10px; max-width: 50ch; }
+
+/* The activity layout editor's styles stood here until 2026-09-20. The editor
+   itself left the product earlier and nothing in src/ sets `.editing` or draws
+   its bar. What this block taught, that a comment with no closing marker eats
+   the rules under it, is held by tests/repo/no-stylesheet-comment-eats-a-rule. */
+
+/* ================================================================ ACTIVITY LAYOUT — contained + responsive
+   Port of the approved "calm feed" mockup (docs/redesign/mockups/2026-06-13/
+   A-calm-feed.html). Replaces the old space-between fixed-column block that pushed
+   the analytics rail past the right window edge and clipped it ("stuck in the wall").
+
+   One centered, contained shell. The columns sit INSIDE it with even gutters, so
+   nothing is ever pinned to the window walls — at every width the rail stays fully
+   on screen. The radar map appears only when the window is wide enough to hold it
+   and steps aside (with the shell narrowing) otherwise.
+
+   Kept LAST in this file, and scoped to .dash-shell[data-tab="activity"], so these
+   rules win by both specificity AND source order over the earlier base / wide /
+   editor blocks. (CSS gives media queries no priority — only specificity + order.)
+
+   The per-column layout editor (the "Edit layout" button + the saved
+   --map-w / --feed-w / --rail-w variables) was unwired from this grid; its
+   component files stay on disk for a future, design-aware home. */
+
+/* default — calm-feed two columns: feed + ~314px analytics rail, centered + capped.
+   border-box so the max-width caps the FULL footprint incl. the 32px side padding
+   (the app is otherwise content-box — the original cause of the rail overrunning
+   the window edge). */
+.dash-shell[data-tab="activity"] { max-width: 1064px; box-sizing: border-box; }
+.dash-shell[data-tab="activity"] .activity-grid {
+  grid-template-columns: minmax(0, 1fr) 314px;
+  gap: 22px;
+}
+
+/* WIDE: three columns across the window. The filter rail at the left, the feed in the middle taking
+   the free width, and the side cards as ONE column at the right edge. Split into two narrow columns
+   that start mid-page, the cards crowd the feed and their rows are too narrow to read. The band is
+   capped at 2000px so an ultrawide screen does not stretch the feed without end; below that the
+   gutters are the shell's own 32px.
+   Gated at 1840px (a ~1900px viewport at 100% zoom); below that the contained layout above applies,
+   which is already rail, feed and one side column. */
+@media (min-width: 1840px) {
+  /* Symmetric gutters; overflow-x:clip on .dash-root absorbs the scrollbar
+     slop in the 100vw term. */
+  .dash-shell[data-tab="activity"] {
+    max-width: none; margin: 0;
+    padding-left: max(32px, calc((100vw - 2000px) / 2));
+    padding-right: max(32px, calc((100vw - 2000px) / 2));
+    box-sizing: border-box;
+  }
+  /* THE CHROME DOES NOT MOVE. Two rules lived here and both are deleted:
+     a full-bleed `.dash-header-inner` and a 960px left-aligned static
+     `.dash-tabs`, each scoped to the activity tab. Together with the three
+     narrower-viewport rules further down, they meant the logo, the health
+     pill and the whole tab bar sat in DIFFERENT PLACES depending on which
+     tab was open, and jumped as you clicked between them. An outside
+     reviewer watching the dashboard for the first time named it as the
+     first thing he noticed (2026-08-21).
+
+     They were not mistakes when written. Each aligned the chrome to the
+     content beneath it on one tab, at a moment when only that tab was being
+     looked at. That is how per-view polish becomes a cross-view defect:
+     nobody was ever looking at the TRANSITION.
+
+     Standing rule, guarded by tests/unit/ui/dashboard/dashboard-chrome-stability.source.test.ts:
+     no rule may scope `.dash-header-inner` or `.dash-tabs` to a `data-tab`
+     value. The header and the tab bar are invariant; only the content below
+     them changes shape per tab. */
+  /* The feed takes what the side column leaves; the side column keeps the sticky, self-scrolling
+     behaviour it has at every width from 940px up, so the cards stay beside the feed as it scrolls. */
+  .dash-shell[data-tab="activity"] .activity-grid {
+    grid-template-columns: minmax(0, 1fr) 400px;
+    gap: 32px;
+    align-items: start;
+  }
+}
+
+/* narrow — one calm column; the rail moves below the feed instead of
+   disappearing (matches the calm-feed mockup <940). `display: none` used to
+   sit here: the rail's rows (recidivist authors, theme mix, per-platform
+   bars) are click-to-filter, the same way a bar in `.fwc-row` or a chip in
+   `.feed-tok` is, so removing the rail removed a way to filter the feed
+   rather than relocating it. Unsticking it and dropping its height cap is
+   the same treatment `.filter-rail` already gets at this width below, and
+   what the >=1840px wide layout does when the rail stops being a fixed-
+   height column: static position, full width, natural height, everything
+   still reachable by scrolling the page. */
+@media (max-width: 939px) {
+  .dash-shell[data-tab="activity"] { max-width: 720px; }
+  .dash-shell[data-tab="activity"] .activity-grid { grid-template-columns: minmax(0, 1fr); }
+  .dash-shell[data-tab="activity"] .side-rail {
+    position: static;
+    max-height: none;
+    overflow: visible;
+    width: 100%;
+    /* The 4px was room for the rail's own scrollbar while it was a sticky
+       scrolling column. Three lines above, it stops being one. The app is
+       otherwise content-box, so `width: 100%` plus 4px of padding is 4px wider
+       than the column holding it, and the grid was clipped by exactly 4px at
+       900px in all four languages. Measured on 2026-09-18, in English first,
+       which is the point: it had been read as a Romanian string-length problem
+       because Romanian at 900 was the only narrow non-English row the matrix
+       had. It is not about language at all. */
+    padding-right: 0;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   ACTIVITY FEED — calm chronicle on a timeline spine (redesign 2026-06-16)
+   "C + A": airy reading cards hung off a continuous chain rail with quiet
+   severity node-circles. Comments collapse/expand inline and the rail grows
+   with them. Token-driven; scoped under .fc-timeline so nothing leaks.
+   ════════════════════════════════════════════════════════════════════════ */
+.fc-timeline { display: flex; flex-direction: column; }
+.fc-virtual-spacer { flex: 0 0 auto; overflow-anchor: none; }
+.dash-shell[data-tab="activity"] .feed-body { padding-left: 0; padding-right: 0; }
+
+/* Zero-lag at scale (docs/spec/subsystems/dashboard-perf.md). The feed renders
+   only a bounded window of rows (useVirtualScroll in Dashboard.tsx: top/bottom
+   spacer <div>s + a windowed slice) so the DOM stays O(viewport) — ~6–13 mounted
+   rows regardless of chain length. That windowing is the lever the 10k prototype
+   measured (301k→1.8k nodes, 1.5s→35ms mount, 11ms worst frame).
+
+   Two things were REMOVED from the timeline rows (known-issues M34 / record #412):
+   (1) `content-visibility: auto; contain-intrinsic-size` — a redundant SECOND
+   render-skipper on already-windowed rows that flipped each card between its
+   intrinsic-size placeholder and its real height at the viewport edge (pop/jump +
+   ResizeObserver churn); and (2) the empty on-card video placeholder tile (~480px
+   of height variance per media card).
+
+   SCROLL ANCHORING IS NATIVE. The rows now use the default `overflow-anchor: auto`
+   so the browser holds the visible row fixed when the windowed rows mount/unmount
+   and the spacers resize ABOVE the viewport. ONLY `.fc-virtual-spacer` keeps
+   `overflow-anchor: none`, so a zero-content spacer is never chosen as the anchor.
+   The previous hand-rolled JS `window.scrollTo()` compensator was removed — it
+   raced the scroll handler and yanked the feed up a row mid-scroll. The 1px
+   sentinel at the window's bottom edge triggers the next page. */
+
+/* session + quiet-gap markers (the temporal spine rhythm) */
+.fc-tl-session { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 22px 0 20px; }
+.fc-tl-session::before, .fc-tl-session::after { content: ''; height: 1px; width: 64px; background: linear-gradient(to right, transparent, var(--fw-border-strong)); }
+.fc-tl-session::after { background: linear-gradient(to left, transparent, var(--fw-border-strong)); }
+.fc-tl-session .lbl { display: inline-flex; align-items: center; gap: 9px; font-size: 12px; font-weight: 600; letter-spacing: 0.2em; text-transform: none; color: var(--fw-text-secondary); }
+.fc-tl-session .lbl::before { content: ''; width: 6px; height: 6px; border-radius: 0; background: var(--fw-teal); }
+.fc-tl-session .lbl { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; color: var(--fw-text); }
+.fc-tl-session .sub { font-family: var(--fw-font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: none; color: var(--fw-muted); }
+
+/* one record = one row: [54px rail gutter] [card] */
+.fc-tl-row { display: grid; grid-template-columns: 26px minmax(0, 1fr); margin-left: -26px; }
+.fc-tl-gutter { position: relative; }
+/* the continuous rail — every gutter draws it, so stacked rows form one line */
+.fc-tl-gutter::before { content: ''; position: absolute; left: 9px; top: 0; bottom: 0; width: 2px; background: var(--fw-session-rule); }
+/* The VERY FIRST record on the spine has no rail above its node — the line begins
+   at the first node, not above it (reported 2026-06-16: the top line on the
+   green circle should be removed). Covers a standalone/flat first row and the first row inside the
+   first post-group (a single first card is a bare row; a grouped first card is the
+   post row inside .post-group). */
+.fc-timeline > .fc-tl-row:first-child .fc-tl-gutter::before,
+.fc-timeline > .post-group:first-child .fc-tl-row:first-child .fc-tl-gutter::before { top: 27px; }
+
+/* record node-circles (quiet — ring + faint halo). Color = the record's
+   TECHNIQUE color (--fw-node-color, set inline by TimelineRow from
+   record-dot.ts) so the dot matches the technique chip + frequency chart.
+   The lo/mi/hi/pass classes remain as tooltip hooks only — the locked marker
+   severity ramp no longer colors this dashboard dot. */
+.fc-tl-node { position: absolute; left: 1px; top: 18px; width: 18px; height: 18px; border-radius: 0; background: var(--fw-bg); border: 2px solid var(--fw-node-color, var(--fw-border-strong)); box-shadow: 0 0 0 4px color-mix(in oklch, var(--fw-node-color, var(--fw-border-strong)) 13%, transparent); z-index: 2; }
+/* comment nodes are smaller and branch off the rail with a short spur (the "tree") */
+.fc-tl-row.sub .fc-tl-node { left: 4px; top: 20px; width: 12px; height: 12px; }
+.fc-tl-row.sub .fc-tl-gutter::after { content: ''; position: absolute; left: 10px; top: 25px; width: 27px; height: 2px; background: var(--fw-session-rule); }
+
+/* quiet-gap row — dashed rail segment through a calm period */
+.fc-tl-row.gap .fc-tl-gutter::before { background: transparent; width: 0; left: 25px; border-left: 2px dashed var(--fw-border-strong); }
+.fc-tl-gaplabel { font-family: var(--fw-font-mono); font-size: 12px; letter-spacing: 0.05em; text-transform: none; color: var(--fw-muted); padding: 12px 0; }
+
+/* Internal rhythm is margin-driven, not flex gap, on every timeline record card. */
+.fc-timeline .feed-card.fc-tl-card { gap: 0; }
+
+/* Carded record — each top-level post is ONE contained card (border + soft
+   shadow + 3px platform accent), so a post and its action row read as a single
+   unit instead of one undifferentiated "blob" (approved 2026-06-22,
+   docs/redesign/mockups/2026-06-22/feed-card-separation.html). The timeline rail
+   + node stay in the gutter, OUTSIDE the card; comments (.sub) keep their own
+   lighter nested surface (rule below). Reuses the shipped --fw-record-card /
+   --fw-shadow-card tokens. */
+.fc-timeline .fc-tl-row:not(.sub) > .feed-card.fc-tl-card {
+  background: var(--fw-record-card, var(--fw-card));
+  border: 1px solid var(--fw-border);
+  border-radius: var(--fw-radius-lg);
+  box-shadow: var(--fw-shadow-card);
+  padding: 18px 22px;
+  margin-bottom: 16px;
+  transition: box-shadow .18s ease, border-color .18s ease;
+}
+.fc-timeline .fc-tl-row:not(.sub) > .feed-card.fc-tl-card:hover { border-color: var(--fw-border-strong); }
+.fc-timeline .fc-tl-row:not(.sub) > .feed-card.fc-tl-card::before {
+  display: block; content: ''; position: absolute; left: 0; top: 14px; bottom: 14px; width: 3px;
+  background: var(--platform-color, var(--fw-border-strong)); border-radius: 0; opacity: .5;
+}
+.fc-tl-row.sub .feed-card.fc-tl-card { background: var(--fw-card); border: 1px solid var(--fw-border); border-radius: var(--fw-radius-lg); padding: 12px 14px; margin-bottom: 12px; }
+.fc-timeline .post-group { background: transparent; border: 0; border-radius: 0; overflow: visible; }
+.fc-timeline .post-group-children { background: transparent; border: 0; padding: 0; display: block; }
+
+.fc-tl-head { display: flex; align-items: flex-start; gap: 12px; }
+.fc-timeline .fc-tl-head .fc-avatar { width: 40px; height: 40px; font-size: 15px; }
+.fc-tl-row.sub .fc-tl-head .fc-avatar { width: 28px; height: 28px; font-size: 12px; }
+.fc-tl-who { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.fc-tl-l1 { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 14px; }
+.fc-tl-l2 { display: flex; align-items: center; gap: 9px; font-size: 12px; color: var(--fw-muted); }
+.fc-tl-time { font-family: var(--fw-font-mono); font-size: 12px; color: var(--fw-muted); white-space: nowrap; padding-top: 4px; }
+
+/* quiet verdict — dot + label, no fill */
+.fc-timeline .fc-action-label { background: transparent; padding: 0; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; letter-spacing: 0.07em; text-transform: none; color: var(--fw-muted); }
+.fc-timeline .fc-action-label::before { content: ''; width: 6px; height: 6px; border-radius: 0; background: var(--fw-muted); }
+.fc-timeline .fc-action-label.hidden::before { background: var(--fw-red); }
+.fc-timeline .fc-action-label.rewritten::before { background: var(--fw-amber); }
+.fc-timeline .fc-action-label.passed::before { background: var(--fw-green); }
+.fc-timeline .fc-action-label.blocked::before { background: var(--fw-purple); }
+
+/* verbatim shown large, as a calm quote */
+.fc-timeline .fc-original.fc-tl-quote { border: 0; padding: 0; white-space: normal; margin-top: 15px; font-size: 18px; line-height: 1.5; color: var(--fw-text); font-weight: 450; letter-spacing: -0.01em; }
+.fc-tl-row.sub .fc-original.fc-tl-quote { font-size: 14px; margin-top: 10px; }
+
+/* soft footer — reach (mono, quiet) + right-aligned actions */
+.fc-tl-foot { display: flex; flex-direction: column; align-items: stretch; gap: 0; margin-top: 16px; }
+.fc-tl-row.sub .fc-tl-foot { flex-direction: row; align-items: center; gap: 14px; margin-top: 12px; }
+.fc-tl-foot .reach { font-family: var(--fw-font-mono); font-size: 13px; color: var(--fw-muted); display: flex; gap: 7px; flex-wrap: wrap; }
+.fc-tl-foot .reach b { color: var(--fw-text-secondary); font-weight: 500; }
+.fc-tl-foot .more { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 13px; padding-top: 13px; border-top: 1px solid var(--fw-session-rule); }
+.fc-tl-row.sub .fc-tl-foot .more { margin: 0 0 0 auto; padding: 0; border-top: 0; }
+.fc-timeline .fc-tl-foot .fc-action-btn { padding: 5px 9px; font-size: 12px; }
+.fc-timeline .fc-drawer { margin-top: 12px; margin-left: 0; }
+
+/* ── alignment + media + professional action bar (2026-06-16 fixes) ── */
+/* kill the platform-shell auto-centering / max-width so every card fills its
+   lane and left-aligns hard against the rail (was the big comment gap). */
+.fc-timeline .feed-card.fc-tl-card { max-width: none; margin: 0; }
+/* comment branch spur reaches the card edge */
+.fc-tl-row.sub .fc-tl-gutter::after { width: 24px; }
+
+/* professional action row — quiet pill buttons with real hover/active states */
+.fc-timeline .fc-tl-foot .fc-action-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 7px 13px; font-size: 12px; font-weight: 500;
+  color: var(--fw-text-secondary);
+  background: transparent; border: 1px solid transparent; border-radius: var(--fw-radius-pill);
+  transition: background .14s ease, border-color .14s ease, color .14s ease;
+}
+.fc-timeline .fc-tl-foot .fc-action-btn:hover {
+  background: var(--fw-surface); border-color: var(--fw-border-strong); color: var(--fw-text);
+}
+.fc-timeline .fc-tl-foot .fc-action-btn:disabled:hover {
+  background: transparent; border-color: transparent; color: var(--fw-muted);
+}
+/* comments = primary action: bordered chip that lights teal when open */
+.fc-timeline .fc-tl-foot .fc-action-btn.comments {
+  color: var(--fw-text); background: var(--fw-card); border-color: var(--fw-border);
+}
+.fc-timeline .fc-tl-foot .fc-action-btn.comments.muted {
+  color: var(--fw-muted); background: transparent; border-color: var(--fw-border);
+}
+.fc-timeline .fc-tl-foot .fc-action-btn.forensic.muted {
+  color: var(--fw-muted); background: transparent; border-color: var(--fw-border);
+}
+.fc-timeline .fc-tl-foot .fc-action-btn.comments:hover { border-color: var(--fw-teal); }
+.fc-timeline .fc-tl-foot .fc-action-btn.comments.on {
+  color: var(--fw-teal);
+  background: color-mix(in oklch, var(--fw-teal) 10%, var(--fw-card));
+  border-color: color-mix(in oklch, var(--fw-teal) 48%, var(--fw-border));
+}
+.fc-timeline .fc-tl-foot .fc-action-btn.forensic.on {
+  color: var(--fw-text); background: var(--fw-surface); border-color: var(--fw-border-strong);
+}
+.fc-timeline .fc-tl-foot .fc-action-btn.confirm.on {
+  color: var(--fw-green);
+  background: color-mix(in oklch, var(--fw-green) 12%, var(--fw-card));
+  border-color: color-mix(in oklch, var(--fw-green) 45%, var(--fw-border));
+}
+.fc-timeline .fc-tl-foot .fc-action-btn.dispute.on {
+  color: var(--fw-amber);
+  background: color-mix(in oklch, var(--fw-amber) 12%, var(--fw-card));
+  border-color: color-mix(in oklch, var(--fw-amber) 45%, var(--fw-border));
+}
+/* inline "shown to the child as" (text posts + comments — no forensic drawer there) */
+.fc-timeline .fc-tl-shown { margin-top: 13px; }
+.fc-tl-row.sub .fc-tl-shown { margin-top: 10px; }
+
+/* ── design depth + data-chain signature (2026-06-16) ── */
+/* the ground: one flat colour (house system, 9 Oct 2026; was a dot grid and three glows) */
+.dash-root { background: var(--fw-bg); }
+/* interactive spine — hover any record to trace its chain link in teal */
+.fc-tl-gutter::before { transition: background .16s ease; }
+.fc-tl-node { transition: box-shadow .16s ease, border-color .16s ease; }
+.fc-chainlink { transition: color .16s ease; }
+.fc-chainlink svg { transition: opacity .16s ease; }
+/* hover chain-glow removed per request */
+/* stacked right-column meta: time over serial over platform */
+.fc-tl-rmeta { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; text-align: right; }
+.fc-tl-rmeta .fc-tl-time { padding-top: 0; }
+.fc-tl-rmeta .fc-serial { font-family: var(--fw-font-mono); }
+.fc-tl-platform { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: var(--platform-color, var(--fw-muted)); }
+.fc-tl-platform .pdot { width: 6px; height: 6px; border-radius: 0; background: var(--platform-color, var(--fw-muted)); }
+/* The three activity-only tab-bar rules that used to sit here are deleted:
+   a left-align, a `width: calc(100% - 336px)`, and a `width: 100%`. They made
+   the tab bar change position AND width when you opened the Activity tab. The
+   base rule at the top of this file is the only one now: centred, sized to its
+   own contents, sticky, identical on every tab. See the note in the >=1840px
+   block above. */
+
+/* metrics — quiet icon + value engagement row */
+.fc-tl-foot .reach { gap: 15px; align-items: center; }
+.fc-tl-foot .reach .m { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.fc-tl-foot .reach .m svg { width: 15px; height: 15px; opacity: .5; flex-shrink: 0; }
+.fc-tl-foot .reach .m b { color: var(--fw-text-secondary); font-weight: 600; }
+
+/* technique chip — at-a-glance classification per record */
+.fc-tech-tag { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: var(--fw-radius-pill); color: var(--technique-color, var(--fw-muted)); background: color-mix(in oklch, var(--technique-color, var(--fw-muted)) 13%, transparent); }
+.fc-tech-tag i { width: 6px; height: 6px; border-radius: 0; background: var(--technique-color, var(--fw-muted)); }
+
+/* chain link — the spine reads as the hash chain */
+.fc-chainlink { display: inline-flex; align-items: center; gap: 5px; font-family: var(--fw-font-mono); font-size: 12px; color: var(--fw-muted); }
+.fc-chainlink svg { width: 11px; height: 11px; opacity: .55; }
+.fc-chainlink b { color: var(--fw-text-secondary); font-weight: 600; }
+.fc-tl-replyto { font-size: 12px; color: var(--fw-muted); }
+
+/* reply nesting (depth 2) — deeper indent, smaller node, longer branch spur */
+.fc-tl-row.sub.depth2 .feed-card.fc-tl-card { background: var(--fw-surface); padding: 12px 14px; margin-left: 18px; }
+.fc-tl-row.sub.depth2 .fc-tl-node { width: 9px; height: 9px; top: 19px; left: 5px; }
+.fc-tl-row.sub.depth2 .fc-tl-gutter::after { left: 10px; top: 24px; width: 34px; }
+.fc-tl-row.sub.depth2 .fc-tl-head .fc-avatar { width: 24px; height: 24px; font-size: 12px; }
+.fc-tl-row.sub.depth2 .fc-original.fc-tl-quote { font-size: 13px; }
+
+/* ── header redesign + smaller severity node (2026-06-16) ── */
+/* Three slots, with the record's status pill centred on the row. Two equal side tracks are what centre
+   the middle one; a plain 1fr keeps each side at least as wide as its content, so a long language
+   moves the pill off centre rather than laying one slot over another. */
+.dash-header-inner { max-width: 1320px; margin: 0 auto; padding: 11px 28px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 14px; }
+.dash-header-left { justify-self: start; display: flex; align-items: center; gap: 14px; min-width: 0; }
+.dash-header-centre { justify-self: center; display: flex; align-items: center; }
+.dash-wordmark { display: flex; align-items: center; gap: 12px; }
+.dash-wordmark-mark { width: 34px; height: 34px; flex-shrink: 0; }
+.dash-wordmark-text { font-size: 15.5px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.05; color: var(--fw-text); }
+.dash-wordmark-text small { display: block; font-size: 12px; font-weight: 600; letter-spacing: 0.16em; text-transform: none; color: var(--fw-muted); margin-top: 2px; }
+.dash-integrity-pill.ok { display: inline-flex; align-items: center; gap: 9px; white-space: nowrap; flex-shrink: 0; font-size: 12px; font-weight: 600; padding: 6px 14px 6px 10px; border-radius: var(--fw-radius-pill); border: 1px solid color-mix(in oklch, var(--fw-green) 38%, var(--fw-border)); background: color-mix(in oklch, var(--fw-green) 9%, var(--fw-card)); color: var(--fw-text); }
+.dash-integrity-pill .dash-ecg { width: 38px; height: 14px; }
+.dash-header-meta { justify-self: end; display: flex; align-items: center; gap: 11px; flex-wrap: nowrap; flex-shrink: 0; }
+
+/* The header refuses to wrap and refuses to shrink, which is right while it
+   fits and wrong the moment it does not. Measured 2026-09-17: in Romanian at a
+   900px window, "Registrul este sanatos / free / Inregistrari 120 / ultima
+   inregistrare 16:44:31 UTC" pushed the whole header 71px past the window on
+   every tab, and the page clips rather than scrolls, so those 71px were cut off
+   rather than reachable. English fitted, which is how it was never seen. Below
+   the width where the rails stop being columns, the header is allowed to take a
+   second line instead. */
+@media (max-width: 1000px) {
+  .dash-header-inner { display: flex; flex-wrap: wrap; row-gap: 6px; }
+  /* The wordmark and the record's actions share one slot, so the slot wraps too, or they could not
+     take a second line of their own and the row would run past the window again. */
+  .dash-header-left { flex-wrap: wrap; row-gap: 6px; }
+  .dash-header-meta { flex-wrap: wrap; flex-shrink: 1; row-gap: 6px; }
+  /* Eight tabs, and in Romanian "Comportamentul fluxului" alone is as wide as
+     three English ones: the strip ran 66px past a 900px window, where the page
+     clips rather than scrolls. It takes a second row instead. */
+  .dash-tabs { flex-wrap: wrap; justify-content: center; row-gap: 4px; }
+}
+.dash-tier-stack { display: inline-flex; align-items: center; gap: 11px; }
+.dash-tier-stack .dash-last-record { display: inline-flex; align-items: center; gap: 6px; font-family: var(--fw-font-mono); font-size: 12px; color: var(--fw-muted); opacity: 1; }
+.dash-tier-stack .dash-last-record svg { width: 12px; height: 12px; opacity: 0.65; }
+.pg-records-chip { border: 1px solid color-mix(in oklch, var(--fw-accent) 38%, var(--fw-border-strong)); background: color-mix(in oklch, var(--fw-accent) 10%, var(--fw-card)); padding: 4px 12px; gap: 8px; border-radius: var(--fw-radius-pill); }
+.pg-records-chip .pg-trust-chip-label { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: none; color: var(--fw-muted); }
+.pg-records-chip .pg-trust-chip-count { font-size: 14px; font-weight: 800; color: var(--fw-text); }
+.dash-tier-pill { text-transform: none; letter-spacing: 0.09em; font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 0; background: var(--fw-surface-2); color: var(--fw-text-secondary); border: 1px solid var(--fw-border); }
+.dash-record-actions { display: inline-flex; align-items: center; gap: 2px; padding: 3px; background: var(--fw-card); border: 1px solid var(--fw-border); border-radius: var(--fw-r-1); }
+.dash-record-btn { font-size: 12px; font-weight: 600; padding: 5px 11px; border-radius: 0; background: transparent; border: 0; color: var(--fw-text-secondary); cursor: pointer; font-family: inherit; transition: background .12s ease, color .12s ease; }
+.dash-record-btn:hover { background: var(--fw-surface); color: var(--fw-text); }
+.dash-record-btn.danger:hover { background: color-mix(in oklch, var(--fw-red) 15%, transparent); color: var(--fw-red); }
+/* 22px is under the 24x24 CSS px minimum; min- clamps the used size up
+   without touching the 22px this rule renders at otherwise. */
+.dash-record-help { width: 22px; height: 22px; min-height: 24px; min-width: 24px; font-size: 12px; font-weight: 700; border-radius: 0; background: transparent; border: 0; color: var(--fw-muted); cursor: help; display: inline-flex; align-items: center; justify-content: center; }
+.dash-record-help:hover { color: var(--fw-text); background: var(--fw-surface); }
+.dash-icon-btn { width: 32px; height: 32px; border-radius: var(--fw-r-1); border: 1px solid var(--fw-border); background: var(--fw-card); color: var(--fw-text-secondary); display: grid; place-items: center; cursor: pointer; transition: background .12s ease, color .12s ease, border-color .12s ease; }
+.dash-icon-btn:hover { background: var(--fw-surface); color: var(--fw-text); border-color: var(--fw-border-strong); }
+.fc-tl-node { width: 14px; height: 14px; left: 3px; top: 19px; }
+
+/* ─── Visual polish (2026-06-21) ─────────────────────────────────────────
+   The dashboard ran flat ("bland", "crude and sharp"). A thin rounded scrollbar
+   + a soft drop-shadow on the SOLID cards add depth. Deliberately scoped to the
+   solid container cards — the activity timeline is intentionally airy/borderless
+   (cards hang off the chain rail), so it is NOT shadowed. Verified on the
+   dashboard-perf prototype before porting. This sheet only loads in the
+   dashboard, so the scrollbar rules are safe global. */
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: color-mix(in oklch, var(--fw-muted) 30%, transparent);
+  border-radius: 0; border: 3px solid transparent; background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklch, var(--fw-muted) 50%, transparent); background-clip: padding-box;
+}
+html { scrollbar-width: thin; scrollbar-color: color-mix(in oklch, var(--fw-muted) 32%, transparent) transparent; }
+
+.stats-card,
+.side-panel,
+.feed-panel,
+.feed-controls,
+.entries-table-wrap {
+  box-shadow: var(--fw-shadow-card);
+}
+
+/* ─── Source labels (slice 2) — WHO posted it ──────────────────────────────
+   Card source chip on the meta line + "Who posted it" filter axis label +
+   "How groups behave" aggregate panel. Ported from the approved prototype
+   docs/redesign/mockups/source-labels.html (measurements transplanted 1:1). */
+
+.fc-source-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12px; font-weight: 600; letter-spacing: 0.03em;
+  border-radius: 0; padding: 1px 7px 1px 6px;
+  border: 1px solid transparent;
+}
+.fc-source-chip svg { width: 12px; height: 12px; }
+.fc-source-chip .fc-source-name { font-weight: 500; opacity: 0.85; }
+.fc-source-chip.person     { color: var(--fw-muted); border-color: var(--fw-border); }
+.fc-source-chip.group      { color: var(--fw-teal);   background: var(--fw-teal-soft); }
+.fc-source-chip.page       { color: var(--fw-purple); background: var(--fw-purple-soft); }
+.fc-source-chip.advertiser { color: var(--fw-amber);  background: var(--fw-amber-soft); }
+
+/* "How groups behave" panel — full-width table below the activity feed. */
+.grp-behave { border: 1px solid var(--fw-border); border-radius: var(--fw-radius-lg); background: var(--fw-card); overflow: hidden; margin-top: 14px; }
+.grp-behave-head { padding: 14px 16px 12px; border-bottom: 1px solid var(--fw-border); }
+.grp-behave-head h3 { margin: 0 0 3px; font-size: 14px; font-weight: 600; letter-spacing: -0.01em; }
+.grp-behave-head p { margin: 0; font-size: 12px; color: var(--fw-muted); line-height: 1.45; }
+.grp-row { display: grid; grid-template-columns: 1.6fr 0.7fr 0.7fr 0.8fr 1.3fr; gap: 12px; align-items: center; padding: 12px 16px; border-top: 1px solid var(--fw-border); font-size: 12px; }
+.grp-row.head { font-size: 12px; text-transform: none; letter-spacing: 0.05em; color: var(--fw-muted); padding-top: 10px; padding-bottom: 8px; font-family: var(--fw-font-mono); border-top: 0; }
+.grp-name { display: inline-flex; align-items: center; gap: 7px; font-weight: 600; color: var(--fw-text); }
+.grp-name svg { width: 13px; height: 13px; color: var(--fw-teal); flex-shrink: 0; }
+.grp-num { font-family: var(--fw-font-mono); }
+.grp-num b { font-size: 14px; }
+.grp-sev { font-family: var(--fw-font-mono); color: var(--fw-muted); }
+.grp-sev.hi { color: var(--fw-red); }
+.grp-sev.mi { color: var(--fw-amber); }
+.grp-sev.lo { color: var(--fw-green); }
+.grp-tech { display: inline-flex; align-items: center; gap: 6px; color: var(--fw-muted); font-size: 12px; }
+.grp-tech .tech-dot { width: 6px; height: 6px; border-radius: 0; background: var(--fw-amber); flex-shrink: 0; }
+
+/* ════════════════════════════════════════════════════════════════════
+   Overview tab (landing surface) — ported 1:1 from the browser-verified
+   mockup docs/redesign/mockups/2026-07-15/overview-home.html.
+   Fence: nothing here touches fc-timeline / FeedCard / virtual-scroll.
+   ════════════════════════════════════════════════════════════════════ */
+.ov-shell { max-width: 1180px; margin: 0 auto; padding: 22px 24px 60px; }
+.ov-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }
+.ov-card {
+  background: var(--fw-card); border: 1px solid var(--fw-border);
+  border-radius: var(--fw-r-1); padding: 16px 18px; min-width: 0;
+}
+.ov-grid .span-12 { grid-column: span 12; }
+.ov-grid .span-7 { grid-column: span 7; }
+.ov-grid .span-6 { grid-column: span 6; }
+.ov-grid .span-5 { grid-column: span 5; }
+@media (max-width: 980px) {
+  .ov-grid .span-7, .ov-grid .span-6, .ov-grid .span-5 { grid-column: span 12; }
+}
+.ov-eyebrow {
+  font-size: 12px; font-weight: 600; text-transform: none;
+  letter-spacing: 0.06em; color: var(--fw-muted); margin: 0 0 6px;
+}
+.ov-card-title { font-size: 14px; font-weight: 600; margin: 0 0 2px; }
+.ov-card-sub { font-size: 12px; color: var(--fw-muted); margin: 0 0 12px; }
+.ov-footnote { font-size: 12px; color: var(--fw-muted); margin-top: 10px; }
+.ov-link {
+  background: none; border: none; padding: 0; font: inherit; font-size: 12px;
+  color: var(--fw-teal); cursor: pointer;
+  /* Under the 24x24 CSS px minimum a pointer target needs. */
+  display: inline-flex; align-items: center;
+  min-height: 24px; min-width: 24px;
+}
+.ov-link:hover { text-decoration: underline; }
+
+/* brief */
+.ov-brief { display: flex; flex-direction: column; gap: 4px; padding: 20px 22px; }
+
+/* ── hero: the one figure the page leads with ──
+   Replaced `.ov-brief-line` (a 21px sentence carrying six numbers) and the
+   six-tile `.ov-kpi-row` beneath it, which between them stated the same three
+   quantities four times. Built to the dataviz form rules: a hero figure is
+   >=48px, in the SAME sans as everything else, exactly one per view, and it
+   uses proportional figures — `tabular-nums` gives every digit the width of a
+   zero, which makes a three-digit number look loose at display size.
+
+   The value wears the TEXT token, not a series colour. Identity is carried by
+   the amber trend beside it, which is the same rule the rest of this file
+   follows: colour lives on the mark, never on the number. */
+.ov-hero {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 20px; flex-wrap: wrap; margin: 2px 0 8px;
+}
+.ov-hero-figure { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.ov-hero-value {
+  font-size: 56px; font-weight: 700; letter-spacing: -0.03em; line-height: 1;
+  color: var(--fw-text); font-variant-numeric: proportional-nums;
+}
+.ov-hero-label { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; color: var(--fw-text-secondary); }
+.ov-hero-trend { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
+.ov-hero-trend .delta { font-size: 12px; color: var(--fw-muted); }
+.ov-hero-trend .delta.up { color: var(--fw-amber); }
+.ov-hero-trend .delta.down { color: var(--fw-teal); }
+/* a quiet day is the product working, so it gets a sentence, not a zero */
+.ov-hero-calm { align-items: baseline; }
+.ov-hero-calm-title { font-size: 27px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.25; color: var(--fw-text); }
+.ov-hero-sub { font-size: 15px; font-weight: 500; line-height: 1.5; color: var(--fw-text); }
+.ov-hero-context { font-size: 12.5px; line-height: 1.55; color: var(--fw-muted); margin-top: 5px; }
+@media (max-width: 620px) { .ov-hero-value { font-size: 48px; } }
+
+.ov-brief-meta { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px; }
+.ov-chip {
+  display: inline-flex; align-items: center; gap: 6px; font-size: 12px;
+  color: var(--fw-text-secondary); background: var(--fw-bg);
+  border: 1px solid var(--fw-border); border-radius: 0; padding: 3px 10px;
+  font-family: inherit;
+}
+button.ov-chip { cursor: pointer; }
+button.ov-chip:hover { border-color: var(--fw-teal); }
+.ov-chip .dot { width: 7px; height: 7px; border-radius: 0; }
+
+/* KPI row */
+/* The six-tile `.ov-kpi-row` that stood here is deleted. Five of its six tiles
+   carried numbers the sentence directly above them had already stated; the
+   sixth (videos checked) is the only figure the page states nowhere else and
+   now rides in the hero's context line. The sparkline the tiles introduced is
+   not lost — it moved onto the one number that leads. */
+
+/* feed balance */
+.ov-balance-headline { font-size: 24px; font-weight: 700; letter-spacing: -0.01em; margin: 2px 0 10px; }
+.ov-balance-bar { display: flex; height: 18px; border-radius: var(--fw-r-1); overflow: hidden; gap: 2px; background: var(--fw-bg); }
+.ov-balance-bar .seg { height: 100%; }
+.ov-balance-bar .seg:first-child { border-radius: var(--fw-r-1) 0 0 var(--fw-r-1); }
+.ov-balance-bar .seg:last-child { border-radius: 0 var(--fw-r-1) var(--fw-r-1) 0; }
+.ov-balance-legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 10px; }
+.ov-legend-item { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--fw-text-secondary); }
+.ov-legend-item .sw { width: 9px; height: 9px; border-radius: 0; }
+.ov-bal-split { font-size: 12px; color: var(--fw-text-secondary); margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--fw-border); }
+.ov-bal-days { display: flex; gap: 8px; align-items: flex-end; margin-top: 14px; height: 46px; }
+.ov-bal-day { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 3px; height: 100%; }
+.ov-bal-day .bar { width: 100%; border-radius: 0; background: var(--fw-teal); min-height: 2px; }
+.ov-bal-day .lbl { font-size: 12px; color: var(--fw-muted); text-align: center; }
+
+/* worth a look */
+.ov-att-row { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; border-top: 1px solid var(--fw-border); }
+.ov-att-row:first-of-type { border-top: none; }
+.ov-att-sev { width: 10px; height: 10px; border-radius: 0; margin-top: 4px; flex: none; }
+.ov-att-main { flex: 1; min-width: 0; }
+.ov-att-why { font-size: 12.5px; font-weight: 600; }
+.ov-att-meta { font-size: 12px; color: var(--fw-muted); margin-top: 1px; overflow-wrap: anywhere; }
+
+/* sessions strip */
+.ov-sess-axis { position: relative; height: 74px; margin: 14px 0 4px; }
+.ov-sess-track {
+  position: absolute; left: 0; right: 0; top: 18px; height: 30px;
+  border-radius: 0; background: var(--fw-bg); border: 1px solid var(--fw-border);
+}
+.ov-sess-block {
+  /* The backstop for the same fault: whatever a block carries, it stays inside
+     itself rather than drawing over the session next to it. */
+  overflow: hidden;
+  position: absolute; top: 18px; height: 30px; min-width: 7px;
+  background: color-mix(in srgb, var(--fw-teal) 13%, transparent);
+  border: 1px solid var(--fw-teal); border-radius: 0; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 3px;
+  overflow: hidden; padding: 0; font-family: inherit;
+}
+.ov-sess-block:hover { background: color-mix(in srgb, var(--fw-teal) 24%, transparent); }
+.ov-sess-block .cnt { font-size: 12px; font-weight: 600; color: var(--fw-text-secondary); }
+.ov-sess-flag { position: absolute; top: 52px; width: 2px; height: 7px; background: var(--fw-amber); border-radius: 0; }
+.ov-sess-hour { position: absolute; top: 0; font-size: 12px; color: var(--fw-muted); transform: translateX(-50%); }
+/* The two at the ends sit at 0% and 100%, so half of each hung outside the card:
+   12px past the right edge for 24:00, and the same to the left for 00:00, where
+   the card's own padding hid it. They are pinned inside instead. */
+.ov-sess-hour.at-start { transform: none; }
+.ov-sess-hour.at-end { transform: translateX(-100%); }
+.ov-sess-tickline { position: absolute; top: 14px; bottom: 12px; width: 1px; background: var(--fw-border); opacity: 0.6; }
+.ov-pf-dot { width: 7px; height: 7px; border-radius: 0; flex: none; }
+
+/* served-surface rows */
+.ov-srv-row {
+  display: grid; grid-template-columns: 110px 1fr 118px; gap: 10px; align-items: center;
+  padding: 6px 0; width: 100%; background: none; border: none; cursor: pointer;
+  font-family: inherit; text-align: left; color: inherit; border-radius: 0;
+}
+.ov-srv-row:hover { background: var(--fw-card-hover); }
+.ov-srv-label { font-size: 12px; color: var(--fw-text-secondary); }
+.ov-srv-track { height: 12px; border-radius: 0; background: var(--fw-bg); overflow: hidden; display: block; }
+.ov-srv-fill { height: 100%; background: var(--fw-teal); border-radius: 0; min-width: 2px; display: block; }
+.ov-srv-right { font-size: 12px; text-align: right; color: var(--fw-muted); font-variant-numeric: tabular-nums; }
+.ov-srv-right .fr { color: var(--fw-amber); }
+
+/* sources */
+.ov-src-row {
+  display: flex; align-items: center; gap: 10px; padding: 7px 0;
+  border-top: 1px solid var(--fw-border); width: 100%; background: none;
+  border-left: none; border-right: none; border-bottom: none; cursor: pointer;
+  font-family: inherit; text-align: left; color: inherit;
+}
+.ov-src-row:first-of-type { border-top: none; }
+.ov-src-row:hover .ov-src-name { color: var(--fw-teal); }
+.ov-src-avatar {
+  width: 26px; height: 26px; border-radius: 0; flex: none;
+  background: var(--fw-bg); border: 1px solid var(--fw-border-light);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: var(--fw-text-secondary);
+}
+.ov-src-name {
+  flex: 1; min-width: 0; font-size: 12.5px; font-weight: 600;
+  overflow: hidden; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.ov-src-type {
+  font-size: 12px; font-weight: 600; text-transform: none; letter-spacing: 0.05em;
+  border: 1px solid var(--fw-border-light); color: var(--fw-muted);
+  border-radius: 0; padding: 1px 5px; flex: none;
+}
+.ov-src-type.advertiser { color: var(--fw-amber); border-color: var(--fw-amber); }
+.ov-src-type.group { color: var(--fw-purple); border-color: var(--fw-purple); }
+.ov-src-nums { font-size: 12px; color: var(--fw-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ov-src-nums .fl { color: var(--fw-amber); }
+
+/* rhythm heat */
+.ov-heat-wrap { display: grid; grid-template-columns: 44px 1fr; gap: 6px; margin-top: 10px; }
+.ov-heat-days { display: grid; grid-template-rows: repeat(7, 15px); row-gap: 3px; }
+.ov-heat-days div { font-size: 12px; color: var(--fw-muted); line-height: 15px; text-align: right; padding-right: 2px; }
+.ov-heat-grid { display: grid; grid-template-rows: repeat(7, 15px); row-gap: 3px; }
+.ov-heat-row { display: grid; grid-template-columns: repeat(24, 1fr); column-gap: 3px; }
+.ov-heat-cell { border-radius: 0; background: var(--fw-bg); border: 1px solid var(--fw-border); }
+.ov-heat-cell.h1 { background: color-mix(in srgb, var(--fw-teal) 18%, var(--fw-card)); border-color: transparent; }
+.ov-heat-cell.h2 { background: color-mix(in srgb, var(--fw-teal) 36%, var(--fw-card)); border-color: transparent; }
+.ov-heat-cell.h3 { background: color-mix(in srgb, var(--fw-teal) 54%, var(--fw-card)); border-color: transparent; }
+.ov-heat-cell.h4 { background: color-mix(in srgb, var(--fw-teal) 76%, var(--fw-card)); border-color: transparent; }
+.ov-heat-cell.h5 { background: var(--fw-teal); border-color: transparent; }
+.ov-heat-hours { display: grid; grid-template-columns: repeat(24, 1fr); column-gap: 3px; margin-top: 4px; }
+.ov-heat-hours div { font-size: 12px; color: var(--fw-muted); text-align: center; }
+
+/* ════════════════════════════════════════════════════════════════════
+   Feed behavior (Patterns deep half) — ported 1:1 from the browser-
+   verified mockup docs/redesign/mockups/2026-07-15/feed-behavior.html.
+   Fence: nothing here touches fc-timeline / FeedCard / virtual-scroll.
+   ════════════════════════════════════════════════════════════════════ */
+.fb-legend-strip { display: flex; gap: 16px; margin: 8px 0 16px; font-size: 12px; color: var(--fw-muted); flex-wrap: wrap; }
+.fb-legend-strip .k { display: inline-flex; align-items: center; gap: 6px; }
+.fb-legend-strip .swatch { width: 10px; height: 10px; border-radius: 0; border: 1px solid var(--fw-border-light); }
+.fb-legend-strip .swatch.fact { background: var(--fw-card); }
+.fb-legend-strip .swatch.interp { background: color-mix(in srgb, var(--fw-amber) 10%, var(--fw-card)); border-color: var(--fw-amber); }
+
+.fb-lensbar { display: flex; gap: 6px; margin: 0 0 18px; flex-wrap: wrap; }
+.fb-lens {
+  border: 1px solid var(--fw-border); background: var(--fw-card); color: var(--fw-text-secondary);
+  border-radius: 0; font-size: 12px; padding: 5px 14px; cursor: pointer; font-family: inherit;
+}
+.fb-lens.active { border-color: var(--fw-teal); color: var(--fw-teal); font-weight: 600; }
+.fb-lens-note { font-size: 12px; color: var(--fw-muted); align-self: center; }
+
+.fb-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; margin-bottom: 14px; }
+.fb-card {
+  background: var(--fw-card); border: 1px solid var(--fw-border);
+  border-radius: var(--fw-r-1); padding: 16px 18px; min-width: 0;
+}
+.fb-card.interp { background: color-mix(in srgb, var(--fw-amber) 7%, var(--fw-card)); border-color: var(--fw-amber); }
+.fb-grid .span-12 { grid-column: span 12; }
+.fb-grid .span-7 { grid-column: span 7; }
+.fb-grid .span-6 { grid-column: span 6; }
+.fb-grid .span-5 { grid-column: span 5; }
+@media (max-width: 980px) {
+  .fb-grid .span-7, .fb-grid .span-6, .fb-grid .span-5 { grid-column: span 12; }
+}
+
+/* A section with nothing in it. The negative is a finding and stays on the
+   summary line where it is read without opening anything; what folds away is
+   the paragraph explaining what the section would show, which is teaching for a
+   reader who has something to read. Eleven of fourteen sections were in this
+   state on a record with nothing flagged, which is every install in its first
+   days (2026-09-17). */
+.fb-card-empty { padding: 10px 18px; }
+.fb-card-empty > summary {
+  cursor: pointer; list-style: none; display: flex; flex-wrap: wrap; align-items: baseline;
+  gap: 10px; column-gap: 14px;
+}
+.fb-card-empty > summary::-webkit-details-marker { display: none; }
+.fb-card-empty > summary::after {
+  content: '+'; margin-left: auto; color: var(--fw-muted); font-family: var(--fw-font-mono); font-size: 13px;
+}
+.fb-card-empty[open] > summary::after { content: '−'; }
+.fb-card-empty .fb-eyebrow-line {
+  font-size: 12px; letter-spacing: 0.08em; text-transform: none; color: var(--fw-text-secondary);
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.fb-card-empty .fb-empty-note { font-size: 12px; color: var(--fw-muted); min-width: 0; }
+.fb-card-empty .fb-empty-body { margin-top: 10px; }
+.fb-card-empty[open] { padding-bottom: 14px; }
+
+/* The same shape for the Feed behaviour tab's lower sections, which were nine
+   copies of two inline style objects (components/PatternSection.tsx). */
+.pat-section {
+  background: var(--fw-card); border: 1px solid var(--fw-border);
+  border-radius: var(--fw-r-1); padding: 14px 16px; margin-bottom: 14px; min-width: 0;
+}
+.pat-section-title { margin: 0 0 2px; font-size: 14px; font-weight: 600; }
+.pat-section-sub { color: var(--fw-muted); font-size: 12px; margin: 2px 0 10px; max-width: 78ch; }
+.pat-section-empty { padding: 10px 16px; }
+.pat-section-empty > summary {
+  cursor: pointer; list-style: none; display: flex; flex-wrap: wrap;
+  align-items: baseline; gap: 10px; column-gap: 14px;
+}
+.pat-section-empty > summary::-webkit-details-marker { display: none; }
+.pat-section-empty > summary::after {
+  content: '+'; margin-left: auto; color: var(--fw-muted);
+  font-family: var(--fw-font-mono); font-size: 13px;
+}
+.pat-section-empty[open] > summary::after { content: '−'; }
+.pat-section-empty .pat-section-note { font-size: 12px; color: var(--fw-muted); min-width: 0; }
+.pat-section-empty[open] { padding-bottom: 14px; }
+
+.fb-lvl {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 40px; height: 18px;
+  border-radius: 0; background: var(--fw-bg); border: 1px solid var(--fw-border-light);
+  font-size: 12px; font-weight: 700; letter-spacing: 0.06em; color: var(--fw-muted); padding: 0 6px;
+}
+.fb-eyebrow {
+  font-size: 12px; font-weight: 600; text-transform: none; letter-spacing: 0.06em;
+  color: var(--fw-muted); margin: 0 0 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.fb-card-sub { font-size: 12px; color: var(--fw-muted); margin: 0 0 12px; }
+.fb-prov { font-size: 12px; color: var(--fw-muted); margin-top: 8px; font-family: var(--fw-font-mono); }
+.fb-lens-cap {
+  font-size: 12px; color: var(--fw-text-secondary); margin-top: 10px; padding: 8px 10px;
+  border-left: 2px solid var(--fw-teal); background: color-mix(in srgb, var(--fw-teal) 6%, transparent);
+  border-radius: 0;
+}
+
+.fb-stat-line { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; margin: 4px 0 2px; }
+.fb-stat-line .hi { color: var(--fw-red); }
+.fb-stat-line .mid { color: var(--fw-amber); }
+.fb-stat-note { font-size: 12px; color: var(--fw-muted); }
+
+.fb-skew-row { display: grid; grid-template-columns: 120px 1fr 120px; gap: 10px; align-items: center; padding: 5px 0; }
+.fb-skew-label { font-size: 12px; color: var(--fw-text-secondary); }
+.fb-skew-track { display: block; height: 12px; border-radius: 0; background: var(--fw-bg); overflow: hidden; }
+.fb-skew-fill { display: block; height: 100%; border-radius: 0; background: var(--fw-amber); min-width: 2px; }
+.fb-skew-num { font-size: 12px; color: var(--fw-muted); font-variant-numeric: tabular-nums; }
+
+.fb-segbar { display: flex; height: 16px; border-radius: var(--fw-r-1); overflow: hidden; gap: 2px; background: var(--fw-bg); margin: 8px 0; }
+.fb-segbar .seg { height: 100%; }
+.fb-seg-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--fw-text-secondary); }
+.fb-seg-legend .sw { width: 9px; height: 9px; border-radius: 0; display: inline-block; margin-right: 5px; }
+
+table.fb-plain { width: 100%; border-collapse: collapse; font-size: 12px; }
+table.fb-plain th {
+  text-align: left; font-size: 12px; text-transform: none; letter-spacing: 0.05em;
+  color: var(--fw-muted); font-weight: 600; padding: 4px 8px 4px 0; border-bottom: 1px solid var(--fw-border);
+}
+table.fb-plain td { padding: 6px 8px 6px 0; border-bottom: 1px solid var(--fw-border); vertical-align: top; }
+table.fb-plain tr:last-child td { border-bottom: none; }
+table.fb-plain td.num { font-variant-numeric: tabular-nums; color: var(--fw-text-secondary); white-space: nowrap; }
+.fb-pf-dot { display: inline-block; width: 7px; height: 7px; border-radius: 0; margin-right: 6px; }
+
+.fb-chain-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--fw-border); }
+.fb-chain-row:last-child { border-bottom: none; }
+.fb-chip {
+  display: inline-flex; align-items: center; font-size: 12px; font-weight: 600; border-radius: 0;
+  padding: 2px 8px; background: var(--fw-bg); border: 1px solid var(--fw-border-light); color: var(--fw-text-secondary);
+}
+.fb-chain-arrow { color: var(--fw-muted); font-size: 12px; }
+.fb-chain-n { margin-left: auto; font-size: 12px; color: var(--fw-muted); font-variant-numeric: tabular-nums; }
+.fb-chain-bar { height: 6px; border-radius: 0; background: var(--fw-amber); }
+
+.fb-caution-tag {
+  display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: none;
+  color: var(--fw-amber); border: 1px solid var(--fw-amber); border-radius: 0; padding: 1px 6px;
+}
+.fb-caution-item {
+  display: flex; gap: 10px; padding: 8px 0;
+  border-top: 1px solid color-mix(in srgb, var(--fw-amber) 25%, var(--fw-border)); font-size: 12.5px;
+}
+.fb-caution-item:first-of-type { border-top: none; }
+.fb-caution-item .n {
+  flex: none; width: 18px; height: 18px; border-radius: 0; background: var(--fw-amber); color: #1a1a1a;
+  font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-top: 2px;
+}
+.fb-caution-item .ev { color: var(--fw-muted); font-size: 12px; }
+.fb-pred { margin-top: 12px; padding: 10px 12px; border: 1px dashed var(--fw-amber); border-radius: var(--fw-r-1); font-size: 12px; }
+.fb-pred .tag {
+  font-size: 12px; font-weight: 700; text-transform: none; letter-spacing: 0.06em;
+  color: var(--fw-amber); margin-right: 6px;
+}
+
+/* ============================================================
+   CHART KIT (fwc-) — turn-13 Statistics/Exposure re-skin.
+   Transplanted 1:1 from docs/redesign/mockups/2026-07-17/chart-kit.html
+   (browser-verified both themes, JS geometry audit). Display-only.
+   Kit law (palette validated 2026-07-17): color is never the only
+   channel — every mark carries a label or tooltip; adjacent fills get
+   a 2px surface gap; pass/benign segments use --fwc-neutral so status
+   hues never sit adjacent. Surface-ID: chart-kit. */
+
+.fwc-eyebrow {
+  font-size: 12px; font-weight: 600; letter-spacing: .08em;
+  text-transform: none; color: var(--fw-muted); margin-bottom: 6px;
+}
+.fwc-hero { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.fwc-hero .fwc-num {
+  font-family: var(--fw-font-mono); font-size: 34px; font-weight: 500;
+  letter-spacing: -0.03em; line-height: 1;
+}
+.fwc-hero .fwc-unit { font-size: 14px; color: var(--fw-text-secondary); }
+.fwc-delta {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 12px; font-weight: 600; border-radius: 0; padding: 2px 9px;
+  border: 1px solid var(--fw-border); color: var(--fw-text-secondary);
+  background: var(--fw-bg);
+}
+.fwc-delta .fwc-arr { font-size: 12px; line-height: 1; }
+.fwc-delta.up .fwc-arr { color: var(--fw-amber); }
+.fwc-delta.down .fwc-arr { color: var(--fw-teal); }
+
+.fwc-tile { display: flex; flex-direction: column; gap: 2px; }
+.fwc-tile .fwc-num {
+  font-family: var(--fw-font-mono); font-size: 40px; font-weight: 500;
+  letter-spacing: -0.03em; line-height: 1.1;
+}
+.fwc-tile .fwc-tile-label { font-size: 12px; font-weight: 600; color: var(--fw-text-secondary); }
+.fwc-tile .fwc-tile-sub { font-size: 12px; color: var(--fw-muted); }
+.fwc-tile .fwc-spark { margin-top: 8px; }
+.fwc-spark polyline { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.fwc-spark .fwc-spark-base { stroke: var(--fwc-neutral); }
+.fwc-spark .fwc-spark-hot { stroke: var(--fw-amber); }
+
+.fwc-row {
+  /* 148px truncated "Harmful content hidden or marked" by 50px on the Exposure
+     tab (measured 2026-09-17), and the ellipsis it fell back to is what a
+     legend cannot afford: the label IS the meaning of the bar beside it.
+     210px fits the English labels with room for the three other languages,
+     which are longer, and the ellipsis stays as the last resort. */
+  display: grid; grid-template-columns: 240px 1fr 64px;
+  align-items: center; gap: 10px; padding: 4px 0; min-height: 22px;
+}
+/* Was nowrap + ellipsis. This row's text sits beside a swatch dot inside a
+   flex box, and line-clamp only counts lines of a box's OWN content, so it
+   cannot be set on the flex container the way it is on the plain-text
+   selectors below; it would need the label text in its own element to
+   clamp it there. Left to wrap without a line cap for now: the row's
+   min-height already lets it grow, and unbounded wrapping loses less of
+   the label than the ellipsis it replaces did. */
+.fwc-row .fwc-label {
+  font-size: 12px; color: var(--fw-text-secondary);
+  overflow-wrap: anywhere;
+  display: flex; align-items: center; gap: 6px;
+}
+.fwc-swatch { flex-shrink: 0; width: 8px; height: 8px; border-radius: 0; background: var(--sw, var(--fw-muted)); }
+.fwc-dot { flex-shrink: 0; width: 7px; height: 7px; border-radius: 0; background: var(--sw, var(--fw-muted)); }
+/* A contrast check measured this track's fill against its card at 1.14:1
+   (light) and 1.18:1 (dark): the empty part of a chart bar had no visible
+   edge. Same border-strong fix as .bar-track above. */
+.fwc-track {
+  position: relative; height: 8px; border-radius: 0;
+  background: var(--fwc-grid); border: 1px solid var(--fw-border-strong); overflow: hidden;
+}
+.fwc-fill {
+  position: absolute; inset: 0 auto 0 0; width: var(--w, 0%);
+  background: var(--c, var(--fw-teal)); border-radius: 0;
+  transition: width .25s;
+}
+.fwc-count {
+  font-family: var(--fw-font-mono); font-size: 12px; color: var(--fw-text);
+  text-align: right; white-space: nowrap;
+}
+.fwc-count .fwc-pct { color: var(--fw-muted); }
+.fwc-row.drill { cursor: pointer; border-radius: 0; }
+.fwc-row.drill:hover { background: var(--fw-card-hover); }
+.fwc-row.drill:hover .fwc-label { color: var(--fw-text); }
+
+.fwc-stack {
+  display: flex; height: 14px; border-radius: 0; overflow: hidden;
+  gap: 2px; background: transparent; margin: 10px 0 8px;
+}
+.fwc-stack .fwc-seg { background: var(--c, var(--fwc-neutral)); min-width: 3px; }
+.fwc-stack .fwc-seg:first-child { border-radius: 0; }
+.fwc-stack .fwc-seg:last-child { border-radius: 0; }
+.fwc-stack .fwc-seg:only-child { border-radius: 0; }
+.fwc-legend { display: flex; gap: 16px; flex-wrap: wrap; }
+/* The button a drillable figure sits inside is a flex item too, and a button
+   does not shrink below its content either: the legend inside it wrapped and
+   the button still ran 21px past its card. Both have to be allowed to give.
+   The one that actually held it, found last: `.ov-link` set white-space:
+   nowrap, which a legend inherits, so no amount of flex would ever have let
+   that sentence take a second line. A legend's text always wraps. (`.ov-link`
+   no longer sets nowrap itself, a contrast/translation pass removed it, but
+   the fix below still holds for the same reason: a button never shrinks
+   below its own content unless told to.) */
+.fwc-legend { max-width: 100%; min-width: 0; }
+/* Was min-width: 0 here too. That let the button shrink with the legend
+   beside it, but it also wins over the 24px pointer-target floor set on
+   `.ov-link` itself, because "button.ov-link" plus the card ancestor is
+   more specific. 24px is still far under any real button label's own
+   content width, so the card-overflow fix above does not need a bare 0 to
+   keep working. */
+.stats-card button.ov-link, .ov-card button.ov-link { max-width: 100%; min-width: 24px; }
+.fwc-legend, .fwc-legend * { white-space: normal; }
+
+/* A legend item is a swatch, a number and a sentence. The sentence is an
+   anonymous flex item, which cannot shrink below its own content, so in
+   Romanian at a 900px window "0 elemente noaptea tarziu · din 120 de elemente
+   vazute saptamana aceasta" pushed its card 47px wider than the column and the
+   end of it was cut off (measured 2026-09-17). It is allowed to take a second
+   line now, like every other sentence in the product. */
+.fwc-legend .fwc-item { display: inline-flex; align-items: center; flex-wrap: wrap; min-width: 0; gap: 6px; font-size: 12px; color: var(--fw-muted); }
+.fwc-legend .fwc-item-label { min-width: 0; flex: 1 1 auto; }
+.fwc-legend .fwc-item strong { font-family: var(--fw-font-mono); font-weight: 600; color: var(--fw-text); }
+
+.fwc-cols {
+  display: flex; align-items: flex-end; gap: 2px;
+  height: var(--h, 72px); padding-bottom: 1px;
+  border-bottom: 1px solid var(--fw-border-light);
+}
+.fwc-col {
+  position: relative; flex: 1; height: 100%;
+  display: flex; flex-direction: column; justify-content: flex-end; gap: 2px;
+  border-radius: 0;
+}
+.fwc-col:hover { background: var(--fwc-grid); }
+.fwc-col .fwc-part {
+  display: block; border-radius: 0;
+  background: var(--c, var(--fwc-neutral)); min-height: 0;
+}
+.fwc-col .fwc-part.fwc-base { border-radius: 0; background: var(--fwc-neutral); }
+.fwc-col .fwc-part.fwc-base:only-child, .fwc-col .fwc-part:first-child { border-radius: 0; }
+.fwc-col.hi .fwc-part.fwc-base { background: var(--fw-teal-soft); }
+.fwc-axis {
+  display: flex; justify-content: space-between;
+  font-family: var(--fw-font-mono); font-size: 12px; color: var(--fw-muted); margin-top: 5px;
+}
+.fwc-axis.per-col { justify-content: initial; gap: 2px; }
+.fwc-axis.per-col span { flex: 1; text-align: center; overflow: hidden; }
+/* CSS tooltip layer — no JS. */
+.fwc-col[data-tip]:hover::after {
+  content: attr(data-tip);
+  position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  background: var(--fwc-tip-bg); color: var(--fwc-tip-text);
+  font-size: 12px; font-family: var(--fw-font-mono); white-space: pre;
+  padding: 4px 8px; border-radius: 0; pointer-events: none; z-index: 10;
+  box-shadow: var(--fw-shadow-3);
+}
+
+.fwc-callout {
+  border-left: 3px solid var(--fw-border-light); border-radius: 0;
+  background: var(--fw-bg); padding: 10px 14px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px 22px;
+}
+.fwc-callout > * { font-size: 12px; color: var(--fw-text-secondary); }
+.fwc-chips { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 12px; }
+.fwc-chip-stat .fwc-k { font-size: 12px; color: var(--fw-muted); }
+.fwc-chip-stat .fwc-v { font-size: 13px; font-weight: 600; color: var(--fw-text); }
+.fwc-list-row {
+  display: flex; align-items: baseline; gap: 12px;
+  padding: 7px 0; border-bottom: 1px solid var(--fw-border); font-size: 12.5px;
+}
+.fwc-list-row:last-child { border-bottom: none; }
+/* Was nowrap + ellipsis. Same shape as .fwc-row .fwc-label above: this is a
+   flex box (dot + caption text), and line-clamp needs the text in its own
+   box to count lines against, which this element does not give it. Left to
+   wrap without a line cap. */
+.fwc-list-row .fwc-cap {
+  flex: 1; min-width: 0; overflow-wrap: anywhere;
+  color: var(--fw-text-secondary); display: flex; align-items: baseline; gap: 7px;
+}
+.fwc-list-row .fwc-cap .fwc-dot { align-self: center; }
+.fwc-pill {
+  font-family: var(--fw-font-mono); font-size: 12px; white-space: nowrap;
+  border: 1px solid var(--fw-border); border-radius: 0; padding: 1px 8px;
+  color: var(--fw-text);
+}
+
+.fwc-seg-switch {
+  display: inline-flex; gap: 2px; background: var(--fw-bg);
+  border: 1px solid var(--fw-border); border-radius: var(--fw-r-1); padding: 3px;
+}
+.fwc-seg-switch button {
+  padding: 5px 12px; font-size: 12px; border: none; cursor: pointer;
+  border-radius: 0; background: transparent; color: var(--fw-muted); font-weight: 400;
+}
+.fwc-seg-switch button.active { background: var(--fw-card); color: var(--fw-text); font-weight: 600; }
+.fwc-seg-switch button .fwc-range { margin-left: 6px; font-family: var(--fw-font-mono); font-size: 12px; color: var(--fw-muted); font-weight: 400; }
+
+/* ── Attention banner ──────────────────────────────────────────────────────
+   Problems that stop the record being saved used to live as grey text at the
+   bottom of the Export tab. Sized and coloured to be seen without shouting:
+   amber, not red, because every item here is fixable by the button next to it
+   (reported 2026-09-01, after a backup folder sat unwritable for days). */
+.dash-attention {
+  margin: 12px 16px 0;
+  border: 1px solid var(--fw-amber, #d98a00);
+  border-left-width: 4px;
+  border-radius: var(--fw-r-1);
+  background: color-mix(in srgb, var(--fw-amber, #d98a00) 7%, transparent);
+  padding: 12px 14px;
+}
+.dash-attention-item {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap;
+  padding: 8px 0;
+}
+.dash-attention-item + .dash-attention-item {
+  border-top: 1px solid color-mix(in srgb, var(--fw-amber, #d98a00) 25%, transparent);
+}
+.dash-attention-text { flex: 1 1 320px; min-width: 0; }
+.dash-attention-title { font-weight: 600; font-size: 13px; margin-bottom: 2px; }
+.dash-attention-body { font-size: 12px; color: var(--fw-muted); line-height: 1.5; }
+.dash-attention-actions { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+/* The CTA is the biggest thing in the banner on purpose: the whole defect was
+   a fix that existed and could not be found. */
+.dash-attention-cta {
+  font-weight: 600;
+  padding: 8px 16px;
+  border-color: var(--fw-amber, #d98a00);
+}
+.dash-attention-hide {
+  background: none; border: none; cursor: pointer;
+  font-size: 12px; color: var(--fw-muted); text-decoration: underline;
+  /* Under the 24x24 CSS px minimum a pointer target needs. */
+  display: inline-flex; align-items: center;
+  min-height: 24px; min-width: 24px;
+}
+.dash-attention-done { font-size: 12px; color: var(--fw-green, #2e7d32); font-weight: 600; }
+
+/* ============================================================
+   NARROW-WIDTH ROW COLLAPSE (max-width: 640px)
+   Several row grids in this file pin one or more tracks to a fixed pixel
+   width: the forensics ledger needs 658px across eight columns, the chart
+   rows in fwc-row need 324px, and the rest follow the same shape. Below
+   640px none of them fit, and with .dash-root now scrolling instead of
+   clipping (see the top of this file) an unfit row would otherwise just
+   push the whole page sideways. Collapsing them to one column is the fix.
+   Kept as a single block at the end of the file, after every rule it
+   touches, because a media-query selector only wins a specificity tie
+   against a later plain rule of the same selector if it also comes later
+   in source order. */
+@media (max-width: 640px) {
+  .fx-ledger-head,
+  .fx-ledger-row {
+    grid-template-columns: 1fr;
+  }
+  .fwc-row {
+    grid-template-columns: 1fr;
+  }
+  .fb-skew-row {
+    grid-template-columns: 1fr;
+  }
+  .ov-srv-row {
+    grid-template-columns: 1fr;
+  }
+  .bar-row {
+    grid-template-columns: 1fr;
+  }
+  .export-grid,
+  .export-grid.two {
+    grid-template-columns: 1fr;
+  }
+  .fwc-callout {
+    grid-template-columns: 1fr;
+  }
+  /* 24 hour cells cannot take a single column without ceasing to be a
+     heatmap, so this one scrolls instead of reflowing. The day labels are
+     pinned so a scrolled-away row does not strand you without them; the
+     hour grid keeps a fixed per-cell width so the cells stay legible
+     rather than shrinking to fit. */
+  .ov-heat-wrap { overflow-x: auto; padding-bottom: 4px; }
+  .ov-heat-days {
+    position: sticky;
+    left: 0;
+    background: var(--fw-card);
+    z-index: 1;
+  }
+  .ov-heat-row,
+  .ov-heat-hours {
+    grid-template-columns: repeat(24, 16px);
+  }
+}
+
+/* A panel that threw while rendering. Deliberately quiet rather than alarming:
+   the record is not at risk and the sentence inside says so, and a red slab
+   on a product whose whole claim is an intact record reads as "your record is
+   gone" to the person holding it. (2026-09-18, a tester's blank Issues tab.) */
+.fw-panel-failed {
+  background: var(--fw-card);
+  border: 1px solid var(--fw-border);
+  border-radius: var(--fw-r-1);
+  padding: 20px;
+  max-width: 640px;
+}
+.fw-panel-failed h3 { margin: 0 0 8px; font-size: 15px; }
+.fw-panel-failed p { margin: 0 0 10px; color: var(--fw-text-secondary); line-height: 1.5; }
+.fw-panel-failed-detail {
+  font-family: var(--fw-font-mono);
+  font-size: 12px;
+  color: var(--fw-muted);
+  overflow-wrap: anywhere;
+}
+/* The tab's own name, for a report: small, last, never competing with the
+   sentence above it. */
+.fw-panel-failed-id {
+  display: block;
+  margin-top: 10px;
+  font-family: var(--fw-font-mono);
+  font-size: 12px;
+  color: var(--fw-muted);
+}
+
+/* The entry count opens its breakdown, so it is a button that keeps the chip's look. */
+button.pg-records-chip { font: inherit; color: inherit; cursor: pointer; }
+button.pg-records-chip:disabled { cursor: default; }
+.dash-entries-breakdown { right: 0; width: 320px; font-family: var(--fw-font-sans); font-size: 12px; color: var(--fw-text); }
+.dash-entries-breakdown ul { margin: 0 0 8px; padding-left: 16px; }
+.dash-entries-breakdown ul ul { margin: 2px 0 0; color: var(--fw-text-secondary); }

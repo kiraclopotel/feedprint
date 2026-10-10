@@ -1,0 +1,166 @@
+{
+  "rule": "fw-ci-1",
+  "what": "Conformance vectors for the content identity rule in FORMAT.md section 9.",
+  "contract": [
+    "Every vector sharing a `group` MUST produce the identity given.",
+    "Vectors in different groups MUST produce different identities, with one stated exception: `empty` and `whitespace-only` both normalise to the empty string and therefore share an identity.",
+    "An identity is the literal string `fw-ci-1:` followed by the lowercase hex SHA-256 of the UTF-8 bytes of the normal form."
+  ],
+  "limits": [
+    "An identity says two observers recorded the same text. It does not say either of them saw it on a platform, and it is not by itself evidence that anything was served.",
+    "A group ending `-cut` or `-unjoined` is a difference this rule deliberately does NOT merge, because a false merge manufactures corroboration. See FORMAT.md section 9.",
+    "Identical short text from different people produces one identity, by definition. Corroboration on very short text is weak."
+  ],
+  "vectors": [
+    {
+      "group": "romanian-post",
+      "name": "the text as served",
+      "text": "Guvernul ascunde adevărul. Trezește-te 👨‍👩‍👧 înainte să fie prea târziu!",
+      "identity": "fw-ci-1:d2fcd1ef9c83b50a8bd65e9fa6867e05d8325d6426a0e936a95c49ed23aa04fb"
+    },
+    {
+      "group": "romanian-post",
+      "name": "decomposed accents (NFD)",
+      "text": "Guvernul ascunde adevărul. Trezește-te 👨‍👩‍👧 înainte să fie prea târziu!",
+      "identity": "fw-ci-1:d2fcd1ef9c83b50a8bd65e9fa6867e05d8325d6426a0e936a95c49ed23aa04fb"
+    },
+    {
+      "group": "romanian-post",
+      "name": "a trailing newline",
+      "text": "Guvernul ascunde adevărul. Trezește-te 👨‍👩‍👧 înainte să fie prea târziu!\n",
+      "identity": "fw-ci-1:d2fcd1ef9c83b50a8bd65e9fa6867e05d8325d6426a0e936a95c49ed23aa04fb"
+    },
+    {
+      "group": "romanian-post",
+      "name": "surrounding whitespace",
+      "text": "   Guvernul ascunde adevărul. Trezește-te 👨‍👩‍👧 înainte să fie prea târziu!  ",
+      "identity": "fw-ci-1:d2fcd1ef9c83b50a8bd65e9fa6867e05d8325d6426a0e936a95c49ed23aa04fb"
+    },
+    {
+      "group": "romanian-post",
+      "name": "a non-breaking space",
+      "text": "Guvernul ascunde adevărul. Trezește-te 👨‍👩‍👧 înainte să fie prea târziu!",
+      "identity": "fw-ci-1:d2fcd1ef9c83b50a8bd65e9fa6867e05d8325d6426a0e936a95c49ed23aa04fb"
+    },
+    {
+      "group": "romanian-post",
+      "name": "a Windows line ending",
+      "text": "Guvernul ascunde adevărul. Trezește-te 👨‍👩‍👧 înainte să fie prea târziu!\r\n",
+      "identity": "fw-ci-1:d2fcd1ef9c83b50a8bd65e9fa6867e05d8325d6426a0e936a95c49ed23aa04fb"
+    },
+    {
+      "group": "romanian-post",
+      "name": "a tab for a space",
+      "text": "Guvernul\tascunde adevărul. Trezește-te 👨‍👩‍👧 înainte să fie prea târziu!",
+      "identity": "fw-ci-1:d2fcd1ef9c83b50a8bd65e9fa6867e05d8325d6426a0e936a95c49ed23aa04fb"
+    },
+    {
+      "group": "romanian-post",
+      "name": "a doubled space",
+      "text": "Guvernul ascunde adevărul.  Trezește-te 👨‍👩‍👧 înainte să fie prea târziu!",
+      "identity": "fw-ci-1:d2fcd1ef9c83b50a8bd65e9fa6867e05d8325d6426a0e936a95c49ed23aa04fb"
+    },
+    {
+      "group": "romanian-post",
+      "name": "a zero-width space",
+      "text": "Guvernul ​ascunde adevărul. Trezește-te 👨‍👩‍👧 înainte să fie prea târziu!",
+      "identity": "fw-ci-1:d2fcd1ef9c83b50a8bd65e9fa6867e05d8325d6426a0e936a95c49ed23aa04fb"
+    },
+    {
+      "group": "romanian-post",
+      "name": "a byte-order mark",
+      "text": "﻿Guvernul ascunde adevărul. Trezește-te 👨‍👩‍👧 înainte să fie prea târziu!",
+      "identity": "fw-ci-1:d2fcd1ef9c83b50a8bd65e9fa6867e05d8325d6426a0e936a95c49ed23aa04fb"
+    },
+    {
+      "group": "romanian-post",
+      "name": "a soft hyphen inside a word",
+      "text": "Guver­nul ascunde adevărul. Trezește-te 👨‍👩‍👧 înainte să fie prea târziu!",
+      "identity": "fw-ci-1:d2fcd1ef9c83b50a8bd65e9fa6867e05d8325d6426a0e936a95c49ed23aa04fb"
+    },
+    {
+      "group": "romanian-post",
+      "name": "an ideographic space",
+      "text": "Guvernul　ascunde adevărul. Trezește-te 👨‍👩‍👧 înainte să fie prea târziu!",
+      "identity": "fw-ci-1:d2fcd1ef9c83b50a8bd65e9fa6867e05d8325d6426a0e936a95c49ed23aa04fb"
+    },
+    {
+      "group": "romanian-post-cut",
+      "name": "the same post truncated at a fold",
+      "text": "Guvernul ascunde adevărul. Trezește-te \ud83d…",
+      "identity": "fw-ci-1:ec844beafd21a37f97a562224091618db7c7891c0c8d24b9f9dffd3b10f91f89"
+    },
+    {
+      "group": "romanian-post-unjoined",
+      "name": "the same post with the emoji joiner dropped",
+      "text": "Guvernul ascunde adevărul. Trezește-te 👨👩👧 înainte să fie prea târziu!",
+      "identity": "fw-ci-1:5297f2ab60593d7727bdb8d6aad123c19199efc7fcf87cbf95fa7855df25442f"
+    },
+    {
+      "group": "paragraphs",
+      "name": "two paragraphs",
+      "text": "First line.\n\nSecond line.",
+      "identity": "fw-ci-1:c13b87d5bab378f3af2ff707f2c9047330c7d4aefad3679931f6505c0c898374"
+    },
+    {
+      "group": "paragraphs",
+      "name": "four blank lines between them",
+      "text": "First line.\n\n\n\n\nSecond line.",
+      "identity": "fw-ci-1:c13b87d5bab378f3af2ff707f2c9047330c7d4aefad3679931f6505c0c898374"
+    },
+    {
+      "group": "paragraphs",
+      "name": "trailing spaces on each line",
+      "text": "First line.   \n\n   Second line.  ",
+      "identity": "fw-ci-1:c13b87d5bab378f3af2ff707f2c9047330c7d4aefad3679931f6505c0c898374"
+    },
+    {
+      "group": "lowercase-claim",
+      "name": "lower case",
+      "text": "they are lying to you",
+      "identity": "fw-ci-1:e142ac5195a1b19ea107bd8f52f1b86f9373d2b6953d03127e95f3f4fd1557e7"
+    },
+    {
+      "group": "uppercase-claim",
+      "name": "upper case, which is a different text",
+      "text": "THEY ARE LYING TO YOU",
+      "identity": "fw-ci-1:d11f5ed168bebf1b62f4ffb7ec7b98781b57d085c62037b1102c80443a98b102"
+    },
+    {
+      "group": "straight-quote",
+      "name": "a straight apostrophe",
+      "text": "it's over",
+      "identity": "fw-ci-1:ffccc06cc1560728770e249369fdd243d266e06ea0ce2ebdc7b013fc8c7f73e6"
+    },
+    {
+      "group": "curly-quote",
+      "name": "a curly apostrophe, which is a different text",
+      "text": "it’s over",
+      "identity": "fw-ci-1:4babbaa4b626f6f1efe6bb79ac0f4a342bcd1048350f95e7ecffc1641d89dea9"
+    },
+    {
+      "group": "persian-zwnj",
+      "name": "a non-joiner that shapes the letters",
+      "text": "می‌روم",
+      "identity": "fw-ci-1:b5992bb1f025974c6317d8ffc13487b6103034b9ccfca1e04a633c4ebd614dd4"
+    },
+    {
+      "group": "persian-joined",
+      "name": "the same letters without it, a different word",
+      "text": "میروم",
+      "identity": "fw-ci-1:828ad07c7dfca559b01a30366ec7a01a44d538fdc0893d629c69738bc0b967ca"
+    },
+    {
+      "group": "empty",
+      "name": "nothing at all",
+      "text": "",
+      "identity": "fw-ci-1:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "group": "whitespace-only",
+      "name": "whitespace only, which normalises to nothing",
+      "text": "   \n\n  \t ",
+      "identity": "fw-ci-1:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

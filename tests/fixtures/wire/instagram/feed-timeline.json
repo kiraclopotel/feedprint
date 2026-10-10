@@ -1,0 +1,76 @@
+{
+  "data": {
+    "xdt_api__v1__feed__timeline__connection": {
+      "edges": [
+        {
+          "node": {
+            "media": {
+              "pk": "3000000000000000001",
+              "code": "SyntheticAA1",
+              "taken_at": 1780000200,
+              "media_type": 1,
+              "user": { "pk": "5000000001", "username": "example_person" },
+              "caption": { "text": "Synthetic caption on a photo post." },
+              "image_versions2": {
+                "candidates": [
+                  { "url": "https://www.instagram.com/static/synthetic-photo-one.jpg", "width": 1080 }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "node": {
+            "media": {
+              "pk": "3000000000000000002",
+              "code": "SyntheticAA2",
+              "taken_at": 1780000300,
+              "media_type": 2,
+              "product_type": "clips",
+              "user": { "pk": "5000000002", "username": "example_shop" },
+              "caption": { "text": "" },
+              "injected": { "label": "Sponsored", "is_demo": false },
+              "video_versions": [
+                { "url": "https://www.instagram.com/static/synthetic-reel-two.mp4", "type": 101 }
+              ],
+              "image_versions2": {
+                "candidates": [
+                  { "url": "https://www.instagram.com/static/synthetic-reel-two.jpg", "width": 1080 }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "node": {
+            "media": {
+              "pk": "3000000000000000003",
+              "code": "SyntheticAA3",
+              "taken_at": 1780000400,
+              "media_type": 8,
+              "user": { "pk": "5000000003", "username": "example_maker" },
+              "caption": { "text": "Synthetic carousel caption." },
+              "is_paid_partnership": true,
+              "carousel_media": [
+                {
+                  "image_versions2": {
+                    "candidates": [
+                      { "url": "https://www.instagram.com/static/synthetic-carousel-a.jpg", "width": 1080 }
+                    ]
+                  }
+                },
+                {
+                  "image_versions2": {
+                    "candidates": [
+                      { "url": "https://www.instagram.com/static/synthetic-carousel-b.jpg", "width": 1080 }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+}

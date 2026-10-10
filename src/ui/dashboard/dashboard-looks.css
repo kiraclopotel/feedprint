@@ -1,0 +1,133 @@
+/* The dashboard's looks, loaded after the frame. The popup's dots choose one look for both pages (src/ui/shared/looks.ts),
+   and each look here is the popup's same colours put into the house values the dashboard draws with: the page is the
+   ground, the text is the ink, the popup's accent is the record (the tab underline, the written-down count, links,
+   the entries chip, the header's tint) and its second colour is the hidden count. A test holds these four colours
+   equal to popup-looks.css and tokens.css for every look, and checks each look's pairs here for contrast, dark and
+   light. Red, amber and green keep meaning blocked, flagged and fine, so no look sets them.
+   scripts/store/looks-sheet.mjs draws every look in both pages, dark and light, from a built package. */
+
+/* ─── A, teal with its pink-violet: the popup's base tokens ──────────────────────────────────────────────────── */
+:root:not([data-look]):not([data-theme="light"]) {
+  --fw-ground: #0e0f13;
+  --fw-ink:    #f0f0f0;
+  --fw-record: #00bcd4;
+  --fw-noise:  #c878d6;
+}
+:root:not([data-look])[data-theme="light"] {
+  --fw-ground: #f1f2f5;
+  --fw-ink:    #1a1a1a;
+  --fw-record: #00707f;
+  --fw-noise:  #7b1fa2;
+}
+
+/* ─── B, cobalt: one accent for both ─────────────────────────────────────────────────────────────────────────── */
+:root[data-look="b"]:not([data-theme="light"]) {
+  --fw-ground: #0a0c11;
+  --fw-ink:    #eef1f7;
+  --fw-record: #5a9cf2;
+  --fw-noise:  #5a9cf2;
+}
+:root[data-look="b"][data-theme="light"] {
+  --fw-ground: #eceff5;
+  --fw-ink:    #0f131b;
+  --fw-record: #1c5bb5;
+  --fw-noise:  #1c5bb5;
+}
+
+/* ─── C, graphite: ink for the record, a dusk blue for the hidden count ──────────────────────────────────────── */
+:root[data-look="c"]:not([data-theme="light"]) {
+  --fw-ground: #111214;
+  --fw-ink:    #f1f2f4;
+  --fw-record: #e6e7ea;
+  --fw-noise:  #9db4d4;
+}
+:root[data-look="c"][data-theme="light"] {
+  --fw-ground: #f2f3f5;
+  --fw-ink:    #17181b;
+  --fw-record: #1e1f23;
+  --fw-noise:  #34537a;
+}
+
+/* ─── D, electric violet with ice blue ───────────────────────────────────────────────────────────────────────── */
+:root[data-look="d"]:not([data-theme="light"]) {
+  --fw-ground: #0b0a1a;
+  --fw-ink:    #f1efff;
+  --fw-record: #a08bff;
+  --fw-noise:  #4fd2ff;
+}
+:root[data-look="d"][data-theme="light"] {
+  --fw-ground: #efedfb;
+  --fw-ink:    #14112b;
+  --fw-record: #5b3fe0;
+  --fw-noise:  #08668e;
+}
+
+/* ─── E, hot pink with lilac ─────────────────────────────────────────────────────────────────────────────────── */
+:root[data-look="e"]:not([data-theme="light"]) {
+  --fw-ground: #170a14;
+  --fw-ink:    #fff0f8;
+  --fw-record: #ff5fb8;
+  --fw-noise:  #c792ff;
+}
+:root[data-look="e"][data-theme="light"] {
+  --fw-ground: #fbeef5;
+  --fw-ink:    #2a0f20;
+  --fw-record: #b0186e;
+  --fw-noise:  #6a2fc0;
+}
+
+/* ─── What every look colours ────────────────────────────────────────────────────────────────────────────────── */
+/* The house sheet maps the old accent names to ink; a look gives them its accent, so the primary buttons, the
+   recommended export and the charts' bars take it, with the page's colour written on it. */
+:root, :root[data-theme] {
+  --fw-teal: var(--fw-record);
+  --fw-accent: var(--fw-record);
+  --fw-on-accent: var(--fw-ground);
+}
+/* The header takes a tint of the accent that fades into the page, as the popup's header does. */
+.dash-header { background: linear-gradient(180deg, color-mix(in oklch, var(--fw-record) 14%, var(--fw-ground)) 0%, var(--fw-ground) 100%); }
+.dash-root a { color: var(--fw-record); }
+/* Whatever is chosen or open is filled with the accent: the filter rows, the order switch, the open breakdown, the
+   chosen lens, the day in focus and the bars. */
+.frail-opt.on,
+.feed-sort-btn.active,
+.feed-breakdown-btn[aria-expanded="true"],
+.fb-lens.active { background: var(--fw-record); color: var(--fw-ground); border-color: var(--fw-record); }
+.frail-opt.on .frail-count { color: inherit; }
+/* A chosen chip, such as the Feed log's period and its All, Hidden and Passed, is the accent too. */
+.chip.active { background: var(--fw-record); color: var(--fw-ground); border-color: var(--fw-record); }
+.chip.active:hover { background: color-mix(in oklch, var(--fw-record) 88%, var(--fw-ink)); color: var(--fw-ground); }
+/* The Feed log's column heads sit on a tint of the accent, and each day's line is written in it. */
+.fl-row-head, .fl-row-head:hover { background: color-mix(in oklch, var(--fw-record) 10%, var(--fw-ground)); }
+.fl-day { color: var(--fw-record); }
+.bar-fill { background: var(--fw-record) !important; }
+.bar-row.active .bar-fill { background: var(--fw-noise) !important; }
+.today-head-day.focus i { background: var(--fw-record); }
+/* The chip's tint stays faint: at 16% the count in the accent fell under 4.5:1 in the light looks. */
+.pg-records-chip { border-color: var(--fw-record); background: color-mix(in oklch, var(--fw-record) 8%, var(--fw-ground)); }
+.pg-records-chip .pg-trust-chip-count { color: var(--fw-record); }
+
+/* ─── D and E: the gradient header and the glowing counts ────────────────────────────────────────────────────── */
+:root[data-look="d"] .dash-header,
+:root[data-look="e"] .dash-header {
+  background: linear-gradient(120deg,
+    color-mix(in oklch, var(--fw-record) 30%, var(--fw-ground)) 0%,
+    color-mix(in oklch, var(--fw-noise) 18%, var(--fw-ground)) 70%,
+    var(--fw-ground) 100%);
+}
+/* In light the same run is fainter: at 30% the muted text at its start fell under 4.5:1. */
+:root[data-look="d"][data-theme="light"] .dash-header,
+:root[data-look="e"][data-theme="light"] .dash-header {
+  background: linear-gradient(120deg,
+    color-mix(in oklch, var(--fw-record) 18%, var(--fw-ground)) 0%,
+    color-mix(in oklch, var(--fw-noise) 12%, var(--fw-ground)) 70%,
+    var(--fw-ground) 100%);
+}
+:root[data-look="d"] .dash-tab.active,
+:root[data-look="e"] .dash-tab.active { color: var(--fw-record); }
+:root[data-look="d"] .today-head-figures dd.record,
+:root[data-look="e"] .today-head-figures dd.record { text-shadow: 0 0 18px color-mix(in oklch, var(--fw-record) 60%, transparent); }
+:root[data-look="d"] .today-head-figures dd.noise,
+:root[data-look="e"] .today-head-figures dd.noise { text-shadow: 0 0 18px color-mix(in oklch, var(--fw-noise) 60%, transparent); }
+:root[data-look="d"][data-theme="light"] .today-head-figures dd,
+:root[data-look="e"][data-theme="light"] .today-head-figures dd { text-shadow: none; }

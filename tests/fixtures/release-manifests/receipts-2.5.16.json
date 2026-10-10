@@ -1,0 +1,122 @@
+{
+  "manifest_version": 3,
+  "name": "__MSG_receiptsName__",
+  "version": "2.5.16",
+  "description": "__MSG_receiptsDescription__",
+  "default_locale": "en",
+  "icons": {
+    "16": "assets/icons/icon-16.png",
+    "32": "assets/icons/icon-32.png",
+    "48": "assets/icons/icon-48.png",
+    "128": "assets/icons/icon-128.png"
+  },
+  "permissions": [
+    "storage",
+    "unlimitedStorage",
+    "alarms",
+    "downloads",
+    "downloads.ui"
+  ],
+  "host_permissions": [
+    "*://*.twitter.com/*",
+    "*://*.x.com/*",
+    "*://*.instagram.com/*",
+    "*://*.tiktok.com/*",
+    "*://*.facebook.com/*",
+    "*://*.youtube.com/*",
+    "https://api.feelingwise.org/*",
+    "https://freetsa.org/*",
+    "http://timestamp.digicert.com/*",
+    "http://timestamp.sectigo.com/*"
+  ],
+  "homepage_url": "https://feelingwise.org/",
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+  "background": {
+    "service_worker": "service-worker.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.twitter.com/*",
+        "*://*.x.com/*",
+        "*://*.instagram.com/*",
+        "*://*.tiktok.com/*",
+        "*://*.facebook.com/*",
+        "*://*.youtube.com/*"
+      ],
+      "exclude_matches": [
+        "*://*.facebook.com/messages",
+        "*://*.facebook.com/messages/*",
+        "*://*.facebook.com/messenger",
+        "*://*.facebook.com/messenger/*",
+        "*://*.instagram.com/direct",
+        "*://*.instagram.com/direct/*",
+        "*://*.twitter.com/messages",
+        "*://*.twitter.com/messages/*",
+        "*://*.twitter.com/i/chat",
+        "*://*.twitter.com/i/chat/*",
+        "*://*.x.com/messages",
+        "*://*.x.com/messages/*",
+        "*://*.x.com/i/chat",
+        "*://*.x.com/i/chat/*",
+        "*://*.tiktok.com/messages",
+        "*://*.tiktok.com/messages/*",
+        "*://*.tiktok.com/inbox",
+        "*://*.tiktok.com/inbox/*"
+      ],
+      "js": [
+        "bootstrap.js",
+        "content.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "*://*.twitter.com/*",
+        "*://*.x.com/*",
+        "*://*.instagram.com/*",
+        "*://*.tiktok.com/*",
+        "*://*.facebook.com/*",
+        "*://*.youtube.com/*"
+      ],
+      "exclude_matches": [
+        "*://*.facebook.com/messages",
+        "*://*.facebook.com/messages/*",
+        "*://*.facebook.com/messenger",
+        "*://*.facebook.com/messenger/*",
+        "*://*.instagram.com/direct",
+        "*://*.instagram.com/direct/*",
+        "*://*.twitter.com/messages",
+        "*://*.twitter.com/messages/*",
+        "*://*.twitter.com/i/chat",
+        "*://*.twitter.com/i/chat/*",
+        "*://*.x.com/messages",
+        "*://*.x.com/messages/*",
+        "*://*.x.com/i/chat",
+        "*://*.x.com/i/chat/*",
+        "*://*.tiktok.com/messages",
+        "*://*.tiktok.com/messages/*",
+        "*://*.tiktok.com/inbox",
+        "*://*.tiktok.com/inbox/*"
+      ],
+      "js": [
+        "page-world.js"
+      ],
+      "world": "MAIN",
+      "run_at": "document_start"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "__MSG_receiptsActionTitle__",
+    "default_icon": {
+      "16": "assets/icons/icon-16.png",
+      "32": "assets/icons/icon-32.png",
+      "48": "assets/icons/icon-48.png",
+      "128": "assets/icons/icon-128.png"
+    }
+  }
+}

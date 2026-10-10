@@ -1,0 +1,46 @@
+{
+  "statusCode": 0,
+  "itemList": [
+    {
+      "id": "7000000000000000001",
+      "desc": "Synthetic caption for a for-you video.",
+      "createTime": 1780000000,
+      "author": {
+        "id": "6000000000000000001",
+        "uniqueId": "example_creator",
+        "nickname": "Synthetic Creator"
+      },
+      "video": {
+        "id": "7000000000000000001",
+        "cover": "https://www.tiktok.com/static/synthetic-cover-one.jpeg",
+        "playAddr": "https://www.tiktok.com/static/synthetic-play-one.mp4"
+      },
+      "stats": { "diggCount": 12, "commentCount": 3, "shareCount": 1 },
+      "isAd": false
+    },
+    {
+      "id": "7000000000000000002",
+      "desc": "",
+      "createTime": 1780000100,
+      "author": {
+        "id": "6000000000000000002",
+        "uniqueId": "example_brand",
+        "nickname": "Synthetic Brand"
+      },
+      "video": {
+        "id": "7000000000000000002",
+        "cover": "https://www.tiktok.com/static/synthetic-cover-two.jpeg"
+      },
+      "stats": { "diggCount": 0, "commentCount": 0, "shareCount": 0 },
+      "isAd": true,
+      "adAuthorization": true
+    },
+    {
+      "id": "7000000000000000003",
+      "desc": "A live room that must never be captured as an item.",
+      "author": { "uniqueId": "example_streamer" },
+      "liveRoomInfo": { "status": 2 }
+    }
+  ],
+  "hasMore": true
+}

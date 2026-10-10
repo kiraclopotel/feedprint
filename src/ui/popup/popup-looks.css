@@ -1,0 +1,253 @@
+/* The popup's looks, loaded after the life sheet by Receipts' popup. A look is a set of the popup's tokens under one
+   attribute on the page's root, beside the dark/light one, so every look exists in both modes. With no attribute the
+   popup is look A, the teal one, exactly as before. Layout, words, spacing and the motion rule are not part of a look.
+   Red, amber and green mean blocked, flagged and fine in every look, so no look sets them. The dashboard carries the
+   same attribute and draws each look from the same colours in dashboard-looks.css. Off, which has no dashboard and
+   no dark/light choice, stays on A.
+   Each colour block below lists its pairs' contrast in tests/unit/ui/popup/popup-looks-contrast.source.test.ts; a
+   look without its rows there does not ship. */
+
+/* ─── Look B, cobalt: sharper corners, flat, one accent ──────────────────────────────────────────────────────── */
+:root[data-look="b"]:not([data-theme="light"]) {
+  --fw-bg:             #0a0c11;
+  --fw-card:           #12161e;
+  --fw-card-hover:     #171c26;
+  --fw-surface:        #12161e;
+  --fw-surface-2:      #1d2330;
+  --fw-border:         #5e6a82;
+  --fw-border-light:   #262d3b;
+  --fw-text:           #eef1f7;
+  --fw-text-secondary: #c6cdda;
+  --fw-muted:          #8f9ab0;
+  --fw-teal:           #5a9cf2;
+  --fw-purple:         #5a9cf2;
+  --fw-on-accent:      #0a0c11;
+  --pop-on-accent:     #0a0c11;
+  --pop-tint:          #5a9cf2;
+}
+:root[data-look="b"][data-theme="light"] {
+  --fw-bg:             #eceff5;
+  --fw-card:           #f9fafc;
+  --fw-card-hover:     #f1f3f8;
+  --fw-surface:        #f9fafc;
+  --fw-surface-2:      #dde2ec;
+  --fw-border:         #7f899c;
+  --fw-border-light:   #d3d8e2;
+  --fw-text:           #0f131b;
+  --fw-text-secondary: #252e3f;
+  --fw-muted:          #566073;
+  --fw-teal:           #1c5bb5;
+  --fw-purple:         #1c5bb5;
+  --fw-on-accent:      #ffffff;
+  --pop-on-accent:     #ffffff;
+  --pop-tint:          #1c5bb5;
+}
+:root[data-look="b"] {
+  --fw-r-xs: 2px;
+  --fw-r-sm: 2px;
+  --fw-r-md: 4px;
+  --fw-r-lg: 6px;
+  --pop-r-scale: 0.4;
+}
+/* Flat: no shadow and no tint behind the header. The counting card is told apart by a bar of the accent instead. */
+html.fw-life-depth[data-look="b"],
+html.fw-life-depth[data-look="b"][data-theme] { --pop-elev: none; --pop-elev-cta: none; }
+html[data-look="b"] .fw-popup .pop-header { background: var(--fw-bg); }
+html[data-look="b"] .fw-popup .today-card { background: var(--fw-card); box-shadow: inset 3px 0 0 var(--fw-teal); }
+/* Numbers in the fixed-width face, the way a ledger prints them. */
+html[data-look="b"] .fw-popup .pop-hero-value { font-family: var(--fw-font-mono); letter-spacing: -0.04em; }
+
+/* ─── Look C, graphite: softer corners and shadows, ink for "on", a dusk blue for the count ───────────────────── */
+:root[data-look="c"]:not([data-theme="light"]) {
+  --fw-bg:             #111214;
+  --fw-card:           #1a1b1e;
+  --fw-card-hover:     #202125;
+  --fw-surface:        #1a1b1e;
+  --fw-surface-2:      #26282c;
+  --fw-border:         #72757c;
+  --fw-border-light:   #2e3034;
+  --fw-text:           #f1f2f4;
+  --fw-text-secondary: #cfd1d6;
+  --fw-muted:          #9a9da4;
+  --fw-teal:           #e6e7ea;
+  --fw-purple:         #9db4d4;
+  --fw-on-accent:      #111214;
+  --pop-on-accent:     #111214;
+  --pop-tint:          #9db4d4;
+}
+:root[data-look="c"][data-theme="light"] {
+  --fw-bg:             #f2f3f5;
+  --fw-card:           #fafafb;
+  --fw-card-hover:     #f4f5f7;
+  --fw-surface:        #fafafb;
+  --fw-surface-2:      #e2e4e8;
+  --fw-border:         #858890;
+  --fw-border-light:   #dcdee2;
+  --fw-text:           #17181b;
+  --fw-text-secondary: #2f3136;
+  --fw-muted:          #5c5f66;
+  --fw-teal:           #1e1f23;
+  --fw-purple:         #34537a;
+  --fw-on-accent:      #fafafb;
+  --pop-on-accent:     #fafafb;
+  --pop-tint:          #34537a;
+}
+:root[data-look="c"] {
+  --fw-r-xs: 6px;
+  --fw-r-sm: 8px;
+  --fw-r-md: 14px;
+  --fw-r-lg: 20px;
+  --pop-r-scale: 1.5;
+}
+html.fw-life-depth[data-look="c"] {
+  --pop-elev: 0 2px 6px rgb(0 0 0 / 0.25), 0 18px 36px -18px rgb(0 0 0 / 0.7);
+  --pop-elev-cta: 0 10px 24px -12px rgb(0 0 0 / 0.6);
+}
+html.fw-life-depth[data-look="c"][data-theme="light"] {
+  --pop-elev: 0 2px 6px rgb(20 24 32 / 0.06), 0 16px 32px -16px rgb(20 24 32 / 0.2);
+  --pop-elev-cta: 0 10px 22px -12px rgb(20 24 32 / 0.35);
+}
+/* Ink is the "on" colour, so links and the plan chip take the blue: in ink a link reads as body text and the chip as
+   one more button. */
+html[data-look="c"] .fw-popup a:not(.pop-cta),
+html[data-look="c"] .fw-popup .lnk { color: var(--fw-purple); }
+html.fw-life-depth[data-look="c"] .fw-popup .pop-tier:not(.free) .pill { background: var(--fw-purple); color: var(--fw-on-accent); }
+/* The header's tint comes from the second colour: ink tinted into ink would not show. */
+html.fw-life-depth[data-look="c"] .fw-popup .pop-header {
+  background: linear-gradient(180deg, color-mix(in oklch, var(--fw-purple) 16%, var(--fw-bg)) 0%, var(--fw-bg) 100%);
+}
+
+/* ─── Looks D and E, the vivid pair: a deep ground, one strong colour, a gradient header and a glowing count ──── */
+/* D is cool, an electric violet with ice blue; E is warm, a hot pink with lilac. Neither is red, amber or green, so
+   those keep meaning blocked, flagged and fine. dashboard-looks.css carries the same ground, text, accent and second
+   colour for each, and a test holds the two sheets equal. */
+:root[data-look="d"]:not([data-theme="light"]) {
+  --fw-bg:             #0b0a1a;
+  --fw-card:           #15132b;
+  --fw-card-hover:     #1b1836;
+  --fw-surface:        #15132b;
+  --fw-surface-2:      #221f40;
+  --fw-border:         #6e68a3;
+  --fw-border-light:   #2a2650;
+  --fw-text:           #f1efff;
+  --fw-text-secondary: #d0ccf0;
+  --fw-muted:          #a29dcc;
+  --fw-teal:           #a08bff;
+  --fw-purple:         #4fd2ff;
+  --fw-on-accent:      #0b0a1a;
+  --pop-on-accent:     #0b0a1a;
+  --pop-tint:          #a08bff;
+}
+:root[data-look="d"][data-theme="light"] {
+  --fw-bg:             #efedfb;
+  --fw-card:           #faf9ff;
+  --fw-card-hover:     #f2f0fd;
+  --fw-surface:        #faf9ff;
+  --fw-surface-2:      #e1ddf6;
+  --fw-border:         #7d77a8;
+  --fw-border-light:   #d6d2ee;
+  --fw-text:           #14112b;
+  --fw-text-secondary: #2a2550;
+  --fw-muted:          #5a5480;
+  --fw-teal:           #5b3fe0;
+  --fw-purple:         #08668e;
+  --fw-on-accent:      #ffffff;
+  --pop-on-accent:     #ffffff;
+  --pop-tint:          #5b3fe0;
+}
+:root[data-look="e"]:not([data-theme="light"]) {
+  --fw-bg:             #170a14;
+  --fw-card:           #22101e;
+  --fw-card-hover:     #2a1426;
+  --fw-surface:        #22101e;
+  --fw-surface-2:      #33182d;
+  --fw-border:         #8a6680;
+  --fw-border-light:   #3d2236;
+  --fw-text:           #fff0f8;
+  --fw-text-secondary: #f0cfe2;
+  --fw-muted:          #c39ab4;
+  --fw-teal:           #ff5fb8;
+  --fw-purple:         #c792ff;
+  --fw-on-accent:      #170a14;
+  --pop-on-accent:     #170a14;
+  --pop-tint:          #ff5fb8;
+}
+:root[data-look="e"][data-theme="light"] {
+  --fw-bg:             #fbeef5;
+  --fw-card:           #fff8fc;
+  --fw-card-hover:     #fbeff6;
+  --fw-surface:        #fff8fc;
+  --fw-surface-2:      #f2dbe8;
+  --fw-border:         #9a7189;
+  --fw-border-light:   #ecd3e1;
+  --fw-text:           #2a0f20;
+  --fw-text-secondary: #47203a;
+  --fw-muted:          #7a4a66;
+  --fw-teal:           #b0186e;
+  --fw-purple:         #6a2fc0;
+  --fw-on-accent:      #ffffff;
+  --pop-on-accent:     #ffffff;
+  --pop-tint:          #b0186e;
+}
+:root[data-look="d"], :root[data-look="e"] {
+  --fw-r-xs: 4px;
+  --fw-r-sm: 6px;
+  --fw-r-md: 12px;
+  --fw-r-lg: 16px;
+  --pop-r-scale: 1.25;
+}
+/* The header runs from the accent into the second colour, stronger than A's tint, the way a player's title bar does. */
+html[data-look="d"] .fw-popup .pop-header,
+html[data-look="e"] .fw-popup .pop-header,
+html.fw-life-depth[data-look="d"] .fw-popup .pop-header,
+html.fw-life-depth[data-look="e"] .fw-popup .pop-header {
+  background: linear-gradient(120deg,
+    color-mix(in oklch, var(--fw-teal) 30%, var(--fw-bg)) 0%,
+    color-mix(in oklch, var(--fw-purple) 18%, var(--fw-bg)) 70%,
+    var(--fw-bg) 100%);
+}
+/* In light the run is fainter, as the dashboard's is: at 30% the muted text at its start fell under 4.5:1. */
+html[data-look="d"][data-theme="light"] .fw-popup .pop-header,
+html[data-look="e"][data-theme="light"] .fw-popup .pop-header,
+html.fw-life-depth[data-look="d"][data-theme="light"] .fw-popup .pop-header,
+html.fw-life-depth[data-look="e"][data-theme="light"] .fw-popup .pop-header {
+  background: linear-gradient(120deg,
+    color-mix(in oklch, var(--fw-teal) 18%, var(--fw-bg)) 0%,
+    color-mix(in oklch, var(--fw-purple) 12%, var(--fw-bg)) 70%,
+    var(--fw-bg) 100%);
+}
+/* The count glows in the second colour; in light the glow would smudge the digits, so it is a soft halo there. */
+html[data-look="d"] .fw-popup .pop-hero-value,
+html[data-look="e"] .fw-popup .pop-hero-value { color: var(--fw-purple); text-shadow: 0 0 18px color-mix(in oklch, var(--fw-purple) 65%, transparent); }
+html[data-look="d"][data-theme="light"] .fw-popup .pop-hero-value,
+html[data-look="e"][data-theme="light"] .fw-popup .pop-hero-value { text-shadow: 0 0 14px color-mix(in oklch, var(--fw-purple) 25%, transparent); }
+html[data-look="d"] .fw-popup .today-card,
+html[data-look="e"] .fw-popup .today-card {
+  background: linear-gradient(160deg, color-mix(in oklch, var(--fw-teal) 16%, var(--fw-card)) 0%, var(--fw-card) 65%);
+  border-color: color-mix(in oklch, var(--fw-teal) 40%, var(--fw-border-light));
+}
+
+/* ─── The chooser: the swatches beside the appearance heading ────────────────────────────────────────────────── */
+.fw-popup .grp-hdr.with-looks { display: flex; align-items: center; gap: var(--pop-2); }
+.fw-popup .look-row { margin: -4px 0 -4px auto; display: inline-flex; gap: var(--pop-1); text-transform: none; letter-spacing: 0; }
+.fw-popup .look-name { align-self: center; margin-right: var(--pop-1); font-weight: 600; color: var(--fw-text-secondary); }
+.fw-popup .look-btn {
+  width: 22px; height: 22px; padding: 0; display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; border: 1px solid transparent; border-radius: 999px; cursor: pointer;
+}
+.fw-popup .look-btn[aria-checked="true"] { border-color: var(--fw-teal); cursor: default; }
+.fw-popup .look-btn:focus-visible { outline: 2px solid var(--fw-teal); outline-offset: 1px; }
+.fw-popup .look-swatch {
+  width: 14px; height: 14px; border-radius: 999px; border: 1px solid var(--fw-border);
+  background: linear-gradient(135deg, var(--sw-1) 0 50%, var(--sw-2) 50% 100%);
+}
+.fw-popup .look-swatch.a { --sw-1: #00bcd4; --sw-2: #c878d6; }
+.fw-popup .look-swatch.b { --sw-1: #1c5bb5; --sw-2: #5a9cf2; }
+.fw-popup .look-swatch.c { --sw-1: #1e1f23; --sw-2: #9db4d4; }
+.fw-popup .look-swatch.d { --sw-1: #a08bff; --sw-2: #4fd2ff; }
+.fw-popup .look-swatch.e { --sw-1: #ff5fb8; --sw-2: #c792ff; }
+
+/* ─── Style and theme in the Settings bar (8 Oct 2026) ─────────────────────────────────────────────────────────── */
+/* One compact row at the top of Settings: back, the title, then the style swatches and the theme icons at the right. */
+.fw-popup .settings-bar .look-row { margin: 0 0 0 auto; }
+.fw-popup .settings-bar .theme-icon-btn { width: 24px; height: 24px; }

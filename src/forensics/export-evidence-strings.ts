@@ -1,0 +1,73 @@
+// What page one says about where the record came from: the build, the install, the key, the
+// witness and the kind of evidence, in the four languages the product speaks. Kept beside the
+// exporter so these rows grow in one small file; the exporter lays each locale over the shared
+// export table (src/i18n/export-strings.ts), and the merged table is what the file carries.
+
+import type { ExportEvidenceStrings, ExportLocale } from '../types/export-strings';
+
+export const EVIDENCE_STRINGS: Record<ExportLocale, ExportEvidenceStrings> = {
+  en: {
+    summaryBuildOne: 'Build that wrote this file',
+    summaryBuildOneValue: '{id}. Every record in this file carries this build, the one that judged it.',
+    summaryBuildOneOfSomeValue: '{id} judged {n} of the {total} records in this file. No build is named on the rest ({rest}): the markers the extension writes about itself never name one, and neither do records written before records carried one.',
+    summaryInstall: 'How the extension was installed',
+    installNormal: 'from the Chrome Web Store',
+    installDevelopment: 'loaded by hand from a folder (a developer copy)',
+    installSideload: 'added by another program on this computer',
+    installAdmin: 'installed by an administrator’s policy',
+    installOther: 'some other way, which Chrome did not name',
+    summaryInstallItem: '{what}: {n} records',
+    summaryInstallUnstated: 'not stated: {n} records, written before records carried it or while Chrome would not say',
+    summaryInstallLimit: 'Chrome tells the extension how it was installed, and each record carries what it was told. A copy someone changed could write anything here, so this is the extension’s own statement, not proof.',
+    chainNoteKeyStated: '{n} times in this file the signing key changes and the record says why: each time a marker signed by the new key names the old key, the new one and the reason.',
+    chainNoteKeyUnstated: '{n} times in this file the signing key changes with nothing on the record saying why. Records written before the extension stated its key changes look like this; in a newer file it can also be a line from another copy of the extension. Each record was still checked under its own key above.',
+  },
+  ro: {
+    summaryBuildOne: 'Versiunea care a scris acest fișier',
+    summaryBuildOneValue: '{id}. Fiecare înregistrare din acest fișier poartă această versiune, cea care a evaluat-o.',
+    summaryBuildOneOfSomeValue: '{id} a evaluat {n} din cele {total} înregistrări din acest fișier. Restul ({rest}) nu numesc nicio versiune: marcajele pe care extensia le scrie despre ea însăși nu o fac niciodată, și nici înregistrările scrise înainte ca înregistrările să o poarte.',
+    summaryInstall: 'Cum a fost instalată extensia',
+    installNormal: 'din Chrome Web Store',
+    installDevelopment: 'încărcată de mână dintr-un dosar (o copie de dezvoltator)',
+    installSideload: 'adăugată de alt program de pe acest calculator',
+    installAdmin: 'instalată prin politica unui administrator',
+    installOther: 'în alt fel, pe care Chrome nu l-a numit',
+    summaryInstallItem: '{what}: {n} înregistrări',
+    summaryInstallUnstated: 'nespus: {n} înregistrări, scrise înainte ca înregistrările să poarte acest lucru sau cât timp Chrome nu a spus',
+    summaryInstallLimit: 'Chrome îi spune extensiei cum a fost instalată, iar fiecare înregistrare poartă ce i s-a spus. O copie modificată de cineva ar putea scrie orice aici, așa că aceasta este declarația extensiei despre ea însăși, nu o dovadă.',
+    chainNoteKeyStated: 'De {n} ori în acest fișier cheia de semnare se schimbă, iar registrul spune de ce: de fiecare dată un marcaj semnat cu cheia nouă numește cheia veche, cheia nouă și motivul.',
+    chainNoteKeyUnstated: 'De {n} ori în acest fișier cheia de semnare se schimbă fără ca registrul să spună de ce. Înregistrările scrise înainte ca extensia să își declare schimbările de cheie arată așa; într-un fișier mai nou poate fi și o linie de la altă copie a extensiei. Fiecare înregistrare a fost totuși verificată mai sus sub propria cheie.',
+  },
+  es: {
+    summaryBuildOne: 'Compilación que escribió este archivo',
+    summaryBuildOneValue: '{id}. Cada registro de este archivo lleva esta compilación, la que lo evaluó.',
+    summaryBuildOneOfSomeValue: '{id} evaluó {n} de los {total} registros de este archivo. El resto ({rest}) no nombra ninguna compilación: las marcas que la extensión escribe sobre sí misma nunca lo hacen, ni los registros escritos antes de que los registros la llevaran.',
+    summaryInstall: 'Cómo se instaló la extensión',
+    installNormal: 'desde Chrome Web Store',
+    installDevelopment: 'cargada a mano desde una carpeta (una copia de desarrollo)',
+    installSideload: 'añadida por otro programa de este ordenador',
+    installAdmin: 'instalada por la política de un administrador',
+    installOther: 'de otra forma, que Chrome no nombró',
+    summaryInstallItem: '{what}: {n} registros',
+    summaryInstallUnstated: 'sin indicar: {n} registros, escritos antes de que los registros lo llevaran o mientras Chrome no lo decía',
+    summaryInstallLimit: 'Chrome le dice a la extensión cómo se instaló, y cada registro lleva lo que se le dijo. Una copia modificada por alguien podría escribir cualquier cosa aquí, así que es la declaración de la propia extensión, no una prueba.',
+    chainNoteKeyStated: '{n} veces en este archivo cambia la clave de firma y el registro dice por qué: cada vez, una marca firmada con la clave nueva nombra la clave anterior, la nueva y el motivo.',
+    chainNoteKeyUnstated: '{n} veces en este archivo cambia la clave de firma sin que nada en el registro diga por qué. Los registros escritos antes de que la extensión declarara sus cambios de clave se ven así; en un archivo más reciente también puede ser una línea de otra copia de la extensión. Cada registro se comprobó igualmente arriba con su propia clave.',
+  },
+  'pt-BR': {
+    summaryBuildOne: 'Build que escreveu este arquivo',
+    summaryBuildOneValue: '{id}. Cada registro deste arquivo carrega este build, o que o avaliou.',
+    summaryBuildOneOfSomeValue: '{id} avaliou {n} dos {total} registros deste arquivo. O restante ({rest}) não nomeia nenhum build: as marcações que a extensão escreve sobre si mesma nunca o fazem, nem os registros escritos antes de os registros o carregarem.',
+    summaryInstall: 'Como a extensão foi instalada',
+    installNormal: 'pela Chrome Web Store',
+    installDevelopment: 'carregada à mão de uma pasta (uma cópia de desenvolvimento)',
+    installSideload: 'adicionada por outro programa deste computador',
+    installAdmin: 'instalada pela política de um administrador',
+    installOther: 'de outro jeito, que o Chrome não nomeou',
+    summaryInstallItem: '{what}: {n} registros',
+    summaryInstallUnstated: 'não informado: {n} registros, escritos antes de os registros carregarem isso ou enquanto o Chrome não dizia',
+    summaryInstallLimit: 'O Chrome diz à extensão como ela foi instalada, e cada registro carrega o que lhe foi dito. Uma cópia alterada por alguém poderia escrever qualquer coisa aqui, então esta é a declaração da própria extensão, não uma prova.',
+    chainNoteKeyStated: '{n} vezes neste arquivo a chave de assinatura muda e o registro diz por quê: a cada vez, uma marcação assinada com a chave nova nomeia a chave antiga, a nova e o motivo.',
+    chainNoteKeyUnstated: '{n} vezes neste arquivo a chave de assinatura muda sem nada no registro dizer por quê. Registros escritos antes de a extensão declarar suas trocas de chave aparecem assim; num arquivo mais novo também pode ser uma linha de outra cópia da extensão. Cada registro foi verificado mesmo assim acima, sob a própria chave.',
+  },
+};

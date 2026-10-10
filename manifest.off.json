@@ -1,0 +1,74 @@
+{
+  "manifest_version": 3,
+  "name": "__MSG_offName__",
+  "version": "1.0.13",
+  "description": "__MSG_offDescription__",
+  "default_locale": "en",
+  "icons": {
+    "16": "assets/icons/icon-16.png",
+    "32": "assets/icons/icon-32.png",
+    "48": "assets/icons/icon-48.png",
+    "128": "assets/icons/icon-128.png"
+  },
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "*://*.twitter.com/*",
+    "*://*.x.com/*",
+    "*://*.instagram.com/*",
+    "*://*.tiktok.com/*",
+    "*://*.facebook.com/*",
+    "*://*.youtube.com/*"
+  ],
+  "homepage_url": "https://feelingwise.org/off",
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.twitter.com/*",
+        "*://*.x.com/*",
+        "*://*.instagram.com/*",
+        "*://*.tiktok.com/*",
+        "*://*.facebook.com/*",
+        "*://*.youtube.com/*"
+      ],
+      "exclude_matches": [
+        "*://*.facebook.com/messages",
+        "*://*.facebook.com/messages/*",
+        "*://*.facebook.com/messenger",
+        "*://*.facebook.com/messenger/*",
+        "*://*.instagram.com/direct",
+        "*://*.instagram.com/direct/*",
+        "*://*.twitter.com/messages",
+        "*://*.twitter.com/messages/*",
+        "*://*.twitter.com/i/chat",
+        "*://*.twitter.com/i/chat/*",
+        "*://*.x.com/messages",
+        "*://*.x.com/messages/*",
+        "*://*.x.com/i/chat",
+        "*://*.x.com/i/chat/*",
+        "*://*.tiktok.com/messages",
+        "*://*.tiktok.com/messages/*",
+        "*://*.tiktok.com/inbox",
+        "*://*.tiktok.com/inbox/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "__MSG_offActionTitle__",
+    "default_icon": {
+      "16": "assets/icons/icon-16.png",
+      "32": "assets/icons/icon-32.png",
+      "48": "assets/icons/icon-48.png",
+      "128": "assets/icons/icon-128.png"
+    }
+  }
+}

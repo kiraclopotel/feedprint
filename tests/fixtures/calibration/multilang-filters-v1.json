@@ -1,0 +1,1603 @@
+{
+  "version": "multilang-filters-v1",
+  "created": "2026-09-04",
+  "what": "Two-sided corpus for the Spanish and Portuguese deterministic filters. ACCEPT cases must match; REJECT cases must not. Without the second half you cannot tell a working filter from an inverted one (darking, 2026-08-26).",
+  "how_reject_was_built": "Every REJECT case whose `why` carries a number was found by scripts/corpus/multilang-fp-probe.ts against 441,690 Spanish and 444,028 Portuguese Tatoeba sentences, Don Quijote, and our own 56,919-post corpus. They are not invented; they are what the filter fired on.",
+  "locale_field": "The reader's locale, as navigator.language reports it. null means unknown, which is the common case and gets global lists only.",
+  "cases": [
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "puta",
+      "text": "eres una puta mentirosa",
+      "why": "ES core, obscene in every region"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "puta",
+      "text": "filho da puta, some daqui",
+      "why": "same term carries Portuguese"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "puto",
+      "text": "que puto calor hace hoy",
+      "why": "ES"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "mierda",
+      "text": "vete a la mierda, no te aguanto",
+      "why": "ES"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "jode",
+      "text": "deja de joder con lo mismo",
+      "why": "stem reaches joder"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "jodi",
+      "text": "estas bien jodido si sigues asi",
+      "why": "stem reaches jodido"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "cabron",
+      "text": "el cabron me robo el dinero",
+      "why": "ES"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "cabron",
+      "text": "eres un cabrón de mierda",
+      "why": "diacritic form folds to the entry"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "gilipolla",
+      "text": "que gilipollas eres",
+      "why": "ES"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "cojon",
+      "text": "estoy hasta los cojones de esto",
+      "why": "ES"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "folla",
+      "text": "solo piensa en follar",
+      "why": "stem reaches follar"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "carajo",
+      "text": "al carajo con todo",
+      "why": "ES"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "chinga",
+      "text": "chinga tu madre",
+      "why": "MX, obscene wherever it is used"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "caga",
+      "text": "me voy a cagar en todo",
+      "why": "stem reaches cagar"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "culo",
+      "text": "besame el culo",
+      "why": "exact-only entry still matches the whole word"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "coño",
+      "text": "pero que coño estas diciendo",
+      "why": "matched literally, before the fold"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "coño",
+      "text": "¡coños! me has asustado",
+      "why": "plural, literal rule"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "chupapolla",
+      "text": "eres un chupapollas",
+      "why": "compound is unambiguous in every region, unlike bare polla"
+    },
+    {
+      "expect": "match",
+      "tier": "slurs",
+      "locale": null,
+      "term": "maricon",
+      "text": "callate maricon de mierda",
+      "why": "ES homophobic slur, no benign sense"
+    },
+    {
+      "expect": "match",
+      "tier": "slurs",
+      "locale": null,
+      "term": "maricon",
+      "text": "los maricones no deberian existir",
+      "why": "stem reaches the plural"
+    },
+    {
+      "expect": "match",
+      "tier": "slurs",
+      "locale": null,
+      "term": "negrata",
+      "text": "no quiero negratas en mi barrio",
+      "why": "ES racial slur, zero benign hits in any corpus"
+    },
+    {
+      "expect": "match",
+      "tier": "slurs",
+      "locale": null,
+      "term": "sudaca",
+      "text": "vete a tu pais, sudaca",
+      "why": "anti-Latin-American slur used in Spain"
+    },
+    {
+      "expect": "match",
+      "tier": "slurs",
+      "locale": null,
+      "term": "mongolico",
+      "text": "eres un mongolico",
+      "why": "ES ableist"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "caralho",
+      "text": "que caralho e isso",
+      "why": "PT core"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "merda",
+      "text": "que merda de dia",
+      "why": "PT"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "buceta",
+      "text": "para de falar besteira, buceta",
+      "why": "PT"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "fode",
+      "text": "vai foder outro",
+      "why": "stem reaches foder"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "foda",
+      "text": "foda-se isso tudo",
+      "why": "PT"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "fodi",
+      "text": "ta tudo fodido agora",
+      "why": "stem reaches fodido"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "bosta",
+      "text": "que bosta de filme",
+      "why": "exact-only entry still matches the whole word"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "punheta",
+      "text": "para de bater punheta",
+      "why": "PT"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "piroca",
+      "text": "chupa minha piroca",
+      "why": "PT"
+    },
+    {
+      "expect": "match",
+      "tier": "slurs",
+      "locale": null,
+      "term": "viado",
+      "text": "sai daqui seu viado",
+      "why": "BR homophobic slur; the deer is spelled veado and is not listed"
+    },
+    {
+      "expect": "match",
+      "tier": "slurs",
+      "locale": null,
+      "term": "traveco",
+      "text": "olha o traveco ali",
+      "why": "BR transphobic slur"
+    },
+    {
+      "expect": "match",
+      "tier": "slurs",
+      "locale": null,
+      "term": "paneleiro",
+      "text": "es um paneleiro de merda",
+      "why": "PT homophobic slur"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": "es-PE",
+      "term": "concha",
+      "text": "andate a la concha",
+      "why": "obscene for a Peruvian reader"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": "es-AR",
+      "term": "concha",
+      "text": "la concha, que frio hace",
+      "why": "obscene for an Argentine reader"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": "es-ES",
+      "term": "polla",
+      "text": "me toca la polla",
+      "why": "obscene for a Spanish reader"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": "es-MX",
+      "term": "verga",
+      "text": "vete a la verga",
+      "why": "obscene for a Mexican reader"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": "es-MX",
+      "term": "pendej",
+      "text": "no seas pendejo",
+      "why": "a strong insult in Mexico"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": "es-PE",
+      "term": "ctm",
+      "text": "ctm que rabia",
+      "why": "the typed form Peruvians actually use"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": "es-PE",
+      "term": "ptm",
+      "text": "ptm no puede ser",
+      "why": "PE"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": "pt-BR",
+      "term": "rapariga",
+      "text": "ela e uma rapariga qualquer",
+      "why": "insult for a Brazilian reader"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": "pt-BR",
+      "term": "porra",
+      "text": "que porra e essa",
+      "why": "BR"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": "pt-BR",
+      "term": "krl",
+      "text": "que krl foi isso",
+      "why": "typed evasion for caralho"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": "pt-BR",
+      "term": "pqp",
+      "text": "pqp, de novo nao",
+      "why": "BR"
+    },
+    {
+      "expect": "match",
+      "tier": "slurs",
+      "locale": "pt-BR",
+      "term": "bicha",
+      "text": "olha a bicha ali",
+      "why": "homophobic slur for a Brazilian reader"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "concha de tu madre",
+      "text": "la concha de tu madre, no vuelvas",
+      "why": "the phrase is obscene in every region even where the word is a seashell"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "concha de tu madre",
+      "text": "conchatumadre, me estafaste",
+      "why": "fused spelling"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "concha de tu madre",
+      "text": "andate a la concha de la lora",
+      "why": "River Plate variant"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "tomar no cu",
+      "text": "vai tomar no cu, otario",
+      "why": "the parts are benign, the phrase is not"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "vai se foder",
+      "text": "vai se foder entao",
+      "why": "PT phrase"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "puta",
+      "text": "eres una put4",
+      "why": "leetspeak folds to the entry (4 maps to a, so p4ta would be pata and must NOT be the test)"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "mierda",
+      "text": "que mieeeerda",
+      "why": "doubled-letter dedup"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "merda",
+      "text": "que m3rda",
+      "why": "leetspeak, Portuguese"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "pt-BR",
+      "text": "Tom lidera o time de futebol e joga bem",
+      "why": "638 hits: the Romanian 'fute' stem was matching futebol"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "pt-BR",
+      "text": "espero um futuro melhor para as futuras geracoes",
+      "why": "448 hits: the Romanian 'futu' stem was matching futuro"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "es-PE",
+      "text": "espero un futuro mejor, con una futura casa propia",
+      "why": "472 hits, Spanish side of the same stem"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "es-PE",
+      "text": "no te molestes, no es ninguna molestia molestar al vecino",
+      "why": "614 hits: the English 'molest' stem was matching molestar"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "pt-BR",
+      "text": "a molestia dele piorou depois da viagem",
+      "why": "20 hits, Portuguese side of the same stem"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "pt-BR",
+      "text": "o elefante foi cacado, ele gosta de cacar na floresta",
+      "why": "307 hits: the Romanian 'caca' stem was matching cacar"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "pt-BR",
+      "text": "o elefante foi caçado, ele gosta de caçar",
+      "why": "same, with the diacritics the fold removes"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "es-PE",
+      "text": "compre una bolsa de cacahuetes y un cacao caliente",
+      "why": "60 hits: cacahuete, cacahuate, cacatua"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "pt-BR",
+      "text": "meus olhos quase pularam, ele pula muito alto",
+      "why": "105 hits: the Romanian 'pula' entry was matching pular"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "pt-BR",
+      "text": "a estrada faz uma curva fechada a direita",
+      "why": "56 hits: the Romanian 'curva' entry is a bend in the road in Portuguese"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "es-PE",
+      "text": "la carretera se curva hacia la derecha en este punto",
+      "why": "40 hits, Spanish side"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "pt-BR",
+      "text": "esta casa cheira a mofo",
+      "why": "7 hits: the English 'mofo' evasion is mould in Portuguese"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "es-ES",
+      "text": "comi rape con patatas en el puerto",
+      "why": "monkfish; the entry can hide a whole video, so it is withdrawn for Spanish readers"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "es-PE",
+      "text": "el rapero mas famoso de Lima dio un concierto",
+      "why": "3 hits: the English 'rape' stem was matching rapero"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "pt-BR",
+      "text": "o trem esta retardado e vai retardar toda a viagem",
+      "why": "17 hits, and this is the tier that hides the post"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "es-PE",
+      "text": "no conozco a nadie con ese conocimiento, reconozco mi error",
+      "why": "3,949 hits: why coño is matched literally and cono is not an entry"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "es-PE",
+      "text": "el niño quiere un cono de helado en el año nuevo",
+      "why": "the fold turns coño into cono and año into ano; neither may fire"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "pt-BR",
+      "text": "a conotacao da palavra mudou com o tempo",
+      "why": "530 Portuguese hits on the same prefix"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "es-PE",
+      "text": "el follaje del arbol da buena sombra",
+      "why": "3 hits: the 'folla' stem reaches follaje"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "es-PE",
+      "text": "es su hijo putativo, no biologico",
+      "why": "found in Don Quijote; the 'puta' stem reaches putativo"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": null,
+      "text": "Mr Pollard pollards the willows every winter",
+      "why": "2 hits in our own corpus; the ES 'polla' entry reaches Pollard"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": null,
+      "text": "he wore a cagoule because of the rain",
+      "why": "the ES 'cago' stem reaches cagoule"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "es-PE",
+      "text": "el arsenico es un elemento quimico peligroso",
+      "why": "3 hits: the English 'arse' stem reaches arsenico"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "pt-BR",
+      "text": "o arsenio esta nos arsenais militares",
+      "why": "6 hits, Portuguese side"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "es-ES",
+      "text": "me arrepiento de haber ido a Peniscola de vacaciones",
+      "why": "6 hits: the English 'penis' stem reaches Peniscola"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": null,
+      "text": "the cockneys of east London have their own accent",
+      "why": "the 'cock' stem reaches cockneys"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "pt-BR",
+      "text": "aquele processo foi cuntatorio e demorado",
+      "why": "1 hit: the English 'cunt' stem reaches cuntatorio"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": null,
+      "text": "am pornit motorul si masina a pornit imediat",
+      "why": "48 hits in our own corpus: the English 'porn' stem reaches the Romanian verb a porni. This one was live on Romanian posts."
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": null,
+      "text": "Como se escreve o ordinal 455 por extenso?",
+      "why": "the leet fold turns 455 into ass; a token with no letters can never be a word"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "es-AR",
+      "text": "los conchabados del campo cobraron su jornal",
+      "why": "3 hits: why the concha entry is exact-only"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "pt-BR",
+      "text": "o bichano dormiu no sofa a tarde toda",
+      "why": "why the bicha entry is exact-only"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "pt-BR",
+      "text": "vi tres veados na estrada de manha",
+      "why": "35 hits: the deer, spelled veado, is not the slur"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "pt-BR",
+      "text": "o macaco comeu a banana no zoologico",
+      "why": "146 hits: a slur only in directed use, which this layer cannot see"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "pt-BR",
+      "text": "o touro tem um corno quebrado",
+      "why": "10 hits: a horn"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "es-PE",
+      "text": "voy a coger el autobus para coger el libro de la mesa",
+      "why": "261 hits: vulgar in most of Latin America, ordinary in writing everywhere"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "es-PE",
+      "text": "el tren viene retrasado otra vez",
+      "why": "42 hits: ableist as an insult, delayed as a fact"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "es-PE",
+      "text": "no seas idiota, es una idiotez pero no pasa nada",
+      "why": "248 hits: mild register, same call as English damn"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "pt-BR",
+      "text": "aquele imbecil nao entendeu nada",
+      "why": "16 PT + 6 Romanian hits"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "pt-BR",
+      "text": "o vagabundo dormia no banco da praca",
+      "why": "15 hits"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "es-PE",
+      "text": "encontre una zorra en el campo anoche",
+      "why": "20 hits: a vixen"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "es-ES",
+      "text": "el niño recogio una concha en la playa",
+      "why": "a seashell for a Spanish reader; the whole reason the entry is region-gated"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "es-MX",
+      "text": "compramos conchas de pan dulce en la panaderia",
+      "why": "a Mexican pastry"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "es-PE",
+      "text": "la polla nacional reparte premios los domingos",
+      "why": "the betting pool; obscene only for a Spanish reader"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "es-ES",
+      "text": "izaron la vela en la verga del mastil",
+      "why": "the nautical sense, for a Spanish reader who is outside the gated regions. For a Mexican reader this sentence IS starred: an accepted collision, since verga is obscene there."
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "es-PE",
+      "text": "ese pendejo se salio con la suya otra vez",
+      "why": "in Peru this is crafty, often admiring; gated to Mexico"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "pt-PT",
+      "text": "a rapariga foi a escola com as amigas",
+      "why": "86 hits: an ordinary girl in Portugal"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "es-ES",
+      "text": "compre una porra y un cafe en la churreria",
+      "why": "8 hits: a churro in Spain"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "es-PE",
+      "text": "abrieron un boquete en la pared del deposito",
+      "why": "3 hits: a gap in Spanish"
+    },
+    {
+      "expect": "clear",
+      "tier": "both",
+      "locale": "es-MX",
+      "text": "csm sent the invoice to the CTM department",
+      "why": "the gated evasions must not fire on acronyms for readers outside their regions"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": "es-PE",
+      "term": "fuck",
+      "text": "what the fuck is this",
+      "why": "regression: English recall is unchanged for a Peruvian reader"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": "es-PE",
+      "term": "pizd",
+      "text": "esti o pizda ordinara",
+      "why": "regression: Romanian recall is unchanged"
+    },
+    {
+      "expect": "match",
+      "tier": "slurs",
+      "locale": "pt-BR",
+      "term": "tigan",
+      "text": "esti un tigan imputit",
+      "why": "regression: Romanian slur recall is unchanged for a Brazilian reader"
+    },
+    {
+      "expect": "match",
+      "tier": "slurs",
+      "locale": null,
+      "term": "retard",
+      "text": "you are such a retard",
+      "why": "regression: the exact-only change must not cost English recall"
+    },
+    {
+      "expect": "match",
+      "tier": "slurs",
+      "locale": null,
+      "term": "retard",
+      "text": "that is a retarded thing to say",
+      "why": "regression: the inflection is now its own entry, and reports the stem it belongs to (CANONICAL_TERM) so the per-rule counts do not fragment"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "molest",
+      "text": "he was accused of molest",
+      "why": "regression: exact form still matches"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "molest",
+      "text": "he was accused of molesting a child",
+      "why": "regression: the inflection is now its own entry, and reports the stem it belongs to (CANONICAL_TERM) so the per-rule counts do not fragment"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "rape",
+      "text": "he was convicted of rape",
+      "why": "regression: exact form still matches"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "rape",
+      "text": "she said he raped her",
+      "why": "regression: the inflection is now its own entry, and reports the stem it belongs to (CANONICAL_TERM) so the per-rule counts do not fragment"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "cacat",
+      "text": "s-a cacat pe el de frica",
+      "why": "regression: the Romanian cacat entry is untouched"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "futu",
+      "text": "futu-ti gura de prost",
+      "why": "regression: the futu-ti construction still resolves after exact-only"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "fute",
+      "text": "futeti mintile voastre",
+      "why": "regression: what the fute stem used to carry is now its own entry"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "pula",
+      "text": "ia de-aici pulă",
+      "why": "regression: Romanian pula still matches for a reader who is not Spanish or Portuguese"
+    },
+    {
+      "expect": "match",
+      "tier": "profanity",
+      "locale": null,
+      "term": "curva",
+      "text": "esti o curva ordinara",
+      "why": "regression: Romanian curva still matches outside Spanish and Portuguese readers"
+    }
+  ],
+  "coded_cases_what": "Two-sided corpus for the Spanish and Portuguese rules in coded-harm-catcher.ts. These are the HIDE tier: a match hides the post or comment and the reader never learns it existed, so the REJECT half carries more weight than the ACCEPT half. Every REJECT case marked (corpus) is a sentence the rules actually fired on across 441,690 Spanish and 444,028 Portuguese Tatoeba sentences plus Don Quijote, before it was fixed.",
+  "coded_cases": [
+    {
+      "expect": "match",
+      "category": "self-harm-encouragement",
+      "text": "matate de una vez, basura",
+      "why": "ES enclitic imperative, unambiguously directed"
+    },
+    {
+      "expect": "match",
+      "category": "self-harm-encouragement",
+      "text": "suicidate, nadie te quiere",
+      "why": "ES"
+    },
+    {
+      "expect": "match",
+      "category": "self-harm-encouragement",
+      "text": "ahorcate ya",
+      "why": "ES"
+    },
+    {
+      "expect": "match",
+      "category": "self-harm-encouragement",
+      "text": "cortate las venas",
+      "why": "ES"
+    },
+    {
+      "expect": "match",
+      "category": "self-harm-encouragement",
+      "text": "pegate un tiro",
+      "why": "ES"
+    },
+    {
+      "expect": "match",
+      "category": "self-harm-encouragement",
+      "text": "tirate de un puente",
+      "why": "ES"
+    },
+    {
+      "expect": "match",
+      "category": "self-harm-encouragement",
+      "text": "muerete",
+      "why": "ES; the corpus contains three real uses of this and no benign one"
+    },
+    {
+      "expect": "match",
+      "category": "self-harm-encouragement",
+      "text": "ojala te mueras",
+      "why": "ES directed death wish"
+    },
+    {
+      "expect": "match",
+      "category": "self-harm-encouragement",
+      "text": "andate a morir",
+      "why": "ES, River Plate"
+    },
+    {
+      "expect": "match",
+      "category": "self-harm-encouragement",
+      "text": "mátate ya",
+      "why": "with the diacritic; detectCodedHarm folds before matching"
+    },
+    {
+      "expect": "match",
+      "category": "self-harm-encouragement",
+      "text": "se mate logo, ninguem liga",
+      "why": "PT proclitic imperative at the start of its clause"
+    },
+    {
+      "expect": "match",
+      "category": "self-harm-encouragement",
+      "text": "mate-se, seu lixo",
+      "why": "PT hyphenated enclitic, only ever an imperative"
+    },
+    {
+      "expect": "match",
+      "category": "self-harm-encouragement",
+      "text": "suicide-se de uma vez",
+      "why": "PT"
+    },
+    {
+      "expect": "match",
+      "category": "self-harm-encouragement",
+      "text": "enforque-se",
+      "why": "PT"
+    },
+    {
+      "expect": "match",
+      "category": "self-harm-encouragement",
+      "text": "vai se matar, otario",
+      "why": "PT, the commonest Brazilian form"
+    },
+    {
+      "expect": "match",
+      "category": "self-harm-encouragement",
+      "text": "corta os pulsos",
+      "why": "PT"
+    },
+    {
+      "expect": "match",
+      "category": "self-harm-encouragement",
+      "text": "se joga da ponte",
+      "why": "PT"
+    },
+    {
+      "expect": "match",
+      "category": "sexual-solicitation",
+      "text": "manda nudes",
+      "why": "the loanword both languages use"
+    },
+    {
+      "expect": "match",
+      "category": "sexual-solicitation",
+      "text": "mandame una foto desnuda",
+      "why": "ES: explicit token plus a directed verb"
+    },
+    {
+      "expect": "match",
+      "category": "sexual-solicitation",
+      "text": "me manda uma foto pelada",
+      "why": "PT"
+    },
+    {
+      "expect": "match",
+      "category": "sexual-solicitation",
+      "text": "muestrame las tetas",
+      "why": "ES"
+    },
+    {
+      "expect": "match",
+      "category": "sexual-solicitation",
+      "text": "mostra a buceta",
+      "why": "PT"
+    },
+    {
+      "expect": "match",
+      "category": "doxxing",
+      "text": "publica su direccion y su telefono",
+      "why": "ES directed exposure"
+    },
+    {
+      "expect": "match",
+      "category": "doxxing",
+      "text": "vaza o endereco dele agora",
+      "why": "PT"
+    },
+    {
+      "expect": "clear",
+      "text": "El mate se puede tomar dulce o amargo",
+      "why": "(corpus) the drink. An unhyphenated mate-se matched this; Portuguese enclisis is always hyphenated, so the space form was dropped"
+    },
+    {
+      "expect": "clear",
+      "text": "estamos se mate por causas tan livianas",
+      "why": "(corpus) Don Quijote: a subjunctive whose subordinating que is a clause away. The proclitic form now has to open its clause"
+    },
+    {
+      "expect": "clear",
+      "text": "Tom vai te matar",
+      "why": "(corpus) vai TE matar is will kill YOU, a threat, not self-harm"
+    },
+    {
+      "expect": "clear",
+      "text": "Dizer por favor vai te matar?",
+      "why": "(corpus) the same idiom, harmless"
+    },
+    {
+      "expect": "clear",
+      "text": "esta roupa vai te matar de tao quente",
+      "why": "(corpus) idiom"
+    },
+    {
+      "expect": "clear",
+      "text": "ele vai se matar de tanto trabalhar",
+      "why": "third person, and a worry about overwork"
+    },
+    {
+      "expect": "clear",
+      "text": "voce vai se matar de tanto estudar",
+      "why": "a warning to someone, not encouragement"
+    },
+    {
+      "expect": "clear",
+      "text": "nao se mate, procure ajuda, voce importa",
+      "why": "negation flips it to support; Portuguese keeps the word order so the guard is what catches this"
+    },
+    {
+      "expect": "clear",
+      "text": "no te mates, busca ayuda por favor",
+      "why": "the Spanish negation uses a different verb form entirely, so it cannot collide"
+    },
+    {
+      "expect": "clear",
+      "text": "espero que se mate nao, que ele procure ajuda",
+      "why": "subordinate clause, third person"
+    },
+    {
+      "expect": "clear",
+      "text": "quiero matarme de tanto trabajar",
+      "why": "first-person disclosure of distress is never encouragement"
+    },
+    {
+      "expect": "clear",
+      "text": "matate de risa con este video",
+      "why": "everyday hyperbole using the same imperative"
+    },
+    {
+      "expect": "clear",
+      "text": "muerete de envidia, me compre un carro",
+      "why": "banter, and a boast"
+    },
+    {
+      "expect": "clear",
+      "text": "mandame una foto de tu perro",
+      "why": "an ordinary request; solicitation needs the explicit token"
+    },
+    {
+      "expect": "clear",
+      "text": "me manda uma foto do bolo que voce fez",
+      "why": "PT, the same"
+    },
+    {
+      "expect": "clear",
+      "text": "mostra a foto da praia",
+      "why": "PT, the same"
+    },
+    {
+      "expect": "clear",
+      "text": "no publiques su direccion, es ilegal",
+      "why": "negation guard, now in Spanish"
+    },
+    {
+      "expect": "clear",
+      "text": "publicar su direccion es ilegal y horrible",
+      "why": "condemnation guard, now in Spanish"
+    },
+    {
+      "expect": "clear",
+      "text": "nao posta o endereco dele, isso e crime",
+      "why": "negation guard, now in Portuguese"
+    },
+    {
+      "expect": "clear",
+      "text": "compartir su numero de vuelo con la aerolinea",
+      "why": "an ordinary sentence with share plus su plus numero, which the pattern must not reach"
+    },
+    {
+      "expect": "clear",
+      "text": "hoy fui al mercado y compre pan para la cena",
+      "why": "plain benign Spanish"
+    },
+    {
+      "expect": "clear",
+      "text": "o jogo de futebol foi otimo, o time jogou bem",
+      "why": "plain benign Portuguese"
+    }
+  ],
+  "l1_cases_what": "Two-sided corpus for the L1 cascade (src/core/techniques/) in Spanish and Portuguese. ACCEPT cases must produce present=true for the named technique; REJECT cases must produce no present technique at all. The REJECT half also locks the ENGLISH behaviour that changed when the shared rules were narrowed: those rules were language-blind, so the Spanish and Portuguese false positives they produced were English false positives too, and no test covered them.",
+  "l1_cases": [
+    {
+      "expect": "match",
+      "technique": "self-harm",
+      "text": "matate ya, nadie te va a extranar",
+      "why": "ES enclitic imperative"
+    },
+    {
+      "expect": "match",
+      "technique": "self-harm",
+      "text": "suicidate de una vez, el mundo estaria mejor sin ti",
+      "why": "ES"
+    },
+    {
+      "expect": "match",
+      "technique": "self-harm",
+      "text": "se mate logo, ninguem vai sentir sua falta",
+      "why": "PT proclitic at clause start"
+    },
+    {
+      "expect": "match",
+      "technique": "self-harm",
+      "text": "mate-se, voce nao serve pra nada",
+      "why": "PT hyphenated enclitic"
+    },
+    {
+      "expect": "match",
+      "technique": "violence-graphic",
+      "text": "te voy a matar, te encuentro y te mato",
+      "why": "ES directed threat; pro-drop means the clitic carries it"
+    },
+    {
+      "expect": "match",
+      "technique": "violence-graphic",
+      "text": "vou te matar, vou te encontrar seu lixo",
+      "why": "PT"
+    },
+    {
+      "expect": "match",
+      "technique": "extreme-toxicity",
+      "text": "todos a reportar a esta cuenta, hay que hacerla llorar",
+      "why": "ES coordinated pile-on"
+    },
+    {
+      "expect": "match",
+      "technique": "extreme-toxicity",
+      "text": "todo mundo denuncia ela, vamos fazer ela chorar",
+      "why": "PT"
+    },
+    {
+      "expect": "match",
+      "technique": "sexual",
+      "text": "eres muy madura para tu edad, esto queda entre tu y yo",
+      "why": "ES grooming: maturity plus secrecy"
+    },
+    {
+      "expect": "match",
+      "technique": "sexual",
+      "text": "voce e muito madura para sua idade, nao conta pra sua mae",
+      "why": "PT"
+    },
+    {
+      "expect": "match",
+      "technique": "drug-promotion",
+      "text": "tengo la merca, la coca esta buenisima, prueba una tacha",
+      "why": "ES: substance plus an acquiring verb, never the noun alone"
+    },
+    {
+      "expect": "match",
+      "technique": "drug-promotion",
+      "text": "tenho a maconha, o po e muito bom, experimenta uma bala",
+      "why": "PT"
+    },
+    {
+      "expect": "clear",
+      "text": "Como se llama este animal en japones?",
+      "why": "(corpus) 0.27% of all Spanish sentences: the bare noun animal was in the dehumanization list"
+    },
+    {
+      "expect": "clear",
+      "text": "O elefante e um animal enorme.",
+      "why": "(corpus) the same, in Portuguese"
+    },
+    {
+      "expect": "clear",
+      "text": "El criminal tuvo que ocultar su identidad.",
+      "why": "(corpus) an ordinary noun in three of the four languages"
+    },
+    {
+      "expect": "clear",
+      "text": "Me gustaria hacer una reservacion de hotel.",
+      "why": "(corpus) the Romanian ho[t] stem for thief matched HOTEL"
+    },
+    {
+      "expect": "clear",
+      "text": "La gente se puso de pie y comenzo a cantar.",
+      "why": "(corpus) the Romanian pus stem plus a bare de matched Spanish wholesale"
+    },
+    {
+      "expect": "clear",
+      "text": "Onde puseste o saco de viagem?",
+      "why": "(corpus) the same, in Portuguese"
+    },
+    {
+      "expect": "clear",
+      "text": "Que lengua se habla en E.U.A.?",
+      "why": "(corpus) EUA is simply how Spanish writes USA"
+    },
+    {
+      "expect": "clear",
+      "text": "Todos os estudantes sao dos EUA.",
+      "why": "(corpus) the same, in Portuguese"
+    },
+    {
+      "expect": "clear",
+      "text": "La fotografia fue descubierta en el siglo XVIII.",
+      "why": "(corpus) Roman numerals are not shouting"
+    },
+    {
+      "expect": "clear",
+      "text": "O seculo XXI pertence a Asia.",
+      "why": "(corpus) the same"
+    },
+    {
+      "expect": "clear",
+      "text": "Esse e o meu CD, nao e?",
+      "why": "(corpus) one abbreviation in a short sentence is not a format signal"
+    },
+    {
+      "expect": "clear",
+      "text": "Su trabajo es anadir ejemplos al diccionario.",
+      "why": "(corpus) my own first draft read 'su X es' as doxxing, at severity 6"
+    },
+    {
+      "expect": "clear",
+      "text": "Ele mora na periferia de Londres.",
+      "why": "(corpus) my own first draft: saying where someone lives is most of what people say about each other"
+    },
+    {
+      "expect": "clear",
+      "text": "Agora trabalha na Franca.",
+      "why": "(corpus) the same"
+    },
+    {
+      "expect": "clear",
+      "text": "A saudade e um sentimento em que o sujeito experimenta uma perda.",
+      "why": "(corpus) my own first draft matched 'experimenta uma' with no substance in it"
+    },
+    {
+      "expect": "clear",
+      "text": "no te mates estudiando, descansa un poco",
+      "why": "the Spanish negation uses a different verb form, so it cannot collide"
+    },
+    {
+      "expect": "clear",
+      "text": "quiero matarme de tanto trabajar",
+      "why": "first person is distress, not encouragement"
+    },
+    {
+      "expect": "clear",
+      "text": "la marihuana medicinal es legal en varios paises",
+      "why": "a policy topic; the substance alone never fires"
+    },
+    {
+      "expect": "clear",
+      "text": "compre una coca cola bien fria en la tienda",
+      "why": "coca is also a soft drink"
+    },
+    {
+      "expect": "clear",
+      "text": "cuantos anos tienes? yo tengo treinta y dos",
+      "why": "an ordinary question between adults, below the threshold on its own"
+    },
+    {
+      "expect": "clear",
+      "text": "I booked a hotel near the station for two nights",
+      "why": "English: the same ho[t] stem, which matched hotel in every language"
+    },
+    {
+      "expect": "clear",
+      "text": "we went to the animal shelter and adopted a cat",
+      "why": "English: the bare dehumanization noun, an ordinary word here too"
+    },
+    {
+      "expect": "clear",
+      "text": "the criminal was arrested on Tuesday according to police",
+      "why": "English: an ordinary news noun"
+    },
+    {
+      "expect": "clear",
+      "text": "Henry VIII had six wives and World War II ended in 1945",
+      "why": "English: Roman numerals were counted as shouting"
+    },
+    {
+      "expect": "clear",
+      "text": "my CV is attached as a PDF",
+      "why": "English: one abbreviation is not a format signal"
+    },
+    {
+      "expect": "match",
+      "technique": "false-urgency",
+      "text": "la oferta termina hoy, ultima oportunidad, no esperes mas",
+      "why": "ES commercial urgency; the commercial object is what makes it urgency"
+    },
+    {
+      "expect": "match",
+      "technique": "false-urgency",
+      "text": "a promocao termina hoje, ultima chance, corra",
+      "why": "PT"
+    },
+    {
+      "expect": "match",
+      "technique": "fomo",
+      "text": "acceso exclusivo para miembros, solo con invitacion, plazas limitadas",
+      "why": "ES"
+    },
+    {
+      "expect": "match",
+      "technique": "fomo",
+      "text": "exclusivo para assinantes, somente com convite, vagas limitadas",
+      "why": "PT"
+    },
+    {
+      "expect": "match",
+      "technique": "bandwagon",
+      "text": "todo el mundo sabe que es asi y nadie lo cuestiona",
+      "why": "ES false consensus"
+    },
+    {
+      "expect": "match",
+      "technique": "bandwagon",
+      "text": "todo mundo sabe disso e ninguem questiona",
+      "why": "PT"
+    },
+    {
+      "expect": "match",
+      "technique": "toxic-positivity",
+      "text": "solo piensa en positivo, deja de quejarte, hay gente peor",
+      "why": "ES"
+    },
+    {
+      "expect": "match",
+      "technique": "toxic-positivity",
+      "text": "so pensa positivo, para de reclamar, tem gente pior",
+      "why": "PT"
+    },
+    {
+      "expect": "match",
+      "technique": "shame-attack",
+      "text": "deberias darte verguenza, ningun padre de verdad haria eso",
+      "why": "ES"
+    },
+    {
+      "expect": "match",
+      "technique": "shame-attack",
+      "text": "voce deveria ter vergonha, nenhum pai de verdade faria isso",
+      "why": "PT"
+    },
+    {
+      "expect": "match",
+      "technique": "fear-appeal",
+      "text": "ellos no quieren que lo sepas, comparte esto antes de que lo borren",
+      "why": "ES conspiracy fear framing"
+    },
+    {
+      "expect": "match",
+      "technique": "fear-appeal",
+      "text": "eles nao querem que voce saiba, compartilhe antes que apaguem",
+      "why": "PT"
+    },
+    {
+      "expect": "match",
+      "technique": "scapegoating",
+      "text": "todos los inmigrantes son el problema, es culpa de ellos",
+      "why": "ES group blame"
+    },
+    {
+      "expect": "match",
+      "technique": "scapegoating",
+      "text": "todos os imigrantes sao o problema, e culpa deles",
+      "why": "PT"
+    },
+    {
+      "expect": "match",
+      "technique": "parasocial-coercion",
+      "text": "eres mi todo, sin ti no puedo, me salvaste la vida",
+      "why": "ES"
+    },
+    {
+      "expect": "match",
+      "technique": "parasocial-coercion",
+      "text": "voce e tudo pra mim, sem voce eu nao consigo, voce salvou minha vida",
+      "why": "PT"
+    },
+    {
+      "expect": "match",
+      "technique": "body-comparison-priming",
+      "text": "asi se ve un cuerpo real, si no te ves asi tu cuerpo tiene que cambiar",
+      "why": "ES"
+    },
+    {
+      "expect": "match",
+      "technique": "body-comparison-priming",
+      "text": "perdi 20 kg em 30 dias, antes e depois",
+      "why": "PT weight-loss claim"
+    },
+    {
+      "expect": "match",
+      "technique": "consumer-rapid-frame",
+      "text": "compra ya, solo hoy, quedan 3 unidades, link en la bio",
+      "why": "ES"
+    },
+    {
+      "expect": "match",
+      "technique": "consumer-rapid-frame",
+      "text": "compre ja, so hoje, restam 3 unidades, link na bio",
+      "why": "PT"
+    },
+    {
+      "expect": "match",
+      "technique": "hyperreal-trauma-bait",
+      "text": "mira hasta el final, esto te va a hacer llorar, ten los panuelos",
+      "why": "ES"
+    },
+    {
+      "expect": "match",
+      "technique": "hyperreal-trauma-bait",
+      "text": "assista ate o final, isso vai te fazer chorar, prepare os lencos",
+      "why": "PT"
+    },
+    {
+      "expect": "clear",
+      "text": "I don't think I'm cut out for city life",
+      "why": "(corpus) the bare don't think fired false-urgency on 0.65% of ALL benign English sentences, more than every other classifier combined"
+    },
+    {
+      "expect": "clear",
+      "text": "I don't think I would have ever said what you say I said",
+      "why": "(corpus) the same"
+    },
+    {
+      "expect": "clear",
+      "text": "If you have any questions, don't hesitate to ask",
+      "why": "(corpus) a politeness formula, not pressure"
+    },
+    {
+      "expect": "clear",
+      "text": "Estoy llamando para aceptar su invitacion",
+      "why": "(corpus) a bare invitacion is a birthday invitation"
+    },
+    {
+      "expect": "clear",
+      "text": "El juguete era un camarero novato de edicion limitada",
+      "why": "(corpus) edicion limitada is a product description; the English list does not carry it either"
+    },
+    {
+      "expect": "clear",
+      "text": "El mes de enero termina hoy",
+      "why": "(corpus) a calendar fact; urgency needs the commercial object"
+    },
+    {
+      "expect": "clear",
+      "text": "El festival del sol termina hoy",
+      "why": "(corpus) the same"
+    },
+    {
+      "expect": "clear",
+      "text": "No lo dudes lo mas minimo",
+      "why": "(corpus) in Spanish this is reassurance, the opposite of pressure"
+    },
+    {
+      "expect": "clear",
+      "text": "Cuando un filosofo me responde, ya no entiendo mi pregunta",
+      "why": "(corpus) a bare me responde is ordinary; the plea marker is required"
+    },
+    {
+      "expect": "clear",
+      "text": "Dalida murio de una sobredosis de somniferos",
+      "why": "(corpus) a news report; the reward frame is what makes it glamorization"
+    },
+    {
+      "expect": "clear",
+      "text": "No todos los judios son religiosos",
+      "why": "(corpus) the negation makes this the OPPOSITE of group blame"
+    },
+    {
+      "expect": "clear",
+      "text": "Este trem e o ultimo para o fim do mundo",
+      "why": "(corpus) fim do mundo is also the middle of nowhere in Portuguese"
+    },
+    {
+      "expect": "clear",
+      "text": "Preciso saber a verdade sobre Tom",
+      "why": "(corpus) a bare a verdade sobre is an ordinary sentence"
+    },
+    {
+      "expect": "clear",
+      "text": "Recebi um convite de aniversario",
+      "why": "(corpus) a birthday invitation"
+    },
+    {
+      "expect": "clear",
+      "text": "Voce esta perdendo seu tempo",
+      "why": "(corpus) wasting your time is not fear of missing out"
+    },
+    {
+      "expect": "clear",
+      "text": "Que voce seja feliz, Ricardo",
+      "why": "(corpus) a good wish; the dismissive just is required, as in English"
+    },
+    {
+      "expect": "clear",
+      "text": "Nos queremos que voce seja feliz",
+      "why": "(corpus) the same"
+    },
+    {
+      "expect": "clear",
+      "text": "Maria apenas sorria, porque sabia a resposta",
+      "why": "(corpus) narration, not an instruction"
+    },
+    {
+      "expect": "clear",
+      "text": "Ninguem acha que voce e estupido",
+      "why": "(corpus) negated, and the dismissive marker is required"
+    },
+    {
+      "expect": "clear",
+      "text": "Las marionetas se mueven por cables",
+      "why": "(corpus) literal puppets; the political sense says somebody IS one"
+    },
+    {
+      "expect": "clear",
+      "text": "No le digas a tu hermano que aun no te has leido el libro",
+      "why": "(corpus) siblings dropped from the grooming list: this fired at severity 6"
+    },
+    {
+      "expect": "clear",
+      "text": "No le digas a nadie lo que estamos haciendo",
+      "why": "(corpus) as likely a surprise party as anything else"
+    }
+  ]
+}

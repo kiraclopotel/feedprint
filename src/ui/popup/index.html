@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Feedprint</title></head>
+<!-- The hardcoded background here (accessibility audit, 2026-09-18) outranked popup-design.css's own
+     `html, body { background: var(--fw-bg) }` by inline-style specificity, so a light-theme user
+     always saw a dark popup: it defeated the theme it was presumably meant to protect against a
+     flash of. The flash-prevention job stays done without it: tokens.css's dark `:root` default
+     plus its `prefers-color-scheme: light` fallback are already close to this same near-black, and
+     Popup.tsx's eagerApplyStoredTheme() sets the real preference synchronously before first paint. -->
+<body style="margin:0;padding:0"><div id="root"></div><script type="module" src="./Popup.tsx"></script></body>
+</html>

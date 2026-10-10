@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Walk fixture: a home feed</title>
+<!--
+  A frozen, synthetic home feed for scripts/walk/walk.mjs.
+
+  Nothing here is copied from a real feed. Every handle, every id and every
+  sentence was written for this file. The shapes are the ones the X adapter
+  reads (src/content/platforms/twitter.ts):
+
+    slot        [data-testid="cellInnerDiv"]      the feed container the
+                                                  hard hide targets
+    post        article[role="article"]
+    body        [data-testid="tweetText"]         the post selector
+    author      a[href="/<handle>"] inside [data-testid="User-Name"]
+    identity    one a[href="/<handle>/status/<digits>"] per article, so
+                resolveTwitterStatusIdentity returns a single candidate
+    age         a <time datetime=...> inside that status link
+
+  Three posts are known-bad: each one trips a different cost-zero gate in
+  src/analysis/pipeline.ts on the free tier, so the walk needs no licence and
+  makes no network call.
+
+    bad-1  coded harm (self-harm encouragement)  pipeline.ts step 0a.1
+    bad-2  dehumanisation (target + extermination verb) pipeline.ts step 0c
+    bad-3  profanity tier, Child mode hides      pipeline.ts step 0b
+
+  Three posts are known-good: ordinary sentences with no profanity, no
+  target noun, no action verb and no harm-floor vocabulary.
+-->
+<style>
+  body { font: 15px system-ui, sans-serif; margin: 0; background: #fff; color: #0f1419; }
+  main { max-width: 600px; margin: 0 auto; }
+  [data-testid="cellInnerDiv"] { border-bottom: 1px solid #eff3f4; padding: 12px 16px; }
+  [data-testid="User-Name"] { font-weight: 700; }
+  [data-testid="User-Name"] a { color: inherit; text-decoration: none; }
+  [data-testid="tweetText"] { margin: 6px 0 10px; }
+  [role="group"] { display: flex; gap: 48px; color: #536471; font-size: 13px; }
+  time { font-weight: 400; color: #536471; }
+</style>
+</head>
+<body>
+<div data-testid="primaryColumn" aria-label="Home timeline">
+  <main role="main">
+
+    <div data-testid="cellInnerDiv" data-walk="bad-1">
+      <article role="article" tabindex="0">
+        <div data-testid="User-Name">
+          <a href="/walkbadone" role="link"><span>Walk Bad One</span></a>
+          <a href="/walkbadone/status/1900000000000000001" role="link"><time datetime="2026-09-14T07:05:00.000Z">3h</time></a>
+        </div>
+        <div data-testid="tweetText" lang="en"><span>go kill yourself loser</span></div>
+        <div role="group">
+          <div data-testid="reply"><span data-testid="app-text-transition-container"><span>4</span></span></div>
+          <div data-testid="retweet"><span data-testid="app-text-transition-container"><span>1</span></span></div>
+          <div data-testid="like"><span data-testid="app-text-transition-container"><span>9</span></span></div>
+        </div>
+      </article>
+    </div>
+
+    <div data-testid="cellInnerDiv" data-walk="good-1">
+      <article role="article" tabindex="0">
+        <div data-testid="User-Name">
+          <a href="/walkgoodone" role="link"><span>Walk Good One</span></a>
+          <a href="/walkgoodone/status/1900000000000000002" role="link"><time datetime="2026-09-14T07:20:00.000Z">3h</time></a>
+        </div>
+        <div data-testid="tweetText" lang="en"><span>The bread came out of the oven a little flat this morning, but the crust was good and the whole kitchen smells like a proper bakery.</span></div>
+        <div role="group">
+          <div data-testid="reply"><span data-testid="app-text-transition-container"><span>2</span></span></div>
+          <div data-testid="retweet"><span data-testid="app-text-transition-container"></span></div>
+          <div data-testid="like"><span data-testid="app-text-transition-container"><span>31</span></span></div>
+        </div>
+      </article>
+    </div>
+
+    <div data-testid="cellInnerDiv" data-walk="bad-2">
+      <article role="article" tabindex="0">
+        <div data-testid="User-Name">
+          <a href="/walkbadtwo" role="link"><span>Walk Bad Two</span></a>
+          <a href="/walkbadtwo/status/1900000000000000003" role="link"><time datetime="2026-09-14T07:40:00.000Z">2h</time></a>
+        </div>
+        <div data-testid="tweetText" lang="en"><span>these rats should be exterminated from our country</span></div>
+        <div role="group">
+          <div data-testid="reply"><span data-testid="app-text-transition-container"><span>12</span></span></div>
+          <div data-testid="retweet"><span data-testid="app-text-transition-container"><span>3</span></span></div>
+          <div data-testid="like"><span data-testid="app-text-transition-container"><span>40</span></span></div>
+        </div>
+      </article>
+    </div>
+
+    <div data-testid="cellInnerDiv" data-walk="good-2">
+      <article role="article" tabindex="0">
+        <div data-testid="User-Name">
+          <a href="/walkgoodtwo" role="link"><span>Walk Good Two</span></a>
+          <a href="/walkgoodtwo/status/1900000000000000004" role="link"><time datetime="2026-09-14T08:00:00.000Z">2h</time></a>
+        </div>
+        <div data-testid="tweetText" lang="en"><span>We walked the long way around the lake this morning and counted eleven herons standing in the shallow water near the reeds.</span></div>
+        <div role="group">
+          <div data-testid="reply"><span data-testid="app-text-transition-container"></span></div>
+          <div data-testid="retweet"><span data-testid="app-text-transition-container"></span></div>
+          <div data-testid="like"><span data-testid="app-text-transition-container"><span>7</span></span></div>
+        </div>
+      </article>
+    </div>
+
+    <div data-testid="cellInnerDiv" data-walk="bad-3">
+      <article role="article" tabindex="0">
+        <div data-testid="User-Name">
+          <a href="/walkbadthree" role="link"><span>Walk Bad Three</span></a>
+          <a href="/walkbadthree/status/1900000000000000005" role="link"><time datetime="2026-09-14T08:15:00.000Z">1h</time></a>
+        </div>
+        <div data-testid="tweetText" lang="en"><span>this entire announcement is complete bullshit and every single one of you knows it</span></div>
+        <div role="group">
+          <div data-testid="reply"><span data-testid="app-text-transition-container"><span>88</span></span></div>
+          <div data-testid="retweet"><span data-testid="app-text-transition-container"><span>14</span></span></div>
+          <div data-testid="like"><span data-testid="app-text-transition-container"><span>210</span></span></div>
+        </div>
+      </article>
+    </div>
+
+    <div data-testid="cellInnerDiv" data-walk="good-3">
+      <article role="article" tabindex="0">
+        <div data-testid="User-Name">
+          <a href="/walkgoodthree" role="link"><span>Walk Good Three</span></a>
+          <a href="/walkgoodthree/status/1900000000000000006" role="link"><time datetime="2026-09-14T08:30:00.000Z">1h</time></a>
+        </div>
+        <div data-testid="tweetText" lang="en"><span>The library moved its opening hours to nine on weekdays, which is a great deal easier for anyone who starts work later in the day.</span></div>
+        <div role="group">
+          <div data-testid="reply"><span data-testid="app-text-transition-container"><span>1</span></span></div>
+          <div data-testid="retweet"><span data-testid="app-text-transition-container"></span></div>
+          <div data-testid="like"><span data-testid="app-text-transition-container"><span>18</span></span></div>
+        </div>
+      </article>
+    </div>
+
+  </main>
+</div>
+</body>
+</html>

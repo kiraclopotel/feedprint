@@ -1,0 +1,56 @@
+{
+  "data": {
+    "node": {
+      "comet_sections": {
+        "content": {
+          "story": {
+            "post_id": "4000000000000001",
+            "creation_time": 1780000500,
+            "actors": [
+              { "__typename": "User", "name": "Synthetic Neighbour", "short_name": "example_person" }
+            ],
+            "message": { "text": "Synthetic feed post body." },
+            "attachments": [
+              {
+                "media": {
+                  "image": { "uri": "https://www.facebook.com/static/synthetic-photo-one.jpg" }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "feedUnits": {
+      "edges": [
+        {
+          "node": {
+            "post_id": "4000000000000002",
+            "creation_time": 1780000600,
+            "actors": [
+              { "__typename": "Page", "name": "Synthetic Store", "short_name": "example_store" }
+            ],
+            "message": { "text": "" },
+            "sponsored_data": { "brs_filter_setting": "none" },
+            "attachments": [
+              {
+                "media": {
+                  "playable_url": "https://www.facebook.com/static/synthetic-video-two.mp4",
+                  "preferred_thumbnail": {
+                    "image": { "uri": "https://www.facebook.com/static/synthetic-video-two.jpg" }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "node": {
+            "id": "not-a-story",
+            "message": { "text": "A node with no post_id is not a story." }
+          }
+        }
+      ]
+    }
+  }
+}

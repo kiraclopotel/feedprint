@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pool a panel's exports</title>
+<meta name="description" content="Put several people's exports into one dataset and two tables, with every record still checkable. Runs in your browser, sends nothing anywhere." />
+<style>
+  :root { color-scheme: light; }
+  body { margin: 0; font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #1c1c1c; background: #fbfbfa; }
+  main { max-width: 760px; margin: 0 auto; padding: 40px 20px 60px; }
+  h1 { font-size: 1.6rem; margin: 0 0 8px; }
+  p { margin: 0 0 12px; }
+  .muted { color: #5a5a5a; font-size: 0.93rem; }
+  .drop { margin: 24px 0; padding: 36px 20px; border: 2px dashed #b8b8b4; border-radius: 10px; text-align: center; background: #fff; }
+  .drop.over { border-color: #2a7f78; background: #eef7f6; }
+  .drop input { margin-top: 10px; }
+  .status { font-size: 0.95rem; color: #5a5a5a; margin: 8px 0; }
+  table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #e3e3df; border-radius: 10px; margin: 12px 0; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid #ecece8; font-size: 0.93rem; vertical-align: top; }
+  td.verified { color: #2a7f78; font-weight: 600; }
+  td.partial { color: #a86a00; font-weight: 600; }
+  td.refused { color: #c62828; font-weight: 600; }
+  td.sha { font: 11px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; word-break: break-all; color: #5a5a5a; }
+  .summary { padding: 14px 18px; border-left: 8px solid #2a7f78; background: #eef7f6; border-radius: 6px; margin: 16px 0; }
+  .downloads button { margin: 6px 8px 6px 0; padding: 8px 14px; font: inherit; border: 1px solid #2a7f78; background: #fff; color: #2a7f78; border-radius: 6px; cursor: pointer; }
+  footer { margin-top: 40px; font-size: 0.85rem; color: #5a5a5a; }
+  code { font: 13px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Pool a panel's exports</h1>
+  <p>Choose every export your volunteers sent, or drop them here together. Each file is checked first; a file that fails its check is left out and named. The rest become one dataset in which every record keeps its signature, and two tables: one for a spreadsheet, one for 4CAT's "Custom/other" upload.</p>
+  <p class="muted">Nothing leaves your computer. This page loads only the two scripts beside it and makes no network request; you can open it with the network off.</p>
+
+  <div class="drop" id="drop">
+    <div>Drop the exports here</div>
+    <div class="muted">or</div>
+    <input type="file" id="files" accept=".html,.htm,.json" multiple />
+  </div>
+
+  <p class="status" id="status" hidden></p>
+  <div id="out" hidden>
+    <table>
+      <thead><tr><th>File</th><th>Name on the file</th><th>Check</th><th>Records pooled</th><th>Already in the pool</th><th>SHA-256</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="summary" id="summary"></div>
+    <div class="downloads">
+      <button type="button" id="get-pool">Save the pool (pool.json)</button>
+      <button type="button" id="get-csv">Save the table (table.csv)</button>
+      <button type="button" id="get-4cat">Save the 4CAT file (for-4cat.csv)</button>
+    </div>
+  </div>
+
+  <footer>
+    <p>The SHA-256 of each file is the one its volunteer was shown after the export and asked to send with it. If the two differ, the file you hold is not the file they made.</p>
+    <p>"Already in the pool" counts records a person exported twice: they are kept once. A text one person was shown twice counts as two sightings by one recorder, and only a text shown to different recorders counts as seen by several. Two files signed by keys of the same install are one recorder.</p>
+    <p>A pool says each record's content is what its key signed. It does not say who held a key, that a panel is complete, or that anything a record says is true. The format is written down in <code>FORMAT.md</code> beside this file, section 10.</p>
+  </footer>
+</main>
+<script src="verify-export.browser.js"></script>
+<script src="kit.browser.js"></script>
+<script>
+(function () {
+  var status = document.getElementById('status');
+  var out = document.getElementById('out');
+  var rows = document.getElementById('rows');
+  var summary = document.getElementById('summary');
+  var drop = document.getElementById('drop');
+  var input = document.getElementById('files');
+  var made = null;
+  function say(text) { status.hidden = !text; status.textContent = text || ''; }
+  function cell(tr, text, cls) { var td = document.createElement('td'); td.textContent = text; if (cls) td.className = cls; tr.appendChild(td); }
+  function save(name, text, type) {
+    var url = URL.createObjectURL(new Blob([text], { type: type }));
+    var a = document.createElement('a');
+    a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+  function pool(files) {
+    if (!files || !files.length) return;
+    out.hidden = true; made = null;
+    say('Checking ' + files.length + ' file' + (files.length === 1 ? '' : 's') + '...');
+    Promise.all(Array.prototype.map.call(files, function (f) {
+      return f.arrayBuffer().then(function (buf) { var bytes = new Uint8Array(buf); return { label: f.name, text: new TextDecoder().decode(bytes), bytes: bytes }; });
+    })).then(function (inputs) {
+      return window.FWKit.pool.buildPool(inputs);
+    }).then(function (p) {
+      made = p;
+      rows.textContent = '';
+      p.sources.forEach(function (s) {
+        var tr = document.createElement('tr');
+        cell(tr, s.file); cell(tr, s.nameOnFile || ''); cell(tr, s.reading === 'verified' ? 'Verified' : 'Partially verified', s.reading);
+        cell(tr, String(s.pooled)); cell(tr, String(s.copies)); cell(tr, s.sha256, 'sha'); rows.appendChild(tr);
+      });
+      p.refused.forEach(function (r) {
+        var tr = document.createElement('tr');
+        cell(tr, r.file); cell(tr, ''); cell(tr, 'Left out: ' + r.reason, 'refused'); cell(tr, '0'); cell(tr, ''); cell(tr, r.sha256, 'sha'); rows.appendChild(tr);
+      });
+      var shared = {};
+      p.records.forEach(function (r) { if (r.recordersWithItem > 1) shared[r.identity] = true; });
+      summary.textContent = p.records.length + ' records from ' + p.recorders.length + ' recorder' + (p.recorders.length === 1 ? '' : 's')
+        + '. ' + Object.keys(shared).length + ' items were recorded by more than one recorder.';
+      say('');
+      out.hidden = false;
+    }).catch(function (err) {
+      say('These files could not be pooled: ' + (err && err.message ? err.message : String(err)));
+    });
+  }
+  document.getElementById('get-pool').addEventListener('click', function () {
+    if (made) save('pool.json', JSON.stringify(made, null, 2) + '\n', 'application/json');
+  });
+  document.getElementById('get-csv').addEventListener('click', function () {
+    if (!made) return;
+    window.FWKit.toCsv.rowsOf(made).then(function (r) { save('table.csv', window.FWKit.toCsv.toCsv(r), 'text/csv'); });
+  });
+  document.getElementById('get-4cat').addEventListener('click', function () {
+    if (!made) return;
+    window.FWKit.to4cat.fourcatRows(made).then(function (r) { save('for-4cat.csv', window.FWKit.to4cat.toFourcatCsv(r), 'text/csv'); });
+  });
+  input.addEventListener('change', function () { pool(input.files); });
+  drop.addEventListener('dragover', function (e) { e.preventDefault(); drop.classList.add('over'); });
+  drop.addEventListener('dragleave', function () { drop.classList.remove('over'); });
+  drop.addEventListener('drop', function (e) {
+    e.preventDefault(); drop.classList.remove('over');
+    pool(e.dataTransfer && e.dataTransfer.files);
+  });
+})();
+</script>
+</body>
+</html>

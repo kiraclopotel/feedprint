@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Check a FeelingWise export</title>
+<meta name="description" content="Open a Feedprint export here and read what its own cryptography says about it. Runs in your browser, sends nothing anywhere." />
+<style>
+  :root { color-scheme: light; }
+  body { margin: 0; font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #1c1c1c; background: #fbfbfa; }
+  main { max-width: 760px; margin: 0 auto; padding: 40px 20px 60px; }
+  h1 { font-size: 1.6rem; margin: 0 0 8px; }
+  p { margin: 0 0 12px; }
+  .muted { color: #5a5a5a; font-size: 0.93rem; }
+  .drop { margin: 24px 0; padding: 36px 20px; border: 2px dashed #b8b8b4; border-radius: 10px; text-align: center; background: #fff; }
+  .drop.over { border-color: #2a7f78; background: #eef7f6; }
+  .drop input { margin-top: 10px; }
+  .check-status { font-size: 0.95rem; color: #5a5a5a; margin: 8px 0; }
+  .fw-check { border: 1px solid #e3e3df; border-radius: 10px; background: #fff; overflow: hidden; }
+  .fw-check-label { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: #6b6b67; margin-bottom: 6px; }
+  .fw-check-holding { padding: 18px 20px; border-bottom: 1px solid #ecece8; }
+  .fw-check-holding p { margin: 0; }
+  .fw-check-verdict { padding: 18px 20px; border-left: 8px solid #b8b8b4; }
+  .fw-check-verdict-line { margin: 0; font-size: 1.15rem; font-weight: 600; line-height: 1.45; }
+  .fw-check-verified .fw-check-verdict { border-left-color: #2a7f78; background: #eef7f6; }
+  .fw-check-partial .fw-check-verdict { border-left-color: #d98a00; background: #fdf5e6; }
+  .fw-check-failed .fw-check-verdict { border-left-color: #c62828; background: #fbeaea; }
+  .fw-check-notes { margin: 0; padding: 14px 20px 14px 40px; line-height: 1.55; }
+  .fw-check-limit { margin: 0; padding: 12px 20px 16px; font-size: 0.88rem; color: #5a5a5a; }
+  .fw-check-raw { border-top: 1px solid #ecece8; padding: 10px 20px 14px; }
+  .fw-check-raw summary { cursor: pointer; color: #2a7f78; }
+  .fw-check-raw pre { white-space: pre-wrap; word-break: break-word; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; margin: 10px 0 0; }
+  footer { margin-top: 40px; font-size: 0.85rem; color: #5a5a5a; }
+  a { color: #2a7f78; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Check a FeelingWise export</h1>
+  <p>Choose the export file you were given, or drop it here. This page reads it and prints what its own cryptography says: every record's hash recomputed, every signature checked under the keys the file carries, the chain links, the signed manifest, and every time-stamp token opened offline.</p>
+  <p class="muted">Nothing leaves your computer. This page loads no script from anywhere and makes no network request; you can open it with the network off.</p>
+
+  <div class="drop" id="check-drop">
+    <div>Drop the export here</div>
+    <div class="muted">or</div>
+    <input type="file" id="check-file" accept=".html,.htm,.json" />
+  </div>
+
+  <p class="check-status" id="check-status" hidden></p>
+  <div id="check-out" hidden></div>
+
+  <footer>
+    <p>The checker compares the file with itself. It does not establish who created the file, whether the embedded key is the original key, that the file holds everything the record held, or that anything a record says is true.</p>
+    <p>This page runs the same functions the export embeds in its own verifier, generated from the same source. Source and licence (Apache-2.0): the <code>README.md</code> beside this file.</p>
+  </footer>
+</main>
+<script src="verify-export.browser.js"></script>
+<script>
+(function () {
+  var out = document.getElementById('check-out');
+  var status = document.getElementById('check-status');
+  var drop = document.getElementById('check-drop');
+  var input = document.getElementById('check-file');
+  var WORDS = {"reading":"Reading {name} ({kb} KB)...","unreadable":"This file could not be read as a Feedprint export."};
+  function say(text) { status.hidden = !text; status.textContent = text || ''; }
+  function check(file) {
+    if (!file) return;
+    out.hidden = true;
+    say(WORDS.reading.replace('{name}', file.name).replace('{kb}', String(Math.round(file.size / 1024))));
+    file.text().then(function (text) {
+      return window.FWVerifier.verifyExportText(text).then(function (report) {
+        say('');
+        window.FWVerifier.render(report, out);
+        out.hidden = false;
+      });
+    }).catch(function (err) {
+      say(WORDS.unreadable + ' ' + (err && err.message ? err.message : String(err)));
+    });
+  }
+  input.addEventListener('change', function () { check(input.files && input.files[0]); });
+  drop.addEventListener('dragover', function (e) { e.preventDefault(); drop.classList.add('over'); });
+  drop.addEventListener('dragleave', function () { drop.classList.remove('over'); });
+  drop.addEventListener('drop', function (e) {
+    e.preventDefault(); drop.classList.remove('over');
+    check(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]);
+  });
+})();
+</script>
+</body>
+</html>

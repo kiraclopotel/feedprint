@@ -1,0 +1,63 @@
+/* The popup's life, loaded last by both popups. Two looks, each under a class life.ts sets on the page's root:
+   fw-life-depth and fw-life-motion. Without them the popup is the flat shell above, and nothing in it moves. */
+
+/* ─── Depth ──────────────────────────────────────────────────────────────────────────────────────────────────── */
+html.fw-life-depth {
+  --pop-elev: 0 1px 2px rgb(0 0 0 / 0.28), 0 10px 22px -12px rgb(0 0 0 / 0.65);
+  --pop-elev-cta: 0 8px 18px -10px color-mix(in oklch, var(--fw-teal) 75%, transparent);
+}
+html.fw-life-depth[data-theme="light"] {
+  --pop-elev: 0 1px 2px rgb(16 24 40 / 0.07), 0 8px 18px -10px rgb(16 24 40 / 0.2);
+  --pop-elev-cta: 0 8px 18px -10px color-mix(in oklch, var(--fw-teal) 60%, transparent);
+}
+@media (prefers-color-scheme: light) {
+  html.fw-life-depth:not([data-theme]) {
+    --pop-elev: 0 1px 2px rgb(16 24 40 / 0.07), 0 8px 18px -10px rgb(16 24 40 / 0.2);
+    --pop-elev-cta: 0 8px 18px -10px color-mix(in oklch, var(--fw-teal) 60%, transparent);
+  }
+}
+/* A tint of the brand colour behind the header that fades into the page by its lower edge, so there is no line. */
+html.fw-life-depth .fw-popup .pop-header {
+  background: linear-gradient(180deg, color-mix(in oklch, var(--fw-teal) 14%, var(--fw-bg)) 0%, var(--fw-bg) 100%);
+}
+/* One level of elevation: every card the same, the main button a little more. */
+html.fw-life-depth .fw-popup .pop-card,
+html.fw-life-depth .fw-popup .key-card,
+html.fw-life-depth .fw-popup .pop-bn,
+html.fw-life-depth .fw-popup .pop-update { box-shadow: var(--pop-elev); }
+html.fw-life-depth .fw-popup .pop-cta:not(.sec):not(.secondary):not(:disabled) { box-shadow: var(--pop-elev-cta); }
+/* Teal's second colour lives on the day's card, a faint pink-violet tint and the figure in pink-violet: with the card
+   plain, Home showed no pink-violet at all and Teal read as one colour. The tint stops at 12%, where the muted total
+   beside the figure still clears 4.5:1 in dark. The other looks colour this card in popup-looks.css. */
+html.fw-life-depth:not([data-look]) .fw-popup .today-card {
+  background: linear-gradient(165deg, color-mix(in srgb, var(--fw-purple) 12%, var(--fw-card)) 0%, var(--fw-card) 60%);
+}
+html.fw-life-depth:not([data-look]) .fw-popup .today-card .pop-hero-value { color: var(--fw-purple); }
+/* The plan chip filled when a key is active, so it reads as a state, not as a label. */
+html.fw-life-depth .fw-popup .pop-tier:not(.free) .pill {
+  background: var(--fw-teal); color: var(--fw-on-accent); border-color: transparent;
+}
+
+/* ─── Motion ─────────────────────────────────────────────────────────────────────────────────────────────────── */
+/* Every movement follows a change: a switch flipped, a screen or tab opened. Each ends within 700 ms; none loops. */
+html.fw-life-motion .fw-popup .toggle { transition: background-color 180ms ease; }
+html.fw-life-motion .fw-popup .toggle::after { transition: left 180ms cubic-bezier(0.2, 0.8, 0.2, 1), background-color 180ms ease; }
+html.fw-life-motion .fw-popup .pop-card { animation: fw-pop-settle 240ms ease-out both; }
+html.fw-life-motion .fw-popup .mode-seg-btn { transition: background-color 160ms ease, color 160ms ease; }
+@keyframes fw-pop-settle { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+/* Nothing loops, in any look: the status dots and Off's mark pulsed forever, which is movement without a change. */
+html .fw-popup .pop-header .ind,
+html .fw-popup .status-chip .status-dot,
+html .fw-popup .pop-header .wordmark::before { animation: none; }
+/* Without the motion look nothing moves, Off's own card and switch movements included. */
+html:not(.fw-life-motion) .fw-popup .pop-card { animation: none; }
+html:not(.fw-life-motion) .fw-popup .toggle,
+html:not(.fw-life-motion) .fw-popup .toggle::after,
+html:not(.fw-life-motion) .fw-popup .pop-card,
+html:not(.fw-life-motion) .fw-popup .pop-cta { transition: none; }
+/* Reduced motion: nothing moves in any look, the small colour fades on buttons included. */
+@media (prefers-reduced-motion: reduce) {
+  html .fw-popup *,
+  html .fw-popup *::before,
+  html .fw-popup *::after { animation: none !important; transition: none !important; }
+}

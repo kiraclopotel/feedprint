@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "."
+  },
+  "include": [
+    "tests/**/*.ts",
+    "tests/**/*.tsx",
+    "scripts/**/*.ts",
+    "scripts/**/*.d.mts",
+    "eslint.config.d.mts",
+    "worker/scripts/**/*.d.mts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}

@@ -1,0 +1,11 @@
+#!/bin/sh
+# FeelingWise pre-merge-commit: git calls this hook, not pre-commit, when a merge makes its commit
+# without stopping, so without it a merge into master passed no gate at all. It runs the same gate
+# and tells it this is a merge: git has not written MERGE_HEAD yet when it calls this hook, so
+# pre-commit could not tell on its own, and a merge into a branch other than master would take the
+# fast lane. A merge that stops on a conflict is finished by `git commit`, which calls pre-commit
+# with MERGE_HEAD in place. A fast-forward makes no commit and calls no hook: the branch's own
+# commits were its gate.
+#
+# Bypass (emergency only): git merge --no-verify
+FW_GATE_MERGE=1 exec sh "$(dirname "$0")/pre-commit"

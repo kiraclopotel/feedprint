@@ -1,0 +1,55 @@
+{
+  "data": {
+    "home": {
+      "home_timeline_urt": {
+        "instructions": [
+          {
+            "type": "TimelineAddEntries",
+            "entries": [
+              {
+                "entryId": "tweet-9000000000000000001",
+                "content": {
+                  "entryType": "TimelineTimelineItem",
+                  "itemContent": {
+                    "itemType": "TimelineTweet",
+                    "tweet_results": {
+                      "result": {
+                        "__typename": "Tweet",
+                        "rest_id": "9000000000000000001",
+                        "core": {
+                          "user_results": {
+                            "result": {
+                              "__typename": "User",
+                              "legacy": {
+                                "name": "Synthetic Home",
+                                "screen_name": "homeauthor"
+                              },
+                              "is_blue_verified": false
+                            }
+                          }
+                        },
+                        "legacy": {
+                          "full_text": "Home feed item.",
+                          "created_at": "Sat May 17 19:00:00 +0000 2026",
+                          "favorite_count": 10,
+                          "reply_count": 2,
+                          "retweet_count": 1,
+                          "quote_count": 0,
+                          "bookmark_count": 3,
+                          "user_id_str": "1000000000000000003"
+                        },
+                        "views": {
+                          "count": "456"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

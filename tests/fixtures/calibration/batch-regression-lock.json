@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "privacy": "Aggregate-only regression evidence. No source text, record rows, identities, URLs, or provider responses.",
+  "runs": [
+    {
+      "corpus": "honest-en-v1.json",
+      "mode": "real",
+      "generated_at": "2026-06-10",
+      "total_records": 289,
+      "failed_count": 0,
+      "poisoned": false,
+      "overall": {
+        "precision": 0.660377358490566,
+        "recall": 0.8536585365853658,
+        "f1": 0.7446808510638298
+      },
+      "provenance": "Aggregate TP=35 FP=18 FN=6 from the documented 2026-06-10 comments-path round-2 run; private corpus and record-level result remain local."
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "receiptsName": { "message": "Feedprint - Save What Your Feed Showed You" },
+  "receiptsShortName": { "message": "Feedprint" },
+  "receiptsDescription": { "message": "A signed archive of what your feed showed on X, Facebook, Instagram, TikTok and YouTube, kept on your computer. Anyone can check it." },
+  "receiptsActionTitle": { "message": "Feedprint by FeelingWise" },
+  "offName": { "message": "Off - Hide Swearing, Likes, Reels, Shorts and Ads on Social Media" },
+  "offDescription": { "message": "Turn off swearing, slurs, like counts, Reels, Shorts and ads on Facebook, Instagram, X, TikTok and YouTube. Free, no account." },
+  "offActionTitle": { "message": "Off" }
+}

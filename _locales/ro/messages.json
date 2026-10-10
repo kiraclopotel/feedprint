@@ -1,0 +1,9 @@
+{
+  "receiptsName": { "message": "Feedprint - Păstrează ce ți-a arătat feedul" },
+  "receiptsShortName": { "message": "Feedprint" },
+  "receiptsDescription": { "message": "O arhivă semnată cu tot ce ți-a arătat feedul pe X, Facebook, Instagram, TikTok și YouTube, pe calculatorul tău. Oricine o verifică." },
+  "receiptsActionTitle": { "message": "Feedprint de la FeelingWise" },
+  "offName": { "message": "Off - Ascunde înjurături, aprecieri, Reels, Shorts și reclame" },
+  "offDescription": { "message": "Oprește înjurăturile, aprecierile, Reels, Shorts și reclamele pe Facebook, Instagram, X, TikTok și YouTube. Gratuit, fără cont." },
+  "offActionTitle": { "message": "Off" }
+}

@@ -1,0 +1,27 @@
+/* Off's popup only, kept out of the shared popup sheet, which the recorder's build ships too. */
+
+/* The first screen: what Off is doing, the guide, then folds. */
+.fw-off .off-status { margin: 6px 0 0; font-size: 14px; line-height: 1.5; color: var(--fw-text); }
+.fw-off .off-hidden { margin: 6px 0 0; font-size: 12px; line-height: 1.5; color: var(--fw-teal); }
+.fw-off .off-help { margin: 8px 0 0; font-size: 12px; line-height: 1.5; color: var(--fw-muted); }
+.fw-off .off-help:last-child { margin-bottom: 8px; }
+.fw-off .off-help a { color: var(--fw-teal); text-decoration: underline; }
+.fw-off :is(.off-fold, .off-card-fold) > summary {
+  list-style: none; cursor: pointer; min-height: 24px; font-size: 11px;
+  /* Tighter than a section title, so six closed folds and the longest status (Spanish) fit in 600. */
+  padding-top: 12px;
+}
+.fw-off :is(.off-fold, .off-card-fold) > summary::-webkit-details-marker { display: none; }
+.fw-off :is(.off-fold, .off-card-fold) > summary::before {
+  content: ""; flex: none; width: 5px; height: 5px; margin: 0 2px 2px 0;
+  border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg); transition: transform 0.15s ease;
+}
+.fw-off :is(.off-fold, .off-card-fold)[open] > summary::before { transform: rotate(45deg); }
+.fw-off :is(.off-fold, .off-card-fold) > summary:hover { color: var(--fw-text); }
+.fw-off :is(.off-fold, .off-card-fold) > summary:focus-visible { outline: 2px solid var(--fw-teal); outline-offset: -2px; border-radius: var(--fw-r-md); }
+.fw-off .off-fold-n { text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--fw-teal); }
+@media (prefers-reduced-motion: reduce) { .fw-off :is(.off-fold, .off-card-fold) > summary::before { transition: none; } }
+/* The guide's fold inside the first card: the same row as the folds below, at the card's own edge. */
+.fw-off .off-card-fold > summary.grp-hdr { padding: 8px 0 4px; }
+.fw-off .off-card-fold + .off-help { margin-top: 4px; }

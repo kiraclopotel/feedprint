@@ -1,0 +1,47 @@
+{
+   "action": {
+      "default_icon": {
+         "128": "assets/icons/icon-128.png",
+         "16": "assets/icons/icon-16.png",
+         "32": "assets/icons/icon-32.png",
+         "48": "assets/icons/icon-48.png"
+      },
+      "default_popup": "popup.html",
+      "default_title": "__MSG_receiptsActionTitle__"
+   },
+   "background": {
+      "service_worker": "service-worker.js",
+      "type": "module"
+   },
+   "content_scripts": [ {
+      "exclude_matches": [ "*://*.facebook.com/messages", "*://*.facebook.com/messages/*", "*://*.facebook.com/messenger", "*://*.facebook.com/messenger/*", "*://*.instagram.com/direct", "*://*.instagram.com/direct/*", "*://*.twitter.com/messages", "*://*.twitter.com/messages/*", "*://*.twitter.com/i/chat", "*://*.twitter.com/i/chat/*", "*://*.x.com/messages", "*://*.x.com/messages/*", "*://*.x.com/i/chat", "*://*.x.com/i/chat/*", "*://*.tiktok.com/messages", "*://*.tiktok.com/messages/*", "*://*.tiktok.com/inbox", "*://*.tiktok.com/inbox/*" ],
+      "js": [ "bootstrap.js", "content.js" ],
+      "matches": [ "*://*.twitter.com/*", "*://*.x.com/*", "*://*.instagram.com/*", "*://*.tiktok.com/*", "*://*.facebook.com/*", "*://*.youtube.com/*" ],
+      "run_at": "document_start"
+   }, {
+      "exclude_matches": [ "*://*.facebook.com/messages", "*://*.facebook.com/messages/*", "*://*.facebook.com/messenger", "*://*.facebook.com/messenger/*", "*://*.instagram.com/direct", "*://*.instagram.com/direct/*", "*://*.twitter.com/messages", "*://*.twitter.com/messages/*", "*://*.twitter.com/i/chat", "*://*.twitter.com/i/chat/*", "*://*.x.com/messages", "*://*.x.com/messages/*", "*://*.x.com/i/chat", "*://*.x.com/i/chat/*", "*://*.tiktok.com/messages", "*://*.tiktok.com/messages/*", "*://*.tiktok.com/inbox", "*://*.tiktok.com/inbox/*" ],
+      "js": [ "page-world.js" ],
+      "matches": [ "*://*.twitter.com/*", "*://*.x.com/*", "*://*.instagram.com/*", "*://*.tiktok.com/*", "*://*.facebook.com/*", "*://*.youtube.com/*" ],
+      "run_at": "document_start",
+      "world": "MAIN"
+   } ],
+   "content_security_policy": {
+      "extension_pages": "script-src 'self'; object-src 'self'"
+   },
+   "default_locale": "en",
+   "description": "__MSG_receiptsDescription__",
+   "homepage_url": "https://feelingwise.org/",
+   "host_permissions": [ "*://*.twitter.com/*", "*://*.x.com/*", "*://*.instagram.com/*", "*://*.tiktok.com/*", "*://*.facebook.com/*", "*://*.youtube.com/*", "https://api.feelingwise.org/*", "https://freetsa.org/*", "https://tsa.cesnet.cz/*", "http://timestamp.digicert.com/*", "http://timestamp.sectigo.com/*" ],
+   "icons": {
+      "128": "assets/icons/icon-128.png",
+      "16": "assets/icons/icon-16.png",
+      "32": "assets/icons/icon-32.png",
+      "48": "assets/icons/icon-48.png"
+   },
+   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAioao+WbDlgpDPiiriiiCGc2kGxzCT3brHztMEHrw6NhQ2nFj9nG1qswQ5Dim2zGl2b7sKoTduBBBHPzsziclqJEh2R2noY9EPwOmycMavCSD6hJFn5E+oNu9VHofEFuyQIOsopR4APC+Au0YDGU3pFJetDrNf8d1YZ1rnlWxT2dBFLAB+ApriRs5+9oK9zP+5ZSG2kxnmgv3fZ750eN+x2A3/5j7Zmbw2d69kVgNoGJXsYwSksZdWSnzzn7zVoeUUsd0GZsmdFJP1aE8lgfJyPxMTHM8XiqC0NMjk7vuQjVSqV3LTrnktGNNjKDuuI6p46eHwIBdhZbdM0Dp++k6EwIDAQAB",
+   "manifest_version": 3,
+   "name": "__MSG_receiptsName__",
+   "permissions": [ "storage", "alarms", "downloads", "downloads.ui" ],
+   "update_url": "https://clients2.google.com/service/update2/crx",
+   "version": "2.5.8"
+}

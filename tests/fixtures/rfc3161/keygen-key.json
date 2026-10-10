@@ -1,0 +1,25 @@
+{
+  "note": "Throwaway test key, generated for these fixtures with Web Crypto (ECDSA P-256) in commit cb256df4; it signs only the key-genesis tests and the checker's test vectors (scripts/build-verifier-vectors.ts) and was never used for a real record.",
+  "publicJwk": {
+    "key_ops": [
+      "verify"
+    ],
+    "ext": true,
+    "kty": "EC",
+    "x": "KHSqI0t5aAf4NPUat9Al2GsElbIu1v0LvH5oVUffGLE",
+    "y": "1JPak8qy1nQ2UJpxpXCt_Oh8l1T1khAYctQFNmVa8zc",
+    "crv": "P-256"
+  },
+  "privateJwk": {
+    "key_ops": [
+      "sign"
+    ],
+    "ext": true,
+    "kty": "EC",
+    "x": "KHSqI0t5aAf4NPUat9Al2GsElbIu1v0LvH5oVUffGLE",
+    "y": "1JPak8qy1nQ2UJpxpXCt_Oh8l1T1khAYctQFNmVa8zc",
+    "crv": "P-256",
+    "d": "gU6qpHoGQwYM-aqizT2ukeFy3Fft_RkUfXOs3an0XfY"
+  },
+  "publicKeyDigest": "42ec8246a681bee3fc92255d0011450cd2123e97b9f4cfdec40a44998f915378"
+}

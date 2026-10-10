@@ -1,0 +1,12 @@
+{
+  "count": 5,
+  "recorded": "2026-09-20",
+  "note": "Ratchet. This number may go DOWN and never up. Raising it needs a reason in the commit message. History: 247 the night 31 lines of dead .kpi-tile CSS were found shipping to every user by grep-verifying the BUILD rather than reading the stylesheet; 256 by 2026-09-16, when PLAN-2026-09-16 item 6.8 began taking the dead families out one at a time; 55 recorded that day; 56 on 2026-09-19, one over, red in the shipped report; 5 on 2026-09-20 after 51 dead names came out. The 5 left are Off's popup classes, declared in the shared popup stylesheet and used by src/products/off/popup/OffPopup.tsx, which builds into dist-off/ and not into the dist/ this scan reads. They are not dead; the scan cannot see their user.",
+  "sample": [
+    "fw-off",
+    "fw-off-tagline",
+    "pick-actions",
+    "pick-group-hdr",
+    "pick-row"
+  ]
+}

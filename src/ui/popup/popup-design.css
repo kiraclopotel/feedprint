@@ -1,0 +1,1110 @@
+/* FeelingWise — popup design surface (CYCLE N+10).
+ *
+ * Sourced verbatim from docs/history/design-system-2026-07/ui_kits/popup/styles.css and
+ * scoped under .fw-popup. Tokens come from ../shared/tokens.css (already
+ * imported by Popup.tsx). The kit-only classes (.kit-stage, .kit-row,
+ * .kit-eyebrow) are dropped — they're for the design-system catalogue,
+ * not the production popup. */
+
+* { box-sizing: border-box; }
+html, body { margin:0; padding:0; background: var(--fw-bg); color:var(--fw-text); font-family: var(--fw-font-sans); -webkit-font-smoothing: antialiased; }
+
+/* Popup frame — Chrome-locked 380 px */
+.fw-popup {
+  width: 380px;
+  /* The 380 sizes Chrome's popup; the cap keeps the frame inside the page once a vertical
+     scrollbar takes its width, where a fixed 380 in a 370 page scrolled sideways. */
+  max-width: 100%;
+  background: var(--fw-bg);
+  border: 1px solid var(--fw-border);
+  font-size: 13px;
+  position: relative;
+  font-family: var(--fw-font-sans);
+  color: var(--fw-text);
+}
+
+.pop-load-state {
+  min-height: 360px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 28px;
+  text-align: center;
+}
+.pop-load-state .ttl { font-size: 15px; font-weight: 650; color: var(--fw-text); }
+.pop-load-state p { margin: 0; color: var(--fw-muted); font-size: 12px; line-height: 1.5; }
+.pop-load-state .muted { color: var(--fw-muted); font-size: 12px; }
+.pop-load-state .pop-cta { width: auto; min-width: 120px; margin: 4px 0 0; }
+
+/* Detached mode — popup.html opened in its own resizable window (the header
+   "open in a window" affordance). Fill the window so dragging its edge actually
+   resizes the content, instead of leaving the fixed 380px panel in a void. The
+   action-popup (no fw-detached class) keeps its exact 380px sizing. */
+body.fw-detached { margin: 0; }
+body.fw-detached,
+body.fw-detached #root { width: 100%; min-height: 100vh; }
+body.fw-detached .fw-popup {
+  width: 100%;
+  min-height: 100vh;
+  border: none;
+}
+
+/* Header (brand wordmark + dot mark).
+   Chrome gives an action popup 600px and no more. On a free adult install the
+   home panel ran to 684px in English and 701px in Romanian, so the one button
+   that opens the record sat below the fold and a person who does not scroll
+   never saw it (measured 2026-09-17, four languages). The header, the tab strip
+   and the cards below each gave back a few pixels; none of them lost anything a
+   reader was using. */
+.pop-header {
+  display:flex; align-items:center; gap:10px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--fw-border);
+}
+.pop-header .wordmark { font-size:15px; font-weight:600; letter-spacing:-0.01em; flex:1; }
+.pop-header .ind {
+  width:8px; height:8px; border-radius:50%; background:var(--fw-teal);
+  animation: fw-pulse 2s infinite;
+}
+/* Ran forever with no reduced-motion override; the shared block below only
+   covered .fw-off/.chip/.rules-saved (accessibility audit, 2026-09-18).
+   Co-located per-animation, matching the dashboard stylesheet's own
+   fc-spin / dash-ecg-beam pattern. */
+@media (prefers-reduced-motion: reduce) {
+  .pop-header .ind { animation: none; }
+}
+
+/* Tab bar. Two tabs, side by side: the icon sits beside the word rather than
+   above it, which is the same target height a thumb wants and 22px shorter. */
+.pop-tabbar {
+  display:flex; gap:4px; padding:6px 12px 8px;
+  border-bottom:1px solid var(--fw-border);
+}
+.pop-tab {
+  flex:1; padding:7px 0; font-size:11px; font-weight:600;
+  background: var(--fw-card); color: var(--fw-text);
+  border:1px solid var(--fw-border); border-radius: calc(6px * var(--pop-r-scale, 1));
+  cursor:pointer; display:flex; flex-direction:row; align-items:center; justify-content:center; gap:6px;
+  font-family: inherit;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+/* Background fill + text colour swap was a colour-only signal (accessibility
+   audit, 2026-09-18); a heavier weight adds a non-colour cue alongside it,
+   pairing with the aria state set elsewhere. */
+.pop-tab.active { background: var(--fw-teal); color: var(--pop-on-accent, var(--fw-bg)); border-color: var(--fw-teal); font-weight: 700; }
+.pop-tab svg { width:14px; height:14px; }
+
+/* Tier badge centered */
+.pop-tier { text-align:center; padding: 8px 16px 0; }
+.pop-tier .pill {
+  display:inline-block; padding:2px 10px; border-radius: calc(12px * var(--pop-r-scale, 1));
+  font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;
+  background: var(--fw-card); color: var(--fw-teal); border:1px solid var(--fw-teal);
+}
+.pop-tier.free .pill { background:transparent; color:var(--fw-muted); border-color:var(--fw-border); }
+.pop-tier .meta { font-size:11px; color:var(--fw-muted); margin-top:4px; }
+.pop-tier .meta.err { color:var(--fw-red); }
+
+/* Status banner (between tier + body) */
+.pop-bn {
+  margin: 8px 16px 0; padding:9px 14px;
+  border-radius: calc(8px * var(--pop-r-scale, 1)); font-size:11px; line-height:1.5;
+}
+.pop-bn .ttl { font-weight:600; margin-bottom:4px; display:flex; align-items:center; gap:6px; }
+.pop-bn .body { color: var(--fw-muted); }
+.pop-bn.err  { background: rgba(239,83,80,0.10); border:1px solid rgba(239,83,80,0.40); }
+.pop-bn.err  .ttl { color: var(--fw-red); }
+.pop-bn.warn { background: rgba(255,171,64,0.10); border:1px solid rgba(255,171,64,0.45); }
+.pop-bn.warn .ttl { color: var(--fw-amber); }
+.pop-bn.ok   { background: rgba(76,175,80,0.08); border:1px solid rgba(76,175,80,0.40); }
+/* A free install is not a fault: the note about the optional reading reads as information. */
+.pop-bn.info { background: var(--fw-card); border:1px solid var(--fw-border); }
+.pop-bn.info .ttl { color: var(--fw-text); }
+.pop-bn.ok   .ttl { color: var(--fw-green); }
+
+/* The one line after an update (PLAN-2026-09-17 item 8a): a link and a small dismiss. */
+.pop-update {
+  margin: 8px 16px 0; padding: 8px 10px 8px 14px;
+  display:flex; justify-content:space-between; align-items:center; gap:8px;
+  border-radius: calc(8px * var(--pop-r-scale, 1)); font-size:11px; line-height:1.4;
+  background: color-mix(in srgb, var(--fw-teal) 10%, transparent);
+  border:1px solid color-mix(in srgb, var(--fw-teal) 45%, transparent);
+}
+.pop-update a { color: var(--fw-teal); text-decoration:underline; cursor:pointer; flex:1; }
+
+/* Card */
+.pop-card {
+  background: var(--fw-card); border:1px solid var(--fw-border);
+  border-radius: calc(8px * var(--pop-r-scale, 1)); padding:9px 12px; margin: 8px 16px 0;
+}
+.pop-card .eyebrow {
+  font-size:10px; color:var(--fw-muted); font-weight:600;
+  text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;
+}
+
+/* CTA button */
+.pop-cta {
+  display:block; width: calc(100% - 32px); margin: 12px 16px;
+  background: var(--fw-teal); color: var(--pop-on-accent, var(--fw-bg));
+  border:1px solid var(--fw-teal); border-radius: calc(6px * var(--pop-r-scale, 1));
+  padding:11px 14px; font-size:13px; font-weight:600;
+  cursor:pointer; font-family: inherit;
+  transition: box-shadow 0.15s ease;
+  text-align: center;
+}
+.pop-cta:hover:not(:disabled) { box-shadow: 0 2px 8px color-mix(in srgb, var(--pop-tint, #00bcd4) 30%, transparent); }
+.pop-cta.sec { background: var(--fw-card); color: var(--fw-text); border-color: var(--fw-border); }
+.pop-cta:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* The recovery phrase's printed card (stage 3, 10 Oct 2026): hidden on screen; on paper it is the only thing shown, so
+   the page prints the phrase, the product's name and the two steps, and nothing else of the window. */
+.fw-phrase-print { display: none; }
+@media print {
+  body * { visibility: hidden !important; }
+  .fw-phrase-print, .fw-phrase-print * { visibility: visible !important; }
+  .fw-phrase-print { display: block; position: absolute; left: 0; top: 0; width: 100%; padding: 24px; color: black; background: white; }
+  .fw-phrase-print-name { font-size: 16px; font-weight: 600; margin: 0 0 12px; }
+  .fw-phrase-print-phrase { font: 600 32px/1.3 monospace; letter-spacing: 4px; margin: 0 0 16px; }
+}
+
+/* Setup wizard */
+.setup-step {
+  padding: 24px 20px; display:flex; flex-direction:column; gap:14px;
+}
+.setup-step .num {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:24px; height:24px; border-radius:50%;
+  background: var(--fw-teal); color: var(--pop-on-accent, var(--fw-bg));
+  font-size:12px; font-weight:600;
+}
+.setup-step h2 { margin:0; font-size:16px; font-weight:600; }
+.setup-step .tag { font-size:13px; color:var(--fw-muted); line-height:1.5; }
+.setup-progress { display:flex; gap:6px; padding: 12px 20px 0; }
+.setup-progress span { flex:1; height:3px; background:var(--fw-border); border-radius:999px; }
+.setup-progress span.done  { background:var(--fw-teal); }
+/* done and active were the same teal differing only by opacity:0.7, so a
+   person could not tell "finished" from "current step" (accessibility
+   audit, 2026-09-18). Active is now taller instead, a size difference that
+   survives grayscale or colour-blind viewing. */
+.setup-progress span.active{ background:var(--fw-teal); height:5px; }
+
+/* PIN entry */
+.pin-row { display:flex; gap:8px; justify-content:center; }
+.pin-box {
+  width:40px; height:48px; border:1px solid var(--fw-border);
+  border-radius: calc(8px * var(--pop-r-scale, 1)); background: var(--fw-card);
+  display:flex; align-items:center; justify-content:center;
+  font-size:18px; font-weight:600;
+  color: var(--fw-text);
+  outline: none;
+  text-align: center;
+  font-family: inherit;
+}
+.pin-box.filled { border-color: var(--fw-teal); }
+/* :focus used to swap the border to the same teal as .filled, so a filled
+   unfocused box and an empty focused box read identically (accessibility
+   audit, 2026-09-18). The ring is a second signal and still shows on a
+   filled+focused box, since .filled only ever touches the border. Against
+   --fw-bg it computes to 8.35:1 (dark) / 3.71:1 (light), and against
+   --fw-card to 7.66:1 (dark) / 3.85:1 (light), all past the 3:1
+   UI-component minimum. */
+.pin-box:focus {
+  border-color: var(--fw-teal);
+  box-shadow: 0 0 0 2px var(--fw-teal);
+}
+
+/* Two-keys card */
+.key-card {
+  background: var(--fw-bg);
+  border: 1px solid var(--fw-border);
+  border-radius: calc(8px * var(--pop-r-scale, 1));
+  padding: 12px 12px 14px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.key-head, .key-row {
+  display: flex; align-items: center; gap: 10px;
+}
+.key-row { padding: 4px 0 8px; }
+.key-meta { flex: 1; min-width: 0; }
+.key-name { font-size: 13px; font-weight: 600; color: var(--fw-text); letter-spacing: -0.005em; }
+.key-sub  { font-size: 11px; color: var(--fw-muted); margin-top: 2px; line-height: 1.4; }
+.key-sub a { color: var(--fw-teal); }
+.key-rows { margin: 4px 0 0; padding-left: 16px; font-size: 11px; color: var(--fw-text); line-height: 1.5; }
+.key-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--fw-border); flex-shrink: 0;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.02);
+}
+.key-dot.ok { background: var(--fw-teal); box-shadow: 0 0 0 3px color-mix(in srgb, var(--pop-tint, #00bcd4) 18%, transparent); }
+/* POP-5: a paid-shaped key the proxy rejected (401/403) must not read the
+   same as a confirmed one — mirrors .status-chip.err / .pop-bn.err. */
+.key-dot.err { background: var(--fw-red); box-shadow: 0 0 0 3px rgba(239,83,80,0.18); }
+.key-pill {
+  font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em;
+  font-weight: 600; padding: 3px 7px; border-radius: 999px;
+  border: 1px solid var(--fw-teal); color: var(--fw-teal);
+}
+.key-pill.err { border-color: var(--fw-red); color: var(--fw-red); }
+.key-input {
+  width: 100%; box-sizing: border-box;
+  background: var(--fw-card); color: var(--fw-text);
+  border: 1px solid var(--fw-border); border-radius: calc(4px * var(--pop-r-scale, 1));
+  padding: 8px 10px; font-size: 12px; font-family: var(--fw-font-mono);
+  outline: none;
+}
+/* outline:none above left border-colour as the only focus signal, and
+   nothing distinguished it from an unfocused state; ring matches .pin-box. */
+.key-input:focus { border-color: var(--fw-teal); box-shadow: 0 0 0 2px var(--fw-teal); }
+/* opacity:0.5 on --fw-muted computed to 2.21:1 (dark) and 2.05:1 (light)
+   against --fw-card, under the 4.5:1 text minimum. Full-opacity muted
+   computes to 4.96:1 (dark) and 5.31:1 (light). */
+.key-input::placeholder { color: var(--fw-muted); }
+.key-help {
+  margin: 0; padding: 10px 12px 10px 28px;
+  background: color-mix(in srgb, var(--pop-tint, #00bcd4) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--pop-tint, #00bcd4) 20%, transparent);
+  border-radius: calc(6px * var(--pop-r-scale, 1));
+  font-size: 11px; line-height: 1.6; color: var(--fw-muted);
+}
+.key-help li { margin: 0 0 2px; }
+.key-help li:last-child { margin: 0; }
+.key-help .mono { font-family: var(--fw-font-mono); color: var(--fw-text); font-size: 10.5px; }
+
+/* Settings rows */
+.feat-row {
+  display:flex; align-items:flex-start; gap:12px;
+  padding: 8px 0;
+}
+.feat-row + .feat-row { border-top: 1px solid var(--fw-border); padding-top:10px; margin-top:2px; }
+.feat-row .fr-body { flex:1; min-width:0; }
+.feat-row .fr-name { font-size:13px; font-weight:600; }
+.pop-count-line { font-size: var(--fw-text-12); color: var(--fw-text-secondary); line-height: 1.5; margin-top: var(--fw-s-3); }
+.fr-desc { font-size: var(--fw-text-11); color: var(--fw-muted); margin-top: 2px; line-height: 1.4; }
+
+/* Toggle switch */
+/* Measured 36x20, under the 24x24 CSS-pixel minimum; this is the master
+   enable switch and all thirteen protection rows (accessibility audit,
+   2026-09-18). Resized to 24 high, 40 wide; the knob and the locked-on
+   padlock below are recentred on the new track by the same offsets they
+   held from the old on-position knob centre, so the geometry that made
+   on/off/locked readable without colour is unchanged, just rescaled. */
+.toggle {
+  width:40px; height:24px; border-radius: calc(12px * var(--pop-r-scale, 1));
+  position:relative; flex-shrink:0; cursor:pointer;
+  transition: background .15s ease;
+  border: none; padding: 0;
+}
+.toggle.on  { background: var(--fw-teal); }
+.toggle.off { background: color-mix(in srgb, var(--fw-muted) 72%, var(--fw-card)); } /* a resting grey: an off switch is a choice, not an error (V1); 72% is 3:1 or more against the card in both themes (B3F, P4-1) */
+.toggle::after {
+  content:""; position:absolute; top:4px; width:16px; height:16px;
+  border-radius:50%; background: var(--fw-text);
+  left: 20px; transition: left .2s ease;
+}
+.toggle.off::after { left:4px; }
+.toggle:focus-visible { outline: 2px solid var(--fw-teal); outline-offset: 2px; }
+
+/* Locked ON (child mode forces these on and takes the control away). The knob
+   becomes a padlock body and ::before draws its shackle, so the state reads as
+   "on and held" rather than "on but faded". The track keeps full-strength
+   teal, the colour of every on switch: the dimming that used to mark every disabled switch is what made a
+   lock look like an off switch. */
+.toggle.locked-on::after {
+  top:10px; left:22px; width:12px; height:9px;
+  border-radius: calc(2px * var(--pop-r-scale, 1));
+}
+.toggle.locked-on::before {
+  content:""; position:absolute;
+  top:6px; left:25px; width:6px; height:5px;
+  box-sizing:border-box;
+  border:2px solid var(--fw-text);
+  border-bottom:none;
+  border-radius: calc(3px * var(--pop-r-scale, 1)) calc(3px * var(--pop-r-scale, 1)) 0 0;
+}
+
+/* Q86: per-row info fold. The button sits inline after the name; the
+   description paints only while it is open. */
+/* Measured ~14px square (icon glyph, zero padding); under the 24x24
+   minimum (accessibility audit, 2026-09-18). Floored to 24x24 without
+   resizing the icon itself. */
+.fr-info {
+  background: none; border: 0; padding: 0; margin-left: 6px;
+  color: var(--fw-muted); cursor: pointer; vertical-align: middle;
+  line-height: 1; display: inline-flex;
+  align-items: center; justify-content: center;
+  min-width: 24px; min-height: 24px;
+}
+.fr-info:hover { color: var(--fw-text); }
+.fr-info:focus-visible { outline: 2px solid var(--fw-teal); outline-offset: 2px; }
+
+/* Group header */
+.grp-hdr {
+  font-size:10px; text-transform:uppercase; letter-spacing:0.05em;
+  font-weight:600; color: var(--fw-muted);
+  padding: 10px 16px 4px;
+}
+
+/* Inline link */
+/* Measured ~14px tall (text glyph, zero padding); under the 24x24 minimum
+   (accessibility audit, 2026-09-18). Stays inline-flex, not block, so the
+   one inline usage (the licence-help <a> mid-sentence in SetupWizard) keeps
+   flowing with its sentence instead of breaking onto its own line. */
+.lnk {
+  font-size:11px; color: var(--fw-teal); cursor:pointer;
+  text-decoration:underline; background:none; border:0; padding:0;
+  font-family:inherit;
+  display: inline-flex; align-items: center;
+  min-width: 24px; min-height: 24px;
+}
+.lnk.inl { padding: 0; }
+
+/* PIN overlay */
+.pin-overlay {
+  position:fixed; inset:0; z-index:100;
+  background: rgba(0,0,0,0.85);
+  display:flex; align-items:center; justify-content:center;
+}
+.pin-overlay .panel {
+  background: var(--fw-bg); border:1px solid var(--fw-border);
+  border-radius: calc(12px * var(--pop-r-scale, 1)); padding: 24px; text-align:center;
+  width: 280px;
+}
+.pin-overlay h3 { margin:0 0 14px; font-size:13px; font-weight:500; color: var(--fw-text); }
+.shake { animation: fw-shake .4s ease; }
+
+/* The PIN screens hold still (L3; STANDARD St Error, T Help, S). The error line sits inside a slot that is always there, so a
+   wrong PIN or two PINs that differ appear without moving the panel or the Save button; the legend over each PIN row is
+   one class. The slot is one Help line tall; in the 280 px overlay the lock message wraps to two lines, so it keeps two. */
+.pin-err-slot { min-height: calc(var(--fw-text-11) * 1.4); text-align: center; }
+.pin-overlay .pin-err-slot { margin-top: var(--fw-s-3); min-height: calc(var(--fw-text-11) * 1.4 * 2); }
+.pin-err { font-size: var(--fw-text-11); color: var(--fw-red); line-height: 1.4; }
+.pin-legend { display: block; width: 100%; padding: 0; font-size: var(--fw-text-11); color: var(--fw-muted); text-align: center; }
+
+/* BETA pill — used next to the rewrite-only surfaces per design contract */
+.beta-pill {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:1px 8px; border:1px solid var(--fw-amber);
+  background: rgba(255,171,64,0.10); color: var(--fw-amber);
+  font-size:9px; font-weight:600; letter-spacing:0.05em;
+  text-transform:uppercase; border-radius: 999px;
+}
+
+/* Footer link cluster */
+.foot {
+  padding: 10px 16px; display:flex; justify-content:space-between; align-items:center;
+  font-size:11px; color: var(--fw-muted);
+  border-top:1px solid var(--fw-border); margin-top: 8px;
+}
+.foot a { color: var(--fw-teal); text-decoration:underline; cursor:pointer; }
+
+/* Inline forms */
+.in-row { display:flex; gap:6px; align-items:center; }
+.in-row input[type=text],
+.in-row input[type=password] {
+  flex:1; background:var(--fw-bg); color:var(--fw-text);
+  border:1px solid var(--fw-border); border-radius: calc(4px * var(--pop-r-scale, 1));
+  padding:8px 10px; font-family: var(--fw-font-mono); font-size:12px;
+  outline: none;
+}
+/* outline:none above left no focus signal at all; same ring as .pin-box/.key-input. */
+.in-row input:focus { border-color: var(--fw-teal); box-shadow: 0 0 0 2px var(--fw-teal); }
+/* The small text buttons outside a row (Reset to standard, the mode switch's confirm and cancel, the licence's
+   remove and cancel) had no rule of their own and drew as the browser's white default on the dark popup. */
+.iconbtn {
+  background: var(--fw-card); color: var(--fw-text);
+  border:1px solid var(--fw-border); border-radius: calc(4px * var(--pop-r-scale, 1));
+  padding:3px 8px; cursor:pointer; font: inherit;
+}
+.iconbtn:disabled { opacity: .5; cursor: default; }
+.in-row .iconbtn { padding:8px 10px; display:flex; align-items:center; }
+/* The setup wizard's licence field is masked like the License tab's, so it
+   moved into an .in-row beside a show/hide button (SetupWizard.tsx, 18 Sep
+   2026). The row's own input rule paints --fw-bg, which is exactly the
+   .key-card colour around it there, leaving a field with nothing but a border
+   to see; keep the lighter fill .key-input already gave it. */
+.key-card .in-row input { background: var(--fw-card); }
+
+/* Mode pick buttons (setup step 2) */
+.mode-btn {
+  flex: 1; padding: 14px 12px; text-align: left;
+  background: var(--fw-card);
+  border: 1px solid var(--fw-border);
+  border-radius: calc(8px * var(--pop-r-scale, 1)); cursor: pointer;
+  color: var(--fw-text); font-family: inherit;
+  transition: background .15s ease, border-color .15s ease;
+}
+/* Background tint + border colour swap was a colour-only signal
+   (accessibility audit, 2026-09-18); a heavier border adds shape, pairing
+   with the aria state set elsewhere. */
+.mode-btn.selected {
+  background: color-mix(in srgb, var(--pop-tint, #00bcd4) 13%, transparent);
+  border-color: var(--fw-teal);
+  border-width: 2px;
+}
+.mode-btn .label { font-size: 14px; font-weight: 600; }
+.mode-btn .age { font-size: 11px; color: var(--fw-muted); margin-top: 2px; }
+
+/* Settings back-bar */
+.settings-bar {
+  padding: 12px 16px; display:flex; align-items:center; gap: 10px;
+  border-bottom: 1px solid var(--fw-border);
+}
+.settings-bar .title { font-size: 14px; font-weight: 600; color: var(--fw-text); }
+
+/* ─── Header status chips (License + Groq dual indicator) ────────────────── */
+/* Replace the legacy single .ind dot with a row of two clickable chips, one
+   per load-bearing key. Each chip = colored dot + label. State semantics:
+   ok = green, warn = amber, err = red. Clickable variant gets pointer +
+   hover lift; non-clickable (setup screen) renders as a plain pill. */
+
+.pop-header { justify-content: space-between; }
+.status-row { display: flex; gap: 6px; align-items: center; }
+
+/* Header icon actions — Settings + Open dashboard ride in the header so
+   both primary actions are reachable with zero scrolling, from any tab. */
+.hdr-iconbtn {
+  width: 28px; height: 28px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--fw-card); color: var(--fw-text-secondary);
+  border: 1px solid var(--fw-border); border-radius: calc(6px * var(--pop-r-scale, 1));
+  cursor: pointer; flex-shrink: 0;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.hdr-iconbtn:hover { border-color: var(--fw-text-secondary); color: var(--fw-text); }
+
+/* Measured ~21px tall, under the 24x24 minimum. Separately, this chip has no
+   min-width override, so the flex default of min-width:auto held it to its
+   label's full width beside three flex-shrink:0 28px buttons in a 380px
+   header; Romanian and Portuguese labels are long enough to push those
+   buttons off (accessibility audit, 2026-09-18). min-width:24px replaces
+   the auto floor, so the chip can shrink well below its label's width in a
+   tight header while still meeting the 24px target-size minimum. */
+.status-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 8px; border-radius: 999px;
+  font-size: 9px; font-weight: 600; letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: var(--fw-card); color: var(--fw-text);
+  border: 1px solid var(--fw-border);
+  font-family: inherit;
+  cursor: default;
+  min-width: 24px; min-height: 24px;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+.status-chip.clickable { cursor: pointer; }
+.status-chip.clickable:hover { border-color: var(--fw-text); background: var(--fw-bg); }
+.status-chip:disabled { opacity: 1; }
+.status-chip .status-label { color: var(--fw-text-secondary); }
+
+.status-chip .status-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  flex-shrink: 0;
+  animation: fw-pulse 2.4s infinite;
+}
+/* Same gap as .pop-header .ind above: ran forever outside the shared
+   .fw-off reduced-motion block (accessibility audit, 2026-09-18). */
+@media (prefers-reduced-motion: reduce) {
+  .status-chip .status-dot { animation: none; }
+}
+.status-chip.ok   .status-dot { background: var(--fw-green); }
+.status-chip.warn .status-dot { background: var(--fw-amber); }
+.status-chip.err  .status-dot { background: var(--fw-red); }
+.status-chip.ok   { border-color: rgba(102,187,106,0.35); }
+.status-chip.warn { border-color: rgba(255,171,64,0.35); }
+.status-chip.err  { border-color: rgba(239,83,80,0.45); }
+
+/* No answer from the license probe. Neutral on purpose: amber or red would
+   read as a licence problem, and a check that could not run is a statement
+   about the check. The pulse is dropped so a still dot separates "waiting"
+   from the three live states. The free tier is neutral for the same reason:
+   a licence nobody bought is not a warning (gem 12). */
+.status-chip.checking  .status-dot,
+.status-chip.unchecked .status-dot,
+.status-chip.free      .status-dot { background: var(--fw-muted); animation: none; }
+
+@keyframes fw-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+
+/* ─── Today: one hero, then a quiet second line ─────────────────────────
+   Replaced three equal `.kpi-tile`s. They gave a count of API requests the
+   same weight as the number a parent opens this popup for, and the middle
+   one reads 0 on most days, so two of three headline numbers were noise.
+   Undifferentiated weight is a large part of what "bland" means.
+
+   Sized to the popup, not to the dashboard: 380px wide with the CTA that
+   must stay above the fold at 380x600, so the figure is 38px rather than
+   the dashboard hero's 56px. Proportional figures, same sans, one per view. */
+.pop-hero {
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+  width: 100%; margin-top: 2px; padding: 8px 6px;
+  background: transparent; border: 1px solid transparent; border-radius: calc(8px * var(--pop-r-scale, 1));
+  cursor: pointer; font-family: inherit; text-align: left;
+  transition: background 0.12s ease, border-color 0.12s ease, transform 0.06s ease;
+}
+.pop-hero:hover { background: rgba(255,255,255,0.03); border-color: var(--fw-border-light); }
+.pop-hero:active { transform: translateY(1px); }
+.pop-hero-value {
+  font-size: 38px; font-weight: 700; line-height: 1; letter-spacing: -0.03em;
+  color: var(--fw-text); font-variant-numeric: proportional-nums;
+}
+.pop-hero-label { font-size: 13px; font-weight: 600; color: var(--fw-text-secondary); }
+.pop-hero-total { font-size: 10.5px; color: var(--fw-muted); margin-left: auto; }
+.pop-hero-secondary {
+  display: block; width: 100%; margin-top: 2px; padding: 5px 6px;
+  background: transparent; border: 1px solid transparent; border-radius: calc(8px * var(--pop-r-scale, 1));
+  font-family: inherit; font-size: 11.5px; color: var(--fw-muted);
+  text-align: left; cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+.pop-hero-secondary:hover { background: rgba(255,255,255,0.03); border-color: var(--fw-border-light); }
+
+/* ─── Mode segmented picker (Account card) ──────────────────────────────── */
+/* Replaces the small key-pill toggle flagged in review as "too up + too small".
+   Vertical stacked layout: header (label + description) → big segmented
+   control aligned with content padding → per-mode explanation block. The
+   segmented buttons are 2-up, full-width, aligned to the card padding so
+   the click targets are large and obvious. */
+
+.mode-card .mode-head { margin-bottom: 14px; }
+.mode-card .mode-head .fr-name {
+  font-size: 13px; font-weight: 600; color: var(--fw-text);
+}
+.mode-card .mode-head .fr-desc {
+  color: var(--fw-muted); margin-top: var(--fw-s-1);
+}
+
+.mode-segmented {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.mode-seg-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 10px 6px;
+  background: var(--fw-bg);
+  border: 1.5px solid var(--fw-border);
+  border-radius: calc(8px * var(--pop-r-scale, 1));
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+  color: var(--fw-text-secondary);
+}
+.mode-seg-btn:hover:not(.active) { border-color: var(--fw-text-secondary); }
+.mode-seg-btn.active {
+  background: color-mix(in srgb, var(--pop-tint, #00bcd4) 10%, transparent);
+  border-color: var(--fw-teal);
+  color: var(--fw-teal);
+  cursor: default;
+}
+.mode-seg-name {
+  font-size: 14px; font-weight: 700; letter-spacing: 0.05em;
+}
+
+/* Theme picker — compact icon-only row. Three square 28x28 buttons:
+   Sun (light) / Moon (dark) / Contrast (auto / system). Hover surfaces
+   the label via native title tooltip; aria-label keeps it accessible. */
+.theme-iconrow {
+  display: inline-flex;
+  gap: 4px;
+  padding: 2px;
+  background: var(--fw-bg);
+  border: 1px solid var(--fw-border);
+  border-radius: calc(7px * var(--pop-r-scale, 1));
+}
+.theme-icon-btn {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 0;
+  border-radius: calc(5px * var(--pop-r-scale, 1));
+  color: var(--fw-text-secondary);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.theme-icon-btn:hover:not(.active) {
+  background: color-mix(in oklch, var(--fw-text-secondary) 12%, transparent);
+  color: var(--fw-text);
+}
+.theme-icon-btn.active {
+  background: color-mix(in oklch, var(--fw-teal) 15%, var(--fw-bg));
+  color: var(--fw-teal);
+  cursor: default;
+}
+.pop-card--compact { margin-top: 0; padding: 10px 12px; }
+
+.mode-explain {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--fw-text-secondary);
+  background: var(--fw-bg);
+  border: 1px solid var(--fw-border);
+  border-radius: calc(8px * var(--pop-r-scale, 1));
+  padding: 10px 12px;
+}
+.mode-explain strong { color: var(--fw-text); font-weight: 600; }
+.mode-explain em { color: var(--fw-text); font-style: normal; font-weight: 600; }
+
+/* ─── Visual polish (design pass, 2026-06-21) ─────────────────────────────────
+   The popup ran entirely flat, which read "bland", with the crude default
+   scrollbar flagged on opening it. A thin rounded scrollbar + a soft card
+   drop-shadow lift the surface without heavy gloss. Verified on the
+   settings-declutter prototype before porting. This sheet only loads in the
+   popup, so the scrollbar rules are safe to scope globally. */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: color-mix(in oklch, var(--fw-muted) 32%, transparent);
+  border-radius: 999px; border: 2px solid transparent; background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklch, var(--fw-muted) 52%, transparent); background-clip: padding-box;
+}
+html { scrollbar-width: thin; scrollbar-color: color-mix(in oklch, var(--fw-muted) 34%, transparent) transparent; }
+
+/* Card elevation — softens the flat borders into floating cards. */
+.pop-card, .key-card {
+  box-shadow: var(--fw-shadow-card);
+  border-color: color-mix(in oklch, var(--fw-border) 55%, var(--fw-card));
+}
+.mode-seg-btn { box-shadow: 0 1px 2px rgba(0, 0, 0, 0.22); }
+.mode-seg-btn.active {
+  box-shadow: 0 0 0 1px var(--fw-teal), 0 3px 10px -3px color-mix(in oklch, var(--fw-teal) 45%, transparent);
+}
+
+/* ─── The rules editor as chips (in a plain list the added rules looked
+   lost and cramped). Both popups: each rule is a pill with its own remove
+   button, the group is one field that takes the next rule, and a new chip
+   grows in rather than appearing. Accounts wear the purple, words and
+   phrases the teal, so a glance tells them apart. */
+.rules-group { margin-top: 10px; }
+.rules-label {
+  display: flex; align-items: baseline; gap: 6px;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.02em; color: var(--fw-text);
+}
+.rules-count { font-weight: 400; color: var(--fw-muted); }
+.chips {
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+  margin-top: 6px; padding: 6px 8px; border-radius: calc(10px * var(--pop-r-scale, 1)); cursor: text;
+  background: color-mix(in srgb, var(--fw-bg) 80%, var(--fw-card));
+  border: 1px solid color-mix(in srgb, var(--fw-border) 70%, var(--fw-card));
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.chips:focus-within {
+  border-color: color-mix(in srgb, var(--fw-teal) 60%, var(--fw-border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--fw-teal) 16%, transparent);
+}
+.chip {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 3px 5px 3px 9px; border-radius: 999px;
+  font-size: 11.5px; line-height: 1.3; color: var(--fw-text);
+  background: color-mix(in srgb, var(--fw-teal) 16%, var(--fw-card));
+  border: 1px solid color-mix(in srgb, var(--fw-teal) 35%, transparent);
+  animation: chip-in 0.18s ease-out;
+}
+.chip-account {
+  background: color-mix(in srgb, var(--fw-purple) 16%, var(--fw-card));
+  border-color: color-mix(in srgb, var(--fw-purple) 35%, transparent);
+}
+/* Measured 16x16, under the 24x24 minimum; it is the remove button on every
+   blocklist chip (accessibility audit, 2026-09-18). min-width/min-height
+   floor the hit area to 24 without changing the visible glyph size. */
+.chip-x {
+  border: none; background: transparent; cursor: pointer;
+  width: 16px; height: 16px; min-width: 24px; min-height: 24px; border-radius: 999px; padding: 0;
+  font-size: 13px; line-height: 16px; color: var(--fw-muted);
+  transition: color 0.12s ease, background 0.12s ease;
+}
+.chip-x:hover, .chip-x:focus-visible { color: #fff; background: color-mix(in srgb, var(--fw-red) 60%, transparent); outline: none; }
+.chip-input {
+  flex: 1 1 96px; min-width: 96px; border: none; background: transparent; outline: none;
+  color: var(--fw-text); font: inherit; font-size: 12px; padding: 3px 2px;
+}
+/* 80% mix computed to 3.87:1 (dark) and 3.43:1 (light) against the chip
+   field's background, under the 4.5:1 text minimum (accessibility audit,
+   2026-09-18). Full-strength muted computes to 5.32:1 (dark) and 5.17:1
+   (light). */
+.chip-input::placeholder { color: var(--fw-muted); }
+.rules-saved { margin-left: 8px; font-size: 11px; font-weight: 400; color: var(--fw-green); animation: chip-in 0.18s ease-out; }
+@keyframes chip-in { from { transform: scale(0.86); opacity: 0; } to { transform: none; opacity: 1; } }
+/* The search over the own rules and over Off's picks. */
+.list-search {
+  width: 100%; box-sizing: border-box; margin-top: 8px; padding: 6px 10px; border-radius: calc(10px * var(--pop-r-scale, 1));
+  font: inherit; font-size: 12px; color: var(--fw-text);
+  background: color-mix(in srgb, var(--fw-bg) 80%, var(--fw-card));
+  border: 1px solid color-mix(in srgb, var(--fw-border) 70%, var(--fw-card));
+}
+.list-search::placeholder { color: var(--fw-muted); }
+.list-search:focus-visible { outline: 2px solid var(--fw-teal); outline-offset: -1px; }
+
+/* Receipts settings: the essentials card's jump to the own rules, and the closed fold over the
+   switches that take parts of a page away (the same chevron fold as Off's popup). */
+.set-rules-jump {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%;
+  min-height: 32px; margin-top: 4px; padding: 6px 0; border: none; background: transparent; cursor: pointer;
+  font: inherit; font-size: 13px; font-weight: 600; color: var(--fw-text); text-align: left;
+}
+.set-rules-jump .set-rules-n { font-weight: 400; color: var(--fw-teal); }
+/* The rules row's one line sits under the button, as a switch's line sits under its name. */
+.set-rules-line { margin-top: -4px; padding-bottom: 6px; }
+.set-rules-jump:focus-visible { outline: 2px solid var(--fw-teal); outline-offset: 2px; border-radius: calc(6px * var(--pop-r-scale, 1)); }
+.set-fold > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+.set-fold > summary::-webkit-details-marker { display: none; }
+.set-fold > summary::before {
+  content: ""; flex: none; width: 5px; height: 5px; margin: 0 2px 2px 0;
+  border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg); transition: transform 0.15s ease;
+}
+.set-fold[open] > summary::before { transform: rotate(45deg); }
+.set-fold > summary:hover { color: var(--fw-text); }
+.set-fold > summary:focus-visible { outline: 2px solid var(--fw-teal); outline-offset: -2px; border-radius: calc(6px * var(--pop-r-scale, 1)); }
+.set-fold-n { text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--fw-teal); }
+@media (prefers-reduced-motion: reduce) { .set-fold > summary::before { transition: none; } }
+
+/* ─── Off: the filter's own surface (the owner asked for a softer surface
+   that does not end abruptly). Scoped to .fw-off so the
+   recorder popup keeps its sheet. The frame loses its hard edge and gets a
+   faint top light; cards get rounder, their borders and row separators
+   fade; "off" is quiet grey and "on" is the brand teal, because in a filter
+   an off switch is the ordinary state, not an alarm; the bottom gets air
+   before a footer with no rule above it. */
+.fw-popup.fw-off {
+  border: none;
+  /* One flat page colour: a lit top made the header that scrolls over it a band of another shade. */
+  background: var(--fw-bg);
+}
+/* Motion where a hand touches: switches slide, the
+   button gives under the press. Short and eased, never bouncy. */
+.fw-off .toggle { transition: background 0.18s ease; }
+.fw-off .toggle::after { transition: left 0.18s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.fw-off .pop-card { transition: border-color 0.18s ease, box-shadow 0.18s ease; }
+.fw-off .pop-cta { transition: transform 0.12s ease, filter 0.12s ease; }
+.fw-off .pop-cta:hover { filter: brightness(1.08); }
+.fw-off .pop-cta:active { transform: scale(0.985); }
+.fw-off .rules-group + .rules-group { margin-top: 12px; }
+.fw-off .rules { padding: 10px 0 12px; }
+
+/* ─── Off, the design pass (the owner asked for it to feel alive). One
+   system: a living mark in the header, section titles that trail off in a
+   hairline, cards that arrive rather than appear, one primary and one quiet
+   button, and lists that fold instead of growing. Motion stops for anyone
+   who asked their system for less of it. */
+.fw-off .pop-header .wordmark::before {
+  content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 9px;
+  border-radius: 50%; background: var(--fw-teal); vertical-align: 2px;
+  animation: fw-breathe 3.4s ease-in-out infinite;
+}
+@keyframes fw-breathe {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--fw-teal) 55%, transparent); }
+  55% { box-shadow: 0 0 0 7px transparent; }
+}
+.fw-off .grp-hdr { display: flex; align-items: center; gap: 10px; }
+.fw-off .pop-card { animation: fw-card-in 0.28s ease-out both; }
+@keyframes fw-card-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.fw-off .pop-cta.secondary, .pick-card .pop-cta.secondary {
+  background: transparent; color: var(--fw-teal);
+  border: 1px solid color-mix(in srgb, var(--fw-teal) 45%, transparent);
+  box-shadow: none;
+}
+.fw-off .pop-cta.secondary:hover, .pick-card .pop-cta.secondary:hover { background: color-mix(in srgb, var(--fw-teal) 10%, transparent); filter: none; }
+/* PF S-5: the row's own rule went with the orphan sweep, so the two buttons stacked flush; they share the card's width with a gap. */
+.pick-card .pick-actions { display: flex; flex-wrap: wrap; gap: var(--fw-s-3); }
+.pick-card .pick-actions .pop-cta { flex: 1 1 140px; margin: 0; }
+/* The picks list. These went out with an orphan sweep on 16 Sep, which read them as unused, and the list
+   rendered as run-together text ("Facebook3Clear") until the store pictures showed it. */
+.pick-card .pick-tally { margin: 10px 0 2px; }
+.pick-card .pick-group { margin-top: 10px; padding-top: 8px; border-top: 1px solid color-mix(in srgb, var(--fw-border) 55%, transparent); }
+.pick-card .pick-group-hdr {
+  display: flex; align-items: baseline; gap: 8px;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.02em; color: var(--fw-text);
+}
+.pick-card .pick-group-hdr .lnk { margin-left: auto; font-size: 11px; }
+.pick-card .pick-group-n { font-weight: 400; color: var(--fw-muted); }
+.pick-card .pick-row {
+  position: relative; display: flex; align-items: center; gap: 8px;
+  padding: 5px 0 5px 12px; font-size: 12px; animation: chip-in 0.18s ease-out;
+}
+.pick-card .pick-row::before {
+  content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 2px; border-radius: calc(2px * var(--pop-r-scale, 1));
+  background: color-mix(in srgb, var(--fw-teal) 55%, transparent);
+}
+.pick-card .pick-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pick-card .pick-more { margin: 4px 0 2px 12px; font-size: 11px; }
+.chip .pill-n { margin-left: 4px; font-size: 10px; opacity: .75; }
+.fw-off .pill-n, .pick-card .pill-n {
+  font-size: 10.5px; padding: 1px 7px; border-radius: 999px; color: var(--fw-text);
+  background: color-mix(in srgb, var(--fw-teal) 16%, var(--fw-card));
+}
+@media (prefers-reduced-motion: reduce) {
+  .fw-off .pop-header .wordmark::before, .fw-off .pop-card, .pick-card .pick-row, .chip, .rules-saved { animation: none; }
+  .fw-off .toggle, .fw-off .toggle::after, .fw-off .pop-card, .fw-off .pop-cta, .chips { transition: none; }
+}
+.fw-off .pop-header {
+  padding: 16px 18px 8px;
+  border-bottom: none;
+  align-items: baseline;
+}
+.fw-off .pop-header .wordmark { font-size: 19px; letter-spacing: -0.02em; }
+.fw-off .grp-hdr {
+  font-size: 10.5px; letter-spacing: 0.09em;
+  padding: 18px 20px 6px;
+  color: color-mix(in srgb, var(--fw-muted) 85%, var(--fw-text));
+}
+.fw-off .pop-card {
+  border-radius: calc(14px * var(--pop-r-scale, 1));
+  padding: 8px 14px;
+  margin: 8px 14px 0;
+  border-color: color-mix(in srgb, var(--fw-border) 45%, var(--fw-card));
+  background: var(--fw-card);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, var(--fw-shadow-card);
+}
+.fw-off .pop-card > .fr-desc { padding-top: 8px; }
+.fw-off .feat-row { padding: 11px 0; gap: 14px; }
+.fw-off .feat-row + .feat-row {
+  border-top-color: color-mix(in srgb, var(--fw-border) 55%, transparent);
+  padding-top: 11px; margin-top: 0;
+}
+.fw-off .feat-row .fr-name { font-size: 13px; letter-spacing: -0.005em; }
+.fw-off .feat-row .fr-desc { margin-top: 3px; line-height: 1.45; }
+
+/* Switches: a resting track for off, the brand colour for on. */
+/* Measured 38x22, also under the 24x24 minimum; matched to the base
+   .toggle's 24x40 (accessibility audit, 2026-09-18) so the knob and
+   padlock offsets below are the same numbers as the base track. */
+.fw-off .toggle { width: 40px; height: 24px; border-radius: calc(12px * var(--pop-r-scale, 1)); }
+.fw-off .toggle.off { background: color-mix(in srgb, var(--fw-muted) 72%, var(--fw-card)); }
+.fw-off .toggle::after {
+  top: 4px; width: 16px; height: 16px; left: 20px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+.fw-off .toggle.off::after { left: 4px; background: var(--fw-text); }
+.fw-off .toggle.locked-on { background: var(--fw-teal); }
+.fw-off .toggle.locked-on::after { top: 10px; left: 22px; width: 12px; height: 9px; border-radius: calc(2px * var(--pop-r-scale, 1)); }
+.fw-off .toggle.locked-on::before { top: 6px; left: 25px; border-color: #fff; }
+
+/* L7 (STANDARD C, the Accent role): whatever sits on the teal track is drawn in the on-accent colour, the same pair the Quiet hours
+   day pill uses. The dark theme's knob was the text colour on teal, 2.02:1 in Receipts and 2.30:1 in Off, under the 3:1 a control's
+   parts need; now it is near-black on teal (8.6:1). The light theme already held (white on teal) and keeps its own rules below. The
+   knob of a locked-on switch is the padlock's body, so the shackle takes the same colour. The off knob and the grey track stay. */
+.toggle.on::after, .fw-off .toggle.on::after { background: var(--fw-on-accent); }
+.toggle.locked-on::before, .fw-off .toggle.locked-on::before { border-color: var(--fw-on-accent); }
+
+/* PF S-16: in the light theme the knob is white with a soft shadow, so it stands off the teal track and the grey one alike
+   (the dark text colour on teal was 3:1 at best). The dark theme keeps its knob. Both light forms, as tokens.css has them:
+   the chosen attribute, and the system preference when no attribute is set. */
+:root[data-theme="light"] .toggle::after,
+:root[data-theme="light"] .fw-off .toggle.off::after {
+  background: var(--fw-on-accent);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--fw-text) 35%, transparent);
+}
+:root[data-theme="light"] .toggle.locked-on::before { border-color: var(--fw-on-accent); }
+/* The padlock on a locked-off switch is drawn in the card colour (controls.tsx, inline), made for the dark knob; on the white light knob
+   it was 1.08:1 and vanished. The text colour reads (17:1). The inline style is why this one needs !important. */
+:root[data-theme="light"] .toggle .toggle-lock { color: var(--fw-text) !important; }
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) .toggle::after,
+  :root:not([data-theme]) .fw-off .toggle.off::after {
+    background: var(--fw-on-accent);
+    box-shadow: 0 1px 2px color-mix(in srgb, var(--fw-text) 35%, transparent);
+  }
+  :root:not([data-theme]) .toggle.locked-on::before { border-color: var(--fw-on-accent); }
+  :root:not([data-theme]) .toggle .toggle-lock { color: var(--fw-text) !important; }
+}
+
+.fw-off .pop-cta { border-radius: calc(10px * var(--pop-r-scale, 1)); }
+
+/* The end of the page: room, then a quiet footer with no rule. */
+.fw-off .foot {
+  border-top: none; margin-top: 10px;
+  padding: 10px 20px 16px;
+  font-size: 10.5px;
+  color: color-mix(in srgb, var(--fw-muted) 80%, var(--fw-bg));
+}
+.fw-off .foot a { color: color-mix(in srgb, var(--fw-teal) 80%, var(--fw-muted)); text-decoration: none; }
+.fw-off .foot a:hover { text-decoration: underline; }
+
+/* Off: the header stays in view when the list scrolls, in the page's own colour so it reads as part of the page,
+   the tagline centred, and no squashed first frame (Chrome paints the popup before the layout has height). */
+.fw-popup.fw-off { min-height: max(560px, 100vh); }
+.fw-off .pop-header {
+  position: sticky; top: 0; z-index: 5;
+  display: grid; grid-template-columns: auto 1fr auto; align-items: baseline;
+  background: var(--fw-bg);
+  padding-bottom: 8px;
+}
+.fw-off .pop-header .wordmark { flex: none; }
+.fw-off .pop-header .fw-off-tagline { text-align: center; font-size: 11px; color: var(--fw-muted); }
+.fw-off .pop-header::after { content: ""; width: 26px; }
+
+/* Quiet hours (QuietHoursEditor.tsx): from, to, and the days, under the pause switches. */
+.quiet-hours { border-top: 1px solid var(--fw-border); padding-top: 10px; margin-top: 2px; }
+.quiet-hours .qh-body { margin-top: 8px; display: flex; flex-direction: column; gap: 8px; }
+.quiet-hours .qh-times { display: flex; gap: 12px; flex-wrap: wrap; }
+.quiet-hours .qh-times label { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--fw-muted); }
+.quiet-hours .qh-times input {
+  font: inherit; font-size: 13px; color: inherit; background: transparent;
+  border: 1px solid var(--fw-border); border-radius: calc(6px * var(--pop-r-scale, 1)); padding: 3px 6px; color-scheme: light dark;
+}
+.quiet-hours .qh-days { display: flex; gap: 4px; flex-wrap: wrap; }
+/* Measured ~23px tall, under the 24x24 minimum (accessibility audit,
+   2026-09-18); min-width was already past 24, only height needed a floor. */
+.quiet-hours .qh-day {
+  font: inherit; font-size: 11px; font-weight: 600; min-width: 34px; min-height: 24px; padding: 4px 6px; cursor: pointer;
+  border-radius: 999px; border: 1px solid var(--fw-border); background: transparent; color: var(--fw-muted);
+}
+.quiet-hours .qh-day.on { background: var(--fw-teal); border-color: var(--fw-teal); color: var(--fw-on-accent); }
+
+/* Home's quiet "Something still showing? Tell us" line, above the foot. */
+.home-report { margin: 10px 0 0; font-size: 11.5px; line-height: 1.5; color: var(--fw-muted); text-align: center; }
+.home-report a { color: var(--fw-teal); text-decoration: underline; }
+
+/* ─── The shell: one look for both popups ────────────────────────────────────────────────────────────────────
+   Receipts and Off share this page. Everything above grew in layers, each with its own spacing, radii and rules, so one
+   screen carried 4, 6, 8, 10 and 14 px corners, three border colours and lines under the header, the tab strip and the
+   footer. This block comes last and holds the shape for both: spacing on a 4 px grid, one card radius and one control
+   radius, one border colour, no rules between parts of the page, and the footer at the foot. It wins over the layers
+   above by order, at the same weight, so a selector here never needs more than .fw-popup in front of it. */
+.fw-popup {
+  --pop-1: 4px;
+  --pop-2: 8px;
+  --pop-3: 12px;
+  --pop-4: 16px;
+  --pop-6: 24px;
+  /* Beside the scrollbar's reserved strip on each side, so the visible edge is the same left and right, scrolling
+     or not. */
+  --pop-edge: var(--pop-2);
+  --pop-card-radius: var(--fw-r-lg);
+  --pop-control-radius: var(--fw-r-md);
+}
+/* Look A in light: the shared border (#8c8c90) measured 2.99:1 against the page, under the 3:1 a control's edge needs;
+   one step darker on each channel is the smallest change that passes (3.03:1). Looks B and C set their own border, and
+   the dashboard keeps the shared value. */
+:root[data-theme="light"]:not([data-look]) {
+  --fw-border: #8b8b8f;
+}
+
+/* The scrollbar takes a strip on both sides whether the page scrolls or not: the right edge stops being eaten by it
+   when a long page scrolls, and nothing shifts sideways when a fold opens. */
+html { scrollbar-gutter: stable both-edges; }
+
+/* The popup fills the window and the footer sits at its foot, so a short screen leaves room above the footer, never
+   a band of another colour below it. Chrome's own window draws the frame, so the page draws none. */
+.fw-popup { display: flex; flex-direction: column; min-height: 100vh; }
+/* The footer sits inside a tab panel or a screen wrapper, so each box between it and the popup grows the same way.
+   Inside these columns margins no longer merge, so every block keeps its space above it and none below. */
+.fw-popup :has(.foot) { flex: 1 0 auto; display: flex; flex-direction: column; }
+body:not(.fw-detached) .fw-popup { border: none; }
+.fw-popup .foot { margin-top: auto; padding: var(--pop-1) var(--pop-edge); border-top: none; }
+
+/* Header, tabs and section bars: flush with the page, no rule under them. */
+.fw-popup .pop-header { padding: var(--pop-2) var(--pop-edge); border-bottom: none; background: var(--fw-bg); }
+.fw-popup .pop-tabbar { padding: var(--pop-1) var(--pop-edge); border-bottom: none; }
+.fw-popup .settings-bar { padding: var(--pop-2) var(--pop-edge); border-bottom: none; }
+.fw-popup .pop-tier { padding: var(--pop-2) var(--pop-edge) 0; }
+
+/* Cards: one radius, one border colour, one fill, the same edge as everything else. */
+.fw-popup .pop-card,
+.fw-popup .key-card,
+.fw-popup .pop-bn,
+.fw-popup .pop-update { border-radius: var(--pop-card-radius); }
+.fw-popup .pop-card,
+.fw-popup .key-card,
+.fw-popup .pop-bn.info { border-color: var(--fw-border); }
+.fw-popup .pop-card { background: var(--fw-card); padding: var(--pop-2) var(--pop-3); margin: var(--pop-2) var(--pop-edge) 0; }
+.fw-popup .pop-bn,
+.fw-popup .pop-update { margin: var(--pop-2) var(--pop-edge) 0; }
+
+/* Controls: one radius. Round switches, chips and day pills stay round. */
+.fw-popup .pop-cta,
+.fw-popup .pop-tab,
+.fw-popup .hdr-iconbtn,
+.fw-popup .iconbtn,
+.fw-popup .key-input,
+.fw-popup .key-help,
+.fw-popup .pin-box,
+.fw-popup .mode-btn,
+.fw-popup .mode-seg-btn,
+.fw-popup .pop-hero,
+.fw-popup .pop-hero-secondary,
+.fw-popup .theme-iconrow,
+.fw-popup .set-select,
+.fw-popup select,
+.fw-popup textarea,
+.fw-popup input:not([type="checkbox"]):not([type="radio"]),
+.fw-popup .set-rules-jump,
+.fw-popup .lnk:focus-visible { border-radius: var(--pop-control-radius); }
+.fw-popup .theme-icon-btn { border-radius: calc(var(--pop-control-radius) - 2px); }
+.fw-popup .pop-cta {
+  width: calc(100% - 2 * var(--pop-edge)); margin: var(--pop-2) var(--pop-edge) 0; padding: var(--pop-2) var(--pop-4); min-height: 40px;
+}
+
+/* Section labels: readable at 11 px, spaced, muted, the same in both products; no trailing rule after them. */
+.fw-popup .grp-hdr {
+  font-size: var(--fw-text-11); letter-spacing: 0.06em; font-weight: 600; color: var(--fw-muted);
+  padding: var(--pop-2) var(--pop-edge) var(--pop-1);
+}
+.fw-popup .grp-hdr::after { content: none; }
+
+/* Rows inside a card are told apart by space, not by lines. */
+.fw-popup .feat-row { padding: var(--pop-1) 0; }
+.fw-popup .feat-row + .feat-row { border-top: none; padding-top: var(--pop-1); margin-top: 0; }
+.fw-popup .quiet-hours { border-top: none; padding-top: var(--pop-1); }
+.fw-popup .pick-card .pick-group { border-top: none; }
+
+/* The level choice: three buttons with one border; the chosen one is filled. */
+.fw-popup .mode-segmented { gap: var(--pop-2); margin-bottom: var(--pop-2); }
+.fw-popup .mode-card .mode-head { margin-bottom: var(--pop-2); }
+.fw-popup .mode-seg-btn { padding: var(--pop-2); border: 1px solid var(--fw-border); box-shadow: none; background: var(--fw-bg); }
+.fw-popup .mode-seg-btn:hover:not(.active) { border-color: var(--fw-border); background: var(--fw-card); }
+.fw-popup .mode-seg-btn.active { background: var(--fw-teal); border-color: transparent; color: var(--fw-on-accent); box-shadow: none; }
+.fw-popup .mode-seg-name { font-size: var(--fw-text-13); }
+/* The level's sentence is part of its card, not a box inside it. */
+.fw-popup .mode-explain {
+  background: none; border: none; border-radius: 0; padding: 0;
+  font-size: var(--fw-text-11); line-height: 1.45;
+}
+/* Customised switches: the sentence, then the way back on its own line. */
+.fw-popup .mode-state { margin-top: var(--pop-2); font-size: var(--fw-text-11); color: var(--fw-muted); display: block; }
+.fw-popup .mode-state .lnk { display: flex; margin-top: 0; }
+
+.fw-popup .pop-hero { padding: var(--pop-1) var(--pop-2); }
+.fw-popup .home-report { margin: var(--pop-2) var(--pop-edge) 0; }
+.fw-popup .set-rules-jump { min-height: 28px; margin-top: 0; padding: var(--pop-1) 0; }
+
+/* PIN, theme and language share one card: the language picker and the theme icons sit on one line. */
+.set-more-row { display: flex; align-items: center; gap: var(--pop-3); }
+.set-more-row .theme-iconrow { flex: none; }
+.set-select {
+  flex: 1; min-width: 0; padding: var(--pop-2) var(--pop-3); font: inherit; font-size: var(--fw-text-12);
+  background: var(--fw-bg); color: var(--fw-text); border: 1px solid var(--fw-border);
+}
+.set-more-row + .fr-desc { margin-top: var(--pop-1); }
+/* The update line with the note about the moved switches: link and note run as one text beside the ×. */
+.pop-update-text { flex: 1; min-width: 0; }
+.pop-update-text a { flex: none; }
+
+/* The reading consent: as wide as the popup allows, so its words take fewer lines, and its two answers pinned at the
+   panel's foot, so both stay on screen in a 600 px popup while the words above scroll (measured: the words alone ran
+   629 to 680 px in a panel capped at 584 in the four languages). */
+.pin-overlay .panel.consent-panel { width: calc(100% - 24px); max-width: 356px; padding: var(--fw-s-7); }
+.consent-panel h3 { margin-bottom: var(--fw-s-3); }
+.consent-panel p { margin: 0 0 var(--fw-s-3); font-size: var(--fw-text-12); line-height: 1.45; }
+.consent-actions {
+  position: sticky; bottom: calc(-1 * var(--fw-s-7)); margin: 0 calc(-1 * var(--fw-s-7)) calc(-1 * var(--fw-s-7));
+  padding: var(--fw-s-3) var(--fw-s-7) var(--fw-s-7); background: var(--fw-bg);
+  border-top: 1px solid var(--fw-border);
+}
+/* Three classes, so it outranks the shell's .fw-popup .pop-cta. */
+.pin-overlay .consent-actions .pop-cta { width: 100%; margin: 0; border-radius: var(--fw-r-md); }

@@ -1,0 +1,33 @@
+{
+  "receipts": {
+    "chromeDist": "dist",
+    "firefoxDist": "dist-firefox",
+    "nameKey": "receiptsName",
+    "gecko": {
+      "id": "feedprint@feelingwise.org",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": ["none"],
+        "optional": ["websiteContent", "authenticationInfo"]
+      }
+    }
+  },
+  "off": {
+    "chromeDist": "dist-off",
+    "firefoxDist": "dist-off-firefox",
+    "nameKey": "offName",
+    "gecko": {
+      "id": "off@feelingwise.org",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    },
+    "names": {
+      "en": "Off - Hide Swearing, Likes, Reels and Ads",
+      "es": "Off - Oculta palabrotas, me gusta y anuncios",
+      "pt_BR": "Off - Oculta palavrões, curtidas e anúncios",
+      "ro": "Off - Ascunde înjurături, aprecieri și reclame"
+    }
+  }
+}

@@ -1,0 +1,54 @@
+#!/bin/sh
+# FeelingWise commit-msg: the item gate.
+#
+# Rule 1 of the eight: "Before any work, name the outside number or question it serves. If you
+# cannot, do not do it."
+#
+# The diagnosis this comes from: 92 commits in 27 hours, on 18 September, reached zero users.
+# Nothing in the tree ever asked a change what it was for, and a tree cannot ask. A commit message
+# can be asked, and this is the only hook that can read one.
+#
+# What it wants is one line, anywhere in the message:
+#
+#     Outside number this serves: Off has 2 store users, read live at 22:27.
+#     Outside question this serves: whether anyone types the words the listing now uses.
+#
+# "number" and "question" are both allowed because some work serves a figure that exists and some
+# serves one that does not exist yet, and refusing the second would push honest work into a
+# pretended number.
+#
+# It only asks when the commit changes the product: src/, worker/src/ or landing/. A note, a plan,
+# a test or a memory file is not a change a user could notice, and making every commit recite a
+# number is how a rule turns into a ritual nobody reads. The cases are pinned in
+# tests/repo/commit-gates.test.ts, which was written before this file existed.
+#
+# Bypass (emergency only): git commit --no-verify
+set -eu
+
+say() { printf 'FeelingWise commit-msg: %s\n' "$1" >&2; }
+
+msg_file="${1:-}"
+[ -n "$msg_file" ] || exit 0
+[ -f "$msg_file" ] || exit 0
+
+product="$(git diff --cached --name-only -- 'src/' 'worker/src/' 'landing/' 2>/dev/null || true)"
+[ -n "$product" ] || exit 0
+
+# A merge or a revert carries a message git wrote, and blocking those strands the tree.
+case "$(head -n 1 "$msg_file")" in
+  Merge\ *|Revert\ *|fixup!\ *|squash!\ *) exit 0 ;;
+esac
+
+if grep -Eq '^[[:space:]]*Outside (number|question) this serves:[[:space:]]*[^[:space:]]' "$msg_file"; then
+  exit 0
+fi
+
+say 'BLOCKED - this commit changes the product and does not say what it is for.'
+say 'Add one line to the message, naming the outside number or the outside question:'
+say ''
+say '    Outside number this serves: Off has 2 store users, read live at 22:27.'
+say '    Outside question this serves: whether anyone types the words the listing uses.'
+say ''
+say 'If you cannot name one, the honest answer is not to make the change.'
+say 'Rule 1 of the eight rules of the house. Emergency bypass: git commit --no-verify'
+exit 1

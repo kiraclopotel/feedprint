@@ -1,0 +1,23 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "src/background/service-worker.ts!",
+    "src/content/bootstrap.ts!",
+    "src/content/index.ts!",
+    "src/content/page-world/main.ts!",
+    "src/products/off/content.ts!",
+    "src/products/off/popup/OffPopup.tsx!",
+    "src/ui/popup/Popup.tsx!",
+    "src/ui/dashboard/Dashboard.tsx!",
+    "tests/**/*.{ts,tsx}",
+    "scripts/**/*.{ts,mjs}"
+  ],
+  "project": [
+    "src/**/*.{ts,tsx}!",
+    "tests/**/*.{ts,tsx}",
+    "scripts/**/*.{ts,mjs}"
+  ],
+  "ignoreDependencies": [
+    "@types/chrome"
+  ]
+}

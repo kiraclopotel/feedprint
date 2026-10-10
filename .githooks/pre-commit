@@ -1,0 +1,267 @@
+#!/bin/sh
+# FeelingWise pre-commit: the gates CI would run, run locally, because the
+# project never pushes and CI therefore never executes (audit cause 8).
+#
+# Enable once per clone:   git config core.hooksPath .githooks
+# Bypass (emergency only): git commit --no-verify
+#
+# Gates, in cost order. The privacy checks always run; the code gates run when
+# a staged file can change the outcome (src/, worker/src/, tests/, scripts/,
+# the tsconfigs, the eslint config, package.json).
+set -eu
+
+say() { printf 'FeelingWise pre-commit: %s\n' "$1" >&2; }
+fail() { say "BLOCKED - $1"; exit 1; }
+
+# 1. Privacy: nothing under a private path may ever be tracked.
+private_tracked="$(git ls-files -- \
+  'corpus/' 'past-forensics/' '.fw-chain.json' 'worker/dev-license.seed.json' \
+  'scripts/license-backup-*' 'scripts/trial-licenses.log' 'scripts/review-licenses.log' \
+  'worker/.dev.vars' '.env' 2>/dev/null || true)"
+if [ -n "$private_tracked" ]; then
+  say "private paths are tracked:"
+  printf '%s\n' "$private_tracked" >&2
+  fail "a private file is in the index"
+fi
+private_staged="$(git diff --cached --name-only --diff-filter=A -- \
+  'corpus/' 'past-forensics/' '.fw-chain.json' 'worker/dev-license.seed.json' \
+  'scripts/license-backup-*' 'scripts/trial-licenses.log' 'scripts/review-licenses.log' \
+  'worker/.dev.vars' '.env' 2>/dev/null || true)"
+if [ -n "$private_staged" ]; then
+  printf '%s\n' "$private_staged" >&2
+  fail "a private file is staged"
+fi
+
+# 2. Privacy: nothing tracked-but-ignored. The one exemption (48 files force-added
+#    into the ignored docs/archive/) ended on 2026-09-16 when they moved to
+#    docs/history/archive/; ignored-yet-tracked is now always a mistake.
+ignored_tracked="$(git ls-files -i -c --exclude-standard || true)"
+if [ -n "$ignored_tracked" ]; then
+  printf '%s\n' "$ignored_tracked" >&2
+  fail "tracked files match .gitignore (they silently stop receiving updates)"
+fi
+
+# 2b. No release files outside release/ and store/: store packages and their hash lists sat at
+#     the root of every worktree and one blind staging away from a commit (2026-09-15). Checked
+#     at the root and one folder down, ignored or not; OUTBOX/sent and OUTBOX/superseded are two
+#     folders down and keep the packages he uploaded or retired.
+stray=""
+for f in *.zip *.sha256.txt */*.zip */*.sha256.txt; do
+  [ -e "$f" ] || continue
+  case "$f" in release/*|store/*) ;; *) stray="$stray $f" ;; esac
+done
+if [ -n "$stray" ]; then
+  printf '%s\n' $stray >&2
+  fail "release files outside release/ and store/ (move them to release/, or to OUTBOX/sent or OUTBOX/superseded)"
+fi
+
+# 3. Every staged path, both sides of a rename and every deletion. The old list
+#    (--diff-filter=ACMR) never saw a deleted file and saw only the new side of a
+#    rename, so a commit that only deleted or moved files skipped the suite even
+#    when tests read what it removed (found by the 2026-09-15 plan review).
+staged="$(git diff --cached --name-status -M --diff-filter=ACDMR | awk -F '\t' '{ for (i = 2; i <= NF; i++) print $i }')"
+
+# 4. The two JUDGE-V1 files are frozen: no modify, delete or rename is committed, with one
+#    exception, added on 2026-09-22 because the two halves of the lock contradicted each other.
+#    tests/repo/frozen-judge-files.test.ts says that when the owner unlocks them "the new hashes
+#    are written here in the same commit, with his word cited", and this step refused that very
+#    commit, so the only way to make it was to skip the hooks, which no session does (read out of
+#    the lock on 2026-09-20, OUTBOX/2026-09-20-two-comment-lines.md, "One more thing your word has
+#    to cover"). The exception is that one case and nothing wider; all three must hold:
+#      a. FW_OWNER_WORD is set and non-empty, his word given by name for that one command;
+#      b. tests/repo/frozen-judge-files.test.ts is staged in the same commit;
+#      c. the staged test file carries the SHA-256 of the staged bytes of every frozen file staged.
+#    The staged bytes, not the working tree's: what the lock describes has to be what is committed.
+#    A deletion or a rename leaves no staged blob to hash, so no word unlocks either.
+frozen_lock='tests/repo/frozen-judge-files.test.ts'
+frozen_hit="$(printf '%s\n' "$staged" | grep -x -e 'src/ai/prompts.ts' -e 'src/core/neutralizer.ts' || true)"
+if [ -n "$frozen_hit" ]; then
+  staged_sha256() {
+    if command -v sha256sum >/dev/null 2>&1; then
+      git show ":$1" | sha256sum | cut -d ' ' -f 1
+    else
+      git show ":$1" | openssl dgst -sha256 | sed 's/.*[ =]//'
+    fi
+  }
+  frozen_missing=''
+  if [ -z "${FW_OWNER_WORD:-}" ]; then
+    frozen_missing='FW_OWNER_WORD is unset or empty, so no word was given for this command'
+  elif [ -z "$(git diff --cached --name-only --diff-filter=ACMR -- "$frozen_lock")" ]; then
+    frozen_missing="$frozen_lock is not staged in the same commit"
+  else
+    lock_text="$(git show ":$frozen_lock")"
+    for f in $frozen_hit; do
+      if ! git cat-file -e ":$f" 2>/dev/null; then
+        frozen_missing="$f is staged as a deletion or a rename, which no word unlocks"
+        break
+      fi
+      sum="$(staged_sha256 "$f")"
+      case "$lock_text" in
+        *"$sum"*) ;;
+        *) frozen_missing="the staged $frozen_lock does not carry the SHA-256 of the staged $f ($sum)"
+           break ;;
+      esac
+    done
+  fi
+  printf '%s\n' "$frozen_hit" >&2
+  if [ -n "$frozen_missing" ]; then
+    say "the owner's word did not open the lock: $frozen_missing"
+    fail "a frozen judge file is staged (JUDGE-V1 changes only with the owner's word)"
+  fi
+  say "the owner's word opened the frozen lock: $frozen_lock is staged and carries the new hashes"
+fi
+
+# 4b. The outbox gate, rule 2 of the eight: his list holds three acts. It lives in its own file
+#     because its test drives it directly, and driving the whole of this hook meant running the
+#     entire suite inside a suite, once per case.
+sh "$(dirname "$0")/outbox-gate" || fail "the outbox gate refused (rule 2)"
+
+# 5. Code gates unless every staged path is prose nothing reads: the outbox, the
+#    root state files, the long log. Tests read docs, landing pages, rule files,
+#    manifests and locales, so everything else runs the gates, and so does an
+#    empty list.
+needs_code_gates=0
+if [ -z "$staged" ]; then needs_code_gates=1; fi
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  case "$f" in
+    OUTBOX/*|STATE.md|BRIEF.md|NOW.md|docs/STATE-LOG.md|docs/history/*) ;;
+    PLAN-*.md) case "$f" in */*) needs_code_gates=1 ;; esac ;;
+    *) needs_code_gates=1 ;;
+  esac
+done <<EOF
+$staged
+EOF
+if [ "$needs_code_gates" -eq 0 ]; then
+  say "only prose staged; privacy checks passed"
+  exit 0
+fi
+
+# 6. The whole unit project, or the fast lane (step 9). The whole project runs for a merge, on
+#    master, when FW_FULL_GATE is set, when a staged path changes how every test runs (the package
+#    files, the test and type configs), when a code path is deleted or renamed (a test that only
+#    mocks the old module is reached by neither fast run), when a code path holds a space (the
+#    related run takes one word per path), and when more than 200 paths are staged (the command
+#    line has a length limit on this system).
+whole_reason=''
+if [ -n "${FW_FULL_GATE:-}" ]; then whole_reason='FW_FULL_GATE is set'
+elif [ -n "${FW_GATE_MERGE:-}" ] || git rev-parse -q --verify MERGE_HEAD >/dev/null 2>&1; then whole_reason='a merge'
+elif [ "$(git symbolic-ref --short -q HEAD || true)" = master ]; then whole_reason='a commit on master'
+elif [ -n "$(git diff --cached --name-only --diff-filter=DR -- src/ tests/ worker/ scripts/ verifier/ landing/)" ]; then
+  whole_reason='a code path is deleted or renamed'
+fi
+related_paths=''
+related_count=0
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  case "$f" in
+    package.json|package-lock.json|vitest.config.*|vite.config.*|tsconfig*.json)
+      [ -n "$whole_reason" ] || whole_reason="$f changes how every test runs" ;;
+  esac
+  case "$f" in
+    *' '*)
+      # Outside the code folders a spaced path is a document, and every test that reads documents
+      # is in the first fast run.
+      case "$f" in
+        src/*|tests/*|worker/*|scripts/*|verifier/*|landing/*) [ -n "$whole_reason" ] || whole_reason="$f holds a space" ;;
+      esac
+      continue ;;
+  esac
+  if [ -f "$f" ]; then
+    related_paths="$related_paths $f"
+    related_count=$((related_count + 1))
+  fi
+done <<EOF
+$(git diff --cached --name-only --diff-filter=ACM)
+EOF
+if [ -z "$whole_reason" ] && [ "$related_count" -gt 200 ]; then whole_reason="$related_count paths are staged"; fi
+
+# 7. The same staged tree is never run twice, as when the message hook refused a commit whose files
+#    already passed here. A fast pass is recorded against the tree and its parent, since the fast
+#    lane chose its tests from the difference to that parent, and it counts only where the fast
+#    lane would run again. A pass that ran the whole unit project, the tooling project and the
+#    worker typecheck is recorded against the tree alone, since nothing it ran depended on the
+#    parent; such a record skips even a merge or a commit on master, soundly, because the same bytes
+#    already passed every gate there is (FW_FULL_GATE runs them again).
+gate_tree="$(git write-tree)"
+gate_parent="$(git rev-parse -q --verify HEAD 2>/dev/null || echo none)"
+green_file="$(git rev-parse --git-common-dir)/fw-green-trees"
+if [ -z "${FW_FULL_GATE:-}" ] && [ -f "$green_file" ]; then
+  if grep -qx "$gate_tree all" "$green_file" ||
+     { [ -z "$whole_reason" ] && grep -qx "$gate_tree $gate_parent" "$green_file"; }; then
+    say "this staged tree already passed every gate this commit needs; not run twice ($gate_tree)"
+    exit 0
+  fi
+fi
+
+# 8. The type checks keep an incremental cache inside this worktree's git folder, so it is never
+#    tracked and two worktrees never share one; tsc rechecks every file whose own text or whose
+#    imports changed, so a cached pass is the same verdict. The lint has no cache: its rules read
+#    types, and its cache is keyed on each file's own bytes, so an unchanged caller of a changed
+#    signature would pass from the cache.
+gate_cache="$(git rev-parse --git-path fw-gate-cache)"
+mkdir -p "$gate_cache"
+say "tsc --noEmit"
+npx tsc --noEmit --incremental --tsBuildInfoFile "$gate_cache/src.tsbuildinfo" || fail "src typecheck"
+say "tsc -p tsconfig.tests.json"
+npx tsc -p tsconfig.tests.json --incremental --tsBuildInfoFile "$gate_cache/tests.tsbuildinfo" || fail "typed test lane"
+say "eslint ."
+npx eslint . || fail "lint"
+
+# The unit project is every test but the twelve that start a process, build a temporary git
+# repository or run the standalone verifier (vitest.config.ts TOOLING_TESTS). Those are slower and
+# they compete for the machine, which has made them red on work that had nothing to do with them.
+# They run here when the commit touches what they exercise, and at every wave end (PLAN-2026-09-16
+# item 7.7).
+# Four workers for the unit project only: the config stays at one for everyone else, and the house
+# lets two suites run at once, so two commits at four each still leave a third of the twelve cores
+# free (an uncapped run of 22 workers is what held the machine before). The tooling project below
+# stays at one: those tests are the ones that turned red when they competed for the machine.
+unit_workers="${FW_TEST_WORKERS:-4}"
+case "$unit_workers" in ''|*[!0-9]*) unit_workers=4 ;; esac
+if [ "$unit_workers" -gt 6 ]; then unit_workers=6; fi
+
+# 9. Without a reason from step 6, two runs cover what the change can reach: every test that reads
+#    the tree from disk or starts a process (vitest.config.ts finds them through their imports,
+#    since vitest's import graph cannot see such a read), and vitest's related run on every staged
+#    path, which follows imports from the change to its tests. A path outside src/ and tests/ (a
+#    script, the worker, a doc) takes the same two runs: a test that imports it is related, and a
+#    test that reads it is in the first run.
+ran_all_units=0
+if [ -n "$whole_reason" ]; then
+  say "vitest run --project unit, the whole project ($unit_workers workers): $whole_reason"
+  FW_TEST_WORKERS="$unit_workers" npx vitest run --project unit --reporter=dot || fail "tests"
+  ran_all_units=1
+else
+  say "vitest run --project unit, the tests that read the tree ($unit_workers workers)"
+  FW_TEST_LANE=guards FW_TEST_WORKERS="$unit_workers" npx vitest run --project unit --reporter=dot || fail "tests (the tests that read the tree)"
+  if [ -n "$related_paths" ]; then
+    say "vitest related --project unit, the tests that import the change ($unit_workers workers)"
+    # shellcheck disable=SC2086 # one word per staged path; step 6 kept spaced paths out
+    FW_TEST_WORKERS="$unit_workers" npx vitest related --run --project unit --reporter=dot --passWithNoTests $related_paths || fail "tests (related to the change)"
+  fi
+fi
+ran_tooling=0
+ran_worker=0
+case "$staged" in
+  *tests/private/*|*tests/helpers/*|*tests/unit/background/dev-reload*|*tests/unit/forensics/import-marker*|  *tests/repo/pre-push-hook*|*tests/repo/commit-gates*|*tests/unit/forensics/receive-export*|*tests/repo/reproducible-build-id*|  *tests/unit/forensics/standalone-verifier*|*tests/gates/verifier-vectors*|*scripts/*|*.githooks/*|  *verifier/*|*worker/scripts/*|*package.json*|*src/forensics/*|*src/background/dev-reload*)
+    say "vitest run --project tooling"
+    npx vitest run --project tooling --reporter=dot || fail "tooling tests"
+    ran_tooling=1 ;;
+esac
+case "$staged" in
+  *worker/src/*)
+    say "worker typecheck"
+    npm --prefix worker run typecheck || fail "worker typecheck"
+    ran_worker=1 ;;
+esac
+if [ "$ran_all_units$ran_tooling$ran_worker" = 111 ]; then
+  printf '%s all\n' "$gate_tree" >> "$green_file"
+else
+  printf '%s %s\n' "$gate_tree" "$gate_parent" >> "$green_file"
+fi
+# The record only ever needs the last few trees; it is cut so it never grows without end.
+if [ "$(wc -l < "$green_file")" -gt 400 ]; then
+  tail -n 200 "$green_file" > "$green_file.cut" && mv "$green_file.cut" "$green_file"
+fi
+say "all gates passed"

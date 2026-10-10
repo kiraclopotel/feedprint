@@ -1,0 +1,72 @@
+{
+  "note": "Throwaway test keys (own, old, substituted), generated for these fixtures with Web Crypto (ECDSA P-256) in commit 9e1e4b1e; they sign only the checker's test vectors (scripts/build-verifier-vectors.ts) and were never used for a real record.",
+  "own": {
+    "publicJwk": {
+      "key_ops": [
+        "verify"
+      ],
+      "ext": true,
+      "kty": "EC",
+      "x": "fiFAIgOjFmESwiv6K5W1WC3_pHnib4yVfUNVmw5GW6Q",
+      "y": "N1cfHS8F2kknyAfg21N6_H8fKLSDjmFkd-rlsvQiv7g",
+      "crv": "P-256"
+    },
+    "privateJwk": {
+      "key_ops": [
+        "sign"
+      ],
+      "ext": true,
+      "kty": "EC",
+      "x": "fiFAIgOjFmESwiv6K5W1WC3_pHnib4yVfUNVmw5GW6Q",
+      "y": "N1cfHS8F2kknyAfg21N6_H8fKLSDjmFkd-rlsvQiv7g",
+      "crv": "P-256",
+      "d": "Q8RREdCmIT7StFxy4k4b43CkJGGsBxWx5Wv1L2-x3P8"
+    }
+  },
+  "old": {
+    "publicJwk": {
+      "key_ops": [
+        "verify"
+      ],
+      "ext": true,
+      "kty": "EC",
+      "x": "VEPmTWgMDM20V9K091TKMKl-2k3C2V1SOqjt6KT6oYU",
+      "y": "Mico2mOCu6751_ikpZLa_kNU9PutQu1oSVamWNIQMzE",
+      "crv": "P-256"
+    },
+    "privateJwk": {
+      "key_ops": [
+        "sign"
+      ],
+      "ext": true,
+      "kty": "EC",
+      "x": "VEPmTWgMDM20V9K091TKMKl-2k3C2V1SOqjt6KT6oYU",
+      "y": "Mico2mOCu6751_ikpZLa_kNU9PutQu1oSVamWNIQMzE",
+      "crv": "P-256",
+      "d": "X1KDeHiTwRTDeNK8XHAO8-oyQ3jVPflTZ4EedrXJX-U"
+    }
+  },
+  "substituted": {
+    "publicJwk": {
+      "key_ops": [
+        "verify"
+      ],
+      "ext": true,
+      "kty": "EC",
+      "x": "5_WBbIjz7Wpj0WJiYBsydugdYUNsHgf_nU81AGuWktU",
+      "y": "_5j6RFkx-rVr8kDVxMvNhV7r--imJVkeCLDbd4awFYQ",
+      "crv": "P-256"
+    },
+    "privateJwk": {
+      "key_ops": [
+        "sign"
+      ],
+      "ext": true,
+      "kty": "EC",
+      "x": "5_WBbIjz7Wpj0WJiYBsydugdYUNsHgf_nU81AGuWktU",
+      "y": "_5j6RFkx-rVr8kDVxMvNhV7r--imJVkeCLDbd4awFYQ",
+      "crv": "P-256",
+      "d": "H5e69OGYIb-zcYZgy-cfaPFNt2c5Wj7f_cj113UzZwk"
+    }
+  }
+}

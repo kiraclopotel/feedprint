@@ -1,0 +1,7 @@
+# Line endings are part of the build: a checkout that turns LF into CRLF builds other bytes, and
+# the store hash no longer reproduces. Measured 2026-09-15: a clone with core.autocrlf=true built
+# 19cd3d42... against the store build's c51e1b7e...; with this rule in the repository the same
+# clone built c51e1b7e..., a match. Every text file stays LF on every system, in this repository
+# and in the public copy (scripts/public-snapshot.mjs copies this file).
+* text=auto eol=lf
+.githooks/* text eol=lf

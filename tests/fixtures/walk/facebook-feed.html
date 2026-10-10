@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Walk fixture: a saved page feed</title>
+<!--
+  A frozen, synthetic Facebook-shaped feed for scripts/walk/walk.mjs.
+
+  Nothing here is copied from a real page. Every name and every sentence was
+  written for this file. The shapes are the ones the Off build reads:
+
+    feed unit    [aria-posinset]                  src/content/engagement/
+                                                  emoji-stripper.ts SCOPE_SELECTORS
+    text scope   [aria-posinset] [dir="auto"]     the word filter reads these
+    hide target  div[role="article"]              word-filter.ts CONTAINER_SELECTORS
+    comment box  form[role="presentation"] and a contenteditable textbox
+                 labelled as a comment field      facebook-engagement.ts
+                                                  blockCommentInputCSS
+    action bar   a row of [role="button"] under each post, which the
+                 structural finder is allowed to stamp and hide
+    ad label     a leaf whose whole text is a label   src/content/engagement/
+                 from the shared list, beside the     ad-labels.ts and
+                 empty role="article" shell of a      feed-ad-blocker.ts
+                 home-feed unit
+
+  The first post carries the walk's own rule word. The walk writes that word
+  into the user's list before it opens this page, so the hide it asserts is
+  the user's own rule firing, not a model's guess. The second post carries
+  nothing any rule matches and must be left alone.
+
+  The last three posts keep their header beside an empty role="article"
+  shell, as the home feed does, because the ad rule reads nothing inside one.
+  The two sponsored ones are labelled Publicidad and Anúncio rather than
+  Patrocinado, which the Facebook adapter's own check also knows, so only the
+  shared list can hide them; the third carries Publicidad only as the whole of
+  a comment, which must hide nothing.
+-->
+<style>
+  body { font: 15px system-ui, sans-serif; margin: 0; background: #f0f2f5; color: #050505; }
+  main { max-width: 620px; margin: 0 auto; padding: 16px 0; }
+  [aria-posinset] { background: #fff; border-radius: 8px; margin-bottom: 16px; padding: 12px 16px; }
+  .head { font-weight: 600; }
+  .bar { display: flex; gap: 32px; margin-top: 10px; padding-top: 8px; border-top: 1px solid #ced0d4; color: #65676b; }
+  .composer { margin-top: 10px; background: #f0f2f5; border-radius: 18px; padding: 8px 12px; color: #65676b; }
+</style>
+</head>
+<body>
+<div role="main">
+  <main>
+
+    <div aria-posinset="1" data-walk="match">
+      <div role="article" aria-label="Post by Walk Page One">
+        <div class="head"><span dir="auto">Walk Page One</span></div>
+        <div dir="auto">The zorbnak trial run is on again tonight and the hall opens at seven for anyone who wants a seat near the front.</div>
+        <div class="bar" role="toolbar">
+          <div role="button" aria-label="Like">Like</div>
+          <div role="button" aria-label="Comment">Comment</div>
+          <div role="button" aria-label="Share">Share</div>
+        </div>
+        <form role="presentation">
+          <div class="composer" contenteditable="true" role="textbox" aria-label="Write a comment">Write a comment</div>
+        </form>
+      </div>
+    </div>
+
+    <div aria-posinset="2" data-walk="clean">
+      <div role="article" aria-label="Post by Walk Page Two">
+        <div class="head"><span dir="auto">Walk Page Two</span></div>
+        <div dir="auto">The allotment committee has put the shed keys back in the green box by the gate, so nobody has to wait for Tuesday to get in.</div>
+        <div class="bar" role="toolbar">
+          <div role="button" aria-label="Like">Like</div>
+          <div role="button" aria-label="Comment">Comment</div>
+          <div role="button" aria-label="Share">Share</div>
+        </div>
+        <form role="presentation">
+          <div class="composer" contenteditable="true" role="textbox" aria-label="Write a comment">Write a comment</div>
+        </form>
+      </div>
+    </div>
+
+    <div aria-posinset="4" data-walk="match-glued">
+      <div role="article" aria-label="Post by Walk Page match-glued">
+        <div class="head"><span dir="auto">Walk Page match-glued</span></div>
+        <div dir="auto">Honestly that was a proper zorbnakhead move from the organisers, and everyone in the queue said so out loud.</div>
+        <div class="bar" role="toolbar">
+          <div role="button" aria-label="Like">Like</div>
+          <div role="button" aria-label="Comment">Comment</div>
+          <div role="button" aria-label="Share">Share</div>
+        </div>
+      </div>
+    </div>
+
+    <div aria-posinset="5" data-walk="near-miss">
+      <div role="article" aria-label="Post by Walk Page near-miss">
+        <div class="head"><span dir="auto">Walk Page near-miss</span></div>
+        <div dir="auto">The zorbnakian school of thought has three books out this year and the library has ordered all of them for the reading group.</div>
+        <div class="bar" role="toolbar">
+          <div role="button" aria-label="Like">Like</div>
+          <div role="button" aria-label="Comment">Comment</div>
+          <div role="button" aria-label="Share">Share</div>
+        </div>
+      </div>
+    </div>
+
+    <div aria-posinset="3" data-walk="clean-two">
+      <div role="article" aria-label="Post by Walk Page Three">
+        <div class="head"><span dir="auto">Walk Page Three</span></div>
+        <div dir="auto">Three of the benches by the river were repainted last week and the bare wood on the fourth one is next, weather permitting.</div>
+        <div class="bar" role="toolbar">
+          <div role="button" aria-label="Like">Like</div>
+          <div role="button" aria-label="Comment">Comment</div>
+          <div role="button" aria-label="Share">Share</div>
+        </div>
+      </div>
+    </div>
+
+    <div aria-posinset="6" data-walk="ad-es">
+      <div role="article" aria-label=""></div>
+      <div class="head"><span dir="auto">Walk Tienda Uno</span> · <span data-walk-label>Publicidad</span></div>
+      <div data-ad-rendering-role="story_message"><div dir="auto">Zapatillas ligeras para caminar por la ciudad todo el día, con envío gratis hasta el domingo.</div></div>
+      <div class="bar" role="toolbar">
+        <div role="button" aria-label="Me gusta">Me gusta</div>
+        <div role="button" aria-label="Comentar">Comentar</div>
+        <div role="button" aria-label="Compartir">Compartir</div>
+      </div>
+    </div>
+
+    <div aria-posinset="7" data-walk="ad-pt">
+      <div role="article" aria-label=""></div>
+      <div class="head"><span dir="auto">Walk Loja Dois</span> · <span data-walk-label>Anúncio</span></div>
+      <div data-ad-rendering-role="story_message"><div dir="auto">Mochilas resistentes para a escola e para o trabalho, com frete grátis até domingo.</div></div>
+      <div class="bar" role="toolbar">
+        <div role="button" aria-label="Curtir">Curtir</div>
+        <div role="button" aria-label="Comentar">Comentar</div>
+        <div role="button" aria-label="Compartilhar">Compartilhar</div>
+      </div>
+    </div>
+
+    <div aria-posinset="8" data-walk="label-in-comment">
+      <div role="article" aria-label=""></div>
+      <div class="head"><span dir="auto">Walk Página Tres</span></div>
+      <div data-ad-rendering-role="story_message"><div dir="auto">Mi hermana abrió por fin su panadería en el barrio, y el pan sale del horno a las siete de la mañana.</div></div>
+      <div class="bar" role="toolbar">
+        <div role="button" aria-label="Me gusta">Me gusta</div>
+        <div role="button" aria-label="Comentar">Comentar</div>
+        <div role="button" aria-label="Compartir">Compartir</div>
+      </div>
+      <div role="article" aria-label="Comentario de Walk Lectora">
+        <span dir="auto">Walk Lectora</span>
+        <div dir="auto"><span data-walk-label>Publicidad</span></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+</body>
+</html>

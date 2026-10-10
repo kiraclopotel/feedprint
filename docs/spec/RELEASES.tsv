@@ -1,0 +1,56 @@
+# Every zip uploaded to the Chrome Web Store that was built with scripts/reproducible-build.mjs: the
+# commit it was built from, the Node version that built it, the SHA-256 of its files (see
+# filesDigest in that script) and of the zip, and the day it was uploaded. A row is added in the
+# commit after the upload, because a commit cannot hold the hash of its own build.
+#
+# This is our record of what we uploaded. The store does not hand the zip out, so the check a
+# stranger can make without trusting it is against the copy Chrome installed from the store:
+# node scripts/reproducible-build.mjs --product receipts --verify-installed <folder>
+#
+# Receipts 2.5.10 and Off 1.0.6 were uploaded on 2026-09-17 and the Receipts review was
+# withdrawn on 2026-09-18, before the store published it, when M184 and M187 were found. The row
+# stays: it records what was uploaded, which is what this file is for. Nothing was ever served
+# from it.
+#
+# Receipts 2.5.8 and earlier uploads were built from source that was never published. Off 1.0.4,
+# uploaded 2026-09-15, is not listed: it was built before Off had a reproducible build.
+product	version	source_commit	node	files_sha256	zip_sha256	uploaded
+receipts	2.5.8	d0a708da78fd93e638c34846191d8ada19b359a0	24.14.0	a80e0e03d6467a83ad96408990fae1e22c174e136446bc78d98b1172947a58ca	01ab3bb46af9d050c1ac95d8640a0cec17aab02be3f9fca3751c4df5f619b941	2026-09-15
+receipts	2.5.9	b56ed67d6a59ae473dfbc5ef55b72a2cdda3a8d9	24.14.0	8b794dce261e424d56a9acccd8fcc0562dc82cab20bbc90c254db459fadc4c9c	9c9461a01a4f3e8b7a518105b5fa49f4dd550739f50ec04c35c37dee6360a2cb	2026-09-16
+off	1.0.5	b56ed67d6a59ae473dfbc5ef55b72a2cdda3a8d9	24.14.0	66b8986791b656bc722e6adf91dfef820de8ea6a11f27dfccd678408f80e88ae	24c036288b661ca4ff405893bd48460fc63ef9b2eaad24933315d2a9d1140da6	2026-09-16
+receipts	2.5.10	ce963b7eef6d160be68f8541ed5e5266e00abf97	24.14.0	62d691c881c12ffff88609d9840573ab6e9ad600f07ec99d967ab101602f4159	51220499081f887aea8df42b4bdecce328b831372fde556f2947a26bb37f9570	2026-09-17
+off	1.0.6	ce963b7eef6d160be68f8541ed5e5266e00abf97	24.14.0	7970a5aef7018828347f5cd3d6879bf1029f411ff07eb7e397f6d29bcbe574b0	a6ef799b3e88a5468509a5a0fc1e87308ec18fdbf0984c6ae2b0d0bf2f06cba3	2026-09-17
+# 2.5.11, added 2026-09-20 from the live listing, which reads 2.5.11 updated 19 September 2026.
+#	No note was moved to OUTBOX/sent for that upload, so the commit and the two hashes below are the
+#	only 2.5.11 package this repository holds (release/receipts-2.5.11.zip, rebuilt from 9d4a82ea's
+#	parent d19670f0 on 19 September, register M280). If a different build went up, these two hashes
+#	are wrong and the public rebuild check will say so; the version, the date and the fact that it is
+#	live are read off the store and are not in doubt.
+receipts	2.5.11	d19670f054a6862c7b5c1a74888f26726586ddef	24.14.0	195ee631e0fdec95419a46a65659492640445f7ee8eb23d02877de5b07058792	1fae6aadfca0e8511af7611ddd4de807a73111558239fe58b1525fc3ed8d5160	2026-09-19
+#
+# 2.5.13 and 1.0.9, added 2026-09-20 the night both were uploaded. Off 1.0.9 was read
+#	back off the store the same night: the served package matches release/off-1.0.9.zip file for
+#	file, the store's own update_url line and _metadata folder apart. Receipts still served 2.5.11
+#	at that reading, so its row records what was handed over, not yet what is served.
+receipts	2.5.13	16511113fc1692b3b17db0f9cc60fa9675981f81	24.14.0	4470930aa07c3e4a1bb128b010f7fcfacc02a13fc7c05045beefff6d1219b071	141defe2e3c593088a2d51ed0ee27a44d3bb54066670204ccd31b092cb4aefc4	2026-09-20
+off	1.0.9	16511113fc1692b3b17db0f9cc60fa9675981f81	24.14.0	4a471853679567d7521a1601bf125ee0d525170ca1167a25ebcc993fe21a8de4	9ba934363b2aad844d47fc889c55330c5974d79d51f51cafa8e2189616a85b00	2026-09-20
+#	Receipts 2.5.13 read back 2026-09-20 03:22: the served package matches release/receipts-2.5.13.zip
+#	file for file, the same two additions the listing makes apart.
+receipts	2.5.14	d493eef554fffab44fb355840a367f26ff0bd6ca	24.14.0	01664662df249ae93eadcdc2c7f1c3bfded8cbef896fe7fe87bfcf6b05750552	4ff5bf9652684c9d3d0bd9d428a298b89a7a860db79436692a7e2eb5faf1d854	2026-09-20
+#	Receipts 2.5.14 uploaded and submitted 2026-09-20 about 23:10, together with the four
+#	descriptions rewritten in the same sitting. Off stays at 1.0.9 for now: 1.0.10 is built
+#	(afcac6def551f4c2c9d65e03ed621a34ff21d614d7a389d0eafe5f33a7195c92) and waits for the Off
+#	review queue to clear, so it gets its row when it is uploaded, not before.
+#	Receipts 2.5.14 is what the store serves from 2026-09-21, read that day at 17:09 with
+#	node scripts/verify/store-vs-site.mjs, which asks Chrome's own update service what an install
+#	would be handed today. Still to do, and not claimed here: the file-for-file read-back of the
+#	served package against release/receipts-2.5.14.zip, the way 1.0.9 and 2.5.13 were read back.
+#	That zip is not in this worktree.
+off	1.0.10	fb35c218ca2258e744ffc96e5810ebd5fb2b5145	24.14.0	2a7af2edb56b6448fef2135e635a9a300b82335777d187d90b5ebcffcce5082a	61a7c3aa43b178ccad27030fd7664d0929c63cf01d4a5f8c78c762930f8625b9	2026-09-26
+receipts	2.5.15	39bb88d53fef2a7d9df036a1bad7cf72908cf139	24.14.0	9e1ea0f1d560621a4f155c57a701c9cec7f1375f94c68739a4486e4df478fa2c	011154a8aec445c8794cb9c1ce6b9b65e94286155d25911432d34867d56023a2	2026-09-27
+#	Receipts 2.5.16, added 2026-10-01 in the site commit of the push, the hour before the owner uploads it the same day (IN.md 17:09):
+#	built from ac0cabcb (REBUILD-2516; recorded in this history by the merge 44d9dcc4); hashes from run/maker/evidence/RB-build.txt
+#	and the upload note (zip 47b9788f...). Off 1.0.11 (1c6472d8) gets its row in the commit after the upload.
+#	Corrected 2026-10-08: the upload was 3 October, not 1 October as planned when this row was added; the instrument is
+#	the upload note of that day, whose last line reads "DONE Sat 03 Oct 2026 20:50".
+receipts	2.5.16	ac0cabcb83fb6bb60f3d4e0f79a88e7610b53f46	24.14.0	e7bf75c937eff58f460e7104e5d1cf922bc705398faefa9564682c3abd2426ac	47b9788f686adc2996bb26acd956a458c9662ff2aed4be2750978bb2187569d9	2026-10-03

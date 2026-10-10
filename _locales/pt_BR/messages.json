@@ -1,0 +1,9 @@
+{
+  "receiptsName": { "message": "Feedprint - Guarde o que o seu feed mostrou" },
+  "receiptsShortName": { "message": "Feedprint" },
+  "receiptsDescription": { "message": "Um registro assinado do que o seu feed mostrou no X, Facebook, Instagram, TikTok e YouTube, no seu computador. Qualquer um confere." },
+  "receiptsActionTitle": { "message": "Feedprint da FeelingWise" },
+  "offName": { "message": "Off - Oculta palavrões, curtidas, Reels, Shorts e anúncios" },
+  "offDescription": { "message": "Desliga palavrões, contadores de curtidas, Reels, Shorts e anúncios no Facebook, Instagram, X, TikTok e YouTube. Grátis, sem conta." },
+  "offActionTitle": { "message": "Off" }
+}

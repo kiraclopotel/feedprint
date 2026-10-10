@@ -1,0 +1,89 @@
+{
+  "responseContext": { "visitorData": "synthetic" },
+  "contents": {
+    "twoColumnBrowseResultsRenderer": {
+      "tabs": [
+        {
+          "tabRenderer": {
+            "content": {
+              "richGridRenderer": {
+                "contents": [
+                  {
+                    "richItemRenderer": {
+                      "content": {
+                        "videoRenderer": {
+                          "videoId": "SyntheticV01",
+                          "title": { "runs": [{ "text": "Synthetic home tile title" }] },
+                          "ownerText": { "runs": [{ "text": "Synthetic Channel One" }] },
+                          "descriptionSnippet": { "runs": [{ "text": "A short description snippet." }] },
+                          "publishedTimeText": { "simpleText": "3 days ago" },
+                          "thumbnail": {
+                            "thumbnails": [
+                              { "url": "https://i.ytimg.com/vi/SyntheticV01/default.jpg", "width": 120 },
+                              { "url": "https://i.ytimg.com/vi/SyntheticV01/hqdefault.jpg", "width": 480 }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "richItemRenderer": {
+                      "content": {
+                        "adSlotRenderer": {
+                          "adSlotMetadata": { "slotId": "synthetic-slot" },
+                          "fulfillmentContent": {
+                            "fulfilledLayout": {
+                              "inFeedAdLayoutRenderer": {
+                                "renderingContent": {
+                                  "videoRenderer": {
+                                    "videoId": "SyntheticAd1",
+                                    "title": { "simpleText": "Synthetic promoted tile" },
+                                    "longBylineText": { "runs": [{ "text": "Synthetic Advertiser" }] },
+                                    "thumbnail": {
+                                      "thumbnails": [
+                                        { "url": "https://i.ytimg.com/vi/SyntheticAd1/hqdefault.jpg", "width": 480 }
+                                      ]
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "richItemRenderer": {
+                      "content": {
+                        "videoRenderer": {
+                          "videoId": "SyntheticV02",
+                          "title": { "simpleText": "Second synthetic home tile" },
+                          "shortBylineText": { "runs": [{ "text": "Synthetic Channel Two" }] },
+                          "badges": [
+                            { "metadataBadgeRenderer": { "style": "BADGE_STYLE_TYPE_AD", "label": "Ad" } }
+                          ],
+                          "thumbnail": {
+                            "thumbnails": [
+                              { "url": "https://i.ytimg.com/vi/SyntheticV02/hqdefault.jpg", "width": 480 }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "richSectionRenderer": {
+                      "content": { "note": "A section with no videoId is not an item." }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

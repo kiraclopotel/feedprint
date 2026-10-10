@@ -1,0 +1,213 @@
+/* The house system on the dashboard (docs/design/site-v6, DESIGN.md): ground, ink, two meaning colours, one face.
+ *
+ * Generated from docs/design/site-v6/tokens.css (its INPUTS to COMPATIBILITY sections) by the dashboard seat, 9 Oct 2026,
+ * because the dashboard is its own document and the shared src/ui/shared/tokens.css has not taken the house file yet.
+ * When the shared file is the house file, delete this file; the frame is dashboard-frame.css.
+ * Two changes from the source: every bare :root is written ":root, :root[data-theme]" so it outranks the old shared
+ * file's themed blocks (same specificity, later in the cascade), and the face is loaded from local() only until
+ * fonts/BricolageGrotesque-Variable.ttf ships in the package.
+ */
+
+/* ───────────────────────── INPUTS, light (the base) ───────────────────────── */
+/* THE FACE. One variable file, OFL 1.1 (the file BricolageGrotesque[opsz,wdth,wght].ttf from the Google Fonts repository, placed as
+   fonts/BricolageGrotesque-Variable.ttf beside this file so no path carries brackets). A Google Fonts link never ships. */
+@font-face { font-family: "Bricolage Grotesque"; src: local("Bricolage Grotesque"), local("BricolageGrotesque"); font-weight: 200 800; font-stretch: 75% 100%; font-display: swap; }
+
+:root, :root[data-theme] {
+  --fw-ground: #eeeff1;   /* the page and the popup */
+  --fw-ink:    #141518;   /* text, blocks, the Off line */
+  --fw-noise:  #b4123f;   /* a thing Off took out: the switch square */
+  --fw-record: #4531c9;   /* a thing Receipts wrote down: the record mark */
+  --fw-lift:   color-mix(in oklab, var(--fw-ground) 30%, white); /* a surface one step above the ground */
+  --fw-scheme: light; color-scheme: light; --fw-scrim-a: 0.6;
+}
+
+/* ───────────────────────── INPUTS, dark ───────────────────────── */
+/* The rule: ink and ground trade places one step short of pure (never #000, never #fff); noise and record
+ * are lifted until they hold 4.5:1 on the dark ground with the same hue. The derived set below follows. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fw-ground: #0f1012;
+    --fw-ink:    #dfe0e2;
+    --fw-noise:  #ff6f8a;
+    --fw-record: #a79cff;
+    --fw-lift:   color-mix(in oklab, var(--fw-ground) 94%, white);
+    --fw-scheme: dark; color-scheme: dark; --fw-scrim-a: 0.75;
+  }
+}
+:root[data-theme="dark"] {
+  --fw-ground: #0f1012;
+  --fw-ink:    #dfe0e2;
+  --fw-noise:  #ff6f8a;
+  --fw-record: #a79cff;
+  --fw-lift:   color-mix(in oklab, var(--fw-ground) 94%, white);
+  --fw-scheme: dark; color-scheme: dark; --fw-scrim-a: 0.75;
+}
+:root[data-theme="light"] {
+  --fw-ground: #eeeff1;
+  --fw-ink:    #141518;
+  --fw-noise:  #b4123f;
+  --fw-record: #4531c9;
+  --fw-lift:   color-mix(in oklab, var(--fw-ground) 30%, white);
+  --fw-scheme: light; color-scheme: light; --fw-scrim-a: 0.6;
+}
+
+/* ───────────────────────── DERIVED (one rule, both schemes) ───────────────────────── */
+:root, :root[data-theme] {
+  --fw-card:   color-mix(in oklab, var(--fw-ink)  5%, var(--fw-ground));  /* a panel on the ground */
+  --fw-line:   color-mix(in oklab, var(--fw-ink) 18%, var(--fw-ground));  /* hairlines, dividers, bars in a drawing */
+  --fw-edge:   color-mix(in oklab, var(--fw-ink) 48%, var(--fw-ground));  /* a control's edge: 3:1 and above */
+  --fw-muted:  color-mix(in oklab, var(--fw-ink) 66%, var(--fw-ground));  /* secondary text: 4.5:1 and above */
+  --fw-faint:  color-mix(in oklab, var(--fw-ink)  2%, var(--fw-ground));  /* a code block's ground */
+  --fw-noise-soft:  color-mix(in oklab, var(--fw-noise)  12%, var(--fw-ground));
+  --fw-record-soft: color-mix(in oklab, var(--fw-record) 12%, var(--fw-ground));
+  --fw-ink-hover:   color-mix(in oklab, var(--fw-ink) 86%, var(--fw-ground));
+  --fw-on-ink: var(--fw-ground);
+
+  /* Status words the product prints (verdicts, warnings). They are the checker's language, not the
+   * identity's: a verdict is never crimson or blue, so noise and record keep their one meaning each. */
+  --fw-ok:      #246b2b;
+  --fw-warn:    #8a4b00;
+  --fw-danger:  #b3261e;
+  --fw-ok-soft:     color-mix(in oklab, var(--fw-ok)     12%, var(--fw-ground));
+  --fw-warn-soft:   color-mix(in oklab, var(--fw-warn)   12%, var(--fw-ground));
+  --fw-danger-soft: color-mix(in oklab, var(--fw-danger) 12%, var(--fw-ground));
+  --fw-focus: var(--fw-record);
+  --fw-focus-gap: var(--fw-ground);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --fw-ok: #6fcf74; --fw-warn: #ffb454; --fw-danger: #ff8a80; }
+}
+:root[data-theme="dark"]  { --fw-ok: #6fcf74; --fw-warn: #ffb454; --fw-danger: #ff8a80; }
+:root[data-theme="light"] { --fw-ok: #246b2b; --fw-warn: #8a4b00; --fw-danger: #b3261e; }
+
+/* ───────────────────────── TYPE ───────────────────────── */
+:root, :root[data-theme] {
+  --fw-font: "Bricolage Grotesque", "Public Sans", system-ui, sans-serif;
+  --fw-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --fw-w-thin: 200;      /* what was taken out */
+  --fw-w-text: 400;
+  --fw-w-label: 500;
+  --fw-w-strong: 600;
+  --fw-w-said: 700;      /* what is said: lines, headings, the wordmark */
+  --fw-track-line: -0.025em;
+  --fw-track-label: 0.02em;
+
+  /* The scale, in rem on the site (root 16 px) and px in the extension; nothing under 12 px anywhere. */
+  --fw-t-micro:   0.75rem;    /* 12: labels, the version line */
+  --fw-t-caption: 0.875rem;   /* 14: the maker line, secondary text, popup body */
+  --fw-t-small:   1rem;       /* 16: popup headings, site small text */
+  --fw-t-body:    1.0625rem;  /* 17: site body */
+  --fw-t-lead:    1.25rem;    /* 20: a lead paragraph */
+  --fw-t-card:    1.5rem;     /* 24: a card title, the dashboard h1 */
+  --fw-t-h2:      1.75rem;    /* 28 */
+  --fw-t-h1-doc:  2.25rem;    /* 36: an inner page's title */
+  --fw-t-h1:      3.5rem;     /* 56: the line on the home page at 1280 */
+  --fw-t-line:    clamp(2.25rem, 6vw, 3.5rem); /* the line, fluid: 36 px at 375 (one size with the page title), 56 px at 1280 */
+  --fw-t-button:  0.9375rem;  /* 15: a block's label */
+  --fw-lh-tight: 1.02;        /* the line */
+  --fw-lh-head:  1.15;
+  --fw-lh-body:  1.5;
+  --fw-measure: 64ch;
+}
+
+/* ───────────────────────── SPACE ───────────────────────── */
+:root, :root[data-theme] {
+  --fw-s-1:  4px;  --fw-s-2:  6px;  --fw-s-3:  8px;  --fw-s-4: 10px;  --fw-s-5: 12px;
+  --fw-s-6: 14px;  --fw-s-7: 16px;  --fw-s-8: 20px;  --fw-s-9: 24px;  --fw-s-10: 32px;
+  --fw-s-11: 40px; --fw-s-12: 48px; --fw-s-13: 64px;
+  --fw-gutter: 16px;          /* phone side gutter, never less */
+  --fw-wrap: 1180px;
+  --fw-tap: 44px;             /* a control's least height on the site */
+  --fw-tap-dense: 36px;       /* in the popup */
+}
+
+/* ───────────────────────── SHAPE ───────────────────────── */
+:root, :root[data-theme] {
+  --fw-r-0: 0;
+  --fw-r-1: 2px;              /* panels, the recording's pictures */
+  --fw-r-2: 4px;              /* an overlay's corner, at most */
+  --fw-stroke: 1.5px;         /* every edge */
+  --fw-stroke-thin: 1px;      /* hairlines */
+  --fw-shadow: none;          /* flat: an edge is a line, a layer is a lift */
+  --fw-overlay-edge: 0 0 0 var(--fw-stroke) var(--fw-edge);
+  --fw-scrim: rgb(0 0 0 / var(--fw-scrim-a)); /* the veil over an overlay is always toward black, in both schemes */
+}
+
+/* ───────────────────────── MOTION ───────────────────────── */
+:root, :root[data-theme] {
+  --fw-ease: cubic-bezier(0.2, 0.7, 0.2, 1);        /* a thing settles */
+  --fw-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --fw-d-hover: 0.15s;      /* a hover, a focus ring */
+  --fw-d-switch: 0.3s;      /* a switch flips, a fold opens */
+  --fw-d-thin: 0.7s;        /* a noun thins out of the line */
+  --fw-d-stagger: 0.4s;     /* between the nouns */
+  --fw-d-mark: 0.3s;        /* the square appears */
+}
+@media (prefers-reduced-motion: reduce) {
+  :root { --fw-d-hover: 0s; --fw-d-switch: 0s; --fw-d-thin: 0s; --fw-d-stagger: 0s; --fw-d-mark: 0s; }
+}
+
+/* ───────────────────────── THE MARK (as CSS, for inline use) ───────────────────────── */
+/* The switch square: a filled square with a hairline ring of ground inset at 18 percent, so it never
+ * reads as a missing glyph. .fw-mark is the element; --fw-mark-size sets it (0.42em in a line, 12 px in
+ * a row, 22 px beside the wordmark). On = filled; off = the edge only. */
+:root, :root[data-theme] { --fw-mark-size: 0.42em; }
+
+/* ───────────────────────── LOCKED BY CONTENT (unchanged; the content script and charts read them) ───── */
+:root, :root[data-theme] {
+  --fw-marker-low:  #449a91;  --fw-marker-mid: #b38346;  --fw-marker-high: #e53935;
+  --fw-tech-fear-appeal: #7c83ff; --fw-tech-repeat-exposure: #8a8f98; --fw-tech-anger-trigger: #ef5350;
+  --fw-tech-shame-attack: #ab47bc; --fw-tech-false-urgency: #ffab40; --fw-tech-bandwagon: #42a5f5;
+  --fw-tech-scapegoating: #ec407a; --fw-tech-fomo: #ff7043; --fw-tech-toxic-positivity: #66bb6a;
+  --fw-tech-misleading-format: #90a4ae; --fw-tech-combined: #5c6bc0; --fw-tech-ai-content-block: #7b1fa2;
+  --fw-tech-profanity: #bdbdbd; --fw-tech-body-comparison: #f06292; --fw-tech-parasocial: #26c6da;
+  --fw-tech-consumer-rapid: #9ccc65; --fw-tech-hyperreal-trauma: #8d6e63; --fw-tech-combined-stack: #5c6bc0;
+  --fw-tech-sexual: #d81b60; --fw-tech-violence-graphic: #c62828; --fw-tech-self-harm: #ad1457;
+  --fw-tech-drug-promotion: #6d4c41; --fw-tech-unsafe-health-experiment: #ff8f00; --fw-tech-extreme-toxicity: #b71c1c;
+  --fw-platform-twitter: #1da1f2; --fw-platform-facebook: #4267b2; --fw-platform-instagram: #e1306c;
+  --fw-platform-tiktok: #69c9d0; --fw-platform-youtube: #ff0000;
+}
+
+/* ───────────────────────── COMPATIBILITY (every existing --fw-* name, mapped; remove as code migrates) ───── */
+:root, :root[data-theme] {
+  --fw-bg: var(--fw-ground);
+  --fw-card-hover: color-mix(in oklab, var(--fw-ink) 8%, var(--fw-ground));
+  --fw-border: var(--fw-edge);
+  --fw-border-light: var(--fw-line);
+  --fw-border-strong: var(--fw-edge);
+  --fw-text: var(--fw-ink);
+  --fw-text-secondary: color-mix(in oklab, var(--fw-ink) 85%, var(--fw-ground));
+  --fw-teal: var(--fw-ink);          /* the old accent: everything "active" is now an ink block */
+  --fw-accent: var(--fw-ink);
+  --fw-on-accent: var(--fw-ground);
+  --fw-amber: var(--fw-warn);
+  --fw-red: var(--fw-danger);
+  --fw-green: var(--fw-ok);
+  --fw-purple: var(--fw-record);     /* the secondary stat was the count of things handled: a record */
+  --fw-teal-soft: var(--fw-card);
+  --fw-amber-soft: var(--fw-warn-soft);
+  --fw-red-soft: var(--fw-danger-soft);
+  --fw-green-soft: var(--fw-ok-soft);
+  --fw-purple-soft: var(--fw-record-soft);
+  --fw-surface: var(--fw-card);
+  --fw-surface-2: color-mix(in oklab, var(--fw-ink) 9%, var(--fw-ground));
+  --fw-font-sans: var(--fw-font);
+  --fw-text-9: 12px; --fw-text-10: 12px; --fw-text-11: 12px; --fw-text-12: 12px; --fw-text-13: 13px;
+  --fw-text-14: 14px; --fw-text-15: 15px; --fw-text-16: 16px; --fw-text-18: 18px; --fw-text-20: 20px;
+  --fw-text-24: 24px; --fw-text-32: 32px;
+  --fw-w-regular: 400; --fw-w-medium: 500; --fw-w-semibold: 600; --fw-w-bold: 700;
+  --fw-r-xs: var(--fw-r-0); --fw-r-sm: var(--fw-r-0); --fw-r-md: var(--fw-r-1); --fw-r-lg: var(--fw-r-1);
+  --fw-r-xl: var(--fw-r-2); --fw-r-pill: var(--fw-r-1);
+  --fw-radius-xs: var(--fw-r-xs); --fw-radius-sm: var(--fw-r-sm); --fw-radius-md: var(--fw-r-md);
+  --fw-radius-lg: var(--fw-r-lg); --fw-radius-xl: var(--fw-r-xl); --fw-radius-pill: var(--fw-r-pill);
+  --fw-shadow-hover: none; --fw-shadow-card: none; --fw-shadow-3: var(--fw-overlay-edge);
+  --fw-shadow-overlay: 0 0 0 100vmax var(--fw-scrim);
+  --fw-border-width: var(--fw-stroke-thin);
+  --fw-feed-bg: var(--fw-ground); --fw-record-card: var(--fw-lift); --fw-thread-rail: var(--fw-line);
+  --fw-quote-rail: var(--fw-edge); --fw-ai-bg: var(--fw-faint); --fw-ai-border: var(--fw-edge);
+  --fw-ai-text: var(--fw-muted); --fw-trust-bar-bg: var(--fw-card); --fw-kind-tag-bg: var(--fw-card);
+  --fw-kind-tag-text: var(--fw-muted); --fw-gap-pill-bg: var(--fw-card); --fw-session-rule: var(--fw-line);
+  --fwc-neutral: var(--fw-line); --fwc-grid: color-mix(in oklab, var(--fw-ink) 6%, transparent);
+  --fwc-tip-bg: var(--fw-ink); --fwc-tip-text: var(--fw-ground);
+}

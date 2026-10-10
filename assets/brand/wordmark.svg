@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 64" width="320" height="64" fill="none">
+  
+  <g transform="translate(0,0)">
+    <circle cx="32" cy="32" r="26" stroke="#00bcd4" stroke-width="2.5" fill="none" stroke-dasharray="153 10" stroke-dashoffset="-46" stroke-linecap="round"></circle>
+    <circle cx="32" cy="32" r="16" stroke="#00bcd4" stroke-width="1.5" fill="none" opacity="0.55"></circle>
+    <circle cx="40" cy="40" r="6" fill="#e0a458"></circle>
+    <circle cx="40" cy="40" r="9.5" stroke="#e0a458" stroke-width="1" fill="none" opacity="0.35"></circle>
+  </g>
+  <text x="74" y="41" font-family="system-ui, -apple-system, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="24" font-weight="600" letter-spacing="-0.4" fill="#f0f0f0">FeelingWise</text>
+</svg>

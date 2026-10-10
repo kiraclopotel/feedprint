@@ -1,0 +1,21 @@
+export const SNAPSHOT_DIR: string;
+export const PUBLIC_ALLOWLIST: string[];
+export const PRIVATE_DENYLIST: string[];
+export const CALIBRATION_ALLOWED: string[];
+export const SCAN_PATTERNS: { name: string; re: RegExp }[];
+export function isPublicPath(path: string): boolean;
+export function publicPackageJson(buf: Buffer): Buffer;
+export function scanContent(path: string, text: string): { path: string; line: number; pattern: string }[];
+export function publicPaths(rev?: string): string[];
+export function committedBlobs(paths: string[], rev?: string): Map<string, Buffer>;
+export function releaseSnapshotPaths(input: {
+  files: string[];
+  isPublicThen: (path: string) => boolean;
+  isPublicNow: (path: string) => boolean;
+}): { paths: string[]; disagree: string[] };
+export function releaseCommitProblem(input: { commit: string; files: string[]; releasesText: string }): string | null;
+export const SOURCE_DIGEST_NAME: string;
+export const SNAPSHOT_MODULE_FILES: string[];
+export function sourceDigestOf(entries: ReadonlyArray<readonly [string, string]>): string;
+export function folderSourceDigest(folder: string): { digest: string; files: string[] };
+export function archiveFolder(folder: string, outFile: string): { outFile: string; fileCount: number; bytes: number };
