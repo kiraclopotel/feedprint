@@ -128,6 +128,67 @@ describe('every look ships with its contrast table', () => {
     }
   }
 
+  // The AI drawer's closed pill keeps one green per mode in every look: its text, and the pill against the card it
+  // sits beside and the page behind it.
+  const pillDark = block(DESIGN_CSS, /^:root \{(?=\s*--ai-pill-bg)/m);
+  const pillLight = block(DESIGN_CSS, /^:root\[data-theme="light"\] \{(?=\s*--ai-pill-bg)/m);
+  for (const look of POPUP_LOOKS) {
+    for (const mode of ['dark', 'light'] as const) {
+      it(`look ${look}, ${mode}: the AI pill's text clears 4.5:1 and the pill stands out from card and page at 3:1`, () => {
+        let t: Record<string, string> = mode === 'dark' ? baseDark : { ...baseLight };
+        if (look === 'a' && mode === 'light') t = { ...t, ...lookALight };
+        if (look !== 'a') {
+          t = { ...t, ...block(LOOKS_CSS, mode === 'dark'
+            ? new RegExp(`:root\\[data-look="${look}"\\]:not\\(\\[data-theme="light"\\]\\) \\{`)
+            : new RegExp(`:root\\[data-look="${look}"\\]\\[data-theme="light"\\] \\{`)) };
+        }
+        const pill = mode === 'dark' ? pillDark : pillLight;
+        // A colour not found would make every ratio NaN, and NaN passes every "less than" check.
+        for (const k of ['--ai-pill-bg', '--ai-pill-ink']) expect(pill[k], `${mode} ${k}`).toMatch(/^#[0-9a-f]{6}$/);
+        for (const k of ['--fw-card', '--fw-bg']) expect(t[k], `${look} ${mode} ${k}`).toMatch(/^#[0-9a-f]{6}$/);
+        expect(pillDark['--ai-pill-bg']).not.toBe(pillLight['--ai-pill-bg']);
+        const fails: string[] = [];
+        if (ratio(pill['--ai-pill-ink'], pill['--ai-pill-bg']) < 4.5) fails.push(`text ${ratio(pill['--ai-pill-ink'], pill['--ai-pill-bg']).toFixed(2)}`);
+        for (const bg of ['--fw-card', '--fw-bg']) if (ratio(pill['--ai-pill-bg'], t[bg]) < 3) fails.push(`pill on ${bg} ${ratio(pill['--ai-pill-bg'], t[bg]).toFixed(2)}`);
+        expect(fails).toEqual([]);
+      });
+    }
+  }
+
+  // With AI checks off or at a level that sends nothing, the closed drawer is the idle pill in the card's own colours.
+  // Its tokens are read from its rules, so a later change of colour is held to the same rows.
+  const tokenOf = (selector: RegExp, prop: string): string => {
+    const rule = selector.exec(DESIGN_CSS);
+    if (!rule) throw new Error(`rule not found: ${selector}`);
+    const m = new RegExp(`${prop}:\\s*var\\((--[a-z0-9-]+)\\)`).exec(rule[1]);
+    if (!m) throw new Error(`${prop} not found in ${selector}`);
+    return m[1];
+  };
+  const idle = {
+    bg: tokenOf(/\.fw-popup \.ai-drawer\.closed\.idle \{([^}]*)\}/, 'background'),
+    edge: tokenOf(/\.fw-popup \.ai-drawer\.closed\.idle \{([^}]*)\}/, 'border-color'),
+    title: tokenOf(/\.ai-drawer\.closed\.idle \.ai-drawer-title \{([^}]*)\}/, 'color'),
+    rest: tokenOf(/\.ai-drawer\.closed\.idle \.ai-drawer-chev \{([^}]*)\}/, 'color'),
+  };
+  for (const look of POPUP_LOOKS) {
+    for (const mode of ['dark', 'light'] as const) {
+      it(`look ${look}, ${mode}: the idle AI pill's words clear 4.5:1 and its edge stands out from card and page at 3:1`, () => {
+        let t: Record<string, string> = mode === 'dark' ? baseDark : { ...baseLight };
+        if (look === 'a' && mode === 'light') t = { ...t, ...lookALight };
+        if (look !== 'a') {
+          t = { ...t, ...block(LOOKS_CSS, mode === 'dark'
+            ? new RegExp(`:root\\[data-look="${look}"\\]:not\\(\\[data-theme="light"\\]\\) \\{`)
+            : new RegExp(`:root\\[data-look="${look}"\\]\\[data-theme="light"\\] \\{`)) };
+        }
+        for (const k of [idle.bg, idle.edge, idle.title, idle.rest, '--fw-bg']) expect(t[k], `${look} ${mode} ${k}`).toMatch(/^#[0-9a-f]{6}$/);
+        const fails: string[] = [];
+        for (const fg of [idle.title, idle.rest]) if (ratio(t[fg], t[idle.bg]) < 4.5) fails.push(`${fg} on ${idle.bg} ${ratio(t[fg], t[idle.bg]).toFixed(2)}`);
+        for (const bg of [idle.bg, '--fw-bg']) if (ratio(t[idle.edge], t[bg]) < 3) fails.push(`${idle.edge} against ${bg} ${ratio(t[idle.edge], t[bg]).toFixed(2)}`);
+        expect(fails).toEqual([]);
+      });
+    }
+  }
+
   it('no look sets a state colour', () => {
     expect(LOOKS_CSS).not.toMatch(/--fw-(red|amber|green)(-soft)?\s*:/);
   });

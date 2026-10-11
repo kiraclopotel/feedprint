@@ -33,7 +33,7 @@ import { TEXT_SCOPE_SELECTORS } from '../engagement/emoji-stripper';
 import { CONTAINER_SELECTORS } from '../engagement/word-filter';
 import { detectTextFold } from '../record/text-fold';
 import { isFacebookCommentArticle } from '../platforms/facebook';
-import { safeSendMessage } from '../../storage/context-guard';
+import { isContextAlive, safeSendMessage } from '../../storage/context-guard';
 import { sendHighStakesForensicLog } from '../record/forensic-retry';
 import { buildConfigSnapshot } from '../record/config-snapshot';
 import { currentPageAddress } from '../record/post-url';
@@ -414,6 +414,7 @@ export function startReadThis(platform: Platform, settings: FWSettings): () => v
       });
     });
   };
-  chrome.storage.onChanged.addListener(listener);
-  return () => { chrome.storage.onChanged.removeListener(listener); disarm?.(); };
+  // A script whose extension was reloaded under the tab has no storage events left; it goes quiet instead of throwing.
+  if (isContextAlive()) chrome.storage.onChanged.addListener(listener);
+  return () => { chrome.storage?.onChanged?.removeListener(listener); disarm?.(); };
 }

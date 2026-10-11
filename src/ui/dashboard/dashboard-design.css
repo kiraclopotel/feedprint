@@ -1575,6 +1575,21 @@ details.export-other .export-grid { margin-top: 12px; }
 .fl-muted { font-style: italic; color: var(--fw-muted); font-size: 12px; }
 .fl-link { color: var(--fw-teal); font-size: 12px; }
 .fl-open-actions { margin-top: 10px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+/* The Feed log is a table read across the window. Held to the shell's width it filled a third of a wide screen, so it
+   reaches out from the shell's centre to the window, less 32px each side, up to 1600px; the header and the tabs stay
+   where every other tab has them. Its list fills the window's height instead of a 560px box, and its rows grow with
+   the room. */
+.fl-wrap {
+  width: min(1600px, calc(100vw - 64px));
+  margin-left: calc(50% - min(800px, 50vw - 32px));
+  box-sizing: border-box;
+}
+.fl-body { max-height: max(560px, calc(100vh - 320px)); }
+@media (min-width: 1200px) {
+  .fl-row { grid-template-columns: 76px 140px 150px 80px minmax(0, 1fr); gap: 16px; padding: 12px 20px; font-size: 14px; }
+  .fl-row-head { font-size: 13px; }
+  .fl-day { padding-left: 20px; padding-right: 20px; font-size: 13px; }
+}
 @media (max-width: 640px) {
   .fl-row { grid-template-columns: 52px 1fr auto; }
   .fl-row > :nth-child(4), .fl-row > :nth-child(5) { display: none; }

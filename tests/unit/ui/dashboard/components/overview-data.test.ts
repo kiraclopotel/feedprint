@@ -140,7 +140,7 @@ describe('overview-data', () => {
     expect(items.value).toBe(2);
   });
 
-  it('sources exclude empty and unknown authors; advertiser type sticks; flag counts flagged verdicts only', () => {
+  it('sources exclude empty and unknown authors and every ad, and count flagged verdicts only', () => {
     const m = computeOverview([
       at('2026-07-15T10:00:00Z', { author: 'ExampleSat', accountType: 'advertiser', verdict: 'flagged' }),
       at('2026-07-15T10:01:00Z', { author: 'ExampleSat', verdict: 'pass' }),
@@ -150,14 +150,12 @@ describe('overview-data', () => {
     ])!;
     expect(m.sourceTotal).toBe(2);
     const star = m.sources.find((s) => s.author === 'ExampleSat')!;
-    expect(star.count).toBe(2);
-    // Both of ExampleSat's items are still SEEN, and the advertiser type still
-    // sticks to the row, but an advertiser's ad is a paid placement and never
-    // a flag (standing decision 1, 2026-09-14), so the flag count is 0 here
-    // and 1 on the account whose flagged item a judge actually read.
+    // The ad is a paid placement: it is not an account the feed served, so it never counts toward a ranked source
+    // (an ad never ranks as an author). Only the account's own post is counted.
+    expect(star.count).toBe(1);
     expect(star.flagged).toBe(0);
-    expect(star.accountType).toBe('advertiser');
-    expect(star.recordIds).toHaveLength(2);
+    expect(star.accountType).toBeUndefined();
+    expect(star.recordIds).toHaveLength(1);
     expect(m.sources.find((s) => s.author === 'friend')!.flagged).toBe(1);
   });
 

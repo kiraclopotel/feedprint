@@ -9,13 +9,31 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { DASHBOARD_STRINGS } from '../../../../src/i18n/dashboard-strings';
 import { UI_LANGUAGES } from '../../../../src/i18n';
+import { dashboardWords } from '../../../../src/ui/dashboard/dashboard-words';
 
 describe('the Activity tab pill', () => {
   const shell = readFileSync(join(process.cwd(), 'src/ui/dashboard/Dashboard.tsx'), 'utf8');
 
-  it('says what it counts instead of printing a bare number', () => {
+  it('says what it counts instead of printing a bare number, inside the timeline and not on its tab', () => {
+    const timeline = readFileSync(join(process.cwd(), 'src/ui/dashboard/components/ActivityTab.tsx'), 'utf8');
     expect(shell).not.toContain('<span className="count-pill">{flaggedCount}</span>');
-    expect(shell).toContain('{t.tabActivityFlagged(flaggedCount)}');
+    expect(shell).toContain('<TabBtn id="activity"   tab={tab} onClick={setTab}>{dashboardWords(lang).tabTimeline}</TabBtn>');
+    expect(shell).toContain('flaggedAllMonths={flaggedCount}');
+    expect(shell).toContain('flaggedAllMonthsTitle={t.tabActivityFlaggedTitle(flaggedCount, olderMonthsNotCounted(unloadedSummaries, monthSets))}');
+    expect(timeline).toContain('{t.tabActivityFlagged(flaggedAllMonths)}');
+  });
+
+  it('the day head leads the Overview only, so the timeline opens on its list and the Overview still says the day', () => {
+    expect(shell).toContain("{tab === 'overview' && !archiveLoading && <TodayHead records={allRecords} lang={lang} />}");
+    expect(shell).not.toMatch(/tab === 'activity'[^\n]*<TodayHead/);
+  });
+
+  it('names the tab in a word or two, in every language, with no count', () => {
+    const want = { en: 'Timeline', ro: 'Cronologie', es: 'Cronología', 'pt-BR': 'Linha do tempo' } as const;
+    for (const lang of UI_LANGUAGES) {
+      expect(dashboardWords(lang).tabTimeline, lang).toBe(want[lang]);
+      expect(dashboardWords(lang).tabTimeline, lang).not.toMatch(/\d/);
+    }
   });
 
   it('reads "1 flagged, all months" in English', () => {

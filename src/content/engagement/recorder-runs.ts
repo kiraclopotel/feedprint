@@ -11,7 +11,7 @@
 // then also recorded). Off's own list is never named: it holds words only Off knows.
 
 import { isFeatureEnabled, type FWSettings } from '../../storage/settings';
-import { markContextInvalidated, onContextInvalidated } from '../../storage/context-guard';
+import { isContextAlive, markContextInvalidated, onContextInvalidated } from '../../storage/context-guard';
 import type { Platform } from '../../types/post';
 
 /**
@@ -115,7 +115,8 @@ export function keepRecorderStamp(
     readSettings().then(write).catch(() => { /* the stamp stays as it was */ });
   };
   stopLastStamp?.();
-  chrome.storage.onChanged.addListener(onChanged);
+  // A script whose extension was reloaded under the tab has no storage events left; the stamp is still written once.
+  if (isContextAlive()) chrome.storage.onChanged.addListener(onChanged);
   // Only an id that was there can go away; a page with no extension id to begin with has nothing to watch.
   const aliveCheck = receiptsStillThere()
     ? setInterval(() => { if (!receiptsStillThere()) markContextInvalidated(); }, ALIVE_CHECK_MS)

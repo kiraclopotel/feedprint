@@ -97,6 +97,11 @@
 /* A chosen chip, such as the Feed log's period and its All, Hidden and Passed, is the accent too. */
 .chip.active { background: var(--fw-record); color: var(--fw-ground); border-color: var(--fw-record); }
 .chip.active:hover { background: color-mix(in oklch, var(--fw-record) 88%, var(--fw-ink)); color: var(--fw-ground); }
+/* A tab under the pointer or the keyboard takes the accent, a faint tint of it and a thin underline, so the strip
+   answers before the click; the open tab keeps its full underline and bold. The ring marks the keyboard's place. */
+.dash-tab:hover, .dash-tab:focus-visible { color: var(--fw-record); background: color-mix(in oklch, var(--fw-record) 8%, var(--fw-ground)); }
+.dash-tab:not(.active):hover, .dash-tab:not(.active):focus-visible { border-bottom-color: color-mix(in oklch, var(--fw-record) 45%, var(--fw-ground)); }
+.dash-tab:focus-visible { outline: 2px solid var(--fw-record); outline-offset: -2px; }
 /* The Feed log's column heads sit on a tint of the accent, and each day's line is written in it. */
 .fl-row-head, .fl-row-head:hover { background: color-mix(in oklch, var(--fw-record) 10%, var(--fw-ground)); }
 .fl-day { color: var(--fw-record); }

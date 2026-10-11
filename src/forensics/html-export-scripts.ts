@@ -610,6 +610,7 @@ export const VERIFIER_SCRIPT_TEMPLATE = `(function(){
           // differs. Duplicated, not called, because this runs in
           // VERIFIER_SCRIPT_TEMPLATE's own script scope.
           var handle=(r.author&&r.author!=='unknown')?r.author:'(unknown)';
+          if(handle==='(unknown)'&&!r.authorName&&typeof FWN!=='undefined'&&FWN.isPaidPlacement(r))handle=i18n.feedAdAuthorNotShown;
           var authorText=r.authorCapture==='withheld'?i18n.feedAuthorWithheld:(r.authorName&&r.authorName!==handle?(handle==='(unknown)'?r.authorName:r.authorName+' @'+handle.replace(/^@+/,'')):handle);
           card.appendChild(el('p',null,[i18n.perRecordAuthor+': '+authorText]));
         }
@@ -1007,6 +1008,8 @@ export const FEED_SCRIPT = `(function(){
     // parenthesised flag an absent author already got is what a non-account
     // needs too (record-feed-study/C-NOTES.md: "author holds non-accounts").
     var handle=(r.author&&r.author!=='unknown')?r.author:'(unknown)';
+    // An ad's account is its advertiser, so an ad the page did not name says that, as the dashboard card does.
+    if(handle==='(unknown)'&&!r.authorName&&typeof FWN!=='undefined'&&FWN.isPaidPlacement(r))return i18n.feedAdAuthorNotShown;
     // Cold read finding 6: the flagged '(unknown)' sentinel is not a real
     // handle to pair a name with -- "Name @(unknown)" reads worse than
     // either half alone. The name stands by itself there.
@@ -1409,7 +1412,7 @@ export const FEED_SCRIPT = `(function(){
     }
   }
   // ── per-account block ──
-  var people={};
+  var people={},noAuthor=0;
   records.forEach(function(r){
     var k=r.kind||'post';
     if(k==='environment'||isMarkerKind(k))return;
@@ -1420,12 +1423,16 @@ export const FEED_SCRIPT = `(function(){
     if(typeof FWN!=='undefined'){
       if(!FWN.isDecidedContentRecord(r)||!FWN.isFlaggedRecord(r))return;
     } else if(!isFlagged(r))return;
-    var a=r.author||'(unknown)';
+    /* A page that named no account is not one author: ranked, every such item piled into one row that topped the
+       list. They are counted apart, in the line under it. */
+    if(typeof FWN!=='undefined'&&FWN.isPaidPlacement(r))return;
+    var a=(r.author||'').trim();
+    if(!a||a.toLowerCase()==='unknown'||r.authorCapture==='withheld'){noAuthor++;return;}
     if(!people[a])people[a]={n:0,sev:0};
     people[a].n++;var s=maxSev(r);if(s>people[a].sev)people[a].sev=s;
   });
   var peopleArr=Object.keys(people).map(function(a){return {a:a,d:people[a]};}).sort(function(x,y){return y.d.n-x.d.n;});
-  if(peopleArr.length){
+  if(peopleArr.length||noAuthor){
     var pb=el('div',{'class':'fw-people'},[el('h3',null,[i18n.feedPeopleHeader]),el('p',{'class':'fw-people-note'},[i18n.feedPeopleNote])]);
     peopleArr.slice(0,10).forEach(function(p){
       pb.appendChild(el('div',{'class':'fw-person'},[
@@ -1433,6 +1440,7 @@ export const FEED_SCRIPT = `(function(){
         el('span',{'class':'fw-person-count'},[dot(sevColor(p.d.sev)),' '+p.d.n+' '+i18n.feedPeopleItems])
       ]));
     });
+    if(noAuthor)pb.appendChild(el('p',{'class':'fw-people-note','data-no-author':''},[i18n.feedPeopleNoAuthor+': '+noAuthor+' '+i18n.feedPeopleItems]));
     root.appendChild(pb);
   }
   // ── room banner (comment-section summary + counts captured before hiding) ──
@@ -2364,6 +2372,7 @@ export const BEHAVIOR_SCRIPT = `(function(){
   content.forEach(function(r){
     var a=(r.author||'').trim();
     if(!a||a.toLowerCase()==='unknown')return;
+    if(typeof FWN!=='undefined'&&FWN.isPaidPlacement(r))return;
     var k=r.platform+' '+a;
     var v=voiceMap[k];
     if(!v){v={author:a,platform:r.platform,type:r.accountType,days:{},n:0,fl:0};voiceMap[k]=v;}

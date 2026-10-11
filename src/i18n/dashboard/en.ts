@@ -507,6 +507,7 @@ export const EN: DashboardStrings = {
   feedAuthorWithheld: 'Author not established',
   feedAuthorWithheldWhy: 'The page showed a name beside this item and the recorder refused it: it could not show that the header and the words belonged to the same item, because the feed reuses one slot for a new item while it is being read.',
   feedUnknownAuthor: 'Unknown author',
+  feedAdAuthorNotShown: 'Sponsored post, advertiser not shown',
   feedRecidivistFrequent: '· frequent',
   feedYouDisputedThis: 'you disputed this',
   feedReelThreadHeader: 'Facebook Reel comments',
@@ -534,12 +535,24 @@ export const EN: DashboardStrings = {
   feedMarkerReset: 'RECORD RESET',
   feedMarkerRotation: 'MONTH ARCHIVED',
   feedMarkerPrune: 'OLD ENTRIES PRUNED',
-  feedMarkerGap: 'RECORDING WAS OFF',
+  feedGapHeading: (reason) => {
+    switch (reason) {
+      case 'context-invalidated': return 'EXTENSION RELOADED';
+      case 'recorder-down': return 'RECORDING WAS OFF';
+      case 'retry-overflow': case 'retry-exhausted': case 'delivery-quarantined': return 'ENTRIES NOT SAVED';
+      case 'backlog-hidden': return 'TAB IN THE BACKGROUND';
+      case 'backlog-overflow': return 'SOME POSTS DROPPED';
+      case 'churn-breaker': case 'heap-valve': return 'RECORDING PAUSED ON A PAGE';
+      case 'chain-lost': return 'ENTRIES LOST';
+      case 'key-replaced': return 'SIGNING KEY CHANGED';
+      default: return 'STOP IN RECORDING';
+    }
+  },
   feedGapSentence: (g) => {
     const when = !g.from || !g.to ? '' : g.from === g.to ? ` at ${g.from}` : ` between ${g.from} and ${g.to}`;
     const on = g.site ? ` on ${g.site}` : '';
     switch (g.reason) {
-      case 'context-invalidated': return `The extension was reloaded or updated${when}. What tabs already open had seen but not yet saved was lost; how much is not known.`;
+      case 'context-invalidated': return `The extension was reloaded or updated${when}. In tabs that were already open, posts seen but not yet saved were lost; how many is not known. Those tabs recorded nothing more until they were reloaded.`;
       case 'recorder-down': return `The recorder was not running${when}.`;
       case 'retry-overflow': case 'retry-exhausted': case 'delivery-quarantined':
         return `${g.count === 1 ? 'One entry' : `${g.count} entries`} could not be saved${when}${on}.`;
@@ -785,6 +798,7 @@ export const EN: DashboardStrings = {
   recidTitle: 'Frequent flaggers',
   recidHint: (threshold) => `≥${threshold} flags`,
   recidEmpty: 'No repeat handles yet.',
+  recidNoAuthor: (n) => `No author shown: ${n.toLocaleString('en-US')} flagged ${n === 1 ? 'item' : 'items'}`,
   recidFilterTip: (author) => `Filter the feed to ${author}`,
   recidTrendRising: 'severity rising',
   recidTrendEasing: 'severity easing',
@@ -803,7 +817,7 @@ export const EN: DashboardStrings = {
 
   expoLoading: "Reading this week's record…",
   expoEmpty: "Feedprint hasn't witnessed enough yet. Browse normally and come back.",
-  expoEmptyWindow: (newestDay) => `Nothing was recorded in this window. The newest item in the record is from ${newestDay}; pick a wider window above, or Your timeline shows the whole record.`,
+  expoEmptyWindow: (newestDay) => `Nothing was recorded in this window. The newest item in the record is from ${newestDay}; pick a wider window above, or the Timeline tab shows the whole record.`,
   expoThisWeek: 'This week',
   expoThisWeekSub: 'Everything Feedprint saw on covered platforms. Week runs Sunday to Saturday.',
   expoItemsWitnessed: 'entries in this period',
@@ -820,7 +834,7 @@ export const EN: DashboardStrings = {
   expoWhatFwDid: 'What Feedprint did',
   expoWhatFwDidSub: 'Actions taken this week. Skipped and pass-through items are not counted here.',
   expoWhatPushed: 'What appeared most',
-  expoWhatPushedSub: 'The pressure patterns Feedprint flagged most this week. You can confirm or dispute each one in Your timeline.',
+  expoWhatPushedSub: 'The pressure patterns Feedprint flagged most this week. You can confirm or dispute each one in the Timeline tab.',
   expoShownUnchanged: 'Shown unchanged',
   expoNoFlagged: 'No flagged patterns this week.',
   expoAdsShare: (ads, total) => (ads === 0
@@ -843,13 +857,13 @@ export const EN: DashboardStrings = {
   statsDailySub: 'Items seen per day, and how many of them were flagged.',
   statsDailyFlaggedOf: (flagged, total) => `${flagged} flagged of ${total}`,
   statsSevDistTitle: 'Severity of flagged items',
-  statsSevDistSub: 'How serious the flagged items were. Most content should sit in the mild band; a heavy top band deserves a look in Your timeline.',
+  statsSevDistSub: 'How serious the flagged items were. Most content should sit in the mild band; a heavy top band deserves a look in the Timeline tab.',
   statsSevLo: 'Mild (1–4)',
   statsSevMi: 'Moderate (5–7)',
   statsSevHi: 'Severe (8–10)',
   statsPlatTechTitle: 'What Feedprint flagged per platform',
   statsPlatTechSub: 'The most-flagged patterns per platform: based on retained records, not a claim about platform intent.',
-  statsDrillHint: 'Click to see these records in Your timeline',
+  statsDrillHint: 'Click to see these records in the Timeline tab',
 
   tabPatterns: 'Feed behavior',
   patIntro: (n, start, end) =>
@@ -933,13 +947,13 @@ export const EN: DashboardStrings = {
   patPressureExposureCount: (n) => `${n} flagged ${n === 1 ? 'entry' : 'entries'} in the chosen range`,
   patPressureEscLabel: 'Escalation: ',
   patPressureEscalation: (label, delta, count) => `${label}: severity rose ${delta} across ${count} flagged entries in the chosen range`,
-  patPressureNoEscalation: 'no rising recurring motif',
-  patPressureEntropyLabel: 'Diversity: ',
-  patPressureEntropy: (drop, window) => `entropy drop ${drop} over windows of ${window} flagged entries`,
+  patPressureNoEscalation: 'no repeated pattern grew more severe',
+  patPressureEntropyLabel: 'Variety: ',
+  patPressureEntropy: (drop, window) => (/^0([.,]0+)?$/.test(drop) ? `the mix of patterns did not narrow between the first and the last ${window} flagged entries` : `the mix of patterns narrowed between the first and the last ${window} flagged entries (by ${drop} on the variety score)`),
   patPressureEntropyPending: (window) => `needs at least ${window} flagged entries on this platform in the chosen range`,
   patPressureGapLabel: 'Return: ',
-  patPressureGap: (label, hours) => `${label}: returned after ${hours}h quiet gap`,
-  patPressureNoGap: 'no quiet-gap return in this range',
+  patPressureGap: (label, hours) => `${label} came back after ${hours} ${hours === 1 ? 'hour' : 'hours'} with none in between`,
+  patPressureNoGap: 'no pattern came back after a long pause in the chosen range',
   patPressureSwitchLabel: 'Switching: ',
   patPressureSwitch: (percent, switches, transitions) => `${percent}% switches (${switches}/${transitions})`,
 
@@ -1220,13 +1234,12 @@ export const EN: DashboardStrings = {
   fbSkewClose: 'Closing third',
   fbSkewNum: (pct, f, n) => `${pct}% flagged (${f}/${n})`,
   fbSkewNone: 'No sitting in this window reached 6 items.',
-  fbSkewCap: (lens, openPct, closePct) => {
-    const lean = openPct > closePct ? 'open' : closePct > openPct ? 'close' : 'even';
+  fbSkewCap: (lens, lean, openPct, closePct) => {
     return ({
       parent: {
         open: 'What this means: in this record the rougher content leaned toward the start of a sitting.',
         close: 'What this means: in this record the rougher content leaned toward the end of a sitting.',
-        even: 'What this means: in this record flagged content favored neither the start nor the end of a sitting.',
+        even: 'What this means: in this record the start and the end of a sitting carried about the same share of flagged content.',
       },
       lawyer: {
         open: 'What this means: position within a sitting is derived only from timestamps in the signed record; both denominators are shown.',
@@ -1280,8 +1293,8 @@ export const EN: DashboardStrings = {
   fbChainThen: 'then',
   fbChainRepeats: 'repeats',
   fbChainTimes: (n) => n === 1 ? 'once' : `${n} times`,
-  fbChainHandoff: 'hand-off',
-  fbChainSustained: 'sustained',
+  fbChainHandoff: 'changed',
+  fbChainSustained: 'repeated',
   fbChainsNone: 'Too few flagged items with a named technique in this window to read order.',
   fbChainsUnnamed: (unnamed, total) =>
     `${unnamed.toLocaleString('en-US')} of ${total.toLocaleString('en-US')} adjacent pairs involved an item the tool flagged without naming a pattern. Those pairs are left out of the rows above: a hand-off can only be read between two named patterns.`,
@@ -1323,7 +1336,7 @@ export const EN: DashboardStrings = {
   fbCautionAmp: 'A share of the amplification measurements in this record showed far more views than likes. That can come from the platform pushing a room and from other causes; the record does not say which.',
   fbCautionAmpEv: (high, total, pct) => `Evidence: ${high} of ${total} measurements showed high amplification (${pct}%).`,
   fbCautionChain: 'Charged items chain: one emotional hit tends to be followed by a related, often harder one. Assume single flagged items understate the experience; the unit of exposure is the run, not the item.',
-  fbCautionChainEv: (a, b, n) => `Evidence: top hand-off "${a} then ${b}" observed ${n === 1 ? 'once' : `${n} times`} in-session.`,
+  fbCautionChainEv: (a, b, n) => `Evidence: the most common change, "${a} then ${b}", seen ${n === 1 ? 'once' : `${n} times`} within one sitting.`,
   fbPredTag: 'Checkable prediction',
   fbPredLead: 'If the observed pattern holds, the next 7 days of entries will again show ',
   fbPredClauseRun: 'at least one unbroken flagged run of 5+ items',

@@ -12,6 +12,7 @@ import { initEngagementControl } from '../../content/engagement/controller';
 import { watchRecorder } from './stand-down';
 import { recorderRuns, watchRecorderRuns } from '../../content/engagement/recorder-runs';
 import { watchPrivateSurface } from './private-surface-watch';
+import { isContextAlive, isContextError } from '../../storage/context-guard';
 
 function whenBodyReady(): Promise<void> {
   if (document.body) return Promise.resolve();
@@ -91,7 +92,7 @@ async function run(platform: Platform): Promise<void> {
       console.warn('[Off] a filter did not stop cleanly; starting again beside the recorder', error);
     }
     console.log(`[Off] leaving what Feedprint (the recorder) runs on ${platform} to it; the rest stays on`);
-    void run(platform);
+    restart(platform);
   });
   // The recorder rewrites what it runs when its own settings change: start again from the new list.
   stopRunsWatch?.();
@@ -102,7 +103,7 @@ async function run(platform: Platform): Promise<void> {
       console.warn('[Off] a filter did not stop cleanly; starting again from what the recorder runs now', error);
     }
     if (recorderRuns() === 'all') { stoodDown = true; return; }
-    void run(platform);
+    restart(platform);
   }) : null;
   watchForTheFeed();
 }
@@ -111,7 +112,21 @@ function halt(): void {
   // Cleared before the stop runs: a stop that throws must not leave Off unable to start again.
   const stop = stopEngagement;
   stopEngagement = null;
-  stop?.();
+  try {
+    stop?.();
+  } catch (error) {
+    // An extension reloaded under the tab cannot stop cleanly and has nothing to report: the context guard said so once.
+    if (isContextError(error) || !isContextAlive()) return;
+    throw error;
+  }
+}
+
+/** Starts again from a watcher. A start that fails is said once here instead of as an uncaught rejection. */
+function restart(platform: Platform): void {
+  run(platform).catch((error: unknown) => {
+    if (isContextError(error) || !isContextAlive()) return;
+    console.warn('[Off] starting again failed', error);
+  });
 }
 
 /** Installed once; follows the page in and out of private conversations. */
@@ -127,9 +142,12 @@ function watchForTheFeed(): void {
     },
     onLeave: () => {
       const platform = detectCurrentPlatform();
-      if (platform) void run(platform);
+      if (platform) restart(platform);
     },
   });
 }
 
-main().catch((err) => console.error('[Off] init failed:', err));
+main().catch((err) => {
+  if (isContextError(err) || !isContextAlive()) return;
+  console.error('[Off] init failed:', err);
+});

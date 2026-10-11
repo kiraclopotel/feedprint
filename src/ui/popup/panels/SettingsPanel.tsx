@@ -221,6 +221,18 @@ export function SettingsPanel({
         </div>
       </div>
 
+      {/* With a key, the reading's drawer comes first after the level, so the rows a key adds are seen. */}
+      <AiCard
+        settings={settings}
+        license={license}
+        platform={platform}
+        rows={rows.filter(r => r.group === 'ai')}
+        render={render}
+        toggle={toggle}
+        overrideNote={overrideNote}
+        onChange={onChange}
+      />
+
       {/* Every switch Receipts has, on the first screen without scrolling: ads, swearing and slurs,
           the reframe markers, and the own rules one tap away. */}
       <div className="grp-hdr">{t.setEssentialsTitle}</div>
@@ -273,17 +285,6 @@ export function SettingsPanel({
       <div className="pop-card" id={RULES_CARD_ID} hidden={!rulesOpen}>
         <BlocklistEditor settings={settings} onChange={onChange} desc={t.rulesDescOne} />
       </div>
-
-      <AiCard
-        settings={settings}
-        license={license}
-        platform={platform}
-        rows={rows.filter(r => r.group === 'ai')}
-        render={render}
-        toggle={toggle}
-        overrideNote={overrideNote}
-        onChange={onChange}
-      />
 
       {/* PIN and language are two rows of their own, not one group (the owner asked for them apart). */}
       <div className="pop-card set-pin-card">

@@ -25,7 +25,7 @@ beforeEach(() => {
   document.body.replaceChildren();
   vi.spyOn(console, 'log').mockImplementation(() => undefined);
   vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined);
-  vi.stubGlobal('chrome', { runtime: { sendMessage: vi.fn(() => Promise.resolve()) } });
+  vi.stubGlobal('chrome', { runtime: { id: 'fw-test', sendMessage: vi.fn(() => Promise.resolve()) } });
 });
 afterEach(() => {
   stop?.(); stop = null;

@@ -165,8 +165,8 @@ function chromeExtensionManifest(manifestFile = 'manifest.json'): Plugin {
 /**
  * Copies the product's icons into dist/assets/icons/ so the manifest icon
  * paths resolve in the built extension: assets/icons/ is Feedprint's fp tile
- * (docs/design/logos/icons/export-icons.mjs), assets/icons-off/ is Off's
- * (scripts/store/brand-assets.mjs).
+ * and assets/icons-off/ is Off's off tile, both exported by
+ * docs/design/logos/icons/export-icons.mjs.
  */
 function copyStaticAssets(): Plugin {
   return {

@@ -62,7 +62,9 @@ describe.each(UI_LANGUAGES)('%s', (lang) => {
 
   it.each(MODES)('without a key at %s: no AI header, no AI switch, no way to a key', (mode) => {
     const doc = render(mode, FREE, lang);
-    expect(headers(doc)).not.toContain(t.groupAi);
+    // The AI group's name sits on the drawer's own button, not on a section header, so the drawer itself is checked.
+    expect(doc.querySelector('.ai-drawer')).toBeNull();
+    expect(doc.body.textContent).not.toContain(t.groupAi);
     const labels = switchLabels(doc);
     expect(labels).not.toContain(t.featAiMasterName);
     expect(labels).not.toContain(t.featAiMasterAriaStrict);
@@ -82,8 +84,9 @@ describe.each(UI_LANGUAGES)('%s', (lang) => {
 
   it('with a key the AI card and its breaker are there', () => {
     const doc = render('teen', PAID, lang);
-    expect(headers(doc)).toContain(t.groupAi);
-    const card = cardUnder(doc, t.groupAi)!;
+    // The card is a drawer whose own header button names the group.
+    const card = doc.querySelector('.ai-drawer')!;
+    expect(card.querySelector('button.ai-drawer-head')?.textContent).toContain(t.groupAi);
     const inCard = Array.from(card.querySelectorAll('[role="switch"]')).map(s => s.getAttribute('aria-label'));
     expect(inCard).toContain(t.featAiMasterName);
     expect(inCard.some(l => swearLabels(t).includes(l ?? '')), 'the swear mask is not an AI row').toBe(false);

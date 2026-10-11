@@ -2,8 +2,8 @@
 // Receipts is a recorder, so its Settings hold the few switches a clean record needs, all on the first
 // card: ads, strict language, the swear mask, the reframe markers and the user's own rules. The page
 // parts, the break and quiet hours, Block this, the hashtag and AI-label hide, comment posting and emoji
-// are Off's and appear nowhere, even when an install stored one of them on. With a key, the AI card sits
-// right under the first card, beside the markers it belongs with. Opening Settings, jumping to the rules
+// are Off's and appear nowhere, even when an install stored one of them on. With a key, the AI drawer sits
+// right under the level, above the switches, where rows a key adds are seen. Opening Settings, jumping to the rules
 // or searching them writes nothing to storage.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -113,16 +113,17 @@ describe.each(UI_LANGUAGES)('Receipts settings, %s', (lang) => {
     for (const name of offNames(t)) expect(all, name).not.toContain(name);
   });
 
-  it('puts the level first and the AI card, with a key, right under the switches', async () => {
+  it('puts the level first, the AI drawer, with a key, right under it, and then the switches', async () => {
     const s = settingsWith();
     s.mode = 'adult';
     await render(s, lang, PAID);
     const headers = Array.from(container.querySelectorAll('.grp-hdr')).map(h => h.textContent);
     expect(headers.indexOf(t.setEssentialsTitle)).toBe(0);
-    expect(headers.indexOf(t.groupAi)).toBe(1);
     const mode = container.querySelector('.mode-card') as HTMLElement;
+    const drawer = container.querySelector('.ai-drawer') as HTMLElement;
     const essentials = container.querySelector('.set-essentials') as HTMLElement;
-    expect(essentials.compareDocumentPosition(mode) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+    expect(mode.nextElementSibling).toBe(drawer);
+    expect(drawer.compareDocumentPosition(essentials) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(container.textContent).toContain(t.featRewriteName);
   });
 

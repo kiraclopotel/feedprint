@@ -45,6 +45,7 @@ beforeEach(() => {
   responseQueue = [];
   (globalThis as unknown as { chrome: unknown }).chrome = {
     runtime: {
+      id: 'fw-test',
       sendMessage: vi.fn((message: unknown) => {
         sendCalls.push(message);
         return Promise.resolve(responseQueue.shift() ?? { ok: true });

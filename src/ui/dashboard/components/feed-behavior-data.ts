@@ -21,6 +21,22 @@ import type { ForensicRecord } from '../../../types/forensic';
 import { localDayKey } from '../../shared/format-time';
 import { splitSessions, type OverviewSession } from './overview-data';
 import { isFlaggedItem, isItem, isRoomSummary } from '../record-sets';
+import { isPaidPlacement } from '../../../forensics/paid-placement';
+import { wilson } from '../../../forensics/wilson';
+import type { SkewLean } from '../../../i18n/dashboard/types';
+
+/**
+ * Which third of a sitting carried more flags. 178 against 179 of 1,516 once read as "leaned toward the end"; a lean is
+ * said only when the two thirds' 95% intervals do not overlap, the rule the switch panel on the same tab already uses.
+ */
+export function skewLean(openFlagged: number, openTotal: number, closeFlagged: number, closeTotal: number): SkewLean {
+  const open = wilson(openFlagged, openTotal);
+  const close = wilson(closeFlagged, closeTotal);
+  if (!open || !close) return 'even';
+  if (open.lower > close.upper) return 'open';
+  if (close.lower > open.upper) return 'close';
+  return 'even';
+}
 
 /** A quiet gap this long (or longer) makes the next item a "return" item. */
 const RETURN_GAP_MS = 2 * 3600 * 1000;
@@ -101,6 +117,8 @@ export interface FeedBehaviorModel {
     closeTotal: number;
     openPct: number;
     closePct: number;
+    /** Which third carried more flags, said only when the two thirds' 95% intervals do not overlap. */
+    lean: SkewLean;
   };
   returns: { flagged: number; total: number; pct: number };
   amplification: { high: number; normal: number; low: number; unknown: number; total: number };
@@ -243,7 +261,8 @@ export function computeFeedBehavior(records: ForensicRecord[]): FeedBehaviorMode
   const voiceMap = new Map<string, { author: string; platform: ForensicRecord['platform']; accountType?: string; days: Set<string>; seen: number; flagged: number }>();
   for (const r of content) {
     const author = (r.author ?? '').trim();
-    if (!author || author.toLowerCase() === 'unknown') continue;
+    // An ad's account is whoever paid to be shown, so it is not a recurring voice.
+    if (!author || author.toLowerCase() === 'unknown' || isPaidPlacement(r)) continue;
     const key = `${r.platform}\x00${author}`;
     let v = voiceMap.get(key);
     if (!v) {
@@ -296,6 +315,7 @@ export function computeFeedBehavior(records: ForensicRecord[]): FeedBehaviorMode
       closeTotal,
       openPct: pct1(openFlagged, openTotal),
       closePct: pct1(closeFlagged, closeTotal),
+      lean: skewLean(openFlagged, openTotal, closeFlagged, closeTotal),
     },
     returns: { flagged: returnFlagged, total: returnTotal, pct: returnPct },
     amplification,

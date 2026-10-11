@@ -55,6 +55,9 @@ html:not(.fw-life-motion) .fw-popup .toggle,
 html:not(.fw-life-motion) .fw-popup .toggle::after,
 html:not(.fw-life-motion) .fw-popup .pop-card,
 html:not(.fw-life-motion) .fw-popup .pop-cta { transition: none; }
+/* The AI drawer is the one card that moves in every look: the card folding into its pill shows where the rows went.
+   Reduced motion still stops it, below and in the drawer's own rule. */
+html:not(.fw-life-motion) .fw-popup .pop-card.ai-drawer { transition: var(--ai-drawer-move); }
 /* Reduced motion: nothing moves in any look, the small colour fades on buttons included. */
 @media (prefers-reduced-motion: reduce) {
   html .fw-popup *,

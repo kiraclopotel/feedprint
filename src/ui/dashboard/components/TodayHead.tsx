@@ -1,6 +1,6 @@
 // The dashboard's first screen, said in three short lines (direction A, 9 Oct 2026; crew/dashboard/OUT.md): what the feed
 // showed on the latest day with records, how much of it was hidden and how much was flagged for review, and the week
-// beside it. It leads Your timeline and the Overview, the two tabs about the day.
+// beside it. It leads the Overview; over the timeline it pushed the list below the fold.
 //
 // It counts nothing of its own. The day, the items and the seven-day series are the Overview's model (computeOverview:
 // the focus day is "the latest day that has content records"); hidden is the one blocked test every count uses

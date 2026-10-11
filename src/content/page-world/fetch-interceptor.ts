@@ -33,7 +33,9 @@
 // (src/content/post-path/surfaces.ts) cannot be consulted here. The stand-down gate for
 // live chats and other streams is applied on the isolated-world side, in
 // relay.ts, before anything is parsed. Private surfaces are refused earlier,
-// here, before a response is even cloned: see mayRead below (2026-09-15).
+// here, twice: when the request is made (mayRead below) and again when its
+// response arrives (stillMayRead), because a person can open a private
+// conversation while a feed request is still on its way.
 
 type Platform = 'twitter' | 'facebook' | 'instagram' | 'tiktok' | 'youtube';
 
@@ -239,6 +241,15 @@ function mayRead(site: Platform, requestBody: unknown): boolean {
   }
 }
 
+/** Asked again when a response arrives: the page may have moved to a private path since the request was made. */
+function stillMayRead(): boolean {
+  try {
+    return !PRIVATE_PATH.test(window.location.pathname);
+  } catch {
+    return false;
+  }
+}
+
 export function _mayReadForTesting(site: Platform, requestBody: unknown): boolean {
   return mayRead(site, requestBody);
 }
@@ -290,32 +301,45 @@ export function installPageWorldInterceptor(): () => void {
 
   const originalFetch = window.fetch;
 
-  window.fetch = async function fwFetch(
+  // The page always gets back the very promise its fetch made. Awaiting it here sent every failure of the page's own
+  // requests (a site's blocked telemetry, say) through this frame as our uncaught rejection; reading a response we
+  // inspect happens on a side branch that swallows its own failures and never touches what the page receives.
+  window.fetch = function fwFetch(
     input: RequestInfo | URL,
     init?: RequestInit,
   ): Promise<Response> {
-    const response = await originalFetch.call(window, input, init);
-
+    const pending = originalFetch.call(window, input, init);
+    let url = '';
     try {
-      const url = requestUrl(input);
-      if (url && matchPlatform(url, sitePlatform) && mayRead(sitePlatform, init?.body)) {
-        const length = Number(response.headers.get('Content-Length') ?? '0');
-        const contentType = response.headers.get('Content-Type') ?? '';
-        if (contentType.includes('application/json') && !(length > MAX_BODY_BYTES)) {
-          const clone = response.clone();
-          clone.json().then(
-            (body) => dispatchPayload(sitePlatform, url, body),
-            () => {
-              /* malformed JSON — silently skip */
-            },
-          );
-        }
-      }
+      url = requestUrl(input);
+      if (!url || !matchPlatform(url, sitePlatform) || !mayRead(sitePlatform, init?.body)) return pending;
     } catch {
-      /* clone() failed or anything else: the page's response is returned untouched */
+      return pending;
     }
-
-    return response;
+    // Registered before the page holds the promise, so this runs first and clones before the page can read the body.
+    pending.then(
+      (response) => {
+        try {
+          if (!stillMayRead()) return;
+          const length = Number(response.headers.get('Content-Length') ?? '0');
+          const contentType = response.headers.get('Content-Type') ?? '';
+          if (contentType.includes('application/json') && !(length > MAX_BODY_BYTES)) {
+            response.clone().json().then(
+              (body) => dispatchPayload(sitePlatform, url, body),
+              () => {
+                /* malformed JSON — silently skip */
+              },
+            );
+          }
+        } catch {
+          /* clone() failed or anything else: the page's response is untouched */
+        }
+      },
+      () => {
+        /* the request failed: that is the page's to handle, through its own promise */
+      },
+    );
+    return pending;
   };
 
   // XHR wrap. Some legacy X endpoints use XHR.
@@ -349,6 +373,7 @@ export function installPageWorldInterceptor(): () => void {
       if (matched) {
         this.addEventListener('load', () => {
           try {
+            if (!stillMayRead()) return;
             const contentType = this.getResponseHeader('Content-Type') ?? '';
             if (!contentType.includes('application/json')) return;
             if (this.responseText.length > MAX_BODY_BYTES) return;

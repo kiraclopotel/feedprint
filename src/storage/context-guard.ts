@@ -41,7 +41,24 @@ export function isContextError(err: unknown): boolean {
   return String(err).includes(CONTEXT_INVALIDATED);
 }
 
+/**
+ * True when the extension this script belongs to is gone: Chrome leaves a content script whose extension was reloaded
+ * under it a runtime without its id and no storage at all. Both are required, because a page with only part of the
+ * extension's API (a test's stand-in, a page with no chrome at all) is not an orphan and must keep working.
+ */
+function orphaned(): boolean {
+  try {
+    if (typeof chrome === 'undefined' || chrome === null || !chrome.runtime) return false;
+    return !chrome.runtime.id && !chrome.storage;
+  } catch {
+    return true;
+  }
+}
+
 export function isContextAlive(): boolean {
+  // The flag alone missed an orphan whose first act was a storage read: its starts threw "reading 'onChanged'" in a
+  // loop instead of going quiet after one line.
+  if (contextValid && orphaned()) markContextInvalidated();
   return contextValid;
 }
 

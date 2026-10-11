@@ -85,17 +85,43 @@ describe('a gap marker on the timeline', () => {
         expect(said, where).not.toContain(reason);
         expect(said, where).not.toMatch(/=|\[|heap|churn|backlog|valve|heartbeat|gap-marker/i);
         expect(said, where).not.toContain('—');
-        expect(said, where).not.toBe(DASHBOARD_STRINGS[lang].feedMarkerGap);
+        expect(said, where).not.toBe(DASHBOARD_STRINGS[lang].feedGapHeading(reason));
         expect(said, where).toContain(formatTimeLocal(input.fromISO, lang));
       }
     }
+  });
+
+  it('heads each stop by its own cause, and only a recorder that was not running says recording was off', () => {
+    const reasons = Object.keys(EVERY_REASON) as GapReason[];
+    for (const lang of LANGS) {
+      const t = DASHBOARD_STRINGS[lang];
+      const off = t.feedGapHeading('recorder-down');
+      for (const reason of reasons) {
+        const input: GapMarkerInput = { reason, platform: 'facebook', count: 3, unit: 'records', fromISO: RELOAD.fromISO, toISO: RELOAD.toISO };
+        const html = render(gapRecord(input), lang);
+        const heading = t.feedGapHeading(reason);
+        expect(html, `${reason} ${lang}`).toContain(`>${heading}<`);
+        // No reason code reaches the heading, whatever its case ("S-A" is Romanian, not a code).
+        for (const code of reasons) expect(heading.toLowerCase(), `${reason} ${lang}`).not.toContain(code);
+        // A reason that fell to the catch-all would read as "a stop in recording" with no cause.
+        expect(heading, `${reason} ${lang}: its own heading, not the catch-all`).not.toBe(t.feedGapHeading(''));
+        if (reason !== 'recorder-down') expect(heading, `${reason} ${lang}`).not.toBe(off);
+      }
+      expect(t.feedGapHeading('retry-exhausted'), lang).not.toBe(t.feedGapHeading('context-invalidated'));
+    }
+  });
+
+  it('says plainly what a reload cost, and that the open tabs recorded nothing more until reloaded', () => {
+    const said = sentenceIn(render(gapRecord(RELOAD), 'en'));
+    const at = formatTimeLocal(RELOAD.fromISO, 'en');
+    expect(said).toBe(`The extension was reloaded or updated at ${at}. In tabs that were already open, posts seen but not yet saved were lost; how many is not known. Those tabs recorded nothing more until they were reloaded.`);
   });
 
   it('says a sentence for a line that does not read back, not the card heading again', () => {
     for (const lang of LANGS) {
       const said = sentenceIn(render(gapRecord(RELOAD, 'not a marker line at all'), lang));
       expect(said, lang).toBe(DASHBOARD_STRINGS[lang].feedGapSentence({ reason: '', count: 0, from: null, to: null, site: null }));
-      expect(said, lang).not.toBe(DASHBOARD_STRINGS[lang].feedMarkerGap);
+      expect(said, lang).not.toBe(DASHBOARD_STRINGS[lang].feedGapHeading(''));
       expect(said, lang).toMatch(/^\S.*\.$/);
     }
   });

@@ -31,7 +31,7 @@ import { formatCount } from '../../shared/format-number';
 import { authorProfileKey } from '../../../forensics/author-store';
 import { isPaidPlacement } from '../../../forensics/paid-placement';
 import { isFlaggedItem } from '../record-sets';
-import { computeAccountLedger } from './account-ledger';
+import { computeAccountLedger, countFlaggedWithoutAuthor } from './account-ledger';
 
 const PLATFORM_SHORT: Record<string, string> = {
   twitter: 'X', facebook: 'FB', instagram: 'IG', tiktok: 'TT', youtube: 'YT',
@@ -75,6 +75,7 @@ export function RecidivistAuthorsPanel({
     })),
     [records, threshold, limit],
   );
+  const noAuthor = useMemo(() => countFlaggedWithoutAuthor(records), [records]);
 
   return (
     <div className="side-panel">
@@ -84,7 +85,8 @@ export function RecidivistAuthorsPanel({
       </div>
       {rows.length === 0 ? (
         <div className="muted" style={{ fontSize: 12 }}>{t.recidEmpty}</div>
-      ) : rows.map((r) => (
+      ) : null}
+      {rows.map((r) => (
         <button
           type="button"
           className="recidivist-row"
@@ -154,6 +156,7 @@ export function RecidivistAuthorsPanel({
           <span className="recidivist-count">{r.count}×</span>
         </button>
       ))}
+      {noAuthor > 0 && <div className="muted" style={{ fontSize: 12, marginTop: 6 }} data-testid="recid-no-author">{t.recidNoAuthor(noAuthor)}</div>}
     </div>
   );
 }

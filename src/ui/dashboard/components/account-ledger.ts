@@ -24,6 +24,7 @@ import type { ForensicRecord } from '../../../types/forensic';
 import type { FeedSource } from '../../../types/post';
 import { authorProfileKey } from '../../../forensics/author-store';
 import { isFlaggedItem, isItem } from '../record-sets';
+import { isPaidPlacement } from '../../../forensics/paid-placement';
 import { localDayKey } from '../../shared/format-time';
 import { canonicalizeTechniqueForStats } from '../../../forensics/technique-canonical';
 
@@ -71,6 +72,16 @@ function isUnknownAuthor(author: string | undefined): boolean {
 }
 
 /**
+ * Flagged items whose page named no account. They are not one author, so they are never a row; the panel counts them
+ * apart, or a list that skips them would read as covering every flag.
+ */
+export function countFlaggedWithoutAuthor(records: ForensicRecord[]): number {
+  let n = 0;
+  for (const r of records) if (isItem(r) && isUnknownAuthor(r.author) && isFlaggedItem(r)) n++;
+  return n;
+}
+
+/**
  * The reader's own calendar day. The row prints "seen on N days", and N has to
  * be N of the days the person remembers; it cut UTC until 2026-09-18, which
  * disagreed with the Overview beside it for every reader away from Greenwich.
@@ -109,6 +120,8 @@ export function computeAccountLedger(
   const byKey = new Map<string, Acc>();
   for (const r of records) {
     if (!isItem(r)) continue;
+    // An ad's account is whoever paid to be shown, not a voice the feed chose, so it never ranks.
+    if (isPaidPlacement(r)) continue;
     if (isUnknownAuthor(r.author)) continue;
     const key = authorProfileKey(r.author, r.platform);
     const acc = byKey.get(key);

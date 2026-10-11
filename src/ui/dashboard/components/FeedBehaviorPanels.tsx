@@ -218,7 +218,7 @@ export function FeedBehaviorPanels({ model, lens }: {
                 <span className="fb-skew-num">{t.fbSkewNum(pct, f, n)}</span>
               </div>
             ))}
-            <LensCap text={t.fbSkewCap(lens, skew.openPct, skew.closePct)} />
+            <LensCap text={t.fbSkewCap(lens, skew.lean, skew.openPct, skew.closePct)} />
           </>
         )}
         {/* The rows above count the first and last thirds of long sittings; the caption gives only the days, since no set name fits that subset. */}
@@ -324,11 +324,6 @@ export function FeedBehaviorPanels({ model, lens }: {
                       <span className="fb-pf-dot" title={PLATFORM_LABEL[v.platform] ?? v.platform}
                         style={{ background: PLATFORM_COLOR[v.platform] ?? 'var(--fw-muted)' }} />
                       {v.author}
-                      {v.accountType === 'advertiser' && (
-                        <span className="fb-chip" style={{ marginLeft: 6 }}>
-                          {t.ovSourceType('advertiser')}
-                        </span>
-                      )}
                     </td>
                     <td className="num">{v.days}</td>
                     <td className="num">{v.seen}{v.flagged > 0 ? ` · ${t.fbVoicesFlaggedShort(v.flagged)}` : ''}</td>

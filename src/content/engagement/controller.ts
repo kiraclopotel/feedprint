@@ -396,12 +396,16 @@ function startPlatformEngagement(
     try {
       return start();
     } catch (error) {
+      // An extension reloaded under the tab is not a filter fault: the context guard says so once, and a retry would
+      // only throw again.
+      if (!isContextAlive()) return () => {};
       bumpCounter(counters.threw);
       console.warn(`[FW engagement] ${name} did not start; trying it once more`, error);
     }
     try {
       return start();
     } catch (retryError) {
+      if (!isContextAlive()) return () => {};
       bumpCounter(counters.retryThrew);
       console.warn(`[FW engagement] ${name} did not start the second time; the other filters stay live`, retryError);
       return () => {};
@@ -514,6 +518,8 @@ export async function initEngagementControl(
   const keepHides = offRuns ? keepingRecorderHides : (run: () => void) => run();
 
   const settings = await readSettings();
+  // The extension can be reloaded while settings are read; an orphaned script has nothing left to start.
+  if (!isContextAlive()) return () => {};
 
   let activeCleanup: () => void = () => {};
   /** Ticks once per restart, so a slow run can tell it has been overtaken. */
@@ -534,6 +540,7 @@ export async function initEngagementControl(
   try {
     if (offRuns) pickerCleanup = startPicker(platform, settings);
   } catch (error) {
+    if (!isContextAlive()) return () => keepHides(() => stopAll([activeCleanup, resetDOM]));
     bumpCounter('engagementPickerStartThrew');
     console.warn('[FW engagement] the picker start threw; the filters go on without it', error);
   }
@@ -546,7 +553,7 @@ export async function initEngagementControl(
     areaName?: string,
   ): void => {
     if (!isContextAlive()) {
-      chrome.storage.onChanged.removeListener(storageListener);
+      chrome.storage?.onChanged?.removeListener(storageListener);
       return;
     }
     // Settings live in chrome.storage.local. A session or sync write that
@@ -642,7 +649,8 @@ export async function initEngagementControl(
     })();
   };
 
-  chrome.storage.onChanged.addListener(storageListener);
+  // An orphaned script has no storage events to listen to; the stop below still clears what did start.
+  if (isContextAlive()) chrome.storage.onChanged.addListener(storageListener);
 
   // Master cleanup
   // Every step runs even if an earlier one throws (a picker that throws on stop used to leave the filters, the page reset and
@@ -656,7 +664,7 @@ export async function initEngagementControl(
     stopAll([
       () => pickerCleanup(),
       () => keepHides(() => stopAll([activeCleanup, resetDOM])),
-      () => chrome.storage.onChanged.removeListener(storageListener),
+      () => chrome.storage?.onChanged?.removeListener(storageListener),
     ]);
   };
   // A Receipts updated or switched off under an open tab leaves this script running with its ad watchers. Its stamp

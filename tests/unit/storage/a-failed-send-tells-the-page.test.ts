@@ -32,7 +32,7 @@ afterEach(() => {
 });
 
 function stubSendMessage(sendMessage: unknown): void {
-  (globalThis as unknown as { chrome: unknown }).chrome = { runtime: { sendMessage } };
+  (globalThis as unknown as { chrome: unknown }).chrome = { runtime: { id: 'fw-test', sendMessage } };
 }
 
 describe('whichever path finds the extension gone first, the page is told', () => {

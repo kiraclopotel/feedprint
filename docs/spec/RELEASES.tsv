@@ -54,3 +54,13 @@ receipts	2.5.15	39bb88d53fef2a7d9df036a1bad7cf72908cf139	24.14.0	9e1ea0f1d560621
 #	Corrected 2026-10-08: the upload was 3 October, not 1 October as planned when this row was added; the instrument is
 #	the upload note of that day, whose last line reads "DONE Sat 03 Oct 2026 20:50".
 receipts	2.5.16	ac0cabcb83fb6bb60f3d4e0f79a88e7610b53f46	24.14.0	e7bf75c937eff58f460e7104e5d1cf922bc705398faefa9564682c3abd2426ac	47b9788f686adc2996bb26acd956a458c9662ff2aed4be2750978bb2187569d9	2026-10-03
+#	Off 1.0.11, added 2026-10-11: uploaded in the sitting of the Receipts 2.5.16 row above (the upload note of 3 October
+#	covers both packages). The zip hash is the one that note gives and tests/repo/the-manifests-add-nothing-to-the-uploaded-
+#	packages.test.ts cites; the files hash is the "[reproducible] files" line of a rebuild from 1c6472d8 on 2026-10-11 with
+#	that commit's own script, whose zip came out byte for byte the uploaded one (5b1048b5...).
+off	1.0.11	1c6472d88c8cea699dd1ebae360b1725a426c1b0	24.14.0	551c80c3752068e90d030980731abba71d33e06437a240068f38fea905496db9	5b1048b5ba1e09cc30f20f5b3ddd4c159bd9d5d75a3817dba19ef1f969addad3	2026-10-03
+#	Feedprint 2.5.18 (the listing named Receipts until this upload) and Off 1.0.13, added 2026-10-11: uploaded and
+#	submitted for review by the owner on 2026-10-10 (his word that evening: both submitted). Both built twice from 690dba9d
+#	with a MATCH; the files hashes are the build log's "[reproducible] files" lines, the zip hashes read from the zips.
+receipts	2.5.18	690dba9d19b838ddc5d6ba29e52b4b64a26ba2e2	24.14.0	f6adc0a75ead20ed1a1996633c50069ca32c3a07ae12fe214be3fd5806da0555	d5b7aabbc3aab64bca4ef4d5f1f288ffef142a107bac934f88aca414cd74a631	2026-10-10
+off	1.0.13	690dba9d19b838ddc5d6ba29e52b4b64a26ba2e2	24.14.0	2cbfd1226c4e125eac8b6cdec29b5bfe4bb9722a31efbab380b2d84066d31fee	4241d4d2b527f7330118ecb95a949669902b48da0c4cf9a5013701128e0ea5d2	2026-10-10

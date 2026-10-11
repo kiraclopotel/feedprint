@@ -122,6 +122,6 @@ describe('the head says the latest day in three short lines', () => {
       expect(w.breakdownShow).not.toBe(w.breakdownHide);
     }
     expect(dashboardWords('ro').showed(20, 2)).toContain('20 de lucruri');
-    expect(dashboardWords('en').tabTimeline).toBe('Your timeline');
+    expect(dashboardWords('en').tabTimeline).toBe('Timeline');
   });
 });

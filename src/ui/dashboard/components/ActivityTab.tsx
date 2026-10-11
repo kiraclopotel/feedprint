@@ -58,6 +58,8 @@ export function ActivityTab({
   archivedCount,
   archivesIncluded,
   archivedOlderCount = 0,
+  flaggedAllMonths = 0,
+  flaggedAllMonthsTitle,
   liveCount,
   readFailed, onRetry,
   readingOffered = true,
@@ -96,6 +98,10 @@ export function ActivityTab({
    *  slice, 14 Sep 2026): counted in every total, never listed here. Said,
    *  so a list that ends at 90 days is not read as the whole record. */
   archivedOlderCount?: number;
+  /** The records flagged for review over every month, older ones from their summaries; said here, beside the other
+   *  counts, because the tab name carries no number. */
+  flaggedAllMonths?: number;
+  flaggedAllMonthsTitle?: string;
   /** How many of `records` are the active chain (its newest records). The
    *  window note describes that chain: it is the one that rolls at the cap. */
   liveCount?: number;
@@ -620,6 +626,11 @@ export function ActivityTab({
                     {archivesIncluded ? t.showingArchivedIncluded(archivedCount ?? 0) : t.showingArchivedNote(archivedCount ?? 0)}
                   </span>
                 )}
+                {!archiveLoading && flaggedAllMonths > 0 && (
+                  <span className="feed-showing-flagged" style={{ color: 'var(--fw-muted)' }} title={flaggedAllMonthsTitle}>
+                    {t.tabActivityFlagged(flaggedAllMonths)}
+                  </span>
+                )}
                 {!archiveLoading && archivedOlderCount > 0 && (
                   <span className="feed-showing-archived-older" style={{ color: 'var(--fw-muted)' }}>
                     {t.showingArchivedOlder(archivedOlderCount)}
@@ -769,7 +780,7 @@ export function ActivityTab({
                               </div>
                             )
                           );
-                      // A day heading where the day changes, so the list reads as a dated sequence ("Your timeline").
+                      // A day heading where the day changes, so the list reads as a dated sequence (the timeline).
                       // Only in the as-seen order: worst-first scrambles time, as the dividers above already respect.
                       const day = feedSort === 'seen' ? dayHeadingAt(groups, globalI, uiLang) : null;
                       const above = (day || divider) ? <>{day}{divider}</> : null;

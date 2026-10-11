@@ -30,6 +30,9 @@ export type FeedMediaStatusKey = 'ready' | 'pending' | 'partial' | 'failed' | 'n
 export type FeedCommentStatusKey = 'captured' | 'not-captured' | 'unavailable';
 
 /** What a gap marker's sentence needs: its reason, its count, and its times as the reader's clock shows them. */
+/** Which third of a sitting carried more flags; 'even' when the record cannot tell them apart. */
+export type SkewLean = 'open' | 'close' | 'even';
+
 export interface GapSentenceParts {
   reason: string;
   count: number;
@@ -577,6 +580,8 @@ export interface DashboardStrings {
   /** The tooltip that says why. */
   feedAuthorWithheldWhy: string;
   feedUnknownAuthor: string;
+  /** An ad whose page named no advertiser: said as an ad, not as an author nobody knows. */
+  feedAdAuthorNotShown: string;
   /** Beside a handle the record has seen often. Was a CSS content: string until 2026-09-19. */
   feedRecidivistFrequent: string;
   /** On a card the reader themselves marked as wrong. Was a CSS content: string until 2026-09-19. */
@@ -602,7 +607,8 @@ export interface DashboardStrings {
   feedMarkerRotation: string;
   feedMarkerPrune: string;
   /** The label on a gap marker's own line: the recorder was off. */
-  feedMarkerGap: string;
+  /** A stop's heading, named by its own cause: a reload or a few unsaved entries is not "recording was off". */
+  feedGapHeading: (reason: string) => string;
   /** A gap marker in the reader's words; times are already in the reader's clock. */
   feedGapSentence: (g: GapSentenceParts) => string;
   feedGapCopied: string;
@@ -817,6 +823,8 @@ export interface DashboardStrings {
   recidTitle: string;
   recidHint: (threshold: number) => string;
   recidEmpty: string;
+  /** Flagged items whose page named no account: never ranked as one author, counted apart under the list. */
+  recidNoAuthor: (n: number) => string;
   recidFilterTip: (author: string) => string;
   recidTrendRising: string;
   recidTrendEasing: string;
@@ -1252,7 +1260,7 @@ export interface DashboardStrings {
   fbSkewClose: string;
   fbSkewNum: (pct: number, f: number, n: number) => string;
   fbSkewNone: string;
-  fbSkewCap: (lens: FeedBehaviorLens, openPct: number, closePct: number) => string;
+  fbSkewCap: (lens: FeedBehaviorLens, lean: SkewLean, openPct: number, closePct: number) => string;
   fbReturnTitle: string;
   fbReturnSub: string;
   fbReturnStatN: (f: number, n: number) => string;

@@ -280,7 +280,8 @@ export function computeOverview(records: ForensicRecord[]): OverviewModel | null
   const srcMap = new Map<string, OverviewSourceRow>();
   for (const r of content) {
     const author = (r.author ?? '').trim();
-    if (!author || author.toLowerCase() === 'unknown') continue;
+    // An ad's account is whoever paid to be shown, so it never ranks among the accounts the feed served.
+    if (!author || author.toLowerCase() === 'unknown' || isPaidPlacement(r)) continue;
     const key = `${r.platform}:${author}`;
     let row = srcMap.get(key);
     if (!row) {

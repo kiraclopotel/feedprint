@@ -758,6 +758,66 @@ html { scrollbar-width: thin; scrollbar-color: color-mix(in oklch, var(--fw-mute
 .set-rules-jump .set-rules-n { font-weight: 400; color: var(--fw-teal); }
 /* The rules row's one line sits under the button, as a switch's line sits under its name. */
 .set-rules-line { margin-top: -4px; padding-bottom: 6px; }
+/* The AI drawer: its header names the group and what the key turns on, and opens or closes its rows. Closed, the
+   card shrinks to a pill that reads as a button. The pill's green is its own, not a look's, and it means the reading
+   is at work: with AI checks off or at a level that sends nothing the pill is "idle" and keeps the card's own colours.
+   Both pills, green on the page and card in every look and their text, are held by popup-looks-contrast. Width eases between the card's
+   full width and the pill's fit; the open width is a length, since a browser cannot ease from one size keyword
+   (auto) to another (fit-content). The pill's corner is half its 36 px height, not a huge radius, which midway
+   through the fold drew a green oval. The rows slide in on a grid row; the hidden attribute stays for readers. */
+:root {
+  --ai-pill-bg: #22c55e; --ai-pill-ink: #052e16;
+  --ai-drawer-move: width 200ms ease, border-radius 200ms ease, background-color 200ms ease, padding 200ms ease;
+}
+:root[data-theme="light"] {
+  --ai-pill-bg: #15803d; --ai-pill-ink: #ffffff;
+}
+.fw-popup .ai-drawer {
+  interpolate-size: allow-keywords; width: calc(100% - 2 * var(--pop-edge)); box-sizing: border-box;
+  transition: var(--ai-drawer-move);
+}
+.fw-popup .ai-drawer.closed {
+  width: fit-content; max-width: calc(100% - 2 * var(--pop-edge)); border-radius: 18px; padding: 2px 14px;
+  background: var(--ai-pill-bg); border-color: var(--ai-pill-bg);
+}
+.ai-drawer.closed .ai-drawer-title,
+.ai-drawer.closed .ai-drawer-plan,
+.ai-drawer.closed .ai-drawer-chev { color: var(--ai-pill-ink); }
+.ai-drawer.closed .ai-drawer-sep,
+.ai-drawer.closed .ai-drawer-plan { flex: none; }
+.fw-popup .ai-drawer.closed.idle { background: var(--fw-card); border-color: var(--fw-border); }
+.ai-drawer.closed.idle .ai-drawer-title { color: var(--fw-text); }
+.ai-drawer.closed.idle .ai-drawer-sep,
+.ai-drawer.closed.idle .ai-drawer-plan,
+.ai-drawer.closed.idle .ai-drawer-chev { color: var(--fw-muted); }
+.ai-drawer-body {
+  display: grid; grid-template-rows: 1fr;
+  transition: grid-template-rows 200ms ease, display 200ms allow-discrete;
+}
+.ai-drawer-body[hidden] { display: none; grid-template-rows: 0fr; }
+@starting-style { .ai-drawer.pressed .ai-drawer-body { grid-template-rows: 0fr; } }
+.ai-drawer-rows { min-height: 0; overflow: hidden; }
+.ai-drawer-head {
+  display: flex; align-items: center; gap: 8px; width: 100%; min-height: 32px; padding: 4px 0;
+  border: none; background: transparent; cursor: pointer; font: inherit; text-align: left; color: var(--fw-text);
+}
+.ai-drawer-title { font-size: 13px; font-weight: 600; }
+.ai-drawer-sep { font-size: 11px; color: var(--fw-muted); }
+.ai-drawer-plan { flex: 1; font-size: 11px; color: var(--fw-muted); }
+.ai-drawer.closed .ai-drawer-sep { color: var(--ai-pill-ink); }
+.ai-drawer-chev { color: var(--fw-muted); transform: rotate(-90deg); transition: transform 200ms ease; }
+.ai-drawer-chev.open { transform: none; }
+/* Drawn before its stored choice is read, the drawer settles once without moving. For a person who asked for less
+   motion it never moves; both rules come after every drawer rule above and outweigh them. */
+html body .fw-popup .pop-card.ai-drawer.unread,
+html .fw-popup .ai-drawer.unread .ai-drawer-body,
+html .fw-popup .ai-drawer.unread .ai-drawer-chev { transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  html .fw-popup .ai-drawer,
+  html .fw-popup .ai-drawer-body,
+  html .fw-popup .ai-drawer-chev { transition: none !important; }
+}
+.ai-drawer-head:focus-visible { outline: 2px solid var(--fw-teal); outline-offset: 2px; border-radius: calc(6px * var(--pop-r-scale, 1)); }
 .set-rules-jump:focus-visible { outline: 2px solid var(--fw-teal); outline-offset: 2px; border-radius: calc(6px * var(--pop-r-scale, 1)); }
 .set-fold > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 8px; }
 .set-fold > summary::-webkit-details-marker { display: none; }

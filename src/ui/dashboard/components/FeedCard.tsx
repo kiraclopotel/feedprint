@@ -58,6 +58,7 @@ import {
 import { useDashboardT, usePopupT, useUiLanguage } from '../../../i18n/react';
 import { featureLabel } from '../feature-label';
 import { GapMarkerSentence } from './GapMarkerSentence';
+import { readGapMarkerLine } from '../gap-marker-line';
 import { formatDateLocal, formatDateTimeLocal, formatTimeLocal, formatUtcStamp } from '../../shared/format-time';
 import { whyWords } from '../../../i18n/why-words';
 import { isButtonReading } from '../../../forensics/export-numbers';
@@ -246,7 +247,7 @@ export function FeedCard({
     const markerLabel = record.kind === 'reset-marker' ? t.feedMarkerReset
       : record.kind === 'month-rotation-marker' ? t.feedMarkerRotation
       : record.kind === 'prune-marker' ? t.feedMarkerPrune
-      : record.kind === 'gap-marker' ? t.feedMarkerGap
+      : record.kind === 'gap-marker' ? t.feedGapHeading(readGapMarkerLine(record.originalText)?.reason ?? '')
       : t.feedMarkerKindWord(record.kind ?? '', 1).toUpperCase();
     return (
       <div className="feed-card" data-fw-key={record.id} style={{
@@ -361,9 +362,10 @@ export function FeedCard({
   const handleDisplay = authorWithheld
     ? t.feedAuthorWithheld
     : (rawHandle.toLowerCase() === 'unknown' || rawHandle === 'Unknown'
-      ? t.feedUnknownAuthor
+      // An ad's account is its advertiser, so an ad the page did not name says that, not "Unknown author".
+      ? (isPaidPlacement(record) ? t.feedAdAuthorNotShown : t.feedUnknownAuthor)
       : (rawHandle.startsWith('@') ? rawHandle : '@' + rawHandle));
-  const avatarChar = (rawHandle.replace(/^@/, '')[0] ?? '?').toUpperCase();
+  const avatarChar = (handleDisplay.replace(/^@/, '')[0] ?? '?').toUpperCase();
 
   // Engagement metrics live on `record.metrics` (RecordMetrics, inside the
   // signed payload). The `environment` ("room") record carries its own

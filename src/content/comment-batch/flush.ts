@@ -809,6 +809,13 @@ export async function flushBatch(parentVideoId: string, deps: FlushDeps): Promis
               `(no paid key stored). Comments use the deterministic harm-floor only. (Logged once per session.)`,
             );
           }
+        } else if (cap === 'master-off') {
+          // The person's own choice, not a fault, so it is an info line and never reaches the extension's Errors list:
+          // the AI switch is off, the level is Strict, or no level is chosen yet (client.ts, the master breaker).
+          console.info(
+            `[FW comment-batch] AI comment analysis is off [class=master-off]: the AI switch is off, the level is ` +
+            `Strict, or no level is chosen yet. Comments use the deterministic harm-floor only. (Logged once per session.)`,
+          );
         } else {
           // cap === 'daily' | 'monthly': a real per-license cap was reached.
           // Either may be client-side (license.ts) or worker-enforced (proxy 429).

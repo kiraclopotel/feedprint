@@ -36,6 +36,7 @@ import { PinOverlay } from './controls';
 import { HomeTab } from './panels/HomeTab';
 import { KeysTab } from './panels/KeysTab';
 import { SettingsPanel } from './panels/SettingsPanel';
+import { readAiDrawerOpen } from './panels/ai/AiCard';
 import { SetupWizard } from './panels/SetupWizard';
 import { PopHeader, PopTabBar } from './panels/header';
 import { computeStatusStates } from './panels/status';
@@ -101,7 +102,8 @@ function Popup() {
   }, [isDetached]);
 
   const reload = useCallback(async () => {
-    const [s, l] = await Promise.all([getSettings(), getLicense()]);
+    // The AI drawer's stored choice is read with the settings, so Settings draws it in place on its first frame.
+    const [s, l] = await Promise.all([getSettings(), getLicense(), readAiDrawerOpen()]);
     setSettings(s);
     setLicenseState(l);
     setConsent(l.tier === 'free' ? null : await getReadingConsent(bearerOf(l)));

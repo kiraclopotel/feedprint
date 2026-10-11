@@ -516,6 +516,7 @@ export const ES: DashboardStrings = {
   feedAuthorWithheld: 'Autor no establecido',
   feedAuthorWithheldWhy: 'La página mostró un nombre junto a este elemento y el registrador lo rechazó: no pudo demostrar que el encabezado y las palabras pertenecían al mismo elemento, porque el feed reutiliza un mismo hueco para un elemento nuevo mientras se lee.',
   feedUnknownAuthor: 'Autor desconocido',
+  feedAdAuthorNotShown: 'Publicación patrocinada, anunciante no indicado',
   feedRecidivistFrequent: '· frecuente',
   feedYouDisputedThis: 'lo has discutido',
   feedReelThreadHeader: 'Comentarios del Reel de Facebook',
@@ -543,13 +544,25 @@ export const ES: DashboardStrings = {
   feedMarkerReset: 'REGISTRO REINICIADO',
   feedMarkerRotation: 'MES ARCHIVADO',
   feedMarkerPrune: 'ENTRADAS ANTIGUAS PODADAS',
-  feedMarkerGap: 'LA GRABACIÓN ESTUVO APAGADA',
+  feedGapHeading: (reason) => {
+    switch (reason) {
+      case 'context-invalidated': return 'EXTENSIÓN RECARGADA';
+      case 'recorder-down': return 'LA GRABACIÓN ESTUVO APAGADA';
+      case 'retry-overflow': case 'retry-exhausted': case 'delivery-quarantined': return 'ENTRADAS SIN GUARDAR';
+      case 'backlog-hidden': return 'PESTAÑA EN SEGUNDO PLANO';
+      case 'backlog-overflow': return 'ALGUNAS PUBLICACIONES DESCARTADAS';
+      case 'churn-breaker': case 'heap-valve': return 'GRABACIÓN EN PAUSA EN UNA PÁGINA';
+      case 'chain-lost': return 'ENTRADAS PERDIDAS';
+      case 'key-replaced': return 'CAMBIÓ LA CLAVE DE FIRMA';
+      default: return 'PAUSA EN LA GRABACIÓN';
+    }
+  },
   feedGapSentence: (g) => {
     const las = (t: string) => (/^0?1[:.]\d/.test(t) ? `la ${t}` : `las ${t}`);
     const when = !g.from || !g.to ? '' : g.from === g.to ? ` a ${las(g.from)}` : ` entre ${las(g.from)} y ${las(g.to)}`;
     const on = g.site ? ` en ${g.site}` : '';
     switch (g.reason) {
-      case 'context-invalidated': return `La extensión se recargó o se actualizó${when}. Lo que las pestañas ya abiertas habían visto y aún no habían guardado se perdió; no se sabe cuánto.`;
+      case 'context-invalidated': return `La extensión se recargó o se actualizó${when}. En las pestañas que ya estaban abiertas, las publicaciones vistas y aún no guardadas se perdieron; no se sabe cuántas. Esas pestañas no grabaron nada más hasta que se recargaron.`;
       case 'recorder-down': return `La grabación no estaba funcionando${when}.`;
       case 'retry-overflow': case 'retry-exhausted': case 'delivery-quarantined':
         return `${g.count === 1 ? 'Una entrada no se pudo guardar' : `${esNum(g.count)} entradas no se pudieron guardar`}${when}${on}.`;
@@ -792,6 +805,7 @@ export const ES: DashboardStrings = {
   recidTitle: 'Cuentas marcadas a menudo',
   recidHint: (threshold) => `≥${esNum(threshold)} avisos`,
   recidEmpty: 'Todavía no hay cuentas repetidas.',
+  recidNoAuthor: (n) => `Sin autor visible: ${esNum(n)} ${n === 1 ? 'elemento marcado' : 'elementos marcados'}`,
   recidFilterTip: (author) => `Filtrar el feed a ${author}`,
   recidTrendRising: 'la gravedad sube',
   recidTrendEasing: 'la gravedad baja',
@@ -810,7 +824,7 @@ export const ES: DashboardStrings = {
 
   expoLoading: 'Leyendo el registro de esta semana…',
   expoEmpty: 'Feedprint todavía no ha presenciado lo suficiente. Navega con normalidad y vuelve.',
-  expoEmptyWindow: (newestDay) => `No se registró nada en este intervalo. El elemento más reciente del registro es del ${newestDay}; elige arriba un intervalo más amplio, o la pestaña Tu cronología muestra el registro completo.`,
+  expoEmptyWindow: (newestDay) => `No se registró nada en este intervalo. El elemento más reciente del registro es del ${newestDay}; elige arriba un intervalo más amplio, o la pestaña Cronología muestra el registro completo.`,
   expoThisWeek: 'Esta semana',
   expoThisWeekSub: 'Todo lo que Feedprint vio en las plataformas cubiertas. La semana va de lunes a domingo.',
   expoItemsWitnessed: 'entradas de este periodo',
@@ -827,7 +841,7 @@ export const ES: DashboardStrings = {
   expoWhatFwDid: 'Qué hizo Feedprint',
   expoWhatFwDidSub: 'Acciones tomadas esta semana. Los elementos saltados y los que pasaron no se cuentan aquí.',
   expoWhatPushed: 'Qué apareció más',
-  expoWhatPushedSub: 'Los patrones de presión que Feedprint marcó más esta semana. Puedes confirmar o discutir cada uno en la pestaña Tu cronología.',
+  expoWhatPushedSub: 'Los patrones de presión que Feedprint marcó más esta semana. Puedes confirmar o discutir cada uno en la pestaña Cronología.',
   expoShownUnchanged: 'Mostrados sin cambios',
   expoNoFlagged: 'No hubo patrones marcados esta semana.',
   expoAdsShare: (ads, total) => (ads === 0
@@ -850,13 +864,13 @@ export const ES: DashboardStrings = {
   statsDailySub: 'Elementos vistos por día y cuántos de ellos fueron marcados.',
   statsDailyFlaggedOf: (flagged, total) => `${esNum(flagged)} marcados de ${esNum(total)}`,
   statsSevDistTitle: 'Gravedad de los elementos marcados',
-  statsSevDistSub: 'Cómo de serios eran los elementos marcados. La mayor parte del contenido debería quedar en la banda leve; una banda alta cargada merece una mirada a la pestaña Tu cronología.',
+  statsSevDistSub: 'Cómo de serios eran los elementos marcados. La mayor parte del contenido debería quedar en la banda leve; una banda alta cargada merece una mirada a la pestaña Cronología.',
   statsSevLo: 'Leve (1–4)',
   statsSevMi: 'Moderada (5–7)',
   statsSevHi: 'Grave (8–10)',
   statsPlatTechTitle: 'Qué marcó Feedprint en cada plataforma',
   statsPlatTechSub: 'Los patrones más marcados por plataforma: basados en registros conservados, no en una afirmación sobre las intenciones de la plataforma.',
-  statsDrillHint: 'Haz clic para ver estos registros en la pestaña Tu cronología',
+  statsDrillHint: 'Haz clic para ver estos registros en la pestaña Cronología',
 
   tabPatterns: 'Comportamiento del feed',
   patIntro: (n, start, end) =>
@@ -940,13 +954,13 @@ export const ES: DashboardStrings = {
   patPressureExposureCount: (n) => `${esNum(n)} ${n === 1 ? 'entrada marcada' : 'entradas marcadas'} en el rango elegido`,
   patPressureEscLabel: 'Escalada: ',
   patPressureEscalation: (label, delta, count) => `${label}: la gravedad subió ${delta} a lo largo de ${esNum(count)} entradas marcadas en el rango elegido`,
-  patPressureNoEscalation: 'no hay un motivo recurrente que vaya a más',
-  patPressureEntropyLabel: 'Diversidad: ',
-  patPressureEntropy: (drop, window) => `caída de entropía de ${drop} en ventanas de ${esNum(window)} entradas marcadas`,
+  patPressureNoEscalation: 'ningún patrón repetido se volvió más grave',
+  patPressureEntropyLabel: 'Variedad: ',
+  patPressureEntropy: (drop, window) => (/^0([.,]0+)?$/.test(drop) ? `la mezcla de patrones no se estrechó entre las primeras y las últimas ${esNum(window)} entradas marcadas` : `la mezcla de patrones se estrechó entre las primeras y las últimas ${esNum(window)} entradas marcadas (${drop} menos en la puntuación de variedad)`),
   patPressureEntropyPending: (window) => `hacen falta al menos ${esNum(window)} entradas marcadas en esta plataforma en el rango elegido`,
   patPressureGapLabel: 'Regreso: ',
-  patPressureGap: (label, hours) => `${label}: volvió tras ${esNum(hours)} h de hueco tranquilo`,
-  patPressureNoGap: 'no hay regreso tras un hueco tranquilo en este rango',
+  patPressureGap: (label, hours) => `${label} volvió después de ${esNum(hours)} ${hours === 1 ? 'hora' : 'horas'} sin aparecer entre medias`,
+  patPressureNoGap: 'ningún patrón volvió tras una pausa larga en el rango elegido',
   patPressureSwitchLabel: 'Cambios: ',
   patPressureSwitch: (percent, switches, transitions) => `${esNum(percent)}% de cambios (${esNum(switches)}/${esNum(transitions)})`,
 
@@ -1227,13 +1241,12 @@ export const ES: DashboardStrings = {
   fbSkewClose: 'Último tercio',
   fbSkewNum: (pct, f, n) => `${esNum(pct)}% marcados (${esNum(f)}/${esNum(n)})`,
   fbSkewNone: 'Ninguna sentada de esta ventana llegó a 6 elementos.',
-  fbSkewCap: (lens, openPct, closePct) => {
-    const lean = openPct > closePct ? 'open' : closePct > openPct ? 'close' : 'even';
+  fbSkewCap: (lens, lean, openPct, closePct) => {
     return ({
       parent: {
         open: 'Qué significa esto: en este registro el contenido más duro se inclinó hacia el principio de una sentada.',
         close: 'Qué significa esto: en este registro el contenido más duro se inclinó hacia el final de una sentada.',
-        even: 'Qué significa esto: en este registro el contenido marcado no favoreció ni el principio ni el final de una sentada.',
+        even: 'Qué significa esto: en este registro el principio y el final de una sentada tuvieron más o menos la misma parte del contenido marcado.',
       },
       lawyer: {
         open: 'Qué significa esto: la posición dentro de una sentada se deriva solo de las marcas de tiempo del registro firmado; se muestran los dos denominadores.',
@@ -1287,8 +1300,8 @@ export const ES: DashboardStrings = {
   fbChainThen: 'luego',
   fbChainRepeats: 'se repite',
   fbChainTimes: (n) => n === 1 ? 'una vez' : `${esNum(n)} veces`,
-  fbChainHandoff: 'relevo',
-  fbChainSustained: 'sostenido',
+  fbChainHandoff: 'cambió',
+  fbChainSustained: 'se repitió',
   fbChainsNone: 'Hay demasiado pocos elementos marcados con una técnica con nombre en esta ventana para leer el orden.',
   fbChainsUnnamed: (unnamed, total) =>
     `${unnamed.toLocaleString('es-ES')} de ${total.toLocaleString('es-ES')} pares contiguos incluían un elemento que la herramienta marcó sin nombrar un patrón. Esos pares quedan fuera de las filas de arriba: un relevo solo se puede leer entre dos patrones con nombre.`,
@@ -1330,7 +1343,7 @@ export const ES: DashboardStrings = {
   fbCautionAmp: 'Una parte de las medidas de amplificación de este registro mostró muchas más vistas que me gusta. Eso puede venir de que la plataforma empujara una sección y de otras causas; el registro no dice cuál.',
   fbCautionAmpEv: (high, total, pct) => `Evidencia: ${esNum(high)} de ${esNum(total)} medidas mostraron amplificación alta (${esNum(pct)}%).`,
   fbCautionChain: 'Los elementos cargados se encadenan: a un golpe emocional suele seguirle otro relacionado y a menudo más duro. Da por hecho que los elementos marcados sueltos se quedan cortos frente a la experiencia; la unidad de exposición es la racha, no el elemento.',
-  fbCautionChainEv: (a, b, n) => `Evidencia: el relevo más frecuente, "${a} luego ${b}", se observó ${n === 1 ? 'una vez' : `${esNum(n)} veces`} dentro de una sentada.`,
+  fbCautionChainEv: (a, b, n) => `Evidencia: el cambio más frecuente, "${a} luego ${b}", se vio ${n === 1 ? 'una vez' : `${esNum(n)} veces`} dentro de una sentada.`,
   fbPredTag: 'Predicción comprobable',
   fbPredLead: 'Si el patrón observado se mantiene, los próximos 7 días de entradas volverán a mostrar ',
   fbPredClauseRun: 'al menos una racha marcada sin cortes de 5 elementos o más',

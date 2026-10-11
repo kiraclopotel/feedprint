@@ -475,6 +475,8 @@ export interface ExportI18nStrings extends DecisionFlatKeys {
   feedPeopleHeader: string;
   feedPeopleNote: string;
   feedPeopleItems: string;
+  /** The label before the count of flagged items whose page named no account, kept out of the ranking. */
+  feedPeopleNoAuthor: string;
   feedShowOriginal: string;
   /** Under a cut item: what the page carried, with `{n}` for the character count. */
   feedTextCaptureCut: string;
@@ -487,6 +489,8 @@ export interface ExportI18nStrings extends DecisionFlatKeys {
   feedNoLevelNote: string;
   /** The author line when the recorder refused a name it could see (AuthorCapture 'withheld'). */
   feedAuthorWithheld: string;
+  /** An ad whose page named no advertiser, in the dashboard card's words. */
+  feedAdAuthorNotShown: string;
   /** Why it refused, under the item. */
   feedAuthorWithheldWhy: string;
   feedMediaAsRead: string;

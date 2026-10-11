@@ -54,6 +54,7 @@ const TINT = {
   feedLogHead: share(DASH_LOOKS, /^\.fl-row-head, \.fl-row-head:hover \{ background: color-mix\(in oklch, var\(--fw-record\) (\d+)%, var\(--fw-ground\)\)/m),
   entriesChip: share(DASH_LOOKS, /^\.pg-records-chip \{ border-color: var\(--fw-record\); background: color-mix\(in oklch, var\(--fw-record\) (\d+)%, var\(--fw-ground\)\)/m),
   chipHover: share(DASH_LOOKS, /^\.chip\.active:hover \{ background: color-mix\(in oklch, var\(--fw-record\) (\d+)%, var\(--fw-ink\)\)/m),
+  tabHover: share(DASH_LOOKS, /^\.dash-tab:hover, \.dash-tab:focus-visible \{ color: var\(--fw-record\); background: color-mix\(in oklch, var\(--fw-record\) (\d+)%, var\(--fw-ground\)\)/m),
 };
 
 describe('the dashboard wears the look the popup chooses', () => {
@@ -104,14 +105,17 @@ describe('the dashboard wears the look the popup chooses', () => {
           : [mixOklch(record, TINT.header, ground), ground];
         const feedLogHead = mixOklch(record, TINT.feedLogHead, ground);
         const entriesChip = mixOklch(record, TINT.entriesChip, ground);
+        const tabHover = mixOklch(record, TINT.tabHover, ground);
         const text: Array<[string, string, string]> = [
           ...stops.flatMap((stop, i): Array<[string, string, string]> => [[`ink on header stop ${i}`, ink, stop], [`muted on header stop ${i}`, muted, stop]]),
           ['ink on the Feed log head', ink, feedLogHead], ['muted on the Feed log head', muted, feedLogHead],
           ['the count on the Entries chip', record, entriesChip], ['the label on the Entries chip', muted, entriesChip],
           ['ground on a chosen chip under the pointer', ground, mixOklch(record, TINT.chipHover, ink)],
+          ['a tab name under the pointer or the keyboard', record, tabHover],
         ];
         const fills: Array<[string, string, string]> = [
           ['a bar on its track', record, card], ['the chosen bar on its track', noise, card], ['the chosen bar on its row', noise, activeRow],
+          ['the keyboard ring on a tab', record, tabHover],
         ];
         const fails: string[] = [];
         for (const [what, fg, bg] of text) if (ratio(fg, bg) < 4.5) fails.push(`${what} ${ratio(fg, bg).toFixed(2)}`);

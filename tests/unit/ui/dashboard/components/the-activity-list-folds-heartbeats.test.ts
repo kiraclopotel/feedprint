@@ -173,7 +173,7 @@ describe('Activity list: heartbeats fold into one line per run', () => {
     await mount(props({ records: chain() }));
     const gap = host.querySelector('.fc-timeline [data-fw-key="gap-1"]');
     expect(gap).not.toBeNull();
-    expect(gap!.textContent).toContain(t.feedMarkerGap);
+    expect(gap!.textContent).toContain(t.feedGapHeading(''));
     expect(rowKeys()).toEqual(['markers:hb-b1', 'gap-1', 'p3', 'markers:hb-a11', 'p1', 'p2']);
   });
 
@@ -201,6 +201,6 @@ describe('Activity list: heartbeats fold into one line per run', () => {
     // Flat is newest first by chain order: the late pair, then the twelve.
     expect(runs.map((r) => r.getAttribute('data-fw-marker-count'))).toEqual(['2', '12']);
     expect(host.querySelectorAll('.fc-timeline .feed-card[data-fw-key^="hb-"]')).toHaveLength(0);
-    expect(host.querySelector('.fc-timeline [data-fw-key="gap-1"]')?.textContent).toContain(t.feedMarkerGap);
+    expect(host.querySelector('.fc-timeline [data-fw-key="gap-1"]')?.textContent).toContain(t.feedGapHeading(''));
   });
 });

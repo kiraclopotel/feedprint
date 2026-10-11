@@ -107,7 +107,7 @@ const bumps: Array<[string, () => void]> = [
 beforeEach(() => {
   // A live extension: with no runtime at all, the queue's first message send
   // reads the extension as gone and every Child cover is stranded.
-  (globalThis as unknown as { chrome: unknown }).chrome = { runtime: { sendMessage: vi.fn(async () => undefined) } };
+  (globalThis as unknown as { chrome: unknown }).chrome = { runtime: { id: 'fw-test', sendMessage: vi.fn(async () => undefined) } };
   _resetForensicDedupForTesting();
   vi.mocked(sendHighStakesForensicLog).mockClear();
   document.body.innerHTML = '';

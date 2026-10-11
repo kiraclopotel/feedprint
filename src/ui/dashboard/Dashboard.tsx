@@ -1125,11 +1125,8 @@ function Dashboard() {
             every tab; Forensics is where a parent goes for the full banner + stats. */}
         <div className="dash-tabs" role="tablist">
           <TabBtn id="feedlog"    tab={tab} onClick={setTab}>{t.tabFeedLog}</TabBtn>
-          <TabBtn id="activity"   tab={tab} onClick={setTab}>
-            {/* The records flagged for review, said with its word (N1, 29 Sep 2026):
-                a bare "Activity 1" read as a stray number to a fresh reader. */}
-            {dashboardWords(lang).tabTimeline} {flaggedCount > 0 && <span className="count-pill" title={t.tabActivityFlaggedTitle(flaggedCount, olderMonthsNotCounted(unloadedSummaries, monthSets))}>{t.tabActivityFlagged(flaggedCount)}</span>}
-          </TabBtn>
+          {/* A count beside a tab name read as part of the name; the flagged count is said inside the timeline, with its other counts. */}
+          <TabBtn id="activity"   tab={tab} onClick={setTab}>{dashboardWords(lang).tabTimeline}</TabBtn>
           <TabBtn id="overview"   tab={tab} onClick={setTab}>{t.tabOverview}</TabBtn>
           <TabBtn id="statistics" tab={tab} onClick={setTab}>{t.tabStatistics}</TabBtn>
           <TabBtn id="patterns"   tab={tab} onClick={setTab}>{t.tabPatterns}</TabBtn>
@@ -1154,10 +1151,10 @@ function Dashboard() {
             It also carries the tabpanel role and the id TabBtn's aria-controls
             names, which until now pointed at nothing. */}
         <TabPanel id={tab}>
-        {/* The day in three short lines leads the two tabs that are about the day (dashboard-words.ts, TodayHead.tsx). On the
-            other tabs it took the top third of the screen before the tab's own content; under the tabs, it never moves
-            them. It waits for the archive like every tab that states a total. */}
-        {(tab === 'activity' || tab === 'overview') && !archiveLoading && <TodayHead records={allRecords} lang={lang} />}
+        {/* The day in three short lines leads the Overview (dashboard-words.ts, TodayHead.tsx). Over the timeline it pushed
+            the list below the fold and said nothing the Overview does not, so the timeline opens on its list. Under the
+            tabs, it never moves them. It waits for the archive like every tab that states a total. */}
+        {tab === 'overview' && !archiveLoading && <TodayHead records={allRecords} lang={lang} />}
         {(tab === 'overview' || tab === 'export') && <AttentionBanner items={attention.filter((a) => a.reminder)
           .map((a) => (tab === 'export' && a.id === 'backup-failing' ? { ...a, body: dashboardWords(lang).backupNeverHere } : a))} />}
         {tab !== 'activity' && tab !== 'feedlog' && archiveLoading && tabLoadingShell}
@@ -1194,6 +1191,8 @@ function Dashboard() {
             archivedCount={archivesPending ? archivedRecordCount : archiveRecords.length}
             archivesIncluded={!archivesPending && archiveRecords.length > 0}
             archivedOlderCount={archivesPending ? 0 : Math.max(0, archivedRecordCount - archiveRecords.length)}
+            flaggedAllMonths={flaggedCount}
+            flaggedAllMonthsTitle={t.tabActivityFlaggedTitle(flaggedCount, olderMonthsNotCounted(unloadedSummaries, monthSets))}
             liveCount={records.length}
             stats={stats}
             parentFeedback={parentFeedback}

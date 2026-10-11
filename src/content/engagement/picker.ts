@@ -27,6 +27,7 @@ import { CONTAINER_SELECTORS, hideTargetFor, readAuthor, tiktokCommentItem } fro
 import { isInPrivateChatSubtree } from '../platforms/adapter';
 import { markHidden } from './mark-hidden';
 import { observeAddedRoots } from './added-roots';
+import { isContextAlive } from '../../storage/context-guard';
 
 export const PICKER_ARMED_KEY = 'fwPickerArmedAt';
 /**
@@ -240,11 +241,12 @@ export function startPickedBlocks(platform: Platform, settings: FWSettings): () 
     resetPickedDOM();
     scanAll();
   };
-  chrome.storage.onChanged.addListener(listener);
+  // An extension reloaded under the tab leaves this script without storage events; it goes quiet instead of throwing.
+  if (isContextAlive()) chrome.storage.onChanged.addListener(listener);
   return () => {
     stopAdded();
     clearInterval(interval);
-    chrome.storage.onChanged.removeListener(listener);
+    chrome.storage?.onChanged?.removeListener(listener);
     resetPickedDOM();
   };
 }
@@ -421,6 +423,6 @@ export function startPicker(platform: Platform, settings: FWSettings): () => voi
     // and not a counter.
     void chrome.storage.local.set({ [PICKER_ACK_KEY]: at });
   };
-  chrome.storage.onChanged.addListener(listener);
-  return () => { chrome.storage.onChanged.removeListener(listener); disarm?.(); };
+  if (isContextAlive()) chrome.storage.onChanged.addListener(listener);
+  return () => { chrome.storage?.onChanged?.removeListener(listener); disarm?.(); };
 }

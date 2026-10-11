@@ -539,6 +539,7 @@ export const RO: DashboardStrings = {
   feedAuthorWithheld: 'Autor nestabilit',
   feedAuthorWithheldWhy: 'Pagina a arătat un nume lângă acest element, iar înregistratorul l-a refuzat: nu a putut arăta că antetul și cuvintele aparțin aceluiași element, fiindcă fluxul refolosește același loc pentru un element nou în timp ce este citit.',
   feedUnknownAuthor: 'Autor necunoscut',
+  feedAdAuthorNotShown: 'Postare sponsorizată, advertiserul nu este afișat',
   feedRecidivistFrequent: '· frecvent',
   feedYouDisputedThis: 'ai contestat asta',
   feedReelThreadHeader: 'Comentarii la Facebook Reel',
@@ -566,12 +567,24 @@ export const RO: DashboardStrings = {
   feedMarkerReset: 'REGISTRU RESETAT',
   feedMarkerRotation: 'LUNĂ ARHIVATĂ',
   feedMarkerPrune: 'INTRĂRI VECHI CURĂȚATE',
-  feedMarkerGap: 'ÎNREGISTRAREA A FOST OPRITĂ',
+  feedGapHeading: (reason) => {
+    switch (reason) {
+      case 'context-invalidated': return 'EXTENSIA A FOST REÎNCĂRCATĂ';
+      case 'recorder-down': return 'ÎNREGISTRAREA A FOST OPRITĂ';
+      case 'retry-overflow': case 'retry-exhausted': case 'delivery-quarantined': return 'INTRĂRI NESALVATE';
+      case 'backlog-hidden': return 'FILĂ ÎN FUNDAL';
+      case 'backlog-overflow': return 'UNELE POSTĂRI NESALVATE';
+      case 'churn-breaker': case 'heap-valve': return 'ÎNREGISTRARE ÎNTRERUPTĂ PE O PAGINĂ';
+      case 'chain-lost': return 'INTRĂRI PIERDUTE';
+      case 'key-replaced': return 'CHEIA DE SEMNARE S-A SCHIMBAT';
+      default: return 'PAUZĂ ÎN ÎNREGISTRARE';
+    }
+  },
   feedGapSentence: (g) => {
     const when = !g.from || !g.to ? '' : g.from === g.to ? ` la ${g.from}` : ` între ${g.from} și ${g.to}`;
     const on = g.site ? ` pe ${g.site}` : '';
     switch (g.reason) {
-      case 'context-invalidated': return `Extensia a fost reîncărcată sau actualizată${when}. Ce văzuseră filele deja deschise și nu salvaseră încă s-a pierdut; nu se știe cât.`;
+      case 'context-invalidated': return `Extensia a fost reîncărcată sau actualizată${when}. În filele deja deschise, postările văzute și încă nesalvate s-au pierdut; nu se știe câte. Filele acelea nu au mai înregistrat nimic până nu au fost reîncărcate.`;
       case 'recorder-down': return `Înregistrarea nu rula${when}.`;
       case 'retry-overflow': case 'retry-exhausted': case 'delivery-quarantined':
         return `${g.count === 1 ? 'O intrare nu a putut fi salvată' : `${roPlural(g.count, 'intrare', 'intrări')} nu au putut fi salvate`}${when}${on}.`;
@@ -816,6 +829,7 @@ export const RO: DashboardStrings = {
   recidTitle: 'Autori semnalați frecvent',
   recidHint: (threshold) => `≥${roNum(threshold)} semnalări`,
   recidEmpty: 'Încă niciun autor repetat.',
+  recidNoAuthor: (n) => `Fără autor afișat: ${roPlural(n, 'element semnalat', 'elemente semnalate')}`,
   recidFilterTip: (author) => `Filtrează fluxul după ${author}`,
   recidTrendRising: 'severitate în creștere',
   recidTrendEasing: 'severitate în scădere',
@@ -836,7 +850,7 @@ export const RO: DashboardStrings = {
 
   expoLoading: 'Se citește registrul acestei săptămâni…',
   expoEmpty: 'Feedprint nu a văzut încă destule. Navighează normal și revino.',
-  expoEmptyWindow: (newestDay) => `Nu s-a înregistrat nimic în acest interval. Cel mai nou element din înregistrare este din ${newestDay}; alege un interval mai larg mai sus, sau fila Cronologia ta arată toată înregistrarea.`,
+  expoEmptyWindow: (newestDay) => `Nu s-a înregistrat nimic în acest interval. Cel mai nou element din înregistrare este din ${newestDay}; alege un interval mai larg mai sus, sau fila Cronologie arată toată înregistrarea.`,
   expoThisWeek: 'Săptămâna aceasta',
   expoThisWeekSub: 'Tot ce a văzut Feedprint pe platformele acoperite. Săptămâna ține de luni până duminică.',
   expoItemsWitnessed: 'intrări din această perioadă',
@@ -853,7 +867,7 @@ export const RO: DashboardStrings = {
   expoWhatFwDid: 'Ce a făcut Feedprint',
   expoWhatFwDidSub: 'Acțiuni întreprinse săptămâna aceasta. Elementele sărite și cele lăsate să treacă nu sunt numărate aici.',
   expoWhatPushed: 'Ce a apărut cel mai des',
-  expoWhatPushedSub: 'Tiparele de presiune semnalate cel mai des de Feedprint săptămâna aceasta. Poți confirma sau contesta fiecare în fila Cronologia ta.',
+  expoWhatPushedSub: 'Tiparele de presiune semnalate cel mai des de Feedprint săptămâna aceasta. Poți confirma sau contesta fiecare în fila Cronologie.',
   expoShownUnchanged: 'Afișat neschimbat',
   expoNoFlagged: 'Niciun tipar semnalat săptămâna aceasta.',
   expoAdsShare: (ads, total) => (ads === 0
@@ -876,13 +890,13 @@ export const RO: DashboardStrings = {
   statsDailySub: 'Elemente văzute pe zi și câte dintre ele au fost semnalate.',
   statsDailyFlaggedOf: (flagged, total) => `${roNum(flagged)} semnalate din ${roNum(total)}`,
   statsSevDistTitle: 'Severitatea elementelor semnalate',
-  statsSevDistSub: 'Cât de serioase au fost elementele semnalate. Majoritatea ar trebui să fie în banda ușoară; o bandă de sus încărcată merită o privire în fila Cronologia ta.',
+  statsSevDistSub: 'Cât de serioase au fost elementele semnalate. Majoritatea ar trebui să fie în banda ușoară; o bandă de sus încărcată merită o privire în fila Cronologie.',
   statsSevLo: 'Ușoară (1–4)',
   statsSevMi: 'Moderată (5–7)',
   statsSevHi: 'Severă (8–10)',
   statsPlatTechTitle: 'Ce a semnalat Feedprint pe fiecare platformă',
   statsPlatTechSub: 'Tiparele cel mai des semnalate pe fiecare platformă: pe baza înregistrărilor păstrate, nu ca afirmație despre intenția platformei.',
-  statsDrillHint: 'Apasă pentru a vedea aceste înregistrări în fila Cronologia ta',
+  statsDrillHint: 'Apasă pentru a vedea aceste înregistrări în fila Cronologie',
 
   tabPatterns: 'Comportamentul fluxului',
   patIntro: (n, start, end) =>
@@ -965,13 +979,13 @@ export const RO: DashboardStrings = {
   patPressureExposureCount: (n) => `${roPlural(n, 'intrare semnalată', 'intrări semnalate')} în intervalul ales`,
   patPressureEscLabel: 'Escaladare: ',
   patPressureEscalation: (label, delta, count) => `${label}: severitatea a crescut cu ${delta} în ${roPlural(count, 'intrare semnalată', 'intrări semnalate')} din intervalul ales`,
-  patPressureNoEscalation: 'niciun motiv recurent în creștere',
-  patPressureEntropyLabel: 'Diversitate: ',
-  patPressureEntropy: (drop, window) => `scădere de entropie ${drop} pe ferestre de ${roPlural(window, 'intrare semnalată', 'intrări semnalate')}`,
+  patPressureNoEscalation: 'niciun tipar repetat nu a devenit mai grav',
+  patPressureEntropyLabel: 'Varietate: ',
+  patPressureEntropy: (drop, window) => (/^0([.,]0+)?$/.test(drop) ? `amestecul de tipare nu s-a îngustat între primele și ultimele ${roPlural(window, 'intrare semnalată', 'intrări semnalate')}` : `amestecul de tipare s-a îngustat între primele și ultimele ${roPlural(window, 'intrare semnalată', 'intrări semnalate')} (cu ${drop} pe scorul de varietate)`),
   patPressureEntropyPending: (window) => `are nevoie de cel puțin ${roPlural(window, 'intrare semnalată', 'intrări semnalate')} pe această platformă în intervalul ales`,
   patPressureGapLabel: 'Revenire: ',
-  patPressureGap: (label, hours) => `${label}: a revenit după ${roNum(hours)}h de pauză`,
-  patPressureNoGap: 'nicio revenire după pauză în acest interval',
+  patPressureGap: (label, hours) => `${label} a revenit după ${roPlural(hours, 'oră', 'ore')} fără să apară între timp`,
+  patPressureNoGap: 'niciun tipar nu a revenit după o pauză lungă în intervalul ales',
   patPressureSwitchLabel: 'Schimbare: ',
   patPressureSwitch: (percent, switches, transitions) => `${roNum(percent)}% schimbări (${roNum(switches)}/${roNum(transitions)})`,
   patLexTierProfanity: 'înjurătură',
@@ -1255,15 +1269,14 @@ export const RO: DashboardStrings = {
   fbSkewClose: 'Treimea de închidere',
   fbSkewNum: (pct, f, n) => `${roNum(pct)}% semnalate (${roNum(f)}/${roNum(n)})`,
   fbSkewNone: 'Nicio sesiune din această fereastră nu a atins 6 elemente.',
-  fbSkewCap: (lens, openPct, closePct) => {
-    const lean = openPct > closePct ? 'open' : closePct > openPct ? 'close' : 'even';
+  fbSkewCap: (lens, lean, openPct, closePct) => {
     const lawyerLine = 'Ce înseamnă: poziția într-o sesiune derivă doar din marcajele de timp din registrul semnat; ambii numitori sunt afișați.';
     const analystLine = `Ce înseamnă: rata de semnalare în treimea de deschidere față de cea de închidere este ${roNum(openPct)}% față de ${roNum(closePct)}%. Testează față de propria bază înainte de a trata diferența ca stabilă.`;
     return ({
       parent: {
         open: 'Ce înseamnă: în acest registru conținutul mai dur s-a înclinat spre începutul unei sesiuni.',
         close: 'Ce înseamnă: în acest registru conținutul mai dur s-a înclinat spre finalul unei sesiuni.',
-        even: 'Ce înseamnă: în acest registru conținutul semnalat nu a favorizat nici începutul, nici finalul unei sesiuni.',
+        even: 'Ce înseamnă: în acest registru începutul și finalul unei sesiuni au avut cam aceeași parte din conținutul semnalat.',
       },
       lawyer: { open: lawyerLine, close: lawyerLine, even: lawyerLine },
       analyst: { open: analystLine, close: analystLine, even: analystLine },
@@ -1309,8 +1322,8 @@ export const RO: DashboardStrings = {
   fbChainThen: 'apoi',
   fbChainRepeats: 'se repetă',
   fbChainTimes: (n) => n === 1 ? 'o dată' : `de ${roNum(n)} ori`,
-  fbChainHandoff: 'predare',
-  fbChainSustained: 'susținut',
+  fbChainHandoff: 's-a schimbat',
+  fbChainSustained: 's-a repetat',
   fbChainsNone: 'Prea puține elemente semnalate cu o tehnică numită în această fereastră pentru a citi ordinea.',
   fbChainsUnnamed: (unnamed, total) =>
     `${roNum(unnamed)} din ${roNum(total)} perechi adiacente au inclus un element pe care unealta l-a semnalat fără să îi dea un nume de tipar. Acele perechi nu apar în rândurile de mai sus: o preluare se poate citi doar între două tipare cu nume.`,
@@ -1352,7 +1365,7 @@ export const RO: DashboardStrings = {
   fbCautionAmp: 'O parte din măsurătorile de amplificare din acest registru au arătat mult mai multe vizualizări decât aprecieri. Asta poate veni din faptul că platforma a împins o cameră și din alte cauze; înregistrarea nu spune care.',
   fbCautionAmpEv: (high, total, pct) => `Dovadă: ${roNum(high)} din ${roPlural(total, 'măsurătoare', 'măsurători')} arată amplificare ridicată (${roNum(pct)}%).`,
   fbCautionChain: 'Elementele încărcate se înlănțuie: o lovitură emoțională tinde să fie urmată de una înrudită, adesea mai dură. Presupune că elementele semnalate izolat subestimează experiența; unitatea expunerii este seria, nu elementul.',
-  fbCautionChainEv: (a, b, n) => `Dovadă: predarea principală "${a} apoi ${b}", observată ${n === 1 ? 'o dată' : `de ${roNum(n)} ori`} în sesiune.`,
+  fbCautionChainEv: (a, b, n) => `Dovadă: cea mai frecventă schimbare, "${a} apoi ${b}", văzută ${n === 1 ? 'o dată' : `de ${roNum(n)} ori`} într-o sesiune.`,
   fbPredTag: 'Predicție verificabilă',
   fbPredLead: 'Dacă tiparul observat se menține, intrările din următoarele 7 zile vor arăta din nou ',
   fbPredClauseRun: 'cel puțin o serie semnalată neîntreruptă de 5+ elemente',

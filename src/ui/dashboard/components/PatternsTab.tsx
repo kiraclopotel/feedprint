@@ -21,6 +21,7 @@ import type { ForensicRecord } from '../../../types/forensic';
 import { buildThemes, type Theme } from '../../../forensics/topics';
 import { crossDayThemes, predominantThemes } from '../../../forensics/themes';
 import { computeReservePatterns, computeTemplatePatterns, type ReserveInstance } from '../../../forensics/reserve';
+import { isPaidPlacement } from '../../../forensics/paid-placement';
 import { computeNarrativePressureSignals, type NarrativePressureSignals, type PlatformNarrativePressure } from '../../../forensics/sequence';
 import { computePlatformSwitches, type PlatformSwitchSignal } from '../../../forensics/platform-switch';
 import { readThemeCache, writeThemeCache } from '../../../forensics/theme-cache';
@@ -527,6 +528,8 @@ function StreakGrid({ perDayCounts, weekDays }: { perDayCounts: Record<string, n
  * "fear appeal" / "false urgency" pills). Red >= 7, amber >= 4, neutral below.
  */
 function TechniqueChip({ name, severity }: { name: string; severity: number }) {
+  // The chip says the technique in the reader's words, the same ones every panel uses; the id is a code.
+  const t = useDashboardT();
   let dot = 'var(--fw-muted)';
   let cls = 'fc-ai-tag';
   if (severity >= 7) { dot = TONE.ink; cls = 'fc-ai-tag neg'; }
@@ -534,7 +537,7 @@ function TechniqueChip({ name, severity }: { name: string; severity: number }) {
   return (
     <span className={cls} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
       <span style={{ width: 6, height: 6, borderRadius: 0, background: dot }} />
-      {name}
+      {t.techniqueLabel(name)}
     </span>
   );
 }
@@ -578,6 +581,10 @@ function ReserveRow({ instance, byId, line }: { instance: ReserveInstance; byId:
   const t = useDashboardT();
   const [expanded, setExpanded] = React.useState(false);
   const topTechnique = instance.techniqueProfile[0] ?? null;
+  // A row with no name reads as the timeline card does: an ad as an ad, anything else as an unknown author.
+  const first = byId.get(instance.recordIds[0]);
+  const named = instance.author.trim() !== '' && instance.author.toLowerCase() !== 'unknown';
+  const who = named ? instance.author : first && isPaidPlacement(first) ? t.feedAdAuthorNotShown : t.feedUnknownAuthor;
   // First-serve epoch (ms) for the "+N days later" deltas in the expanded list.
   const firstMs = instance.timestamps.length ? Date.parse(instance.timestamps[0]) : NaN;
   return (
@@ -589,7 +596,7 @@ function ReserveRow({ instance, byId, line }: { instance: ReserveInstance; byId:
               and forced single line on the author/sample text and the reserve
               sentence, both of which run longer in RO/PT-BR than English. */}
           <span>
-            <strong>{instance.author}</strong>
+            <strong>{who}</strong>
             {instance.sampleText && <span style={{ color: 'var(--fw-muted)' }}> · {instance.sampleText.slice(0, 90)}</span>}
           </span>
         </span>

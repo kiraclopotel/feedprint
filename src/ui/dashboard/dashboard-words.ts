@@ -78,7 +78,7 @@ const plural = (n: number, one: string, many: string): string => (n === 1 ? one 
 const roDe = (n: number): string => (n % 100 >= 20 || (n !== 0 && n % 100 === 0) ? 'de ' : '');
 
 const EN: DashboardWords = {
-  tabTimeline: 'Your timeline',
+  tabTimeline: 'Timeline',
   dayOpener: (when, d) => (when === 'today' ? 'Today' : when === 'yesterday' ? 'Yesterday' : `On ${d}`),
   showed: (items, sites) => `your feed showed you ${enN(items)} ${plural(items, 'thing', 'things')} on ${enN(sites)} ${plural(sites, 'site', 'sites')}.`,
   keptAll: (p) => `${p} wrote down every one.`,
@@ -118,7 +118,7 @@ const EN: DashboardWords = {
 };
 
 const RO: DashboardWords = {
-  tabTimeline: 'Cronologia ta',
+  tabTimeline: 'Cronologie',
   // Romanian opens on the date itself, "Joi, 8 octombrie,": a "Pe" before a weekday reads as a translation.
   dayOpener: (when, d) => (when === 'today' ? 'Azi' : when === 'yesterday' ? 'Ieri' : `${d.charAt(0).toUpperCase()}${d.slice(1)},`),
   showed: (items, sites) => `feedul ți-a arătat ${items === 1 ? 'un lucru' : `${roN(items)} ${roDe(items)}lucruri`} pe ${sites === 1 ? 'un site' : `${roN(sites)} ${roDe(sites)}site-uri`}.`,
@@ -159,7 +159,7 @@ const RO: DashboardWords = {
 };
 
 const ES: DashboardWords = {
-  tabTimeline: 'Tu cronología',
+  tabTimeline: 'Cronología',
   dayOpener: (when, d) => (when === 'today' ? 'Hoy' : when === 'yesterday' ? 'Ayer' : `El ${d}`),
   showed: (items, sites) => `tu feed te mostró ${esN(items)} ${plural(items, 'cosa', 'cosas')} en ${esN(sites)} ${plural(sites, 'sitio', 'sitios')}.`,
   keptAll: (p) => `${p} las anotó todas.`,
@@ -199,7 +199,7 @@ const ES: DashboardWords = {
 };
 
 const PT_BR: DashboardWords = {
-  tabTimeline: 'Sua linha do tempo',
+  tabTimeline: 'Linha do tempo',
   dayOpener: (when, d) => (when === 'today' ? 'Hoje' : when === 'yesterday' ? 'Ontem' : `Em ${d}`),
   showed: (items, sites) => `seu feed mostrou ${ptbrN(items)} ${plural(items, 'coisa', 'coisas')} em ${ptbrN(sites)} ${plural(sites, 'site', 'sites')}.`,
   keptAll: (p) => `${p} anotou todas.`,

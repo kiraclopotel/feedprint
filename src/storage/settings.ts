@@ -827,15 +827,17 @@ function reportUsageLoss(reason: string, increment: UsageIncrement): void {
 }
 
 async function sendUsageIncrement(increment: UsageIncrement): Promise<void> {
-  if (!isContextAlive()) {
-    reportUsageLoss('extension context invalidated', increment);
-    return;
-  }
+  // After the extension reloads under an open tab every count from that tab is lost by design, and the context guard
+  // already says once to refresh the tab; a warning here would put a second line in the extension's Errors list.
+  if (!isContextAlive()) return;
   let reply: unknown;
   try {
     reply = await chrome.runtime.sendMessage({ type: 'USAGE_INCREMENT', payload: increment });
   } catch (err) {
-    if (isContextError(err)) markContextInvalidated();
+    if (isContextError(err)) {
+      markContextInvalidated();
+      return;
+    }
     reportUsageLoss(err instanceof Error ? err.message : String(err), increment);
     return;
   }

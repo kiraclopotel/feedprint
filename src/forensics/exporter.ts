@@ -703,6 +703,7 @@ const PDF_STRINGS: Record<PDFLocale, Record<string, string>> = {
     timestamp: 'Timestamp',
     originalPost: 'Original post',
     authorWithheld: 'not established',
+    adAuthorNotShown: 'Sponsored post, advertiser not shown',
     recordWithheld: 'Withheld at the request of the person who made this report. The record keeps its place, its hash and its signature; a signed marker in the HTML and JSON exports attests the withholding.',
     authorWithheldWhy: 'The page showed a name beside this item and the recorder refused it: it could not show that the header and the words belonged to the same item, because the feed reuses one slot for a new item while it is being read. No name is recorded rather than the wrong one.',
     textCaptureCut: 'The page carried the first {n} characters; the rest was behind a control the recorder does not press.',
@@ -766,6 +767,7 @@ const PDF_STRINGS: Record<PDFLocale, Record<string, string>> = {
     timestamp: 'Data și ora',
     originalPost: 'Postare originală',
     authorWithheld: 'nestabilit',
+    adAuthorNotShown: 'Postare sponsorizată, advertiserul nu este afișat',
     recordWithheld: 'Reținut la cererea celui care a făcut acest raport. Înregistrarea își păstrează locul, hash-ul și semnătura; un marcaj semnat din exporturile HTML și JSON atestă reținerea.',
     authorWithheldWhy: 'Pagina a arătat un nume lângă acest element, iar înregistratorul l-a refuzat: nu a putut arăta că antetul și cuvintele aparțin aceluiași element, fiindcă fluxul refolosește același loc pentru un element nou în timp ce este citit. Nu se înregistrează niciun nume, în loc de unul greșit.',
     textCaptureCut: 'Pagina a purtat primele {n} caractere; restul era în spatele unui buton pe care înregistratorul nu îl apasă.',
@@ -829,6 +831,7 @@ const PDF_STRINGS: Record<PDFLocale, Record<string, string>> = {
     timestamp: 'Marca de tiempo',
     originalPost: 'Publicación original',
     authorWithheld: 'no establecido',
+    adAuthorNotShown: 'Publicación patrocinada, anunciante no indicado',
     recordWithheld: 'Retenido a petición de quien hizo este informe. El registro conserva su lugar, su hash y su firma; una marca firmada en las exportaciones HTML y JSON atestigua la retención.',
     authorWithheldWhy: 'La página mostró un nombre junto a este elemento y el registrador lo rechazó: no pudo demostrar que el encabezado y las palabras pertenecían al mismo elemento, porque el feed reutiliza un mismo hueco para un elemento nuevo mientras se lee. No se registra ningún nombre en lugar de uno equivocado.',
     textCaptureCut: 'La página llevaba los primeros {n} caracteres; el resto estaba detrás de un control que el registrador no pulsa.',
@@ -892,6 +895,7 @@ const PDF_STRINGS: Record<PDFLocale, Record<string, string>> = {
     timestamp: 'Marca de tempo',
     originalPost: 'Publicação original',
     authorWithheld: 'não estabelecido',
+    adAuthorNotShown: 'Post patrocinado, anunciante não indicado',
     recordWithheld: 'Retido a pedido de quem fez este relatório. O registro mantém o seu lugar, o seu hash e a sua assinatura; uma marca assinada nas exportações HTML e JSON atesta a retenção.',
     authorWithheldWhy: 'A página mostrou um nome ao lado deste item e o gravador o recusou: não conseguiu mostrar que o cabeçalho e as palavras pertenciam ao mesmo item, porque o feed reaproveita um mesmo espaço para um item novo enquanto ele está sendo lido. Nenhum nome é registrado, em vez de um errado.',
     textCaptureCut: 'A página trazia os primeiros {n} caracteres; o resto ficava atrás de um controle que o gravador não pressiona.',
@@ -976,6 +980,8 @@ async function buildVerificationBlock(): Promise<VerificationBlock> {
 function authorDisplayText(r: ForensicRecord, s: (k: string) => string): string {
   if (r.authorCapture === 'withheld') return s('authorWithheld');
   const handle = r.author && r.author !== 'unknown' ? r.author : '(unknown)';
+  // An ad's account is its advertiser, so an ad the page did not name says that, as the dashboard card does.
+  if (handle === '(unknown)' && !r.authorName && isPaidPlacement(r)) return s('adAuthorNotShown');
   // Cold read finding 6: no real handle to pair the name with -- the name
   // stands alone rather than reading "Name @(unknown)".
   if (r.authorName && r.authorName !== handle) return handle === '(unknown)' ? r.authorName : `${r.authorName} @${handle.replace(/^@+/, '')}`;

@@ -193,7 +193,7 @@ export function OverviewTab({ records, onDrill, onOpenStatistics, archivesPendin
                   {isHiddenAsHarmful(r) ? `, ${t.ovAttentionHidden}` : ''}
                 </div>
                 <div className="ov-att-meta">
-                  {(r.author ?? t.ovUnknownAuthor)} · {pfLabel(r.platform)} · {hm(new Date(r.timestamp).getTime(), lang)}
+                  {(r.author && r.author.toLowerCase() !== 'unknown' ? r.author : t.ovUnknownAuthor)} · {pfLabel(r.platform)} · {hm(new Date(r.timestamp).getTime(), lang)}
                 </div>
               </div>
               <button type="button" className="ov-link" onClick={() => drillIds([r.id])}>{t.ovViewRecord}</button>
@@ -272,7 +272,8 @@ export function OverviewTab({ records, onDrill, onOpenStatistics, archivesPendin
             <button key={`${s.platform}:${s.author}`} type="button" className="ov-src-row" onClick={() => drillIds(s.recordIds)}>
               <span className="ov-src-avatar" aria-hidden="true">{s.author.slice(0, 2).toUpperCase()}</span>
               <span className="ov-src-name">{s.author}</span>
-              {(s.accountType === 'advertiser' || s.accountType === 'group') && (
+              {/* No advertiser badge: an ad never ranks here (overview-data.ts). */}
+              {s.accountType === 'group' && (
                 <span className={`ov-src-type ${s.accountType}`}>{t.ovSourceType(s.accountType)}</span>
               )}
               <span className="ov-pf-dot" style={{ background: pfColor(s.platform) }} aria-hidden="true" />
