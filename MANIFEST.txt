@@ -1,4 +1,4 @@
-source-commit a6ec8fdf953a98e35ff06f3a2ac8e9232a082a59
+source-commit 9b4984fe698667cb816872c0252eba736139ba7a
 files 1913
 
 df4aff888be9da428e9d29a7d12cc42463edbcdd6a74207f348080728aa2e874  .gitattributes
@@ -714,7 +714,7 @@ ca2c919301c07fe71f7b030306e6fbe9c9ac05fc0ddb01a7761a1578d4def236  tests/helpers/
 4a3be6861b8edd3b2d96fb37dd2e702b627665a3bdc20fae982047b7a5acf68f  tests/repo/a-corpus-probe-reads-its-published-set-where-it-lives.test.ts
 fb6d64aabbce22fd590dc82b9de0692ef479edfc5f72a887c8b483dd85e8b28a  tests/repo/a-public-test-reads-no-private-path.test.ts
 83038eb4d2249638a21954c9125c1a944c7f55fbe30ee725a269b4c331f43ada  tests/repo/architecture-layering.test.ts
-cdccaf0c97ec3ec11b5937026f3ca89d8d1a8a0dc1bb36a5cc47c65c08a31cca  tests/repo/commit-gates.test.ts
+a546029fcbb1ee1efdaaf5944d92fbbae8a761dede63bf0bd54baecc1fbd1ba5  tests/repo/commit-gates.test.ts
 658bed847016efd2a72d3f7ff969746ad920ede4ec0fcbf5da8d5f93f46453c2  tests/repo/each-package-draws-its-letter-tile.test.ts
 a76e2773d98de1a9c7cf36febee15ad3674709123c0d0ab525d385a79834d205  tests/repo/every-database-is-placed-by-the-reset.test.ts
 7ffdc3f899b6b316b398408e39f9de30e0e65f3cf84e5f78fe76f119ec0adc2e  tests/repo/every-word-on-a-surface-is-in-the-tables.test.ts

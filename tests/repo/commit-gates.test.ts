@@ -25,7 +25,11 @@ import { appendFileSync, chmodSync, mkdtempSync, mkdirSync, writeFileSync, rmSyn
 import { tmpdir } from 'node:os';
 import { delimiter, dirname, join, resolve } from 'node:path';
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+// Each case builds a temporary repository and runs a hook in it; the first one on a cold shared runner takes more than
+// the default five seconds.
+vi.setConfig({ testTimeout: 60_000 });
 
 const commitMsgHook = resolve('.githooks/commit-msg');
 const outboxGate = resolve('.githooks/outbox-gate');
