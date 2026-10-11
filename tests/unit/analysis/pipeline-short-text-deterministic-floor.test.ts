@@ -222,3 +222,42 @@ describe('short-text deterministic floors are not shadowed by the LLM-noise reje
     }
   });
 });
+
+// The word gate counted words with ASCII \w: a Cyrillic or Chinese post counted no words and never reached the reading,
+// and Romanian lost its short words with diacritics ("și", "îți"). Words now count in any alphabet, and in the scripts
+// written without spaces every two characters count as one.
+describe('the word gate counts words in every script', () => {
+  const reachesTheReading = async (text: string): Promise<boolean> => {
+    combinedMock.mockReset();
+    const result = await process(makePost(text)).catch(() => null);
+    return combinedMock.mock.calls.length > 0 && result?.detectionMode !== 'pre-llm-non-substantive';
+  };
+
+  it.each([
+    ['Romanian with diacritics', 'Îți știi și țara?'],
+    ['Cyrillic', 'Он опять врёт всем нам'],
+    ['Chinese', '这个人一直在网上撒谎骗大家'],
+  ])('a %s post of real length reaches the reading', async (_script, text) => {
+    expect(await reachesTheReading(text)).toBe(true);
+  });
+
+  it('a two-word Latin post still stops at the gate', async () => {
+    expect(await reachesTheReading('totally agreed!!')).toBe(false);
+  });
+});
+
+// The pipeline asks the cache with the parent it shows the judge.
+describe('the pipeline looks up a reply under its parent', () => {
+  it('the same reply under two different posts is two cache lookups', async () => {
+    const { sha256 } = await import('../../../src/forensics/hasher');
+    vi.mocked(sha256).mockImplementation(async (input: string) => input);
+    const lookups: string[] = [];
+    vi.mocked(processingCache.getPersistent).mockImplementation(async (key: string) => { lookups.push(key); return null; });
+    const reply = 'same here, could not agree more with every word of this';
+    for (const parentText of ['What a lovely thing to do for your neighbours.', 'People like her should be run out of town.']) {
+      await process({ ...makePost(reply), parentText } as PostContent).catch(() => null);
+    }
+    expect(lookups).toHaveLength(2);
+    expect(lookups[0]).not.toBe(lookups[1]);
+  });
+});

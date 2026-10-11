@@ -15,8 +15,9 @@ import type { FWSettings } from '../../storage/settings';
 import { isFeatureEnabled } from '../../storage/settings';
 import { startStructuralEngagementScan } from './structural-finder';
 import { startCountChipScan } from './section-model';
-import { hideElement } from './mark-hidden';
+import { hideElement, markHidden } from './mark-hidden';
 import { noteSelectorFamilySweep } from './selector-family-miss';
+import { selectorFamily } from '../../core/repairs/families';
 import { ensureStyleTag, removeStyleTag } from './style-tag';
 import { observeAddedRoots } from './added-roots';
 import { isFacebookCommentArticle } from '../platforms/facebook-comment-signal';
@@ -61,14 +62,15 @@ const COMMENT_MARK_ATTRIBUTE = 'data-fw-fb-comment';
  * only ever adds the attribute the CSS reads; nothing is hidden from here, so
  * a wrong mark is undone by removing an attribute.
  */
-function markCommentArticles(root: ParentNode = document): void {
+export function markCommentArticles(root: ParentNode = document): void {
   const articles: HTMLElement[] = [];
   if (root instanceof HTMLElement && root.matches('[role="article"]')) articles.push(root);
   root.querySelectorAll<HTMLElement>('[role="article"]').forEach(el => articles.push(el));
   for (const el of articles) {
     if (el.getAttribute(COMMENT_MARK_ATTRIBUTE) === '1') continue;
     if (!isFacebookCommentArticle(el)) continue;
-    el.setAttribute(COMMENT_MARK_ATTRIBUTE, '1');
+    // Through the door like every stamp a hide is keyed off (a count of 0: the stamp itself hides nothing).
+    markHidden(el, { marker: COMMENT_MARK_ATTRIBUTE, value: '1', reason: 'block-comment-posting:fb-comment', count: 0 });
   }
 }
 
@@ -164,7 +166,7 @@ function outsidePrivateSurfaces(): string {
 export function blockCommentInputCSS(): string {
   const gate = outsidePrivateSurfaces();
   return `
-    ${COMMENT_BLOCK_SELECTORS.map((sel) => sel + gate).join(',\n    ')} {
+    ${selectorFamily('finder.facebook.comment-block', COMMENT_BLOCK_SELECTORS).map((sel) => sel + gate).join(',\n    ')} {
       display: none !important;
     }
   `;

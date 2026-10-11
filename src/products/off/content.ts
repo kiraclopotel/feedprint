@@ -9,6 +9,7 @@
 import type { Platform } from '../../types/post';
 import { detectCurrentPlatform, isPrivateMessageSurface } from '../../content/platforms/adapter';
 import { initEngagementControl } from '../../content/engagement/controller';
+import { installDomReportListener } from '../../content/dom-report/listen';
 import { watchRecorder } from './stand-down';
 import { recorderRuns, watchRecorderRuns } from '../../content/engagement/recorder-runs';
 import { watchPrivateSurface } from './private-surface-watch';
@@ -26,6 +27,8 @@ async function main(): Promise<void> {
   // unsupported host, so the URL gate is already closed at boot.
   const platform = detectCurrentPlatform();
   if (!platform) return;
+  // The popup's "describe this page" asks here; the answer is built on the request and goes nowhere but back to the popup.
+  installDomReportListener('off');
   if (isPrivateMessageSurface()) {
     // Not the end of it: these are single page applications, so the person can
     // walk out of Messages into the feed without loading anything. The watch

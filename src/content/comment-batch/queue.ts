@@ -315,6 +315,24 @@ export function commentRecordRoomFields(roomFields: PreparedBatchRoomFields): Pi
   return { postUrl, roomAuthor, roomCaption, roomUrl };
 }
 
+/**
+ * The room fields a comment's record carries, for a comment that is recorded without waiting for its bucket to be
+ * flushed (a rule hid it at the door). The same source the flush reads: the pending bucket when there is one, else
+ * the room the page was remembered with.
+ */
+export function roomFieldsForComment(post: PostContent): PreparedBatchRoomFields {
+  const key = post.parentVideoId ?? post.id;
+  const bucket = pendingBatches.get(key) ?? newPendingBatch(post, key);
+  applyPendingRoomFallback(key, bucket);
+  return {
+    postUrl: bucket.videoUrl,
+    roomAuthor: bucket.videoAuthor,
+    roomCaption: truncateRoomCaption(bucket.caption),
+    roomUrl: bucket.videoUrl,
+    videoCaption: bucket.caption,
+  };
+}
+
 export function takePendingBatchForFlush(parentVideoId: string): PreparedFlushBatch | undefined {
   const bucket = pendingBatches.get(parentVideoId);
   if (!bucket) return undefined;

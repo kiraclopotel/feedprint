@@ -14,6 +14,9 @@
 
 import { incrementMetricsHidden } from '../../storage/settings';
 import { isInPrivateChatSubtree } from '../platforms/adapter';
+import { protectedRegionReason } from '../../core/protected-regions';
+import { hideSanityProblem } from '../../core/hide-sanity';
+import { recordFinderEvent } from '../../diagnostics/finder-ledger';
 
 export const BLOCK_REASON_ATTR = 'data-fw-block-reason';
 
@@ -114,6 +117,30 @@ function refusedForPrivacy(el: HTMLElement): boolean {
 }
 
 /**
+ * The door's second duty (11 Oct 2026, the owner's report that Off took the choices to unfollow and block out of
+ * the card that opens over an account name on Facebook). Whatever a rule decided, the door will not hide a menu, a
+ * tooltip or a list of choices, nor the controls for blocking, unfollowing, unfriending and reporting
+ * (protected-regions.ts). Refusing to mark refuses to hide, as for a private conversation.
+ *
+ * Its third duty is the size of a hide (hide-sanity.ts): an action bar that has become a wrapper holding a text box,
+ * an ad that has become the feed. A refusal for either reason is counted once per element in the finder ledger, so a
+ * rule that starts to reach too far shows as a number before anyone has to notice a missing page.
+ */
+const refusalCounted = new WeakSet<HTMLElement>();
+
+function refusedByTheDoor(el: HTMLElement, opts: MarkHiddenOptions): boolean {
+  if (refusedForPrivacy(el)) return true;
+  const feature = opts.feature ?? opts.reason.split(':')[0];
+  const why = protectedRegionReason(el) ?? hideSanityProblem(el, feature, opts.reason);
+  if (why === null) return false;
+  if (!refusalCounted.has(el)) {
+    refusalCounted.add(el);
+    recordFinderEvent(`refused.${feature}.${why}`);
+  }
+  return true;
+}
+
+/**
  * Idempotently mark an element hidden. Returns false when the element
  * already carries the marker value (nothing done, nothing counted), or when
  * the element is inside a private conversation, and true when this call
@@ -123,7 +150,7 @@ function refusedForPrivacy(el: HTMLElement): boolean {
  * for free: an unmarked element matches no rule and stays visible.
  */
 export function markHidden(el: HTMLElement, opts: MarkHiddenOptions): boolean {
-  if (refusedForPrivacy(el)) return false;
+  if (refusedByTheDoor(el, opts)) return false;
   if (el.getAttribute(opts.marker) === opts.value) return false;
   el.setAttribute(opts.marker, opts.value);
   el.setAttribute(BLOCK_REASON_ATTR, opts.reason);
@@ -147,7 +174,7 @@ export function markHidden(el: HTMLElement, opts: MarkHiddenOptions): boolean {
  * leaving the attribute, and re-applying is how the hide survives that.
  */
 export function hideElement(el: HTMLElement, opts: MarkHiddenOptions): boolean {
-  if (refusedForPrivacy(el)) return false;
+  if (refusedByTheDoor(el, opts)) return false;
   markHidden(el, opts);
   if (opts.mode === 'visibility') {
     // Keeps the layout box, which several filters need on purpose: TikTok's

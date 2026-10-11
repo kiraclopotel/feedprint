@@ -11,6 +11,8 @@
 // Cost: one sample every 30s (a property read) + cheap integer bumps from a few
 // hot paths. Persistence is debounced to one write per 5s.
 
+import { utcDayKey } from '../storage/utc-day';
+
 const STORAGE_KEY = 'fw_diagnostics';
 const MAX_SAMPLES = 120;          // ~1 hour at 30s — long enough to see a slow climb
 const SAMPLE_INTERVAL_MS = 30_000;
@@ -109,8 +111,6 @@ export interface PostInterventionAttempt {
   concurrent: boolean;
 }
 
-function today(): string { return new Date().toISOString().slice(0, 10); }
-
 /** usedJSHeapSize in MB, or null when performance.memory is unavailable. */
 function usedHeapMB(): number | null {
   if (typeof performance === 'undefined') return null;
@@ -121,9 +121,9 @@ function usedHeapMB(): number | null {
 
 function ensureSnapshot(): DiagnosticsSnapshot {
   const host = typeof location !== 'undefined' ? location.hostname : '';
-  if (!snapshot || snapshot.date !== today()) {
+  if (!snapshot || snapshot.date !== utcDayKey()) {
     snapshot = {
-      date: today(), host, samples: [], peakMB: 0, counters: {}, counterFirstSeen: {}, gauges: {},
+      date: utcDayKey(), host, samples: [], peakMB: 0, counters: {}, counterFirstSeen: {}, gauges: {},
     };
   }
   return snapshot;
@@ -426,7 +426,7 @@ async function persistNow(): Promise<void> {
     // Per-session merge. Read-modify-write races self-heal: each active tab
     // keeps its own in-memory snapshot and re-merges on its next persistence.
     const got = await chrome.storage.local.get([STORAGE_KEY]);
-    const doc = coerceMultiHost(got[STORAGE_KEY], today());
+    const doc = coerceMultiHost(got[STORAGE_KEY], utcDayKey());
     doc.hosts[DIAGNOSTIC_SESSION_ID] = snapshot;
     doc.counterSessions[DIAGNOSTIC_SESSION_ID] = {
       observedAt: Date.now(),
@@ -445,13 +445,13 @@ async function persistNow(): Promise<void> {
 
 /** Dashboard reader: worst heap session plus all per-session counter totals. */
 export async function readDiagnosticsResult(): Promise<DiagnosticsReadResult> {
-  const empty: DiagnosticsSnapshot = { date: today(), host: '', samples: [], peakMB: 0, counters: {}, gauges: {} };
+  const empty: DiagnosticsSnapshot = { date: utcDayKey(), host: '', samples: [], peakMB: 0, counters: {}, gauges: {} };
   if (typeof chrome === 'undefined' || !chrome?.storage?.local) {
     return { snapshot: empty, counterTotals: {}, counterFirstSeen: {} };
   }
   try {
     const got = await chrome.storage.local.get([STORAGE_KEY]);
-    const doc = coerceMultiHost(got[STORAGE_KEY], today());
+    const doc = coerceMultiHost(got[STORAGE_KEY], utcDayKey());
     return {
       snapshot: pickWorstClimbingSnapshot(doc.hosts) ?? empty,
       counterTotals: aggregateDiagnosticCounters(doc.counterSessions),

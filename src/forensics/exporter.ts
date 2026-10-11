@@ -32,6 +32,7 @@ import { applyRedactions } from './redaction';
 import { buildExportProfile, profileNameSlug } from './profile';
 import { sha256 } from './hasher';
 import { getAnchors } from './chain-anchor-store';
+import { escapeHtml } from './html-escape';
 import type { ChainAnchor } from '../types/chain-anchor';
 import { loadArchivesOldestFirst } from './archive-reader';
 import { readSalvagedRecords } from './salvage-store';
@@ -128,12 +129,39 @@ export function applyExportGate(
   };
 }
 
+/**
+ * A record a rule acted on and no AI read: a word or account the person listed, a fixed rule, or the rule
+ * engine named as its source. The file's first sentence says who judged, so it asks the records.
+ */
+function actedOnByRule(r: ForensicRecord): boolean {
+  const mode = r.detectionMode ?? '';
+  return r.aiSource === 'rules' || r.aiSource === 'none' || mode.startsWith('blocklist:') || mode.startsWith('block:');
+}
+
+const NOT_A_FINDING = 'It is not a legal opinion, a complete capture record, or a determination of intent by the post author.';
+
+/**
+ * The sentence that opens the CSV, the JSON and the report. It used to say an AI flagged every item, and a file
+ * whose only record a person's own blocked word had hidden said so too (11 Oct 2026, the night walk): a file
+ * handed to a school or a lawyer must not credit an AI with a judgment nobody made.
+ */
+function leadSentence(included: ForensicRecord[]): string {
+  const byRule = included.filter(actedOnByRule).length;
+  const byAi = included.length - byRule;
+  if (byRule === 0) {
+    return `AI Safety Interpretation. This report identifies retained items that FeelingWise flagged as showing manipulative framing patterns. ${NOT_A_FINDING}`;
+  }
+  const rules = 'a word or account set on this device, or a fixed rule';
+  if (byAi === 0) {
+    return `This report lists retained items that FeelingWise acted on because of a rule: ${rules}. No AI reading is among them, so none of these items is an AI judgment of manipulative framing. ${NOT_A_FINDING}`;
+  }
+  return `This report lists retained items that FeelingWise acted on. ${byAi} ${byAi === 1 ? 'was' : 'were'} flagged by an AI reading as showing manipulative framing patterns; ${byRule} ${byRule === 1 ? 'was' : 'were'} acted on because of a rule (${rules}) and carry no AI judgment. ${NOT_A_FINDING}`;
+}
+
 /** P0.3 — single-paragraph plain-English caveat embedded in every export. */
 function caveatText(filter: ExportFilterResult): string {
   const lines: string[] = [];
-  lines.push(
-    'AI Safety Interpretation. This report identifies retained items that FeelingWise flagged as showing manipulative framing patterns. It is not a legal opinion, a complete capture record, or a determination of intent by the post author.',
-  );
+  lines.push(leadSentence(filter.included));
   if (filter.totalSource > filter.included.length) {
     const parts: string[] = [];
     if (filter.excludedUnreviewed) parts.push(`${filter.excludedUnreviewed} not yet reviewed by the report author`);
@@ -194,18 +222,6 @@ function triggerDownload(blob: Blob, filename: string): void {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-}
-
-// A withheld record has no text, author or address: redaction.ts removes them on the copy
-// that leaves. Both escape helpers assumed a string, so the CSV and the PDF threw on the
-// first withheld record and the tab printed the raw error (2026-09-20). Absent is ''.
-function escapeHTML(value: string | undefined): string {
-  return (value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
 }
 
 /**
@@ -564,7 +580,7 @@ export function exportJSON(records: ForensicRecord[], filter?: ExportFilterResul
   const json = JSON.stringify(payload, null, 2);
   const blob = new Blob([json], { type: 'application/json' });
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const filename = `feelingwise-records-${timestamp}.json`;
+  const filename = `feedprint-records-${timestamp}.json`;
   triggerDownload(blob, filename);
   return { filename, bytes: blob.size };
 }
@@ -614,18 +630,23 @@ function withheldOr(r: ForensicRecord, value: string | undefined): string {
   return value === undefined && r.redacted ? CSV_WITHHELD : (value ?? '');
 }
 
+/** "provider / model: outcome" for a record the paid reading's Claude reader was asked about; '' otherwise. */
+export function paidReadingCell(r: ForensicRecord): string {
+  const c = r.decision?.claude;
+  return c ? `${c.provider} / ${c.model}: ${c.outcome}` : '';
+}
+
 export function exportCSV(records: ForensicRecord[], filter?: ExportFilterResult): DownloadNote {
-  // P0.3 — caveat as a comment row at the top. CSV doesn't have a standard
-  // header block, so we use a `# ` prefix on the first line. Most spreadsheet
-  // importers either skip it or import it as a single cell — either way the
-  // caveat is visible.
-  const caveatLine = filter ? `# ${caveatText(filter)}\n` : '';
+  // P0.3: the caveat rides in the file as a `# ` row. It sits LAST since 11 Oct 2026: first, a spreadsheet took it as
+  // row 1 and the column names as row 2. The column names are row 1 now, and the sentence is the final row, so it
+  // is still in the file a recipient opens. The JSON and the HTML report keep it at the top.
+  const caveatRow = filter ? `\n# ${caveatText(filter)}` : '';
   const targetRecords = filter ? filter.included : records;
   // A hidden and a marked item differ in no other column (their
   // neutralized_text and visual_applied are both empty), so `action` names the
   // applied outcome the dashboard chip shows (feed-action.ts). It is read from
   // fields already on the record, never a new signed field.
-  const header = 'timestamp,platform,author,post_url,techniques,severity,original_length,original_text,text_shown_as,neutralized_text,ai_model,ai_provider,detection_mode,mode_at_capture,config_mode,config_threshold,config_daily_cap,config_video_understanding,config_image_understanding,config_enabled_features,config_settings_read_failed,visual_applied,text_capture,author_capture,action';
+  const header = 'timestamp,platform,author,post_url,techniques,severity,original_length,original_text,text_shown_as,neutralized_text,ai_model,ai_provider,detection_mode,mode_at_capture,config_mode,config_threshold,config_daily_cap,config_video_understanding,config_image_understanding,config_enabled_features,config_settings_read_failed,visual_applied,text_capture,author_capture,action,paid_reading';
   const rows = targetRecords.map(r => {
     const techniques = r.techniques.map(t => t.name).join(';');
     return [
@@ -674,13 +695,17 @@ export function exportCSV(records: ForensicRecord[], filter?: ExportFilterResult
       // predates the field.
       escapeCSV(r.authorCapture ?? ''),
       escapeCSV(feedActionKeyFor(r) ?? ''),
+      // The paid reading's Claude reader, when it was asked: "provider / model: outcome". Empty means
+      // it was not asked (a free key, the switch off, or a record from before it existed); it never
+      // means the pair alone acted when Claude agreed, because then the cell is filled.
+      escapeCSV(paidReadingCell(r)),
     ].join(',');
   });
 
-  const csv = caveatLine + [header, ...rows].join('\n');
+  const csv = [header, ...rows].join('\n') + caveatRow;
   const blob = new Blob([csv], { type: 'text/csv' });
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const filename = `feelingwise-records-${timestamp}.csv`;
+  const filename = `feedprint-records-${timestamp}.csv`;
   triggerDownload(blob, filename);
   return { filename, bytes: blob.size };
 }
@@ -717,6 +742,7 @@ const PDF_STRINGS: Record<PDFLocale, Record<string, string>> = {
     integrityHash: 'Record integrity hash',
     aiProvider: 'AI provider',
     aiModel: 'AI model',
+    paidReading: 'Paid reading',
     detectionMode: 'Detection mode',
     activeMode: 'Mode at capture',
     postUrl: 'Source URL',
@@ -781,6 +807,7 @@ const PDF_STRINGS: Record<PDFLocale, Record<string, string>> = {
     integrityHash: 'Hash de integritate al registrului',
     aiProvider: 'Furnizor AI',
     aiModel: 'Model AI',
+    paidReading: 'Analiza plătită',
     detectionMode: 'Mod detecție',
     activeMode: 'Mod la capturare',
     postUrl: 'URL sursă',
@@ -845,6 +872,7 @@ const PDF_STRINGS: Record<PDFLocale, Record<string, string>> = {
     integrityHash: 'Hash de integridad del registro',
     aiProvider: 'Proveedor de IA',
     aiModel: 'Modelo de IA',
+    paidReading: 'Lectura de pago',
     detectionMode: 'Modo de detección',
     activeMode: 'Modo al capturar',
     postUrl: 'URL de origen',
@@ -909,6 +937,7 @@ const PDF_STRINGS: Record<PDFLocale, Record<string, string>> = {
     integrityHash: 'Hash de integridade do registro',
     aiProvider: 'Provedor de IA',
     aiModel: 'Modelo de IA',
+    paidReading: 'Leitura paga',
     detectionMode: 'Modo de detecção',
     activeMode: 'Modo na hora da captura',
     postUrl: 'URL de origem',
@@ -1003,7 +1032,7 @@ export async function buildEvidenceReportHTML(records: ForensicRecord[], locale:
   // included/excluded counts before reading individual records.
   const caveatHtml = filter
     ? `<div class="caveat" style="margin: 16px 0; padding: 14px 18px; border-left: 4px solid #c62828; background: #fff3e0; font-size: 13px; line-height: 1.5;">
-         <strong>Important:</strong> ${escapeHTML(caveatText(filter))}
+         <strong>Important:</strong> ${escapeHtml(caveatText(filter))}
        </div>`
     : '';
 
@@ -1016,7 +1045,7 @@ export async function buildEvidenceReportHTML(records: ForensicRecord[], locale:
   const recordsHtml = sorted.map((r, i) => {
     const ts = new Date(r.timestamp).toLocaleString(intlLocaleFor(locale));
     const techniquesHtml = r.techniques.map(t => `
-      <li><strong>${escapeHTML(t.name)}</strong> — ${s('severity')} ${t.severity.toFixed(1)}/10, ${(t.confidence * 100).toFixed(0)}% ${s('confidence')}</li>
+      <li><strong>${escapeHtml(t.name)}</strong> — ${s('severity')} ${t.severity.toFixed(1)}/10, ${(t.confidence * 100).toFixed(0)}% ${s('confidence')}</li>
     `).join('');
     // Media understanding is stated only when the record actually carries it.
     // A record written before the start gate resolved, or before the field
@@ -1035,16 +1064,16 @@ export async function buildEvidenceReportHTML(records: ForensicRecord[], locale:
     // precisely because the mode tag alone cannot prove which protections
     // were live; an export that drops them defeats that defense (Q21).
     const enabledFeaturesHtml = r.configSnapshot?.enabledFeatures?.length
-      ? `<div class="meta-row"><span class="meta-label">${s('enabledFeaturesLabel')}:</span> ${escapeHTML(r.configSnapshot.enabledFeatures.join(', '))}</div>`
+      ? `<div class="meta-row"><span class="meta-label">${s('enabledFeaturesLabel')}:</span> ${escapeHtml(r.configSnapshot.enabledFeatures.join(', '))}</div>`
       : '';
     const readFailedHtml = r.configSnapshot?.settingsReadFailed === true
-      ? `<div class="meta-row" style="color:#c62828"><strong>${escapeHTML(s('settingsReadFailedNote'))}</strong></div>`
+      ? `<div class="meta-row" style="color:#c62828"><strong>${escapeHtml(s('settingsReadFailedNote'))}</strong></div>`
       : '';
     const visualNotAppliedHtml = r.visualApplied === false
-      ? `<div class="meta-row" style="color:#c62828"><strong>${escapeHTML(s('visualNotAppliedNote'))}</strong></div>`
+      ? `<div class="meta-row" style="color:#c62828"><strong>${escapeHtml(s('visualNotAppliedNote'))}</strong></div>`
       : '';
     const configHtml = r.configSnapshot
-      ? `<div class="meta-row"><span class="meta-label">${s('configSnapshot')}:</span> mode=${escapeHTML(r.configSnapshot.mode)}, threshold=${r.configSnapshot.threshold}, dailyCap=${r.configSnapshot.dailyCap}${mediaBits.length ? ', ' + escapeHTML(mediaBits.join(', ')) : ''}</div>${enabledFeaturesHtml}${readFailedHtml}`
+      ? `<div class="meta-row"><span class="meta-label">${s('configSnapshot')}:</span> mode=${escapeHtml(r.configSnapshot.mode)}, threshold=${r.configSnapshot.threshold}, dailyCap=${r.configSnapshot.dailyCap}${mediaBits.length ? ', ' + escapeHtml(mediaBits.join(', ')) : ''}</div>${enabledFeaturesHtml}${readFailedHtml}`
       : '';
     // A rewrite is printed when the record holds one. A record with none (a hide, a mark, a video
     // skipped) prints no box: an empty "Neutralized version" reads as a rewrite that came out empty.
@@ -1057,44 +1086,45 @@ export async function buildEvidenceReportHTML(records: ForensicRecord[], locale:
     const standIn = standInKey(r);
     const rewriteHtml = r.neutralizedText
       ? `<div class="section-label">${s('neutralizedPost')}</div>
-        <div class="post-text neutralized">${escapeHTML(r.neutralizedText)}</div>`
+        <div class="post-text neutralized">${escapeHtml(r.neutralizedText)}</div>`
       : applied && !(isHiddenAd(r) && applied === 'hide')
-        ? `<div class="meta-row"><span class="meta-label">${escapeHTML(shownAsWords.feedDecisionShownAs.charAt(0).toUpperCase() + shownAsWords.feedDecisionShownAs.slice(1))}:</span> ${escapeHTML(shownAsWords[`act_${applied}`])}</div>`
+        ? `<div class="meta-row"><span class="meta-label">${escapeHtml(shownAsWords.feedDecisionShownAs.charAt(0).toUpperCase() + shownAsWords.feedDecisionShownAs.slice(1))}:</span> ${escapeHtml(shownAsWords[`act_${applied}`])}</div>`
         : '';
     return `
       <div class="record">
         <div class="record-header">
           <span class="record-index">#${i + 1}</span>
-          <span class="record-platform">${escapeHTML(r.platform)}</span>
+          <span class="record-platform">${escapeHtml(r.platform)}</span>
           <span class="record-severity" style="background:${r.overallScore >= 7 ? '#c62828' : r.overallScore >= 4 ? '#ef6c00' : '#2e7d32'}">
             ${s('severity')}: ${r.overallScore.toFixed(1)}
           </span>
         </div>
-        <div class="meta-row"><span class="meta-label">${s('timestamp')}:</span> ${escapeHTML(ts)}</div>
-        <div class="meta-row"><span class="meta-label">${s('activeMode')}:</span> ${escapeHTML(modeLabel(modeAtCapture(r), I18N[locale]))}</div>
-        <div class="meta-row"><span class="meta-label">${s('author')}:</span> ${escapeHTML(authorDisplayText(r, s))}</div>
-        ${r.authorCapture === 'withheld' ? `<div class="text-capture">${escapeHTML(s('authorWithheldWhy'))}</div>` : ''}
-        ${r.postUrl ? `<div class="meta-row"><span class="meta-label">${s('postUrl')}:</span> ${escapeHTML(r.postUrl)}</div>` : ''}
+        <div class="meta-row"><span class="meta-label">${s('timestamp')}:</span> ${escapeHtml(ts)}</div>
+        <div class="meta-row"><span class="meta-label">${s('activeMode')}:</span> ${escapeHtml(modeLabel(modeAtCapture(r), I18N[locale]))}</div>
+        <div class="meta-row"><span class="meta-label">${s('author')}:</span> ${escapeHtml(authorDisplayText(r, s))}</div>
+        ${r.authorCapture === 'withheld' ? `<div class="text-capture">${escapeHtml(s('authorWithheldWhy'))}</div>` : ''}
+        ${r.postUrl ? `<div class="meta-row"><span class="meta-label">${s('postUrl')}:</span> ${escapeHtml(r.postUrl)}</div>` : ''}
 
-        <div class="section-label">${escapeHTML(isHiddenAd(r) ? I18N[locale].feedAdHidden : s('originalPost'))}</div>
-        ${standIn === 'feedAdHidden' ? '' : `<div class="post-text original">${escapeHTML(r.redacted && r.originalText === undefined ? s('recordWithheld') : standIn ? I18N[locale][standIn] : r.originalText)}</div>`}
-        ${r.textCapture === 'cut' ? `<div class="text-capture">${escapeHTML(s('textCaptureCut').replace('{n}', String(r.originalLength)))}</div>` : ''}
-        ${r.textCapture === 'folded' ? `<div class="text-capture">${escapeHTML(s('textCaptureFolded'))}</div>` : ''}
-        ${r.textCapture === 'platform' ? `<div class="text-capture">${escapeHTML(s('textCapturePlatform'))}</div>` : ''}
+        <div class="section-label">${escapeHtml(isHiddenAd(r) ? I18N[locale].feedAdHidden : s('originalPost'))}</div>
+        ${standIn === 'feedAdHidden' ? '' : `<div class="post-text original">${escapeHtml(r.redacted && r.originalText === undefined ? s('recordWithheld') : standIn ? I18N[locale][standIn] : r.originalText)}</div>`}
+        ${r.textCapture === 'cut' ? `<div class="text-capture">${escapeHtml(s('textCaptureCut').replace('{n}', String(r.originalLength)))}</div>` : ''}
+        ${r.textCapture === 'folded' ? `<div class="text-capture">${escapeHtml(s('textCaptureFolded'))}</div>` : ''}
+        ${r.textCapture === 'platform' ? `<div class="text-capture">${escapeHtml(s('textCapturePlatform'))}</div>` : ''}
 
         ${rewriteHtml}
 
         <div class="section-label">${s('techniques')}</div>
         <ul class="techniques">${techniquesHtml}</ul>
 
-        ${r.aiProvider ? `<div class="meta-row"><span class="meta-label">${s('aiProvider')}:</span> ${escapeHTML(r.aiProvider)}${r.aiModel ? ` / ${escapeHTML(r.aiModel)}` : ''}</div>` : ''}
-        ${r.detectionMode ? `<div class="meta-row"><span class="meta-label">${s('detectionMode')}:</span> ${escapeHTML(r.detectionMode)}</div>` : ''}
+        ${r.aiProvider ? `<div class="meta-row"><span class="meta-label">${s('aiProvider')}:</span> ${escapeHtml(r.aiProvider)}${r.aiModel ? ` / ${escapeHtml(r.aiModel)}` : ''}</div>` : ''}
+        ${r.decision?.claude ? `<div class="meta-row paid-reading"><span class="meta-label">${s('paidReading')}:</span> ${escapeHtml(paidReadingCell(r))}</div>` : ''}
+        ${r.detectionMode ? `<div class="meta-row"><span class="meta-label">${s('detectionMode')}:</span> ${escapeHtml(r.detectionMode)}</div>` : ''}
         ${configHtml}${visualNotAppliedHtml}
 
-        <div class="hash-row"><span class="meta-label">${s('originalHash')}:</span> <code>${escapeHTML(r.originalHash)}</code></div>
-        <div class="hash-row"><span class="meta-label">${s('integrityHash')}:</span> <code>${escapeHTML(r.integrityHash)}</code></div>
+        <div class="hash-row"><span class="meta-label">${s('originalHash')}:</span> <code>${escapeHtml(r.originalHash)}</code></div>
+        <div class="hash-row"><span class="meta-label">${s('integrityHash')}:</span> <code>${escapeHtml(r.integrityHash)}</code></div>
         ${r.signature
-          ? `<div class="hash-row"><span class="meta-label">${s('recordSignatureLabel')}:</span> <code>${escapeHTML(r.signature)}</code></div>`
+          ? `<div class="hash-row"><span class="meta-label">${s('recordSignatureLabel')}:</span> <code>${escapeHtml(r.signature)}</code></div>`
           : ''}
       </div>
     `;
@@ -1104,7 +1134,7 @@ export async function buildEvidenceReportHTML(records: ForensicRecord[], locale:
 <html lang="${locale}">
 <head>
 <meta charset="utf-8">
-<title>${s('title')} — ${escapeHTML(generatedLocal)}</title>
+<title>${s('title')} — ${escapeHtml(generatedLocal)}</title>
 <style>
   @page { size: A4; margin: 18mm 16mm; }
   body { font-family: Georgia, "Times New Roman", serif; color: #111; line-height: 1.5; font-size: 11pt; margin: 0; }
@@ -1148,13 +1178,13 @@ export async function buildEvidenceReportHTML(records: ForensicRecord[], locale:
   </div>
 
   <h1>${s('title')}</h1>
-  <div class="meta">${s('generated')}: ${escapeHTML(generatedLocal)} <br><small>ISO-8601: ${escapeHTML(generatedIso)}</small></div>
+  <div class="meta">${s('generated')}: ${escapeHtml(generatedLocal)} <br><small>ISO-8601: ${escapeHtml(generatedIso)}</small></div>
   ${caveatHtml}
 
   <div class="summary">
     <div><strong>${s('totalRecords')}:</strong> ${records.length}</div>
-    <div><strong>${s('dateRange')}:</strong> ${escapeHTML(firstTs)} — ${escapeHTML(lastTs)}</div>
-    <div><strong>${s('platforms')}:</strong> ${platforms.map(escapeHTML).join(', ') || '—'}</div>
+    <div><strong>${s('dateRange')}:</strong> ${escapeHtml(firstTs)} — ${escapeHtml(lastTs)}</div>
+    <div><strong>${s('platforms')}:</strong> ${platforms.map(escapeHtml).join(', ') || '—'}</div>
   </div>
 
   <h2>${s('records')}</h2>
@@ -1170,10 +1200,10 @@ export async function buildEvidenceReportHTML(records: ForensicRecord[], locale:
     <p>${s('cryptoVerificationBody')}</p>
     ${verification.jwk
       ? `
-        <div class="hash-row" style="margin-top:12px"><span class="meta-label">${s('keyCreatedLabel')}:</span> <code>${escapeHTML(verification.createdAt ?? '—')}</code></div>
-        <div class="hash-row"><span class="meta-label">${s('fingerprintLabel')}:</span> <code>${escapeHTML(verification.fingerprint ?? '—')}</code></div>
+        <div class="hash-row" style="margin-top:12px"><span class="meta-label">${s('keyCreatedLabel')}:</span> <code>${escapeHtml(verification.createdAt ?? '—')}</code></div>
+        <div class="hash-row"><span class="meta-label">${s('fingerprintLabel')}:</span> <code>${escapeHtml(verification.fingerprint ?? '—')}</code></div>
         <div class="section-label" style="margin-top:10px">${s('publicKeyLabel')}</div>
-        <pre style="background:#f5f5f5;border:1px solid #ccc;padding:8px;font-family:'Courier New',monospace;font-size:9pt;white-space:pre-wrap;word-break:break-all;border-radius:3px">${escapeHTML(JSON.stringify(verification.jwk, null, 2))}</pre>
+        <pre style="background:#f5f5f5;border:1px solid #ccc;padding:8px;font-family:'Courier New',monospace;font-size:9pt;white-space:pre-wrap;word-break:break-all;border-radius:3px">${escapeHtml(JSON.stringify(verification.jwk, null, 2))}</pre>
         <div class="section-label" style="margin-top:10px">${s('verifyInstructionsTitle')}</div>
         <p style="font-size:9.5pt">${s('verifyInstructions')}</p>
       `
@@ -1203,7 +1233,7 @@ export async function buildEvidenceReportHTML(records: ForensicRecord[], locale:
     </div>
   </div>
 
-  <div class="footer">${s('generatedByFooter')} — ${escapeHTML(generatedIso)}</div>
+  <div class="footer">${s('generatedByFooter')} — ${escapeHtml(generatedIso)}</div>
 
   <script>
     // Auto-trigger print dialog so the user can pick "Save as PDF" immediately.

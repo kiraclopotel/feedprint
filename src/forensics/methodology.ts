@@ -120,6 +120,13 @@ export interface MethodologyBlock {
      * itself a defect of the same shape this comment already describes.
      */
     adultReader: string;
+    /**
+     * The paid reading's third reader (src/ai/claude-reader.ts, 11 Oct 2026): asked beside the second
+     * model on the items the first fires on, for a key that holds the reading and its own consent to
+     * this company. Its own entry, not a rewording of adultReader, because the sentences above are
+     * carried in records that predate it.
+     */
+    paidReader: string;
     roomSensor: string;
     modelProvenanceNote: string;
   };
@@ -238,6 +245,11 @@ export function buildMethodologyBlock(extensionVersion: string): MethodologyBloc
       adultReader: `${JUDGE_V1_MODEL} (DeepInfra); a second model, ${JUDGE_V1_SECOND_MODEL} ` +
         '(DeepInfra), is asked whenever the first fires, and the record is only ' +
         'acted on where both agree',
+      paidReader: 'claude-haiku-5-5 (Anthropic) is asked beside the second model on the items the first ' +
+        'fires on, only for a key that holds the paid reading and a consent naming this company; the ' +
+        'record is acted on where the first fires and either the second or Claude agrees, and each such ' +
+        'record carries, under decision.claude, who was asked and what came of it: Claude\'s reading, or ' +
+        'the reason there is none',
       roomSensor: 'openai/gpt-oss-20b (DeepInfra)',
       modelProvenanceNote:
         'These are the pins at export time. Every individual record carries the ' +

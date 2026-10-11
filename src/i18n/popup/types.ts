@@ -146,6 +146,14 @@ export interface PopupStrings {
   consentMoney: string;
   consentStart: string;
   consentNotNow: string;
+  /** consentWhy when the proxy names a second company (the paid reading's Claude reader): two companies, both named. */
+  consentWhyTwo: string;
+  /** The second company, as the proxy serves it: asked only about what the first flags; what binds it. */
+  consentToWhomClaude: (provider: string) => string;
+  /** On the key card while the Claude reading is on: near the monthly limit it stops first. */
+  claudeStopsFirst: string;
+  /** On the key card while the Claude reading is paused by a limit or a refusal; the ordinary reading goes on. */
+  claudePausedLine: string;
   // Non-free tier whose live proxy probe returned 'revoked' (401/403). The
   // key is well-formatted but the server rejected it, so AI checks are off
   // even though the pills/toggles look active. Mirrors the free-tier banner
@@ -285,7 +293,6 @@ export interface PopupStrings {
   softenSwearingDesc: string;
   /** Shown on the soften-swearing row while Child mode holds it locked. */
   softenSwearingDescChild: string;
-  softenSwearingDescImplied: string;
   reframeRewritesName: string;
   reframeRewritesDesc: string;
   /** The quiet-hours control (2026-09-15): one window for all five sites. */
@@ -337,11 +344,6 @@ export interface PopupStrings {
   modeStateCustomized: (mode: string) => string;
   modeStateReset: string;
   modeSwitchConfirmYes: string;
-  strictLangName: string;
-  strictLangDescChild: string;
-  strictLangDescOther: string;
-  strictLangAria: string;
-  strictLangAriaChild: string;
 
   // Own rules: the word / phrase / account list editor (shared by both popups)
   rulesName: string;
@@ -414,6 +416,26 @@ export interface PopupStrings {
   offReportSwitches: string;
   offReportNoSite: string;
   offReportNone: string;
+  describeTitle: string;
+  describeIntro: string;
+  describeStill: string;
+  describeMissing: string;
+  describeElse: string;
+  describeBuilding: string;
+  describeNoSite: string;
+  describePrivate: string;
+  describeReload: string;
+  describeSee: string;
+  describeSend: string;
+  describeSendNote: string;
+  describeCopy: string;
+  describeCopyNote: string;
+  describeCopied: string;
+  describeSent: string;
+  describeSlow: string;
+  describeFailed: string;
+  describeNoCalls: string;
+  describeSummary: (n: number, site: string) => string;
   receiptsReportSubject: (site: string | null) => string;
   receiptsReportVersion: string;
   receiptsReportNoSite: string;

@@ -76,7 +76,7 @@ async function readMarker(): Promise<void> {
 }
 
 /** True when the proxy's licence code is one that pauses the key. */
-export function isPausingLicenseCode(code: string | undefined): boolean {
+function isPausingLicenseCode(code: string | undefined): boolean {
   return code !== undefined && Object.prototype.hasOwnProperty.call(PAUSE_BY_CODE, code);
 }
 

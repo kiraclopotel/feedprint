@@ -48,7 +48,7 @@ describe('StatisticsTab feed balance card', () => {
       rec('m1', 'pass', { kind: 'reset-marker' } as Partial<ForensicRecord>),
       rec('c1', 'cancelled-dom-gone'),
     ]);
-    expect(html).toContain('Most of what was checked passed');
+    expect(html).toContain('50% of everything decided passed.');
     expect(html).toContain('50% passed untouched: 2 of 4 checked items.');
   });
 
@@ -58,9 +58,23 @@ describe('StatisticsTab feed balance card', () => {
     expect(html).toContain('75% passed untouched: 3 of 4 checked items.');
   });
 
+  // The headline was one fixed sentence, "Most of what was checked passed", shown over "25% passed untouched: 7 of 28"
+  // (tester, 11 Oct 2026). It now says the share, in the Overview's own words, and an empty record says it is empty.
+  it('says the share in its headline, whatever the share is', () => {
+    const html = render([rec('p1', 'pass'), rec('f1', 'flagged'), rec('f2', 'flagged'), rec('f3', 'flagged')]);
+    expect(html).toContain('25% of everything decided passed.');
+    expect(html).not.toContain('Most of what was checked passed');
+  });
+
+  it('an empty record says so in the headline, not that most of it passed', () => {
+    const html = render([]);
+    expect(html).toContain('Nothing checked yet in this record.');
+    expect(html).not.toContain('Most of what was checked passed');
+  });
+
   it('localizes the balance copy in Romanian', () => {
     const html = render([rec('p1', 'pass'), rec('f1', 'flagged')], 'ro');
-    expect(html).toContain('Cea mai mare parte din ce a fost verificat a trecut');
+    expect(html).toContain('50% din tot ce a fost decis a trecut.');
     expect(html).toContain('au trecut neatinse');
   });
 });

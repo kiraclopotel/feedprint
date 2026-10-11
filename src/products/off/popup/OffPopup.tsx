@@ -5,7 +5,7 @@
 // language. It asks nothing about who is using the browser.
 //
 // It shares the settings store, the presets, the strings, the CSS and the
-// control components with the Receipts popup; it carries none of the
+// control components with the Feedprint popup; it carries none of the
 // licence, AI, dashboard or record surfaces, because Off has none.
 
 import '../../../ui/shared/tokens.css';
@@ -26,6 +26,7 @@ import { modeSwitchRequiresPin } from '../../../ui/popup/switches';
 import { BlocklistEditor } from '../../../ui/popup/BlocklistEditor';
 import { BlockAiHashtagEditor } from '../../../ui/popup/BlockAiHashtagEditor';
 import { PickCard } from '../../../ui/popup/PickCard';
+import { DescribePage } from '../../../ui/popup/DescribePage';
 import { QuietHoursEditor } from '../../../ui/popup/QuietHoursEditor';
 import { UpdateNoticeLine, useUpdateNotice } from '../../../ui/popup/UpdateNotice';
 import { resolveUiLanguage, UI_LANGUAGES, UI_LANGUAGE_LABELS, type UiLanguage } from '../../../i18n';
@@ -76,6 +77,16 @@ export { OFF_SITES, SWITCH_REACH };
 export const switchesOnFor = (settings: FWSettings, site: Platform | null): string[] => switchesOnAt(settings, site, offSwitchIds());
 
 /** The site and kind of the page in front, read once when the popup opens; its address is not kept. */
+/** The tab in front, for the page description (the popup asks that tab's page for it). */
+async function frontTabId(): Promise<number | undefined> {
+  try {
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+    return tabs[0]?.id;
+  } catch {
+    return undefined;
+  }
+}
+
 function usePageInFront(): { site: Platform | null; kind: PageKind | null } {
   const [page, setPage] = useState<{ site: Platform | null; kind: PageKind | null }>({ site: null, kind: null });
   useEffect(() => {
@@ -318,6 +329,7 @@ export function OffBody({ settings, reload }: { settings: FWSettings; reload: ()
             target="_blank" rel="noopener noreferrer"
           >{t.offReportLink}</a>
         </p>
+        <DescribePage tabId={frontTabId} />
       </div>
 
       <Fold title={t.offGroupSwitches} count={t.offSwitchesOn(switchesOn, SWITCHES(t).length + 1)}>

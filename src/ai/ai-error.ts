@@ -3,6 +3,10 @@ export type AIFailure =
   | { kind: 'rate-limit'; retryAfterMs: number }
   | { kind: 'json-refusal' }
   | { kind: 'auth-refusal' }
+  // The relay asked this key for the reading go-ahead (403 consent_required) and the person has not given it, or the
+  // pause that follows that answer still holds. Not a licence problem and not our request being refused: it needs the
+  // person to open the popup and start the reading, so it has a kind of its own (storage/reading-pause.ts).
+  | { kind: 'consent-required' }
   | { kind: 'content-policy' }
   | { kind: 'network'; message?: string }
   | { kind: 'aborted' }

@@ -1,4 +1,4 @@
-// "Block this", in Off and in Receipts: the human in the loop of the structure map.
+// "Block this", in Off and in Feedprint: the human in the loop of the structure map.
 //
 // The popup arms the picker (a timestamp in chrome.storage.local, no new
 // permission); the visible tab's content script takes the next click. A
@@ -11,7 +11,7 @@
 // whenever it comes back, under the same guards as every other rule: never
 // the page's main column or feed, never a box holding two or more posts. A
 // box with no anchor within six levels is refused with a message, because a
-// bare div chain would match half the page. Device only. In Receipts the
+// bare div chain would match half the page. Device only. In Feedprint the
 // box is hidden on screen only: capture never reads the marker, so the
 // record keeps what the platform served.
 

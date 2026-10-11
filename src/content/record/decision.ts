@@ -213,6 +213,10 @@ export function decisionForJudge(f: JudgeDecisionFacts): DecisionBlock {
     },
     descriptor: null,
     ...(f.descriptorV1 ? { descriptorV1: f.descriptorV1 } : {}),
+    // The paid reading's Claude reader, when it was asked: the record then names both companies
+    // that read the item, not only the pair (found by the 11 Oct 2026 map: an item acted on because
+    // Haiku agreed was signed as the pair alone).
+    ...(f.judge.claude ? { claude: f.judge.claude } : {}),
     rails: [],
     household: { mode: levelOf(f.mode), reader: f.reader ?? READER_DEFAULT, topicRule: null, mask: f.mask },
     row: d.row,

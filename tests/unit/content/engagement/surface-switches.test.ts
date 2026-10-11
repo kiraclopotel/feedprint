@@ -205,14 +205,21 @@ describe('X', () => {
 
 describe('YouTube', () => {
   const tile = (href: string) => `<ytd-rich-item-renderer><a href="${href}">v</a></ytd-rich-item-renderer>`;
-  it('hides the Shorts shelf (every tile a Short) and the guide entry, never the video grid', () => {
+  it('hides the Shorts shelf (every tile a Short), the guide entry and the lone Shorts tiles of a grid, never the videos', () => {
     document.body.innerHTML = `<ytd-rich-grid-renderer>
         <ytd-rich-section-renderer id="shelf"><ytd-rich-shelf-renderer><div>${tile('/shorts/a')}${tile('/shorts/b')}${tile('/shorts/c')}</div></ytd-rich-shelf-renderer></ytd-rich-section-renderer>
         <div id="grid">${tile('/watch?v=1')}${tile('/watch?v=2')}${tile('/shorts/d')}${tile('/shorts/e')}${tile('/shorts/f')}</div>
       </ytd-rich-grid-renderer>
       <ytd-guide-entry-renderer id="guide"><a href="/shorts/">Shorts</a></ytd-guide-entry-renderer>`;
     scanSurfaces(document, rules('youtube', 'block-reels'));
-    expect(hidden().sort()).toEqual(['ytd-guide-entry-renderer#guide=youtube:shorts-nav', 'ytd-rich-section-renderer#shelf=youtube:shorts-shelf']);
+    // The shelf's own tiles go with it and are not hidden twice; the grid's three Shorts tiles are hidden one by one.
+    expect(hidden().sort()).toEqual([
+      'ytd-guide-entry-renderer#guide=youtube:shorts-nav',
+      'ytd-rich-item-renderer#?=youtube:shorts-tile',
+      'ytd-rich-item-renderer#?=youtube:shorts-tile',
+      'ytd-rich-item-renderer#?=youtube:shorts-tile',
+      'ytd-rich-section-renderer#shelf=youtube:shorts-shelf',
+    ]);
   });
 
   // The search results page as read live on 2026-09-26: Shorts in a shelf among ordinary results.
@@ -226,8 +233,46 @@ describe('YouTube', () => {
     expect(hidden()).toEqual(['grid-shelf-view-model#shelf=youtube:shorts-shelf']);
   });
 
-  it('never takes the page when single Shorts sit among ordinary results', () => {
+  // A single Short among ordinary videos (11 Oct 2026, the night walk): Off's "Block Reels and Shorts" was on and a
+  // watch page still listed four Shorts tiles, each leading to a page that says "Off blocks Shorts on this page."
+  // The shelf rule rightly refuses a box holding ordinary videos, so a Short that sits alone is hidden by its own
+  // tile: never the page, never the videos around it.
+  it('hides the tile of each single Short among ordinary results, and nothing around it', () => {
     document.body.innerHTML = results(video('v1', '/watch?v=1') + video('s1', '/shorts/aaa') + video('v2', '/watch?v=2') + video('s2', '/shorts/bbb'));
+    scanSurfaces(document, rules('youtube', 'block-reels'));
+    expect(hidden().sort()).toEqual(['ytd-video-renderer#s1=youtube:shorts-tile', 'ytd-video-renderer#s2=youtube:shorts-tile']);
+  });
+
+  // The watch page's recommendations: the new lockup tile, and the older compact tile.
+  const lockup = (id: string, href: string) => `<yt-lockup-view-model id="${id}"><a href="${href}">thumb</a><h3><a href="${href}">title</a></h3></yt-lockup-view-model>`;
+  const watchPage = (items: string) => `<ytd-app><ytd-watch-flexy><div id="secondary"><ytd-watch-next-secondary-results-renderer><div id="items">${items}</div></ytd-watch-next-secondary-results-renderer></div></ytd-watch-flexy></ytd-app>`;
+
+  it('hides a Shorts tile in a watch page\'s recommendations, in either tile layout', () => {
+    const compact = (id: string, href: string) => `<ytd-compact-video-renderer id="${id}"><a href="${href}">t</a></ytd-compact-video-renderer>`;
+    document.body.innerHTML = watchPage(lockup('v1', '/watch?v=1') + lockup('s1', '/shorts/aaa') + compact('v2', '/watch?v=2') + compact('s2', '/shorts/bbb'));
+    scanSurfaces(document, rules('youtube', 'block-reels'));
+    expect(hidden().sort()).toEqual(['yt-lockup-view-model#s1=youtube:shorts-tile', 'ytd-compact-video-renderer#s2=youtube:shorts-tile']);
+  });
+
+  it('hides the outer tile, not the inner box, when a Short sits in a lockup inside a grid item', () => {
+    const inner = `<ytm-shorts-lockup-view-model><a href="/shorts/aaa">s</a></ytm-shorts-lockup-view-model>`;
+    document.body.innerHTML = `<ytd-rich-grid-renderer><div id="grid"><ytd-rich-item-renderer id="short">${inner}</ytd-rich-item-renderer><ytd-rich-item-renderer id="video"><a href="/watch?v=1">v</a></ytd-rich-item-renderer></div></ytd-rich-grid-renderer>`;
+    scanSurfaces(document, rules('youtube', 'block-reels'));
+    expect(hidden()).toEqual(['ytd-rich-item-renderer#short=youtube:shorts-tile']);
+  });
+
+  it('leaves a tile that holds a watch link, and a Shorts link that sits in no tile', () => {
+    document.body.innerHTML = watchPage(
+      `<yt-lockup-view-model id="both"><a href="/watch?v=1">v</a><a href="/shorts/aaa">a short by the same channel</a></yt-lockup-view-model>`
+      + `<ytd-comment-view-model id="comment"><a href="/shorts/bbb">my short</a></ytd-comment-view-model>`
+      + `<p id="description">see <a href="/shorts/ccc">this</a></p>`,
+    );
+    scanSurfaces(document, rules('youtube', 'block-reels'));
+    expect(hidden()).toEqual([]);
+  });
+
+  it('leaves a tile that lists more than one Short to the shelf rule', () => {
+    document.body.innerHTML = watchPage(`<yt-lockup-view-model id="two"><a href="/shorts/aaa">a</a><a href="/shorts/bbb">b</a></yt-lockup-view-model>` + lockup('v1', '/watch?v=1'));
     scanSurfaces(document, rules('youtube', 'block-reels'));
     expect(hidden()).toEqual([]);
   });

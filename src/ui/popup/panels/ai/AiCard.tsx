@@ -103,8 +103,12 @@ export function AiCard({ settings, license, platform, rows, render, toggle, over
       <div className={['pop-card', 'ai-drawer', open ? '' : 'closed', readingAtWork ? '' : 'idle', state === null ? 'unread' : '', pressed ? 'pressed' : ''].filter(Boolean).join(' ')}>
         <button type="button" className="ai-drawer-head" aria-expanded={open} aria-controls={DRAWER_BODY_ID} onClick={flip}>
           <span className="ai-drawer-title">{t.groupAi}</span>
-          <span className="ai-drawer-sep" aria-hidden={true}>·</span>
-          <span className="ai-drawer-plan">{t.keySubActive}</span>
+          {/* The plan label is the License card's name for what the key buys; when it is the group's own name
+              (the feature is called one thing everywhere), the header says it once. */}
+          {t.keySubActive !== t.groupAi && (<>
+            <span className="ai-drawer-sep" aria-hidden={true}>·</span>
+            <span className="ai-drawer-plan">{t.keySubActive}</span>
+          </>)}
           <ChevronDown size={14} className={open ? 'ai-drawer-chev open' : 'ai-drawer-chev'} aria-hidden={true} />
         </button>
         <div id={DRAWER_BODY_ID} className="ai-drawer-body" hidden={!open}>

@@ -88,7 +88,6 @@ describe('the words table', () => {
 describe('the generated checker', () => {
   const mjs = read('verifier/verify-export.mjs');
   const browser = read('verifier/verify-export.browser.js');
-  const served = read('landing/verify-export.browser.js');
 
   it.each([['verify-export.mjs', () => mjs], ['verify-export.browser.js', () => browser]])(
     '%s carries the words and takes a language',
@@ -102,30 +101,11 @@ describe('the generated checker', () => {
     },
   );
 
-  it('serves the same browser checker the repository holds', () => {
-    // landing/ is deployed and verifier/ is published. A generator that wrote
-    // one and not the other would leave the site a version behind with nothing
-    // saying so.
-    expect(served).toBe(browser);
-  });
-
   it('falls back to English rather than printing a half-translated report', () => {
     expect(mjs).toContain("const DEFAULT_LOCALE = 'en'");
   });
 });
 
-describe('the pages that check a file', () => {
-  it('asks for a Romanian reading on the Romanian page', () => {
-    expect(read('landing/check-ro.html')).toContain("render(report, out, 'ro')");
-  });
-
-  it('leaves the English page asking for nothing, which is the default', () => {
-    expect(read('landing/check.html')).toContain('render(report, out)');
-  });
-
-  it('no longer tells a Romanian reader the report comes back in English', () => {
-    // That sentence was the honest interim answer while this was unfixed. Left
-    // in place it would now be false, which is worse than the gap it described.
-    expect(read('landing/check-ro.html')).not.toContain('este scris în engleză');
-  });
-});
+// The site's half of this check (the served copy of the browser checker equals the repository's, and the two
+// check pages ask for the reader's language) is tests/private/site/the-site-serves-the-checker.test.ts: the site
+// folder is not in the public copy of this repository (scripts/public-snapshot.mjs).

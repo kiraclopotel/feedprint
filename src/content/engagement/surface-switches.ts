@@ -103,6 +103,27 @@ function navEntryOf(a: Element): Element {
   return cur;
 }
 
+/**
+ * The tags YouTube lists one video in, in its grids, its watch page's recommendations and its search results. A
+ * closed list on purpose: a Short is hidden by its own tile or not at all, never by climbing to a box that holds
+ * other things.
+ */
+const VIDEO_TILES = [
+  'ytm-shorts-lockup-view-model-v2', 'ytm-shorts-lockup-view-model', 'yt-lockup-view-model',
+  'ytd-compact-video-renderer', 'ytd-video-renderer', 'ytd-grid-video-renderer', 'ytd-rich-item-renderer', 'ytd-reel-item-renderer',
+].join(', ');
+
+/** The whole tile a link sits in: the outermost listed tile, since a grid item wraps the lockup inside it. */
+function videoTileOf(a: Element): Element | null {
+  let tile = a.closest(VIDEO_TILES);
+  while (tile?.parentElement) {
+    const outer: Element | null = tile.parentElement.closest(VIDEO_TILES);
+    if (!outer) break;
+    tile = outer;
+  }
+  return tile;
+}
+
 /** The first element under `root`, top-most, with `min` or more children of its own content. */
 function stackUnder(root: Element, min: number): Element | null {
   const queue: Element[] = [root];
@@ -311,6 +332,25 @@ const RULES: SurfaceRule[] = [
         // the whole page.
         if (links(box, p => p === '/watch').length > 0) continue;
         out.add(box);
+      }
+      return [...out];
+    },
+  },
+  // A Short that sits alone among ordinary videos (a watch page's recommendations, a search result, a channel's
+  // list) is not a shelf, and the rule above refuses any box with a video in it. Its own tile is hidden: a tile
+  // whose links are one Short and no watch link. A Short in a comment or a description sits in no tile and stays.
+  {
+    id: 'youtube:shorts-tile', feature: 'block-reels', platform: 'youtube',
+    find(root) {
+      const out = new Set<Element>();
+      for (const a of links(root, isShort, SHORT_LINKS)) {
+        const tile = videoTileOf(a);
+        if (!tile) continue;
+        // A tile inside a shelf this switch already hid is gone with it; hiding it again would count it twice.
+        if (tile.parentElement?.closest(`[${SURFACE_HIDDEN_MARKER}]`)) continue;
+        if (links(tile, p => p === '/watch').length > 0) continue;
+        if (new Set(links(tile, isShort, SHORT_LINKS).map(pathOf)).size !== 1) continue;
+        out.add(tile);
       }
       return [...out];
     },

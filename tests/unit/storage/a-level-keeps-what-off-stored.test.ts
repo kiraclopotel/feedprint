@@ -4,7 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { adultPreset, childPreset } from '../../../src/storage/presets';
-import { OFF_ONLY_FEATURE_IDS, presetKeepingOffOnly, receiptsFeatures, withReceiptsScope } from '../../../src/storage/switch-scope';
+import { OFF_ONLY_FEATURE_IDS, presetKeepingOffOnly, receiptsFeatures, withFeedprintScope } from '../../../src/storage/switch-scope';
 import type { FWSettings } from '../../../src/storage/settings';
 
 function storedByAnOlderInstall() {
@@ -37,7 +37,7 @@ describe('a level change in Receipts', () => {
     expect(scoped['block-ads']).toEqual(stored['block-ads']);
     expect(JSON.stringify(stored)).toBe(before);
     const settings = { features: stored, pickedBlocks: [{ id: 'p' }] } as unknown as FWSettings;
-    expect(withReceiptsScope(settings).pickedBlocks).toEqual([]);
+    expect(withFeedprintScope(settings).pickedBlocks).toEqual([]);
     expect(settings.pickedBlocks).toHaveLength(1);
   });
 });

@@ -22,6 +22,7 @@ import { isContextAlive, isContextError, markContextInvalidated } from './contex
 import { getLocalWithRetry } from './local-read';
 import { TEXT_CAP_STORAGE_KEY } from './cap-markers';
 import { LICENSE_REFUSED_STORAGE_KEY, forgetLicenseRefusal } from './license-refusal';
+import { READING_PAUSED_STORAGE_KEY, forgetReadingPause } from './reading-pause';
 import { GROQ_BLENDED_RATE_PER_1M_USD } from './usage-weights';
 
 export type LicenseTier = 'free' | 'starter' | 'family' | 'extended' | 'dev';
@@ -356,8 +357,9 @@ export async function clearLicense(): Promise<void> {
 async function clearCapMarkers(): Promise<void> {
   // A key pasted again (renewed) or replaced is tried at once, not after a refusal's pause.
   forgetLicenseRefusal();
+  forgetReadingPause();
   try {
-    await chrome.storage.local.remove([TEXT_CAP_STORAGE_KEY, 'mediaMonthlyCapReached', LICENSE_REFUSED_STORAGE_KEY]);
+    await chrome.storage.local.remove([TEXT_CAP_STORAGE_KEY, 'mediaMonthlyCapReached', LICENSE_REFUSED_STORAGE_KEY, READING_PAUSED_STORAGE_KEY]);
   } catch {
     // Best-effort: the text client also compares the licence fingerprint.
   }

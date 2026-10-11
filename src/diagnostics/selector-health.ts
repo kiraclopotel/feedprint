@@ -41,6 +41,7 @@
 // is the extraction-canary's job, not this counter's.
 
 import type { ExtractionCanarySnapshot } from './extraction-canary';
+import { utcDayKey } from '../storage/utc-day';
 
 export type SelectorTier = 'primary' | 'fallback-1' | 'fallback-2' | 'fallback-3+' | 'miss';
 
@@ -64,10 +65,6 @@ const FLUSH_INTERVAL_MS = 30_000;
 
 const counters: Map<string, SelectorHealthCounter> = new Map();
 let flushScheduled = false;
-
-function todayKey(): string {
-  return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-}
 
 function ensureCounter(label: string): SelectorHealthCounter {
   let c = counters.get(label);
@@ -171,7 +168,7 @@ export async function flushNow(): Promise<void> {
   try {
     const existing = await chrome.storage.local.get([STORAGE_KEY]);
     const raw = existing[STORAGE_KEY] as SelectorHealthSnapshot | undefined;
-    const today = todayKey();
+    const today = utcDayKey();
     const snap: SelectorHealthSnapshot =
       raw && raw.date === today
         ? raw
@@ -207,15 +204,15 @@ export async function flushNow(): Promise<void> {
  */
 export async function readSelectorHealth(): Promise<SelectorHealthSnapshot> {
   if (typeof chrome === 'undefined' || !chrome?.storage?.local) {
-    return { date: todayKey(), counters: {} };
+    return { date: utcDayKey(), counters: {} };
   }
   try {
     const existing = await chrome.storage.local.get([STORAGE_KEY]);
     const raw = existing[STORAGE_KEY] as SelectorHealthSnapshot | undefined;
-    if (raw && raw.date === todayKey()) return raw;
-    return { date: todayKey(), counters: {} };
+    if (raw && raw.date === utcDayKey()) return raw;
+    return { date: utcDayKey(), counters: {} };
   } catch {
-    return { date: todayKey(), counters: {} };
+    return { date: utcDayKey(), counters: {} };
   }
 }
 

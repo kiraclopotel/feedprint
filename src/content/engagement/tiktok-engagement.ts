@@ -10,6 +10,7 @@ import type { FWSettings } from '../../storage/settings';
 import { isFeatureEnabled } from '../../storage/settings';
 import { markHidden, hideElement, unmarkHidden } from './mark-hidden';
 import { noteSelectorFamilySweep } from './selector-family-miss';
+import { selectorFamily } from '../../core/repairs/families';
 import { startCountChipScan } from './section-model';
 import { createRafBodyObserver, trailingThrottle } from '../post-path/raf-observer';
 import { TT_COMMENT_ROW_SELECTOR, findTikTokRowBodyEl } from '../platforms/tiktok-bundle';
@@ -151,7 +152,7 @@ function controlActionRail(settings: FWSettings): void {
       if (current === 'neutralized') continue;
       // count per-element metric hides (likes/views/comments etc. each).
       let countThisRail = 0;
-      for (const sel of COUNT_SELECTORS) {
+      for (const sel of selectorFamily('finder.tiktok.counts', COUNT_SELECTORS)) {
         element.querySelectorAll<HTMLElement>(sel).forEach(el => {
           // Through the door (2026-09-20). These chips were the last hide in
           // the folder with no marker, no reason stamp and no privacy check:
@@ -390,7 +391,7 @@ function resetDataAttributes(): void {
     unmarkHidden(el, 'data-fw-action-rail');
     el.style.removeProperty('display');
     el.style.removeProperty('visibility');
-    for (const sel of COUNT_SELECTORS) {
+    for (const sel of selectorFamily('finder.tiktok.counts', COUNT_SELECTORS)) {
       el.querySelectorAll<HTMLElement>(sel).forEach(count => {
         count.style.removeProperty('visibility');
       });

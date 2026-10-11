@@ -175,7 +175,7 @@ export function openDB(): Promise<IDBDatabase> {
       }
 
       // v5 → v6: durable SW-owned delivery outbox + committed/discarded
-      // receipts. Receipts make a repeated deliveryId idempotent even after
+      // receipts. Feedprint make a repeated deliveryId idempotent even after
       // its outbox row has been atomically consumed with the chain write.
       if (oldVersion < 6) {
         if (!db.objectStoreNames.contains(FORENSIC_DELIVERY_OUTBOX_STORE)) {

@@ -10,7 +10,7 @@ import type { PostContent } from '../../types/post';
 import type { ChildProtectionManager } from './child-first-protection';
 import { recordSpan } from '../../diagnostics/perf-trace';
 import { tryRecoverCommentHideAnchor } from '../post-path/dom-recycle-recovery';
-import { buildCommentEntryForRoot, hideCommentTerminal, type CommentHideNotice } from './comment-overlay';
+import { buildCommentEntryForRoot, hideCommentTerminal, swapCommentTextInPlace, type CommentHideNotice } from './comment-overlay';
 import { renderTeenMarker } from '../markers/teen-marker';
 import { createProtectionSettler } from './settle-protection';
 
@@ -85,6 +85,26 @@ export function createProtectionTerminals(deps: ProtectionTerminalDeps) {
     }
   }
 
+  /**
+   * Star a swearing comment's words in place and prove it landed (11 Oct 2026). The mask is the same swap the
+   * batch's mask uses, applied at the door when no reading follows. Returns false when the row moved, was recycled
+   * for another comment, or the page refused the text: the comment is then left exactly as served and the caller
+   * records nothing that says otherwise.
+   */
+  function applyCommentMask(post: PostContent, masked: string): boolean {
+    try {
+      const row = resolveCommentRow(post);
+      if (!row) return false;
+      const { el, entry } = row;
+      if (!prepareCurrentPostMutation(post, el)) return false;
+      swapCommentTextInPlace(entry, masked);
+      const norm = (s: string): string => s.replace(/\s+/g, ' ').trim();
+      return entry.rootEl.dataset.fwRewritten === 'true' && norm(entry.textEl.textContent ?? '') === norm(masked);
+    } catch {
+      return false;
+    }
+  }
+
   function renderCommentMarkerForCurrentClassification(
     post: PostContent,
     options: Parameters<typeof renderTeenMarker>[0],
@@ -146,6 +166,7 @@ export function createProtectionTerminals(deps: ProtectionTerminalDeps) {
     prepareCurrentPostMutation,
     resolveCommentRow,
     applyCommentHide,
+    applyCommentMask,
     renderCommentMarkerForCurrentClassification,
     mountProtection,
     protectBeforeEnqueue,

@@ -44,7 +44,7 @@ export function buildConfigSnapshot(
     // deterministic hash regardless of grid key order.
     ...(features
       ? {
-          // A switch Receipts no longer runs is never named as live, whatever the install stored.
+          // A switch Feedprint no longer runs is never named as live, whatever the install stored.
           enabledFeatures: Object.entries(features)
             .filter(([id, f]) => !!f?.enabled && receiptsRuns(id as FeatureId))
             .map(([id]) => id)

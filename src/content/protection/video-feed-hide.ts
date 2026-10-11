@@ -397,7 +397,7 @@ export function snapshotWatched(item: HTMLElement, surface: VideoFeedSurface): W
  * item (a box above it collapsed and the feed did not hold its place), scroll
  * it back to where it was. Returns true when it scrolled.
  */
-export function holdWatchedItem(before: WatchSnapshot): boolean {
+function holdWatchedItem(before: WatchSnapshot): boolean {
   const el = before.watched;
   if (!el || !el.isConnected) return false;
   // The watched card moves while the person scrolls, and that move is not the collapse's: putting the card back to its saved

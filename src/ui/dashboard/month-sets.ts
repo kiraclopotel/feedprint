@@ -176,3 +176,32 @@ export function entriesBreakdown(
   }
   return { total, loaded: sets, olderCounted, olderSorted, olderUnreadable, unaccounted: total - sets.entries - olderCounted };
 }
+
+/** The whole record's sets: the loaded months counted here, the older ones from their saved counts. */
+export interface WholeRecordSets {
+  sets: RecordSetCounts;
+  /** Entries in older months not counted yet; the sets leave them out until they are. */
+  olderPending: number;
+  /** Stored entries no line reached, because they would not open or decode. */
+  unread: number;
+}
+
+/**
+ * The Statistics tab counts the whole record, not only the months the page loaded: as the record grows its older
+ * months leave the loaded window, and a share counted on the window alone would quietly describe less and less of it.
+ */
+export function wholeRecordSets(
+  total: number,
+  loaded: readonly ForensicRecord[],
+  unloadedSummaries: readonly MonthSummary[],
+  monthSets: ReadonlyMap<string, MonthSets> = NO_SETS,
+): WholeRecordSets {
+  const b = entriesBreakdown(total, loaded, unloadedSummaries, monthSets);
+  const sets = { ...b.loaded };
+  if (b.olderSorted) addCounts(sets, b.olderSorted);
+  return {
+    sets,
+    olderPending: b.olderSorted ? 0 : b.olderCounted,
+    unread: b.olderUnreadable + Math.max(0, b.unaccounted),
+  };
+}

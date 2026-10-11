@@ -171,9 +171,11 @@ operations are acked.
 shared lock and per-author locks, a session-backed registry of inspection tabs so a dashboard tab is
 never itself protected, and a recheck ledger cleaned on restart.
 
-**The server.** FeelingWise's server at `api.feelingwise.org` carries the paid AI reading and, for
-a paid install, the time-stamp request when the authorities cannot be reached directly. Its code is
-not in this tree.
+**The server.** FeelingWise's server at `api.feelingwise.org` carries the paid AI reading, for a
+paid install the time-stamp request when the authorities cannot be reached directly, and for every
+install at Moderate or Relaxed the signed repair file (about every six hours, nothing about the
+person) and the "Describe this page" report (only on a press, structure only). Its code is not in
+this tree.
 
 **Permissions.** Every host permission in both manifests corresponds to a real fetch target. The
 `off` manifest is a strict subset of the recorder's.

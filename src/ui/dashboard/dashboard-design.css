@@ -1604,6 +1604,15 @@ details.export-other .export-grid { margin-top: 12px; }
   min-height: 24px; min-width: 24px;
 }
 .fx-withhold:hover { color: var(--fw-text); border-color: var(--fw-text); }
+/* The reason for a withhold, asked in the row (11 Oct 2026). */
+.fl-ask { margin-top: 12px; padding: 12px 0 0; border-top: 1px solid var(--fw-border); max-width: 72ch; }
+.fl-ask-label { display: block; font-size: 12px; color: var(--fw-text-secondary); line-height: 1.5; margin-bottom: 6px; }
+.fl-ask-field {
+  display: block; box-sizing: border-box; width: 100%; font: inherit; font-size: 13px; padding: 8px 10px;
+  border: 1px solid var(--fw-border); border-radius: 0; background: var(--fw-bg); color: var(--fw-text); resize: vertical;
+}
+.fl-ask-field:focus-visible { outline: 2px solid var(--fw-teal); outline-offset: 1px; }
+.fx-withhold.fl-ask-go { color: var(--fw-text); border-color: var(--fw-text); }
 
 /* ---------------------------------------------------------------- first-run welcome */
 .feed-welcome {

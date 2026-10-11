@@ -98,6 +98,19 @@ export interface AnalysisResult {
     severity: number;
     effect: string;
     intent: string;
+    /**
+     * The paid reading's Claude reader, present only when it was asked (wherever gpt-oss fired, beside
+     * Gemma; src/ai/judge-pair.ts actFires). Says who was asked and what came of it:
+     * `read` with Haiku's five fields, or the reason there is no reading, in which case the item
+     * took the pair's rule. The shape is src/ai/claude-reader.ts ClaudeStamp.
+     */
+    claude?: {
+      model: string;
+      provider: string;
+      hash: string;
+      outcome: string;
+      reading?: { charged: boolean; family: string; severity: number; effect: string; intent: string };
+    };
   };
   /**
    * DESCRIPTOR-V1's reading when the measured judge fired (src/ai/descriptor-v1.ts,

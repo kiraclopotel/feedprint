@@ -84,7 +84,7 @@ describe('the home panel', () => {
     const html = renderHome(FOUNDER, 'revoked');
     expect(html).not.toContain('class="pop-tier"');
     expect(html).not.toContain('unlimited (founder)');
-    expect(html).toContain('AI checks are off');
+    expect(html).toContain('Live Rephrase is off'); // the feature's name since 11 Oct 2026 (rename pass)
     // The honest card POP-5 added stays where it was.
     expect(html).toContain('License key not accepted');
   });
@@ -126,7 +126,7 @@ describe('the four languages', () => {
   it('says the same thing in Romanian, so the fix is not English-only', () => {
     const home = renderHome(FOUNDER, 'revoked', 'ro');
     expect(home).not.toContain('class="pop-tier"');
-    expect(home).toContain('verificările AI sunt oprite');
+    expect(home).toContain('Live Rephrase este oprit');
     expect(home).not.toContain('unlimited (founder)');
     const keys = renderKeys(FOUNDER, 'revoked', 'ro');
     expect(keys).not.toContain('Unlimited AI calls (founder)');

@@ -133,7 +133,7 @@ describe('a Receipts that goes away under the open tab', () => {
     const guard = await freshGuard();
     const runs = await import('../../../../src/content/engagement/recorder-runs');
     const filters = vi.fn();
-    runs.stopWhenReceiptsGoes(filters);
+    runs.stopWhenFeedprintGoes(filters);
     // The settings module, loaded fresh with it, keeps a listener of its own.
     const before = [...listeners];
     for (let i = 0; i < 3; i++) runs.keepRecorderStamp('facebook', settingsWith(teenPreset()), async () => settingsWith(teenPreset()), '2.5.19');
@@ -152,7 +152,7 @@ describe('a Receipts that goes away under the open tab', () => {
       vi.stubGlobal('chrome', { runtime, storage: { onChanged: { addListener: () => {}, removeListener: () => {} } } });
       const runs = await import('../../../../src/content/engagement/recorder-runs');
       const filters = vi.fn();
-      runs.stopWhenReceiptsGoes(filters);
+      runs.stopWhenFeedprintGoes(filters);
       runs.keepRecorderStamp('youtube', settingsWith(teenPreset()), async () => settingsWith(teenPreset()), '2.5.19');
       await vi.advanceTimersByTimeAsync(9000);
       expect(runs.recorderRuns(), 'still there').toEqual(new Set(['ads']));

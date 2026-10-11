@@ -19,6 +19,7 @@ import { startCountChipScan } from './section-model';
 import { hideElement } from './mark-hidden';
 import { ensureStyleTag, removeStyleTag } from './style-tag';
 import { privateChatSubtreeCss } from '../platforms/adapter';
+import { selectorFamily } from '../../core/repairs/families';
 
 const INSTAGRAM_PLATFORM = 'instagram' as const;
 
@@ -93,7 +94,7 @@ export function blockCommentInputCSS(): string {
   // on an aria-label substring alone.
   const gate = `:not(:is(${privateChatSubtreeCss()}))`;
   return `
-    ${COMMENT_BLOCK_SELECTORS.map((sel) => sel + gate).join(',\n    ')} {
+    ${selectorFamily('finder.instagram.comment-block', COMMENT_BLOCK_SELECTORS).map((sel) => sel + gate).join(',\n    ')} {
       display: none !important;
     }
   `;

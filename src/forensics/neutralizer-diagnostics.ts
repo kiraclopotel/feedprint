@@ -24,6 +24,8 @@
 // It lives under src/forensics/ only because the other telemetry-
 // adjacent modules live here.
 
+import { utcDayKey } from '../storage/utc-day';
+
 export type NeutralizerEventReason =
   | 'non-string-neutralized-text'
   | 'parse-failed'
@@ -63,21 +65,8 @@ interface NeutralizerDiagnostics {
 
 const STORAGE_KEY = 'neutralizerDiagnostics';
 
-/**
- * Uses UTC-day key so day-rollover semantics match the daily-counter
- * reset in settings.ts. Format `YYYY-MM-DD` (UTC). Existing
- * chrome.storage.local `neutralizerDiagnostics` records with the old
- * `toDateString()` value will
- * mismatch on next read and trigger an auto-reset (acceptable: counters are
- * operational, not chain-of-custody).
- */
-function todayKey(): string {
-  const d = new Date();
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
-}
-
 function emptyDiagnostics(): NeutralizerDiagnostics {
-  return { date: todayKey(), counts: {} };
+  return { date: utcDayKey(), counts: {} };
 }
 
 /**
@@ -108,7 +97,7 @@ export async function readNeutralizerDiagnostics(): Promise<NeutralizerDiagnosti
     }
 
     // Auto-reset on day flip. Mirror of the daily-reset pattern in settings.ts.
-    if (date !== todayKey()) {
+    if (date !== utcDayKey()) {
       return emptyDiagnostics();
     }
     return { date, counts };
@@ -132,7 +121,7 @@ export async function recordNeutralizerEvent(reason: NeutralizerEventReason | st
     nextCounts[reason] = (nextCounts[reason] ?? 0) + 1;
     await chrome.storage.local.set({
       [STORAGE_KEY]: {
-        date: todayKey(),
+        date: utcDayKey(),
         counts: nextCounts,
       },
     });

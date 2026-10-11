@@ -559,8 +559,8 @@ const waitingForOff = new WeakMap<HTMLElement, Set<string>>();
 /**
  * Off already hides this post by its own word rule (both products installed). The caller still records the
  * verdict; a second hide or fold here would leave a Show button that cannot bring the post back. When Off lets
- * the post go (the person took the word off Off's list, or switched Off off), Receipts' own hide is applied
- * then, or the post Receipts recorded as hidden would stand on the page. True when Off holds the post.
+ * the post go (the person took the word off Off's list, or switched Off off), Feedprint's own hide is applied
+ * then, or the post Feedprint recorded as hidden would stand on the page. True when Off holds the post.
  */
 function leftToOff(hide: string, el: HTMLElement, box: HTMLElement, applyOwn: () => void): boolean {
   const offBox = box.closest<HTMLElement>(OFF_HIDDEN) ?? el.closest<HTMLElement>(OFF_HIDDEN);

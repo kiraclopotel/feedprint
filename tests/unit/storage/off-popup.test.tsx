@@ -6,8 +6,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 
 import { OffBody, OFF_SITES, SWITCH_REACH, offSwitchIds } from '../../../src/products/off/popup/OffPopup';
 import { POPUP_STRINGS } from '../../../src/i18n/popup-strings';
@@ -17,7 +15,6 @@ import { TEXT_SCOPE_SELECTORS } from '../../../src/content/engagement/emoji-stri
 import { readSource } from '../../helpers/read-source';
 import { I18nProvider } from '../../../src/i18n/react';
 import { UI_LANGUAGES, type ResolvedUiLanguage } from '../../../src/i18n';
-import { REPO_ROOT } from '../../helpers/repo-root';
 import { adultPreset } from '../../../src/storage/presets';
 import { surfaceRulesFor } from '../../../src/content/engagement/surface-switches';
 import { YOUTUBE_FEED_FEATURES } from '../../../src/content/engagement/youtube-feeds';
@@ -425,12 +422,8 @@ describe('OffBody: the privacy link', () => {
     expect(footerLink().textContent).toBe(POPUP_STRINGS[lang].offPrivacy);
   });
 
-  it.each(['privacy.html', 'privacy-ro.html'])('%s carries the summary first, before the legal text', file => {
-    const html = readFileSync(join(REPO_ROOT, 'landing', file), 'utf8');
-    const main = html.slice(html.indexOf('<main'));
-    expect(main).toContain('id="off"');
-    // The first section of the page is the summary; numbered section 1 comes after it.
-    expect(main.indexOf('id="off"')).toBeLessThan(main.indexOf('<h2 id="1">'));
-    expect(main.indexOf('<h2')).toBe(main.indexOf('<h2 id="off-title">'));
-  });
+  // That the two pages carry the summary first is checked where the site lives, in
+  // tests/private/site/off-privacy-summary-first.test.ts: the site folder is not in the public copy
+  // of this repository (scripts/public-snapshot.mjs), and a test the copy carries reads only what
+  // the copy carries (tests/repo/a-public-test-reads-no-private-path.test.ts).
 });

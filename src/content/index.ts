@@ -32,6 +32,7 @@ export {
   _peekPendingBatchRoomForTesting,
 } from './comment-batch/queue';
 import { flushBatch as runFlushBatch, type FlushDeps } from './comment-batch/flush';
+import { ruleHitAtTheDoor, hideAtTheDoor, maskAtTheDoor } from './comment-batch/door';
 import { createResultApplier } from './post-path/result-apply';
 import { createProtectionTerminals } from './protection/protection-terminals';
 // URL helpers live in ./post-url; re-exported for the existing import-from-index tests.
@@ -99,6 +100,7 @@ import { initVideoPipeline } from './post-path/video-pipeline';
 import { initYtWatchComments } from './platforms/yt-watch-comments';
 import { initYtShorts } from './platforms/yt-shorts';
 import { initEngagementControl } from './engagement/controller';
+import { installDomReportListener } from './dom-report/listen';
 import { setBlockedRecorder } from './engagement/recorder-sink';
 import { sendHighStakesForensicLog } from './record/forensic-retry';
 import { startReadThis } from './markers/read-this';
@@ -148,6 +150,7 @@ const {
   prepareCurrentPostMutation,
   resolveCommentRow,
   applyCommentHide,
+  applyCommentMask,
   renderCommentMarkerForCurrentClassification,
   mountProtection,
   protectBeforeEnqueue,
@@ -317,6 +320,37 @@ function routeBatchedComment(
   return true;
 }
 
+/**
+ * A batched comment's way in. A rule that hides it (the household's list, a threat or a shaming order) acts here, the
+ * moment the comment is handed over: the batch behind it is not a given (the free tier's failed batch puts the video in
+ * a cooldown that drops what arrives next, a budget hold defers the flush), and 80 comments on a page showed 2 hidden
+ * by a listed word. Anything no rule hides goes on to the batch exactly as before. The Child cover goes up before the
+ * settings are read, so the raw text is never bare while the door looks.
+ */
+async function routeBatchedCommentThroughTheDoor(post: PostContent, detectedAt: number): Promise<void> {
+  const settled = shouldBypassResolvedBatchedComment(post) || sessionCommentResolutionByKey.has(sessionVerdictKey(post));
+  if (!settled) {
+    mountProtection(post, detectedAt);
+    try {
+      const settings = await getSettings();
+      const hit = ruleHitAtTheDoor(post, settings);
+      // A hide that landed is the end of it. One that did not (the row moved) is still on the record, and the comment
+      // goes on to the batch like any other, whose flush finds the record written and re-applies the hide.
+      if (hit && hideAtTheDoor(post, hit, settings, applyCommentHide)) return;
+      // No rule hides it. If it only swears and no reading will follow, the mask is a rule too: star it now.
+      if (await maskAtTheDoor(post, settings, applyCommentMask)) {
+        settleProtection(post, { record: 'verdict', reason: 'comment-masked-at-door' });
+        return;
+      }
+    } catch (error) {
+      // The rules are an addition to the batch, never a reason for a comment to go unread.
+      bumpCounter('commentDoorThrew');
+      console.warn('[FW comment door] the rule check threw; the comment goes on to the batch', error);
+    }
+  }
+  routeBatchedComment(post, () => enqueueCommentForBatch(post, flushBatch), detectedAt);
+}
+
 export { routeBatchedComment as _routeBatchedCommentForTesting };
 export { reapplyDuplicateTextVerdict as _reapplyDuplicateTextVerdictForTesting };
 export { resolveRuntimeMode as _resolveRuntimeModeForTesting };
@@ -476,17 +510,18 @@ async function init(): Promise<void> {
 
     // Engagement control: metric hiding, action rail/row suppression
     // The recorder's stamp on the page, with what it runs written first. Off
-    // reads both and leaves exactly those switches to Receipts: both products
+    // reads both and leaves exactly those switches to Feedprint: both products
     // carry the same engagement code, same style-tag ids, same markers, and
     // two copies of one module on a page undo each other's hides
     // (engagement/recorder-runs.ts, products/off/stand-down.ts).
     keepRecorderStamp(platform, settings, getSettings, chrome?.runtime?.getManifest?.()?.version ?? '1');
-    // Receipts installs the recorder's sink before the filter starts: from here on, a Reel, an ad
+    // Feedprint installs the recorder's sink before the filter starts: from here on, a Reel, an ad
     // or an AI-labelled item the filter hides is also a record. Off installs nothing, so the same
     // filter code records nothing and never reaches the recorder (PLAN-2026-09-16 item 9.2).
     setBlockedRecorder((payload) => {
       void sendHighStakesForensicLog({ type: 'BLOCKED_LOG', payload });
     });
+    installDomReportListener('feedprint');
     initEngagementControl(platform).catch((e) => console.error(e));
     // Adult mode's "read this for me": armed from the popup, answers beside
     // the item the reader points at, records the reading. Silent otherwise.
@@ -715,11 +750,7 @@ async function prepareDetectedPost(post: PostContent, detectedAt: number): Promi
   // so the bucket key is well-defined (twitter.ts stamps
   // parentVideoId = focused-tweet-id on children-of-focused only).
   if (isBatchedComment) {
-    routeBatchedComment(
-      post,
-      () => enqueueCommentForBatch(post, flushBatch),
-      firstProtectionStartedAt,
-    );
+    await routeBatchedCommentThroughTheDoor(post, firstProtectionStartedAt);
     return;
   }
 

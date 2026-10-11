@@ -308,7 +308,10 @@ function facebookCoverage(path: string, s: CoverageStrings): PageCoverage {
 // same shape of risk and are not changed here.
 function youtubeCoverage(path: string, s: CoverageStrings): PageCoverage {
   if (path.startsWith('/watch')) {
-    return cov('youtube', s.video, HIDE_ONLY, s.ytWatchGap);
+    // The video and every comment and reply a person opens are read and written into the record (yt-watch-comments.ts),
+    // so this page is covered: it said "limited" here until 11 Oct 2026. Its note (flagged comments are marked or hidden,
+    // not rewritten) stays with the page.
+    return cov('youtube', s.video, { ...HIDE_ONLY, postScan: true, comments: true }, s.ytWatchGap);
   }
   if (path.startsWith('/shorts/')) {
     return cov('youtube', s.shorts, { ...HIDE_ONLY, reelsBlockable: true }, s.ytShortsGap);

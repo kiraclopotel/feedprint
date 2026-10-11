@@ -9,6 +9,7 @@
  * See `ForensicRecord.textCapture` and docs/design/TEXT-CAPTURE-2026-09-05.md.
  */
 export type TextCapture = 'whole' | 'folded' | 'cut' | 'platform';
-// 'platform' (since 2026-09-17, PLAN-2026-09-17 item 6): the page carried no text for the item and
-// the text on the record is the caption the platform's own data sent for it, filled by
-// src/content/page-world/wire-store.ts. A reader must know it was not read off the screen.
+// 'platform' (since 2026-09-17, PLAN-2026-09-17 item 6): the page carried no text for the item, or
+// only a fragment cut at a "See more" or "Show more" control, and the text on the record is the
+// whole caption the platform's own data sent for it, filled by src/content/page-world/wire-store.ts.
+// A reader must know it was not read off the screen.

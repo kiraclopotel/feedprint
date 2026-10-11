@@ -548,7 +548,7 @@ async function runCommentPipeline(
   // comments here. isCommentRewriteEnabled returns false for youtube regardless
   // of the user toggle, so this path reports/acts as no-rewrite on YouTube.
   const rewriteComments = isCommentRewriteEnabled(settings, platform);
-  // Comment posting is Off's switch; Receipts never hides the section for it.
+  // Comment posting is Off's switch; Feedprint never hides the section for it.
   const blockCommentSection = receiptsRuns('block-comment-posting') && isFeatureEnabled(
     settings, 'block-comment-posting', platform,
   );

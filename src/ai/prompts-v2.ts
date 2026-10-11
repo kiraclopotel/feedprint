@@ -258,8 +258,7 @@ function buildAncestryBlock(ancestors: CommentNode[], labels: NameLabelMap | und
     const role = roleFor(i);
     const meta: string[] = [];
     if (a.age_relative) meta.push(a.age_relative);
-    meta.push(`${a.metrics.likes ?? 0}♥`);
-    meta.push(`${a.metrics.reply_count ?? 0}↪`);
+    meta.push(...countMarks(a.metrics));
     const text = textForPrompt(a.text, labels).slice(0, 200);
     return `L${a.depth - 1} ${role} by ${authorLine(a.author, labels)} (${meta.join(', ')}): "${text}"`;
   });
@@ -270,13 +269,41 @@ function buildAncestryBlock(ancestors: CommentNode[], labels: NameLabelMap | und
  * Per-comment compact line.
  *
  * Format per GROQ_PROMPT_ARCHITECTURE §4.1:
- *   `<idx>. by @<handle> (<age>, <likes>♥, <replies>↪, depth=<d>) [FLAGS]: "<text>"`
+ *   `<idx>. by @<handle> (<age>, <likes>♥, <replies>↪, depth=<d>) [FLAGS] [REPLY TO <n>: "<parent>"]: "<text>"`
  *
+ * Counts appear only when the page showed them, and the reply mark only when the parent comment is in the batch.
  * Flags emitted only when the corresponding boolean is true. Text truncated
  * to 280 chars (existing v2 budget; keeps N=25 comment block under ~2.5K
  * tokens per spec §8.1).
  */
-function buildCommentLine(c: CommentNode, slotIdx: number, labels: NameLabelMap | undefined): string {
+/**
+ * The likes and replies marks, only for counts the page showed. An unknown count printed as "0♥" told the model a
+ * comment nobody liked, on every YouTube comment, where the counts are not read.
+ */
+function countMarks(metrics: CommentNode['metrics']): string[] {
+  const marks: string[] = [];
+  if (typeof metrics.likes === 'number') marks.push(`${metrics.likes}♥`);
+  if (typeof metrics.reply_count === 'number') marks.push(`${metrics.reply_count}↪`);
+  return marks;
+}
+
+/**
+ * What a reply answers, when that comment is in the same batch: its number and its first 200 characters, so a reply
+ * such as "exactly, they should" is read against what it agrees with.
+ */
+function replyToMark(c: CommentNode, slotById: Map<string, { slot: number; text: string }>, labels: NameLabelMap | undefined): string {
+  if (c.depth < 2) return '';
+  const parent = slotById.get(c.parent_id);
+  if (!parent) return '';
+  return ` [REPLY TO ${parent.slot}: "${textForPrompt(parent.text, labels).slice(0, 200)}"]`;
+}
+
+function buildCommentLine(
+  c: CommentNode,
+  slotIdx: number,
+  labels: NameLabelMap | undefined,
+  slotById: Map<string, { slot: number; text: string }> = new Map(),
+): string {
   const flags: string[] = [];
   if (c.author.verified) flags.push('[VERIFIED]');
   if (c.author.is_pinned_by_creator) flags.push('[PINNED]');
@@ -305,12 +332,11 @@ function buildCommentLine(c: CommentNode, slotIdx: number, labels: NameLabelMap 
 
   const meta: string[] = [];
   if (c.age_relative) meta.push(c.age_relative);
-  meta.push(`${c.metrics.likes ?? 0}♥`);
-  meta.push(`${c.metrics.reply_count ?? 0}↪`);
+  meta.push(...countMarks(c.metrics));
   meta.push(`depth=${c.depth}`);
 
   const text = textForPrompt(c.text, labels).slice(0, 280);
-  return `${slotIdx + 1}. by ${authorLine(c.author, labels)} (${meta.join(', ')})${flagStr}: "${text}"`;
+  return `${slotIdx + 1}. by ${authorLine(c.author, labels)} (${meta.join(', ')})${flagStr}${replyToMark(c, slotById, labels)}: "${text}"`;
 }
 
 /**
@@ -629,8 +655,9 @@ export function buildBatchPromptV3(
       ? buildAncestryBlock(encounter.ancestors, names)
       : '';
 
+  const slotById = new Map(encounter.children.map((c, i) => [c.id, { slot: i + 1, text: c.text }] as const));
   const commentLines = encounter.children
-    .map((c, i) => buildCommentLine(c, i, names))
+    .map((c, i) => buildCommentLine(c, i, names, slotById))
     .join('\n');
 
   const n = encounter.children.length;

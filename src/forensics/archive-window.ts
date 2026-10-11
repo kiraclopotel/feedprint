@@ -53,7 +53,7 @@ export function monthKeysInWindow(
   return monthKeys.filter((k) => k >= start).sort();
 }
 
-export interface LoadedMonth {
+interface LoadedMonth {
   monthKey: string;
   records: ForensicRecord[];
   anchors: ChainAnchor[];

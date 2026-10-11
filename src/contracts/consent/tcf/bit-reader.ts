@@ -54,7 +54,7 @@ export function mergeSpans(spans: readonly IdSpan[]): IdSpan[] {
  * the work is bounded by the 65,535 ids a 16-bit id can name, however many overlapping ranges a string
  * repeats: 4,095 copies of 1 to 65,535 would otherwise be 268 million steps in the person's browser.
  */
-export function expandSpans(spans: readonly IdSpan[]): number[] {
+function expandSpans(spans: readonly IdSpan[]): number[] {
   const ids: number[] = [];
   for (const [start, end] of mergeSpans(spans)) for (let id = start; id <= end; id++) ids.push(id);
   return ids;

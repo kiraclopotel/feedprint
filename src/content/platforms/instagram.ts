@@ -17,6 +17,7 @@ import { extractCommentRows, type DomMasterAdapter } from './dom-master';
 import { parseCountText } from './count-text';
 import { isForeignPostUrlHost } from '../record/post-url-host';
 import { currentPageAddress } from '../record/post-url';
+import { isEmojiPicture } from '../../core/emoji-picture';
 import { bumpCounter } from '../../diagnostics/diagnostics';
 
 // Instagram surface kinds per PER_PLATFORM_V1_SPEC §5.3.
@@ -216,6 +217,36 @@ function isLeafTextNode(el: HTMLElement): boolean {
     if (child.nodeType !== Node.TEXT_NODE) return false;
   }
   return true;
+}
+
+/**
+ * True when an element holds its words itself: text, line breaks, an emoji picture, and links for a mention or a hashtag.
+ * A caption or a comment with a second line or a mention in it is one of these, and is not a leaf. It is not a wrapper:
+ * a span or a div inside it makes it one, and a link that is a comment's own timestamp (or holds a time) is the age,
+ * not words, so a row's age line does not pass for a body.
+ */
+function holdsItsOwnWords(el: HTMLElement): boolean {
+  for (const child of Array.from(el.childNodes)) {
+    if (child.nodeType === Node.TEXT_NODE) continue;
+    if (!(child instanceof HTMLElement)) return false;
+    if (child.tagName === 'BR') continue;
+    if (child.tagName === 'IMG' && isEmojiPicture(child)) continue;
+    if (child.tagName === 'A') {
+      if ((child.getAttribute('href') ?? '').includes('/c/')) return false;
+      if (child.querySelector('time, div, span, img')) return false;
+      continue;
+    }
+    return false;
+  }
+  return true;
+}
+
+/**
+ * The post's code from an address that opens one post: /p/<code>/, or /<user>/p/<code>/ (a post opened from a profile
+ * link carries the user's name first, and the readers used to look for /p/ at the very start of the path).
+ */
+function postCodeFromPath(pathname: string): string | null {
+  return pathname.match(/^\/(?:[A-Za-z0-9_.]{1,30}\/)?p\/([A-Za-z0-9_-]+)/)?.[1] ?? null;
 }
 
 /**
@@ -602,7 +633,7 @@ export class InstagramAdapter implements PlatformAdapter {
     if (
       surfaceKind === 'instagram-post' &&
       posts.length === 0 &&
-      /^\/p\/[A-Za-z0-9_-]+/.test(window.location.pathname)
+      postCodeFromPath(window.location.pathname) !== null
     ) {
       this._extractPermalinkSurface(posts, feedSource);
     }
@@ -845,9 +876,8 @@ export class InstagramAdapter implements PlatformAdapter {
     const main = document.querySelector('main');
     if (!main) return;
 
-    const urlMatch = window.location.pathname.match(/^\/p\/([A-Za-z0-9_-]+)/);
-    if (!urlMatch) return;
-    const postId = urlMatch[1];
+    const postId = postCodeFromPath(window.location.pathname);
+    if (!postId) return;
 
     // Collect comment rows by walking up from each /c/ link.
     const cLinks = Array.from(
@@ -884,15 +914,23 @@ export class InstagramAdapter implements PlatformAdapter {
     // doubling.
     let captionText = '';
     let captionEl: HTMLElement | null = null;
-    const captionCandidates = main.querySelectorAll<HTMLElement>(
-      'span[dir="auto"], h1',
-    );
+    // On the layout of a post opened by its link the caption is a span with no dir attribute, set beside the post's own
+    // time (a comment's time is inside its /c/ link; the post's is not). Such a span counts as a candidate too.
+    const sitsBesideThePostsTime = (el: HTMLElement): boolean => {
+      const time = el.parentElement?.querySelector('time');
+      return !!time && !time.closest('a[href*="/c/"]') && !isInsideRow(time as HTMLElement);
+    };
+    const captionCandidates = main.querySelectorAll<HTMLElement>('span, h1');
     for (const s of captionCandidates) {
+      if (!s.matches('span[dir="auto"], h1') && !sitsBesideThePostsTime(s)) continue;
       if (findChatOverlayAncestor(s)) continue;
       if (s.closest('button')) continue;
       if (s.closest('a')) continue;
       if (isInsideRow(s)) continue;
-      if (!isLeafTextNode(s)) continue;
+      // The sign-in wall is a dialog over the post with words of its own and no time on it; a post has a time.
+      const dialog = s.closest('[role="dialog"]');
+      if (dialog && !dialog.querySelector('time')) continue;
+      if (!holdsItsOwnWords(s)) continue;
       const t = s.textContent?.trim() ?? '';
       if (t.length < 5) continue;
       if (t === 'Pentru tine' || t === 'For you' || t === 'Urmăriri' || t === 'Following') continue;
@@ -931,16 +969,20 @@ export class InstagramAdapter implements PlatformAdapter {
 
     if (!captionAlreadyEmitted && captionEl && captionText.length >= 5) {
       let author = 'unknown';
-      const headerLinks = main.querySelectorAll<HTMLAnchorElement>('a[href^="/"]');
-      for (const link of headerLinks) {
-        if (findChatOverlayAncestor(link)) continue;
-        if (isInsideRow(link)) continue;
-        const href = link.getAttribute('href') ?? '';
-        if (!/^\/[a-zA-Z0-9_.]{1,30}\/?$/.test(href)) continue;
-        const text = link.textContent?.trim() ?? '';
-        if (text && text.length > 0 && text.length < 40) { author = text; break; }
-        const handle = href.replace(/^\/|\/$/g, '');
-        if (handle) { author = handle; break; }
+      // The author is the profile link nearest the caption: its own block first, then each block around it up to
+      // <main>. The first profile link under <main> can be a link in the sign-in wall or a suggestion.
+      for (let scope: HTMLElement | null = captionEl.parentElement; scope && author === 'unknown'; scope = scope === mainEl ? null : scope.parentElement) {
+        for (const link of scope.querySelectorAll<HTMLAnchorElement>('a[href^="/"]')) {
+          if (findChatOverlayAncestor(link)) continue;
+          if (isInsideRow(link)) continue;
+          if (link.closest('a') !== link || captionEl.contains(link)) continue;
+          const href = link.getAttribute('href') ?? '';
+          if (!/^\/[a-zA-Z0-9_.]{1,30}\/?$/.test(href)) continue;
+          const text = link.textContent?.trim() ?? '';
+          if (text && text.length > 0 && text.length < 40) { author = text; break; }
+          const handle = href.replace(/^\/|\/$/g, '');
+          if (handle) { author = handle; break; }
+        }
       }
 
       // `fellBehind`: this body was already recorded under a different id, so it
@@ -1030,7 +1072,7 @@ export class InstagramAdapter implements PlatformAdapter {
         if (s.closest('button')) continue;
         if (s.closest('a')) continue;
         if (isInNestedRow(s, row)) continue;
-        if (!isLeafTextNode(s)) continue;
+        if (!holdsItsOwnWords(s)) continue;
         const t = s.textContent?.trim() ?? '';
         if (t.length < 2) continue;
         if (/^\d+\s+(likes?|aprecier|j'aime|me gusta)/i.test(t)) continue;
@@ -1335,7 +1377,7 @@ export class InstagramAdapter implements PlatformAdapter {
     // comment shape walk normally — they pass the :scope > li gate.
     if (
       typeof window !== 'undefined'
-      && /^\/p\/[A-Za-z0-9_-]+/.test(window.location?.pathname ?? '')
+      && postCodeFromPath(window.location?.pathname ?? '') !== null
       && ul.querySelector(':scope > li') === null
     ) {
       return;

@@ -1,9 +1,9 @@
-// Which switches Receipts runs.
+// Which switches Feedprint runs.
 //
-// Receipts is the recorder: it runs the ads, the language, the own rules, the reframe markers and the
+// Feedprint is the recorder: it runs the ads, the language, the own rules, the reframe markers and the
 // AI reading. The switches that take parts of a page away, the break and quiet hours, Block this, the
-// hashtag and AI-label hide, comment posting and emoji belong to Off, which runs them beside Receipts
-// (content/engagement/recorder-runs.ts). Receipts never shows or runs them, but it never rewrites what
+// hashtag and AI-label hide, comment posting and emoji belong to Off, which runs them beside Feedprint
+// (content/engagement/recorder-runs.ts). Feedprint never shows or runs them, but it never rewrites what
 // an install stored for them either: an "on" stays in storage unread, the picks stay readable, and the
 // record's categories for Reels and AI content keep printing old records.
 
@@ -24,10 +24,10 @@ export function receiptsRuns(id: FeatureId): boolean {
 }
 
 /**
- * The settings as Receipts acts on them: every Off-only switch reads off with no value (so a quiet-hours
+ * The settings as Feedprint acts on them: every Off-only switch reads off with no value (so a quiet-hours
  * schedule has nothing to run on) and no pick is hidden. A copy; the stored object is untouched.
  */
-export function withReceiptsScope(settings: FWSettings): FWSettings {
+export function withFeedprintScope(settings: FWSettings): FWSettings {
   return { ...settings, features: receiptsFeatures(settings.features), pickedBlocks: [] };
 }
 
@@ -39,7 +39,7 @@ export function storedOffSwitchOn(features: FeatureToggles | undefined): boolean
   });
 }
 
-/** A preset grid for Receipts to save: its own switches from the preset, Off's exactly as stored. */
+/** A preset grid for Feedprint to save: its own switches from the preset, Off's exactly as stored. */
 export function presetKeepingOffOnly(preset: FeatureToggles, stored: FeatureToggles | undefined): FeatureToggles {
   // An Off switch with nothing stored stays unwritten, so a level never stores the preset's value for it.
   const grid: Partial<FeatureToggles> = { ...preset };

@@ -1,7 +1,8 @@
 // Each package's toolbar and extensions-page icon is its letter tile: Feedprint's fp, Off's off. Both manifests name
 // the same four paths, and the build fills them from assets/icons for Feedprint and assets/icons-off for Off, so this
-// holds the manifests to those paths, the build to that choice, and each icon file to its size and to the tile that
-// docs/design/logos/icons/export-icons.mjs exports.
+// holds the manifests to those paths, the build to that choice, and each icon file to its size. That each file is
+// byte for byte the tile the design folder exports is checked in tests/private/design/icons-match-the-design-exports.test.ts:
+// the design folder is not in the public copy of this repository (scripts/public-snapshot.mjs).
 
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
@@ -31,10 +32,9 @@ describe('each package draws its letter tile', () => {
 
   for (const [folder, tile] of [['icons', 'feedprint'], ['icons-off', 'off']] as const) {
     for (const size of SIZES) {
-      it(`assets/${folder}/icon-${size}.png is ${size} x ${size} and is the ${tile} tile`, () => {
+      it(`assets/${folder}/icon-${size}.png is ${size} x ${size} (the ${tile} tile)`, () => {
         const icon = readFileSync(repoPath('assets', folder, `icon-${size}.png`));
         expect(pngSize(icon)).toEqual([size, size]);
-        expect(icon.equals(readFileSync(repoPath('docs', 'design', 'logos', 'icons', tile, `icon-${size}.png`)))).toBe(true);
       });
     }
   }

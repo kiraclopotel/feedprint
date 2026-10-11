@@ -69,7 +69,7 @@ export const RO: DashboardStrings = {
   tabStatistics: 'Statistici',
   tabRecord: 'Registru',
   tabFeedLog: 'Jurnalul fluxului',
-  feedLogSub: 'Această filă afișează, începând cu cele mai noi, elementele din fluxul tău pe care le-a văzut Feedprint, și ce a făcut cu fiecare. Deschide un rând pentru detalii.',
+  feedLogSub: 'Jurnalul fluxului listează elementele înregistrate, cele mai noi primele, fiecare rând arată ce a făcut Feedprint cu acel element. Deschide un rând pentru detalii.',
   feedLogEmpty: 'Nimic din fluxul tău nu a fost văzut în această fereastră.',
   feedLogPointer: 'Elementele din fluxul tău, și ce a făcut Feedprint cu fiecare, sunt acum în fila Jurnalul fluxului. Registrul păstrează sigiliul și verificările înregistrărilor.',
   feedLogColAction: 'Ce a făcut Feedprint',
@@ -767,7 +767,6 @@ export const RO: DashboardStrings = {
   drillActiveLabel: 'Filtrat după',
   drillCount: (n) => roPlural(n, 'înregistrare', 'înregistrări'),
 
-  statsBalanceTitle: 'Cea mai mare parte din ce a fost verificat a trecut',
   statsBalanceSub: 'Proporția din tot ce a verificat Feedprint care a trecut neatins. Ca cifrele de mai jos (marcate și blocate) să se citească în contextul întregului, nu singure.',
   statsBalanceLine: (passedPct, passed, decided) => `${roNum(passedPct)}% au trecut neatinse: ${passed.toLocaleString('ro-RO')} din ${decided.toLocaleString('ro-RO')} ${roPluralWord(decided, 'element verificat', 'elemente verificate')}.`,
   statsBalancePassed: 'trecute',
@@ -1190,6 +1189,9 @@ export const RO: DashboardStrings = {
   opsCardTextCapAction: (period) => period === 'monthly'
     ? 'Nu este nevoie de nimic. Se resetează la schimbarea lunii (UTC).'
     : 'Nu este nevoie de nimic. Se resetează la miezul nopții (UTC).',
+  opsCardReadingPausedTitle: 'Citirea cu AI este oprită: așteaptă acordul tău',
+  opsCardReadingPausedMeaning: 'Serviciul care îți citește fluxul cere fiecărei persoane să pornească citirea o singură dată, iar acest lucru nu s-a făcut încă pe acest dispozitiv. Până atunci, postările și comentariile rămân așa cum au fost scrise; protecțiile de pe pagină care nu au nevoie de citire continuă să funcționeze.',
+  opsCardReadingPausedAction: 'Deschide fereastra Feedprint și apasă „Începe Live Rephrase acum”. Citirea reia imediat. Pictograma arată un „!” roșu până atunci.',
   opsTechDetails: 'Detalii tehnice (pentru asistență)',
 
   // Fila Prezentare generală
@@ -1387,7 +1389,7 @@ export const RO: DashboardStrings = {
   recordLimitsTitle: 'Ce poate și ce nu poate spune această evidență',
   recordLimit1: 'Evidența listează ce a văzut Feedprint pe acest ecran. Un element care lipsește aici poate să fi apărut în altă parte, pe alt dispozitiv sau pe o suprafață pe care instrumentul nu o acoperă.',
   recordLimit2: 'Verificarea confirmă că intrările nu au fost modificate după captare. Ea nu autentifică însuși conținutul platformei și nu poate recupera ceva ce instrumentul nu a văzut niciodată.',
-  recordLimit3: 'Severitatea și tehnicile sunt citirea filtrului încorporat la momentul captării, sau a AI-ului acolo unde o cheie de licență a pornit analiza cu AI; transcrierile video vin doar de la AI. Oricare dintre ele poate greși; textul captat este stocat cuvânt cu cuvânt. Semnalările le confirmi sau le contești în flux.',
+  recordLimit3: 'Severitatea și tehnicile sunt citirea filtrului încorporat la momentul captării, sau a Live Rephrase acolo unde o cheie de licență a pornit Live Rephrase; transcrierile video vin doar de la Live Rephrase. Oricare dintre ele poate greși; textul captat este stocat cuvânt cu cuvânt. Semnalările le confirmi sau le contești în flux.',
   recordLimit4: 'Intrările de dinainte să existe semnarea rămân lizibile, dar sunt marcate ca neverificate, în loc să fie acceptate în tăcere.',
 
   railHead: 'Restrânge registrul',

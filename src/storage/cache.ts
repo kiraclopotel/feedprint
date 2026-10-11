@@ -1,5 +1,6 @@
 // FeelingWise - Processing cache
-// LRU cache keyed by SHA-256 of `${platform}|${mode}|${locale}|${post.text}`.
+// LRU cache keyed by SHA-256 of `${platform}|${mode}|${locale}|${outputLanguage}|${post.text}`, plus the parent's
+// text for a reply (storage/cache-key.ts).
 // The platform prefix isolates per-platform variance — the same caption
 // reposted across X / TikTok / YouTube no longer shares a verdict, since
 // DOM-context, comment-environment, and audience differ. The mode prefix
@@ -22,6 +23,7 @@
 //     least-recently-touched after get() refreshes it. Map iteration is
 //     insertion-order in JS, so this is a correct LRU eviction policy.
 
+import { getBuildId } from '../core/build-id';
 import { AnalysisResult } from '../types/analysis';
 
 interface CacheEntry {
@@ -81,11 +83,14 @@ interface L3Entry extends CacheEntry {
 }
 
 function cacheVersion(): string {
+  let version = 'dev';
   try {
-    return chrome.runtime.getManifest().version;
-  } catch {
-    return 'dev';
-  }
+    version = chrome.runtime.getManifest().version;
+  } catch { /* no manifest here: tests and harnesses */ }
+  // The build id is part of it: the manifest version is the same on every rebuild of one release, and a verdict must
+  // not outlive the build that judged it (a check added to the rewrite, a prompt changed). '' in a build with no id.
+  const build = getBuildId();
+  return build ? `${version}+${build}` : version;
 }
 
 class ProcessingCache {
@@ -119,24 +124,27 @@ class ProcessingCache {
     const l1 = this.get(textHash);
     if (l1) return l1;
 
-    if (typeof chrome === 'undefined' || !chrome.storage?.session) return null;
-    try {
-      const key = SESSION_PREFIX + textHash;
-      const result = await chrome.storage.session.get(key);
-      const entry = (result as Record<string, CacheEntry | undefined>)[key];
-      if (entry) {
-        if (Date.now() - entry.timestamp > MAX_AGE_MS) {
-          await chrome.storage.session.remove(key);
-          return this.getL3(textHash);
+    // L2 is `chrome.storage.session`, which a content script cannot reach unless the worker grants it (it does not):
+    // there the area is absent, or refuses. L3 is `chrome.storage.local`, which a content script does reach, and it must
+    // still be asked. Until 11 Oct 2026 an absent or refusing L2 ended the lookup, so L3 was written and never read, and
+    // every post judged once was judged again after each page reload (the Tester's full test: 34 calls for 24 posts).
+    if (typeof chrome !== 'undefined' && chrome.storage?.session) {
+      try {
+        const key = SESSION_PREFIX + textHash;
+        const result = await chrome.storage.session.get(key);
+        const entry = (result as Record<string, CacheEntry | undefined>)[key];
+        if (entry) {
+          if (Date.now() - entry.timestamp > MAX_AGE_MS) {
+            await chrome.storage.session.remove(key);
+          } else {
+            // Hydrate L1.
+            this.cache.set(textHash, entry);
+            return entry;
+          }
         }
-        // Hydrate L1.
-        this.cache.set(textHash, entry);
-        return entry;
-      }
-      return this.getL3(textHash);
-    } catch {
-      return null;
+      } catch { /* L2 is not reachable from here: L3 still holds the verdict */ }
     }
+    return this.getL3(textHash);
   }
 
   /**

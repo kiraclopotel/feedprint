@@ -11,10 +11,10 @@ import { MARKER_STRINGS } from '../../i18n/marker-strings';
 import type { ResolvedUiLanguage } from '../../i18n';
 import { markContextInvalidated, onContextInvalidated } from '../../storage/context-guard';
 
-export const UPDATE_NOTICE_ATTRIBUTE = 'data-fw-update-notice';
+const UPDATE_NOTICE_ATTRIBUTE = 'data-fw-update-notice';
 
 /** Show the line once per document; a second call leaves the first in place. */
-export function showUpdateNotice(doc: Document, lang: ResolvedUiLanguage): HTMLElement | null {
+function showUpdateNotice(doc: Document, lang: ResolvedUiLanguage): HTMLElement | null {
   const existing = doc.querySelector<HTMLElement>(`[${UPDATE_NOTICE_ATTRIBUTE}]`);
   if (existing) return existing;
   const parent = doc.body ?? doc.documentElement;

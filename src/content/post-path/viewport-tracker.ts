@@ -351,6 +351,23 @@ function isCurrentlyInViewport(el: HTMLElement): boolean {
   return rect.bottom > 0 && rect.top < winH && rect.right > 0 && rect.left < winW;
 }
 
+/**
+ * Readers that keep their own record of what they have read (the YouTube watch reader has a stamp and a list of keys of
+ * its own, beside the two stamps cleared below) are told when a comment is given back for re-extraction, so they forget
+ * it too. Without this the request cleared the generic stamps only, and the YouTube reader skipped the comment as seen
+ * for the rest of the page (11 Oct 2026).
+ */
+const givenBackHooks = new Set<(post: PostContent) => void>();
+export function onCommentGivenBack(hook: (post: PostContent) => void): () => void {
+  givenBackHooks.add(hook);
+  return () => { givenBackHooks.delete(hook); };
+}
+function tellReadersGivenBack(post: PostContent): void {
+  for (const hook of givenBackHooks) {
+    try { hook(post); } catch { /* a reader's own bookkeeping never stops the others */ }
+  }
+}
+
 function unmarkExtractedComment(post: PostContent): void {
   const el = post.domRef?.deref();
   if (!el) return;
@@ -368,6 +385,7 @@ function unmarkExtractedComment(post: PostContent): void {
   // reconciler — neither is present in these realms.
   if (typeof IntersectionObserver === 'undefined') {
     clearStampsAndViewedState(el, shell);
+    tellReadersGivenBack(post);
     return;
   }
 
@@ -384,6 +402,7 @@ function unmarkExtractedComment(post: PostContent): void {
         if (entry.isIntersecting) {
           window.clearTimeout(ttl);
           clearStampsAndViewedState(el, shell);
+          tellReadersGivenBack(post);
           io.disconnect();
           awaitingViewportElements.delete(el);
           return;

@@ -236,7 +236,10 @@ describe('wiring (source lock)', () => {
     // The rows and their withhold button moved from the Record tab to the Feed log on 10 Oct 2026.
     const tab = read('src/ui/dashboard/components/FeedLogTab.tsx');
     expect(tab).toContain('{onWithhold && !r.redacted && !isMarker(r) && (');
-    expect(tab).toContain('window.prompt(t.withholdPrompt');
+    // The reason is asked in the row since 11 Oct 2026, not in window.prompt
+    // (tests/unit/ui/dashboard/components/the-withhold-reason-is-asked-in-the-page.test.tsx).
+    expect(tab).toContain('{t.withholdPrompt}</label>');
+    expect(tab).not.toContain('window.prompt');
     expect(tab).toContain('r.redacted ? t.withheldShort :');
     for (const [locale, s] of Object.entries(DASHBOARD_STRINGS)) {
       for (const k of ['withholdBtn', 'withholdPrompt', 'withholdDone', 'withholdFailed', 'withheldNote', 'withheldShort'] as const) {

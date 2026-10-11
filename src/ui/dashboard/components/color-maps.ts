@@ -97,6 +97,7 @@ export const BLOCKED_CATEGORY_LABELS_RO: Record<string, string> = {
   'Platform breaks':   'Pauze de platformă',
   'Ads':               'Reclame',
   'Other blocks':      'Alte blocări',
+  'Your own list':     'Lista ta',
   'Hidden':            'Ascuns',
 };
 
@@ -107,6 +108,7 @@ export const BLOCKED_CATEGORY_LABELS_ES: Record<string, string> = {
   'Platform breaks':   'Pausas de plataforma',
   'Ads':               'Anuncios',
   'Other blocks':      'Otros bloqueos',
+  'Your own list':     'Tu propia lista',
   'Hidden':            'Oculto',
 };
 
@@ -117,6 +119,7 @@ export const BLOCKED_CATEGORY_LABELS_PT_BR: Record<string, string> = {
   'Platform breaks':   'Pausas de plataforma',
   'Ads':               'Anúncios',
   'Other blocks':      'Outros bloqueios',
+  'Your own list':     'Sua própria lista',
   'Hidden':            'Oculto',
 };
 

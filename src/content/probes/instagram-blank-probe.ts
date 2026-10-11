@@ -17,7 +17,7 @@ import { isFeatureEnabled } from '../../storage/feature-flags';
 import { getSettings } from '../../storage/settings';
 import { bumpCounter } from '../../diagnostics/diagnostics';
 
-export interface ProbeMarker { on: 'self' | 'ancestor' | 'child'; name: string; value?: string }
+interface ProbeMarker { on: 'self' | 'ancestor' | 'child'; name: string; value?: string }
 
 export interface BlankPost {
   reason: 'visibility' | 'display' | 'ancestor-visibility' | 'ancestor-display' | 'child-display' | 'zero-height' | 'shield-ancestor';
@@ -95,7 +95,7 @@ export function describeBlankPosts(root: ParentNode, inView: (el: Element) => bo
 }
 
 /** In the viewport by layout; used by the live probe, while tests pass their own. */
-export function inViewport(el: Element): boolean {
+function inViewport(el: Element): boolean {
   const r = el.getBoundingClientRect();
   return r.bottom > 0 && r.top < (typeof window !== 'undefined' ? window.innerHeight : 0);
 }

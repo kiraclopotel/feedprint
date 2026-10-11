@@ -7,7 +7,7 @@
 // "Ad" post with a large picture, in the first live test) stayed. This
 // module is the DOM-tier rule for every platform in Off. In the recorder it
 // runs only for the ad slots a platform's rule names as beyond the
-// pipeline's reach (`receipts`; YouTube's search and side slots, 2026-10-09),
+// pipeline's reach (`feedprint`; YouTube's search and side slots, 2026-10-09),
 // and every hide there writes its record, so no ad is hidden without one.
 //
 // Reliability posture, same as the other ad modules: the worst case is a
@@ -70,11 +70,11 @@ interface AdRule {
    */
   alwaysAdHost?: { slot: string; host: string }[];
   /**
-   * Receipts: the rule hides and records the `alwaysAd` slots itself, except inside `leftToPipeline`, which the
-   * recorder's pipeline hides and records. Absent: the rule stands down in Receipts, where the pipeline hides and
+   * Feedprint: the rule hides and records the `alwaysAd` slots itself, except inside `leftToPipeline`, which the
+   * recorder's pipeline hides and records. Absent: the rule stands down in Feedprint, where the pipeline hides and
    * records the platform's feed ads.
    */
-  receipts?: { leftToPipeline: string };
+  feedprint?: { leftToPipeline: string };
   /**
    * False where the adapter's detector is the whole rule: X's label is a
    * bare "Ad" leaf that organic posts can also carry inside a card, and the
@@ -150,11 +150,11 @@ const RULES: Record<Platform, AdRule> = {
       { slot: 'ytd-ad-slot-renderer', host: 'ytd-reel-video-renderer' },
     ],
     hideTarget: 'ytd-rich-item-renderer',
-    // Receipts' pipeline knows YouTube's ad shapes on home tiles only
+    // Feedprint's pipeline knows YouTube's ad shapes on home tiles only
     // (injector.ts AD_CONTAINER_SELECTORS); the search page's slots and the
-    // right column are this rule's in Receipts too (tester 2026-10-09: 8 ad
+    // right column are this rule's in Feedprint too (tester 2026-10-09: 8 ad
     // slots on search, 0 hidden, at every level).
-    receipts: { leftToPipeline: 'ytd-rich-item-renderer' },
+    feedprint: { leftToPipeline: 'ytd-rich-item-renderer' },
     genericLeaf: true,
     hideMode: 'display',
   },
@@ -193,7 +193,7 @@ function hasAdLabelLeaf(container: Element, rule: AdRule): boolean {
  */
 export function namedAdSlots(platform: Platform, product: 'off' | 'feedprint'): string {
   const rule = RULES[platform];
-  if (product === 'feedprint' && !rule.receipts) return '';
+  if (product === 'feedprint' && !rule.feedprint) return '';
   return rule.alwaysAd ?? '';
 }
 
@@ -262,12 +262,12 @@ function hideAd(container: HTMLElement, rule: AdRule, lang: ResolvedUiLanguage, 
   return true;
 }
 
-/** Receipts' side of a scan: the record each hide writes. */
+/** Feedprint's side of a scan: the record each hide writes. */
 interface FeedAdRecording {
   mode: FWSettings['mode'];
 }
 
-/** The marker Receipts' pipeline stamps on an ad it hid (and recorded) itself. */
+/** The marker Feedprint's pipeline stamps on an ad it hid (and recorded) itself. */
 const PIPELINE_AD_HIDDEN = '[data-fw-ad-hidden]';
 
 /**
@@ -532,7 +532,7 @@ function tendHiddenHosts(root: ParentNode, rule: AdRule, lang: ResolvedUiLanguag
 }
 
 /**
- * Judge every container under `root` (and `root` itself, and the container above it). With `record` (Receipts),
+ * Judge every container under `root` (and `root` itself, and the container above it). With `record` (Feedprint),
  * only the rule's `alwaysAd` slots outside the pipeline's reach are judged, and each hide is also a record.
  */
 export function scanFeedAds(
@@ -543,13 +543,13 @@ export function scanFeedAds(
   const candidates = new Set<HTMLElement>();
   if (record) {
     const named = namedAdSlots(platform, 'feedprint');
-    if (!named || !rule.receipts) return 0;
+    if (!named || !rule.feedprint) return 0;
     if (root instanceof HTMLElement) {
       const above = root.closest<HTMLElement>(named);
       if (above) candidates.add(above);
     }
     root.querySelectorAll<HTMLElement>(named).forEach((c) => candidates.add(c));
-    const left = rule.receipts.leftToPipeline;
+    const left = rule.feedprint.leftToPipeline;
     for (const c of candidates) {
       if (c.closest(left) || c.closest(PIPELINE_AD_HIDDEN)) candidates.delete(c);
     }
@@ -729,14 +729,14 @@ function recordPlayerAd(words: string, platform: Platform, record: FeedAdRecordi
 }
 
 /**
- * Start the feed ad hider. In Receipts it runs only where the rule names the
- * ad slots the pipeline does not reach (`receipts`), and each hide there is a
- * record; elsewhere in Receipts the pipeline hides and records feed ads. No-op
+ * Start the feed ad hider. In Feedprint it runs only where the rule names the
+ * ad slots the pipeline does not reach (`feedprint`), and each hide there is a
+ * record; elsewhere in Feedprint the pipeline hides and records feed ads. No-op
  * when block-ads is off for the platform.
  */
 export function startFeedAdBlocker(platform: Platform, settings: FWSettings): () => void {
   const record: FeedAdRecording | undefined = isOffProduct() ? undefined : { mode: settings.mode };
-  if (record && !RULES[platform].receipts) return () => {};
+  if (record && !RULES[platform].feedprint) return () => {};
   if (!isFeatureEnabled(settings, 'block-ads', platform)) return () => {};
 
   const lang = resolveUiLanguage(settings.uiLanguage);

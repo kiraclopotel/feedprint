@@ -45,10 +45,11 @@ const BELOW: Record<Lang, string> = {
 describe.each(UI_LANGUAGES)('%s', (lang) => {
   const t = POPUP_STRINGS[lang];
 
-  it('P3-4: the Strict language note names the switch it says is locked', () => {
-    expect(t.strictLangDescChild).toContain(t.softenSwearingName);
-    expect(t.strictLangDescChild).not.toMatch(SWITCH_BELOW[lang]);
-    expect(t.strictLangDescChild).not.toMatch(/—/);
+  // P3-4's note left with its switch on 11 Oct 2026: one switch for swearing (one-switch-for-swearing.test.tsx).
+  it('P3-4: the Strict language note is gone with its switch, and the mask\'s own note points at nothing below', () => {
+    expect((t as unknown as Record<string, unknown>).strictLangDescChild).toBeUndefined();
+    expect(t.softenSwearingDescChild).not.toMatch(SWITCH_BELOW[lang]);
+    expect(t.softenSwearingDescChild).not.toMatch(/—/);
   });
 
   // A4's level row line ("Change any switch below ...") left Settings on 8 Oct 2026, so it has nothing to point at.

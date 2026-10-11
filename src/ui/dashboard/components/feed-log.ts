@@ -73,6 +73,9 @@ export function feedWhy(r: ForensicRecord, action: FeedAction = feedAction(r)): 
   const top = worstTechnique(r);
   if (top) return { kind: 'technique', id: top.name };
   if (action !== 'hidden') return null;
+  // The household's own list (a word, a phrase or an account the person chose) writes `blocklist:<kind>:<rule>`, not
+  // `block:`; it is a reason all the same, and the row says so.
+  if (/^(?:late-after-rotation:)?blocklist:/.test(r.detectionMode ?? '')) return { kind: 'blocked', category: 'Your own list' };
   // A hidden row never has an empty why: the rule's category its record names ('block:<reason>:<token>'), or that no
   // reason was saved.
   const reason = /^(?:late-after-rotation:)?block:([^:]+)/.exec(r.detectionMode ?? '')?.[1];

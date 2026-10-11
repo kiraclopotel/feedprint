@@ -1,5 +1,6 @@
 import { isInPrivateChatSubtree } from '../platforms/adapter';
 import { hideElement } from './mark-hidden';
+import { wordFamily } from '../../core/repairs/families';
 import { observeAddedRoots } from './added-roots';
 
 // FeelingWise — Engagement-bar finder (4-tier redesign, )
@@ -298,7 +299,7 @@ function ariaLabelMatches(el: Element): boolean {
   if (label) {
     const folded = fold(label);
     if (folded) {
-      for (const stem of ARIA_STEM_SET) {
+      for (const stem of wordFamily('finder.meta.action-stems', ARIA_STEM_SET, { minLength: 4 })) {
         if (folded.includes(stem)) return true;
       }
     }
@@ -315,7 +316,7 @@ function ariaLabelMatches(el: Element): boolean {
   if (text && text.length <= 60) {
     const folded = fold(text);
     if (folded) {
-      for (const stem of ARIA_STEM_SET) {
+      for (const stem of wordFamily('finder.meta.action-stems', ARIA_STEM_SET, { minLength: 4 })) {
         if (folded.includes(stem)) return true;
       }
     }

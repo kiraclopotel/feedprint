@@ -24,6 +24,8 @@
 // when the script reloads (extension reload, navigation triggering
 // reinjection). Per-platform: TT-rot doesn't suppress an X warning.
 
+import { utcDayKey } from '../storage/utc-day';
+
 // Both thresholds and time gates are deliberately set well above routine
 // SPA DOM churn. The canary's design assumes "MO batch with content UI
 // present + 0 extractions = signal" — but on SPAs (X/TT/IG/FB) the MO
@@ -122,7 +124,7 @@ export function recordExtractionResult(
     // per tab was not enough: a tab opened before midnight UTC spent its one
     // write on the old day's key, and the new day read "no visit" while it
     // went on extracting.
-    const today = canaryTodayKey();
+    const today = utcDayKey();
     if (firstSuccess || state.warned || state.successSavedDay !== today) {
       state.warned = false;
       state.successSavedDay = today;
@@ -221,17 +223,13 @@ export interface ExtractionCanarySnapshot {
   successes?: Record<string, { at: string }>;
 }
 
-function canaryTodayKey(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
 /** Best-effort: record a fired canary warning so the dashboard can show it. */
 async function persistCanaryWarning(platform: string, kind: CanaryKind): Promise<void> {
   if (typeof chrome === 'undefined' || !chrome?.storage?.local) return;
   try {
     const existing = await chrome.storage.local.get([CANARY_STORAGE_KEY]);
     const raw = existing[CANARY_STORAGE_KEY] as ExtractionCanarySnapshot | undefined;
-    const today = canaryTodayKey();
+    const today = utcDayKey();
     const snap: ExtractionCanarySnapshot =
       raw && raw.date === today ? raw : { date: today, warnings: {} };
     snap.warnings[platform] = { kind, at: new Date().toISOString() };
@@ -251,7 +249,7 @@ async function persistCanarySuccess(platform: string): Promise<void> {
   try {
     const existing = await chrome.storage.local.get([CANARY_STORAGE_KEY]);
     const raw = existing[CANARY_STORAGE_KEY] as ExtractionCanarySnapshot | undefined;
-    const today = canaryTodayKey();
+    const today = utcDayKey();
     const snap: ExtractionCanarySnapshot =
       raw && raw.date === today ? raw : { date: today, warnings: {} };
     if (!snap.successes) snap.successes = {};
@@ -266,12 +264,12 @@ async function persistCanarySuccess(platform: string): Promise<void> {
 /** Best-effort read for the dashboard. Returns today's snapshot or an empty shell. */
 export async function readExtractionCanary(): Promise<ExtractionCanarySnapshot> {
   if (typeof chrome === 'undefined' || !chrome?.storage?.local) {
-    return { date: canaryTodayKey(), warnings: {}, status: 'unreadable' };
+    return { date: utcDayKey(), warnings: {}, status: 'unreadable' };
   }
   try {
     const existing = await chrome.storage.local.get([CANARY_STORAGE_KEY]);
     const raw = existing[CANARY_STORAGE_KEY] as ExtractionCanarySnapshot | undefined;
-    if (raw && raw.date === canaryTodayKey()) {
+    if (raw && raw.date === utcDayKey()) {
       return { ...raw, status: Object.keys(raw.warnings ?? {}).length > 0 ? 'warned' : 'clear' };
     }
     // A snapshot from a previous UTC day says nothing about today, and a
@@ -279,9 +277,9 @@ export async function readExtractionCanary(): Promise<ExtractionCanarySnapshot> 
     // seeing anything. 'stale' is the honest word for both, because a warned
     // adapter is not re-persisted after it has warned once, so yesterday's
     // silence can hide a platform that is still broken right now.
-    return { date: canaryTodayKey(), warnings: {}, status: 'stale' };
+    return { date: utcDayKey(), warnings: {}, status: 'stale' };
   } catch {
-    return { date: canaryTodayKey(), warnings: {}, status: 'unreadable' };
+    return { date: utcDayKey(), warnings: {}, status: 'unreadable' };
   }
 }
 

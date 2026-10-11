@@ -52,7 +52,7 @@ describe('the Spanish welcome', () => {
 describe('English keeps what is true and says who it is true for', () => {
   it('reads exactly', () => {
     expect(POPUP_STRINGS.en.setupWelcomeBody1).toBe(
-      'Feedprint writes down what your feed shows you and keeps that record on this computer. At Moderate and Relaxed, only a fingerprint of it, with no post text, goes to independent time-stamp services so the record can be dated. Strict sends nothing. You can export it as a file anyone can check.',
+      'Feedprint writes down posts, flagged items, hidden ads, and comments caught by rules and keeps that record on this computer. At Moderate and Relaxed, only a fingerprint of it, with no post text, goes to independent time-stamp services so the record can be dated. Strict sends nothing. You can export it as a file anyone can check.',
     );
   });
 });

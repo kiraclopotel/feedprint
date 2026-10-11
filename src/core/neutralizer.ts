@@ -1180,6 +1180,13 @@ export interface CombinedDetectOptions {
    * the marker fires with no rewrite.
    */
   rewrite?: (input: { text: string; technique: string; signal?: AbortSignal }) => Promise<string>;
+  /**
+   * The paid reading's Claude reader (src/ai/claude-reader.ts), asked only where the first judge
+   * fired and the second did not agree. Injected by pipeline.ts only while that reading is on, the
+   * way `rewrite` is; absent, the pair's rule is unchanged.
+   */
+  claudeReader?: (input: { text: string; platform?: string; kind?: string; parentText?: string; signal?: AbortSignal }) =>
+    Promise<NonNullable<NonNullable<AnalysisResult['judge']>['claude']>>;
 }
 
 /** The technique each JUDGE-V1 family lands on downstream (labels, record, actions). */
@@ -1276,10 +1283,20 @@ async function judgeV1Adult(
   // about JUDGE-V1 moves here: same frozen prompt, same schema, same cut. What changed on
   // 2026-09-21 is that one model's word is no longer enough to rewrite what somebody sees.
   const secondWasAsked = needsSecondOpinion(verdict, JUDGE_V1_FIRE_SEVERITY);
-  const second = secondWasAsked ? await askJudgeV1(text, locale, options, JUDGE_V1_SECOND_MODEL) : null;
+  // The paid reading's Claude reader is asked beside the second judge, and either may agree
+  // (judge-pair.ts actFires, written here through pairFires so this file takes no new import).
+  const [second, claude] = secondWasAsked
+    ? await Promise.all([
+      askJudgeV1(text, locale, options, JUDGE_V1_SECOND_MODEL),
+      options?.claudeReader
+        ? options.claudeReader({ text, platform: options.platform, kind: options.kind ?? 'post', parentText: options.parentText, signal: options.signal })
+        : null,
+    ])
+    : [null, null];
   const identity = judgeIdentity(secondWasAsked, JUDGE_V1_MODEL, JUDGE_V1_SECOND_MODEL);
   const processingTimeMs = performance.now() - startTime;
-  const fired = pairFires(verdict, second, JUDGE_V1_FIRE_SEVERITY);
+  const fired = pairFires(verdict, second, JUDGE_V1_FIRE_SEVERITY)
+    || pairFires(verdict, claude?.reading ?? null, JUDGE_V1_FIRE_SEVERITY);
   if (!fired) {
     return {
       analysis: {
@@ -1301,6 +1318,7 @@ async function judgeV1Adult(
           severity: verdict.severity,
           effect: verdict.effect,
           intent: verdict.intent,
+          ...(claude ? { claude } : {}),
         },
       },
       neutralized: null,
@@ -1332,6 +1350,7 @@ async function judgeV1Adult(
       severity: verdict.severity,
       effect: verdict.effect,
       intent: verdict.intent,
+      ...(claude ? { claude } : {}),
     },
   };
   let neutralized: NeutralizedContent | null = null;

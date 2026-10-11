@@ -100,12 +100,12 @@ describe.each(UI_LANGUAGES)('Strict without a key, %s (P3-2)', (lang) => {
 describe.each(UI_LANGUAGES)('Settings at Strict, %s (P3-3)', (lang) => {
   const t = POPUP_STRINGS[lang];
 
-  // Without a key there is no AI card, so the AI switch is held only where a key is.
-  it.each([['free', FREE, 2], ['paid', PAID, 3]] as const)('%s: AI checks and Mask swearing name the level, and every locked switch wears a padlock', (n, license, held) => {
+  // Without a key there is no AI card, so the AI switch is held only where a key is. One fewer since 11 Oct 2026: Strict
+  // language's row left, Mask swearing is the one switch for swearing (one-switch-for-swearing.test.tsx).
+  it.each([['free', FREE, 1], ['paid', PAID, 2]] as const)('%s: AI checks and Mask swearing name the level, and every locked switch wears a padlock', (n, license, held) => {
     const html = settingsPanel('child', license, lang);
     expect(html.includes(`aria-label="${esc(t.featAiMasterAriaStrict)}"`)).toBe(n === 'paid');
     expect(html).toContain(`aria-label="${esc(t.softenSwearingAriaChild)}"`);
-    expect(html).toContain(`aria-label="${esc(t.strictLangAriaChild)}"`);
     expect(t.featAiMasterAriaStrict).toContain(t.modeChild);
     expect(t.softenSwearingAriaChild).toContain(t.modeChild);
 

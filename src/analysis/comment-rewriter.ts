@@ -22,6 +22,7 @@ import {
   FORBIDDEN_META_PATTERNS,
 } from '../core/neutralizer';
 import { detectUnsafeVisibleLanguage } from '../core/visible-output-safety';
+import { rewriteKeepsTheAttack } from './rewrite-keeps-attack';
 
 /**
  * Post-LLM language validator.
@@ -84,6 +85,7 @@ type RewriteRejectionReason =
   | 'language-drift'
   | 'profanity-preserved'
   | 'near-identical'
+  | 'attack-kept'
   | 'refusal';
 
 export interface RewriteValidationResult {
@@ -322,6 +324,13 @@ export function validateRewrite(
 
   if (isNearIdentical(originalText, rewrite)) {
     return { valid: false, reason: 'near-identical' };
+  }
+
+  // The insult behind an "I think", or the call it ended on (share this, disappear), carried into the rewrite
+  // (analysis/rewrite-keeps-attack.ts, 11 Oct 2026). Rejected like any invalid rewrite: the comment is marked or hidden.
+  const kept = rewriteKeepsTheAttack(originalText, rewrite);
+  if (kept !== null) {
+    return { valid: false, reason: 'attack-kept', detail: kept };
   }
 
   const det = detectLanguage(originalText);

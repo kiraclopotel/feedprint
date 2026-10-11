@@ -12,6 +12,7 @@ import { mediaUrlsNow } from '../record/media-urls';
 import type { AnalysisResult, TechniqueName, TechniqueResult } from '../../types/analysis';
 import type { FWMessage } from '../../types/messages';
 import { getSettings, isFeatureEnabled, isCommentRewriteEnabled, type FWSettings } from '../../storage/settings';
+import { activeParentBlocklist, isParentBlocklistEmpty, matchParentBlocklist, type BlocklistMatch } from '../../core/parent-blocklist';
 import { bumpCounter } from '../../diagnostics/diagnostics';
 import { processingCache } from '../../storage/cache';
 import { verdictCacheKeyInput } from '../../storage/cache-key';
@@ -54,6 +55,7 @@ import type { renderTeenMarker } from '../markers/teen-marker';
 import { AI_TEXT_ATTR, type AiWriter } from '../markers/ai-mark';
 import type { CommentHideNotice } from '../protection/comment-overlay';
 import { commentHideNoticeFor } from '../markers/comment-hide-notice';
+import { hideAndRecordComment } from './door';
 import { decisionForLegacy, decisionForMask, NOTE_NOT_APPLIED, READER_DEFAULT, rewriteStage } from '../record/decision';
 import { filterProfanity, maskProfanity } from '../../core/profanity-filter';
 import { detectDehumanization } from '../../core/dehumanization-filter';
@@ -195,7 +197,8 @@ let warnedAuthRefusalThisSession = false;
 /**
  * Persist a flagged comment's VALIDATED reframe into the shared content cache,
  * keyed IDENTICALLY to the per-post pipeline (sha256 of
- * platform|mode|locale|outputLanguage|text). The comment path computes the
+ * platform|mode|locale|outputLanguage|text, plus the parent's text when the
+ * comment carries one, as the focused tweet does). The comment path computes the
  * reframe in BATCH context, but opening that same comment on its OWN permalink
  * makes it a focused tweet that flows through the per-post pipeline — a
  * DIFFERENT prompt that re-analysed from scratch and showed the original,
@@ -209,6 +212,7 @@ let warnedAuthRefusalThisSession = false;
 async function primeReframeCache(
   platform: string,
   text: string,
+  parentText: string | undefined,
   analysisLike: Record<string, unknown>,
   rewrite: string,
   settings: FWSettings,
@@ -217,7 +221,7 @@ async function primeReframeCache(
   try {
     const outputLanguage = settings.outputLanguage ?? 'auto';
     const textHash = await sha256(
-      verdictCacheKeyInput(platform, settings.mode, settings.locale, outputLanguage, text),
+      verdictCacheKeyInput(platform, settings.mode, settings.locale, outputLanguage, text, parentText),
     );
     processingCache.set(textHash, analysisLike as unknown as AnalysisResult, rewrite, undefined, writerModel);
   } catch {
@@ -345,53 +349,14 @@ export async function flushBatch(parentVideoId: string, deps: FlushDeps): Promis
     sharedFields: Record<string, unknown>,
     analysisLike: Record<string, unknown>,
   ): void => {
-    // Teen and Adult see a sentence where the comment was, in the row's own
-    // words when the legacy signal names one; Child gets the silent close
-    // (docs/design/HIDE-NOTICE-2026-09-07.md). The record's fields are the
-    // notice's only source, so the page and the chain say the same why.
-    const techniques = Array.isArray(analysisLike.techniques)
-      ? (analysisLike.techniques as Array<{ technique?: string; present?: boolean }>)
-        .filter((t) => t.present !== false)
-        .map((t) => String(t.technique ?? ''))
-      : [];
-    const notice = commentHideNoticeFor(settings.mode, resolveUiLanguage(settings.uiLanguage), {
-      detectionMode: typeof sharedFields.detectionMode === 'string' ? sharedFields.detectionMode : undefined,
-      techniques,
-      severity: typeof analysisLike.overallScore === 'number' ? analysisLike.overallScore : undefined,
-    });
-    const hideApplied = applyCommentHide(post, notice);
+    const hideApplied = hideAndRecordComment({ settings, post, sharedFields, analysisLike, applyCommentHide });
     commentHideAttempts++;
     if (hideApplied) {
       commentHidesApplied++;
-      // PROVEN hide → cache so a fresh-node re-extraction is re-hidden before
-      // any uncover cycle and never re-scored (CORE-1 / CORE-2). Only on the
-      // applied branch — a miss keeps the cover but is NOT a resolved verdict.
-      rememberResolvedComment(post, notice ? { kind: 'hide', notice } : { kind: 'hide' });
     } else {
       commentHideMisses++;
       if (settings.mode === 'child') protectionsToRetain.add(post);
     }
-    void sendHighStakesForensicLog({
-      type: 'FORENSIC_LOG',
-      payload: {
-        ...sharedFields,
-        neutralizedText: '',
-        analysis: {
-          ...analysisLike,
-          action: recordedCommentHideAction(hideApplied),
-        },
-        // Why the product acted, in the policy table's words (Stage 2, 2026-09-07).
-        decision: decisionForLegacy({
-          mode: settings.mode,
-          detectionMode: typeof sharedFields.detectionMode === 'string' ? sharedFields.detectionMode : undefined,
-          techniques,
-          severity: typeof analysisLike.overallScore === 'number' ? analysisLike.overallScore : undefined,
-          applied: hideApplied ? 'hide' : 'mark',
-          mask: blanketProfanitySoften(settings, post.platform),
-        }),
-        reader: READER_DEFAULT,
-      },
-    } as Extract<FWMessage, { type: 'FORENSIC_LOG' }>);
   };
   /**
    * The decision block for a comment the legacy batch path acted on
@@ -617,6 +582,37 @@ export async function flushBatch(parentVideoId: string, deps: FlushDeps): Promis
     return;
   }
 
+  // The household's own list, on comments (11 Oct 2026). On a post it is the first step of the pipeline; a batched
+  // comment (every YouTube comment, TikTok's, X permalink replies) never reaches that pipeline, so a word on the
+  // list swapped a YouTube title for "Hidden: on this household's block list" and left every comment holding the
+  // word on screen. A match is a rule, not a reading: whatever the batch said (or failed to say), the comment is
+  // hidden and the record names the rule, as the pipeline's record does, with no claim that anything was judged.
+  // Each hit is also read by the comment's own words, so the batch call is not changed.
+  const blockedByHousehold = new Map<number, BlocklistMatch>();
+  {
+    const list = activeParentBlocklist(settings.features);
+    if (!isParentBlocklistEmpty(list)) {
+      if (!Array.isArray(result.comments)) result.comments = [];
+      for (let i = 0; i < bucket.posts.length; i++) {
+        const post = bucket.posts[i];
+        const hit = matchParentBlocklist(list, post.text, post.author, post.card);
+        if (!hit) continue;
+        blockedByHousehold.set(i, hit);
+        result.comments[i] = {
+          index: i + 1, technique: 'none', sentiment: 'neutral', severity: 0, confidence: 1,
+          reason: `household list: ${hit.kind}`, action: 'hide',
+        };
+      }
+    }
+  }
+  // What a record of a comment says about who acted: the rule engine when the household's list did, the batch otherwise.
+  const householdFields = (i: number): Record<string, unknown> => {
+    const hit = blockedByHousehold.get(i);
+    return hit
+      ? { aiSource: 'rules', detectionMode: `blocklist:${hit.kind}:${hit.rule}`, aiModel: 'fw-household-list-v1', aiProvider: 'fw-rules' }
+      : {};
+  };
+
   // // fail-closed batch handling. When `scoreBatch` returns a fail-closed
   // result (LLM threw / empty raw / unparseable JSON / shape mismatch) every
   // comment is stamped technique='none' / sev=0 with `failed: true`. Pre-
@@ -648,8 +644,8 @@ export async function flushBatch(parentVideoId: string, deps: FlushDeps): Promis
     // transient failures (rate-limit / network / json-refusal) still record
     // honestly below.
     const capExhausted = result.failureKind === 'cap-exhausted';
-    // A provider is named only when one answered, with the model it named; otherwise the record
-    // keeps the batch model's name and names no provider.
+    // A model and a provider are named only when one answered, with the name it gave. A record of a call nobody
+    // answered names neither: a file handed on must not say a model read what none did (11 Oct 2026).
     const answered = callProvenanceFor(batchCalls.signal);
     let escalatedCount = 0;
     let cancelledCount = 0;
@@ -698,6 +694,7 @@ export async function flushBatch(parentVideoId: string, deps: FlushDeps): Promis
             aiProvider: 'fw-rules',
             kind: 'comment' as const,
             parentVideoId,
+            ...householdFields(i),
         };
         if (verdict.action === 'hide') {
           recordCommentHideOutcome(post, sharedFields, escalatedAnalysis);
@@ -746,7 +743,7 @@ export async function flushBatch(parentVideoId: string, deps: FlushDeps): Promis
           textCapture: post.textCapture,
           authorCapture: post.authorCapture,
           mediaUrls: mediaUrlsNow(post),
-          aiModel: answered?.model ?? GROQ_FAST_MODEL,
+          aiModel: answered?.model,
           aiProvider: answered?.provider,
           // Config at capture time (board #6a). The comment path's flag gate
           // is the fixed MANIPULATION_SEVERITY_THRESHOLD, not the per-post
@@ -1163,6 +1160,7 @@ export async function flushBatch(parentVideoId: string, deps: FlushDeps): Promis
       // the AI judged what a regex caught). Flows to FORENSIC_LOG + the deferred
       // rewrite path + PASS_LOG via this shared base.
       overrideOrigin: verdict?.overrideOrigin,
+      ...householdFields(i),
     };
     if (analysisLike.isManipulative) {
       if (verdict?.action === 'hide') {
@@ -1655,7 +1653,7 @@ export async function flushBatch(parentVideoId: string, deps: FlushDeps): Promis
         writerByPostId.set(item.postId, writer);
         // Reuse this reframe if the same comment is later opened on its own
         // permalink (where it flows through the per-post pipeline) or re-scrolled.
-        void primeReframeCache(bucket.platform, item.text, item.analysisLike, rewrite, settings, writer.model);
+        void primeReframeCache(bucket.platform, item.text, item.post.parentText, item.analysisLike, rewrite, settings, writer.model);
       }
     }
   }

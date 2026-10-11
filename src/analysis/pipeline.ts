@@ -13,6 +13,7 @@ import {
   buildNameLabelMapForPost, isNameLabelStepOn, replaceNamesInCaptionContext, replaceNamesInText, restoreNames,
 } from '../core/name-labels';
 import { neutralizeText } from '../ai/neutralize-only';
+import { askClaudeReader, claudeReadingOn } from '../ai/claude-reader';
 import { getSettings, isFeatureEnabled, type FWSettings } from '../storage/settings';
 import type { Platform } from '../types/post';
 import { activeParentBlocklist, matchParentBlocklist } from '../core/parent-blocklist';
@@ -53,6 +54,8 @@ import { startTrace } from '../diagnostics/perf-trace';
 // crossing the layer boundary here is cheaper than refactoring the
 // file.
 import { detectLanguage } from '../core/lang-detect';
+import { rewriteKeepsTheAttack } from './rewrite-keeps-attack';
+import { recordNeutralizerEvent } from '../forensics/neutralizer-diagnostics';
 import { validateRewriteLanguage } from '../analysis/comment-rewriter';
 // License tier resolution. Free tier short-circuits the entire
 // detection pipeline (no slur filter, no profanity, no L1, no LLM call):
@@ -111,6 +114,17 @@ interface PassContext {
 }
 
 /** The kind word the judge is told: comment kinds fold to 'comment', as the protocol's runner did. */
+/**
+ * The judge's own rule for a missing rewrite, for where a rewrite is dropped after the judge ran (a name label nobody
+ * got, an attack the rewrite kept): a severe hostile flag is hidden, as it is when the judge rejects the rewrite itself.
+ */
+function hideWhenSevereAndHostile(analysis: AnalysisResult): void {
+  const sev = analysis.overallScore ?? 0;
+  const t = analysis.primaryTechnique;
+  const hostile = t === 'shame-attack' || t === 'scapegoating' || t === 'anger-trigger' || t === 'fear-appeal';
+  if (analysis.isManipulative && analysis.action !== 'collapse' && sev >= 7 && hostile) analysis.action = 'hide';
+}
+
 export function judgeKindFor(kind: PostContent['kind'] | undefined): 'post' | 'comment' | 'video' {
   if (kind === 'comment' || kind === 'top-comment' || kind === 'reply' || kind === 'reply-to-reply') return 'comment';
   if (kind === 'video') return 'video';
@@ -337,15 +351,33 @@ function isSubstantiveText(text: string): boolean {
   // Strip URLs, @mentions, hashtags
   const stripped = text
     .replace(/https?:\/\/\S+/g, '')
-    .replace(/@\w+/g, '')
-    .replace(/#\w+/g, '')
+    .replace(/@[\p{L}\p{N}_]+/gu, '')
+    .replace(/#[\p{L}\p{N}_]+/gu, '')
     .trim();
   // The 3-word floor catches "stop trusting him" / "she's lying" —
   // exactly the patterns to flag. An older 8-word threshold was tuned
   // for a "single bundle per video" architecture that mixed caption +
   // comments; with per-comment records, the lower floor is correct.
-  const words = stripped.split(/\s+/).filter(w => w.replace(/[^\w]/g, '').length > 1);
-  return words.length >= 3 && stripped.length >= MIN_TEXT_LENGTH;
+  return wordUnits(stripped) >= 3 && stripped.length >= MIN_TEXT_LENGTH;
+}
+
+/** Letters of the scripts written without spaces between words, where a run of text is one "token" however long. */
+const UNSPACED = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Thai}\p{Script=Lao}\p{Script=Khmer}\p{Script=Myanmar}]/gu;
+
+/**
+ * Words in any script. A word is a run of two or more letters or digits in any alphabet: ASCII \w counted Cyrillic,
+ * Greek, Arabic and Hebrew as nothing and cut "și" or "îți" to one letter, so those posts never reached the reading.
+ * In the scripts written without spaces (Chinese, Japanese, Thai and their kin) every two characters count as one
+ * word, about the length of a word there.
+ */
+function wordUnits(text: string): number {
+  let units = 0;
+  for (const token of text.split(/\s+/)) {
+    const unspaced = token.match(UNSPACED)?.length ?? 0;
+    const spaced = token.replace(UNSPACED, '').replace(/[^\p{L}\p{N}]/gu, '').length;
+    units += Math.floor(unspaced / 2) + (spaced > 1 ? 1 : 0);
+  }
+  return units;
 }
 
 /**
@@ -550,11 +582,13 @@ async function processUnstamped(
     //     language. Validator catches the drift on second-pass but the
     //     cache held the bad value until eviction. Audit A5-B5 closure.
     //   • text — the original post body.
+    //   • parentText — what the item answers, when the page showed it: the judge reads it, so the same words under
+    //     two posts are two verdicts.
     // If you add another dimension upstream, mirror this list AND the
     // `// LRU cache keyed by ...` comment at the top of storage/cache.ts.
     const outputLanguage = settings.outputLanguage ?? 'auto';
     const textHash = await sha256(
-      verdictCacheKeyInput(post.platform, settings.mode, settings.locale, outputLanguage, post.text),
+      verdictCacheKeyInput(post.platform, settings.mode, settings.locale, outputLanguage, post.text, post.parentText),
     );
     // getPersistent checks both the in-memory L1 and
     // chrome.storage.session L2 so a post seen in feed → profile →
@@ -1074,11 +1108,15 @@ async function processUnstamped(
     // is reused below and the queue keys hold it. The Adult judge is a measured instrument and
     // keeps reading the text as written until its own word comes.
     const labels = settings.mode !== 'adult' && isNameLabelStepOn()
-      ? buildNameLabelMapForPost(post.author, post.context)
+      ? buildNameLabelMapForPost(post.author, post.context, [post.text])
       : null;
     const judgeText = labels ? replaceNamesInText(labels, post.text) : post.text;
     const judgeAuthor = labels ? labels.authorValue : (post.author ?? 'unknown');
     const judgeContext = labels && post.context ? replaceNamesInCaptionContext(labels, post.context) : post.context;
+    // The paid reading's Claude reader runs beside the adult judge's second opinion, for a paid key
+    // whose person agreed to the second company on the consent screen (the consent is the switch);
+    // it checks its own key and consent again before it sends anything.
+    const claudeReader = settings.mode === 'adult' && await claudeReadingOn() ? askClaudeReader : undefined;
     const result = await tracer.wrap('combined_call', () =>
       combinedDetectAndNeutralize(judgeText, techniques, settings.mode, settings.locale, judgeAuthor, judgeContext, {
         twoStageCascade: true,
@@ -1098,6 +1136,7 @@ async function processUnstamped(
           });
         },
         rewriteEnabled: rewritesEnabled,
+        ...(claudeReader ? { claudeReader } : {}),
         // Thread per-post signal into the cascade. fetch wakes via
         // AbortError on cancel and callAI surfaces it as Err(aborted).
         // combinedDetectAndNeutralize then resolves to null and we hit
@@ -1133,13 +1172,23 @@ async function processUnstamped(
           result.neutralized = null;
           // The judge's own rule for a missing rewrite ran before this drop, so it runs again here:
           // a severe hostile flag is hidden, as it is when the judge rejects the rewrite itself.
-          const sev = analysis.overallScore ?? 0;
-          const t = analysis.primaryTechnique;
-          const hostile = t === 'shame-attack' || t === 'scapegoating' || t === 'anger-trigger' || t === 'fear-appeal';
-          if (analysis.isManipulative && analysis.action !== 'collapse' && sev >= 7 && hostile) analysis.action = 'hide';
+          hideWhenSevereAndHostile(analysis);
         } else {
           result.neutralized.rewrittenText = back;
         }
+      }
+    }
+
+    // A rewrite that still carries the attack is not shown (the Tester's full test, 11 Oct 2026): the insult behind an
+    // "I think", the call to share, the call to disappear. It takes the same road as a rewrite the judge rejects: the
+    // post stays with its mark, or is hidden when it is severe and hostile. Run on the real texts, names back in.
+    if (result?.neutralized && typeof result.neutralized.rewrittenText === 'string') {
+      const kept = rewriteKeepsTheAttack(post.text, result.neutralized.rewrittenText);
+      if (kept !== null) {
+        console.debug(`[FeelingWise] Pipeline: REWRITE DROPPED (${kept}) for ${post.id}`);
+        void recordNeutralizerEvent(`rewrite-keeps-attack:${kept}`);
+        result.neutralized = null;
+        hideWhenSevereAndHostile(result.analysis);
       }
     }
 

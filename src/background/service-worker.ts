@@ -45,6 +45,7 @@ import { appendReconcileMarker, isReconcileMarkerInput } from '../forensics/reco
 import { appendRedactionMarker, isRedactionMarkerInput } from '../forensics/redaction';
 import { EXCLUSIONS_KEY, excludableAuthor, isExcludedAuthor, noteExcludedSkip, readExclusions, type AuthorExclusion } from '../forensics/author-exclusions';
 import { HEARTBEAT_INTERVAL_MINUTES } from '../forensics/heartbeat';
+import { syncRepairsIfDue } from './repairs-sync';
 import { makesNoOutsideCall } from '../types/mode';
 import { noteBuildRun } from '../storage/build-history';
 import { refreshEntitlementsOnInstall } from './entitlements-on-install';
@@ -63,6 +64,8 @@ import {
 } from '../types/messages';
 import { openSetupOnInstall } from './open-setup-on-install';
 import { provideBuildId } from '../core/build-id';
+import { READING_PAUSED_STORAGE_KEY } from '../storage/reading-pause';
+import { paintToolbarIcon } from './toolbar-icon';
 
 declare const __FW_BUILD_ID__: string;
 
@@ -391,6 +394,8 @@ async function writePendingUpdateGap(): Promise<void> {
 
 chrome.runtime.onStartup.addListener(() => {
   armMissingAlarms();
+  // A reading that was waiting for the go-ahead when the browser closed is still waiting.
+  void paintToolbarIcon();
 });
 
 chrome.runtime.onInstalled.addListener((details) => {
@@ -591,6 +596,8 @@ chrome.alarms.onAlarm.addListener((alarm) => {
     void kickForensicDeliveryPump();
   }
   if (alarm.name === 'forensic-heartbeat') {
+    // The repair file rides on this tick (repairs-sync.ts decides whether it is time), so it adds no scheduled job.
+    void syncRepairsIfDue();
     // The height check runs BEFORE the heartbeat, never after. The heartbeat
     // writes a record of its own, and on an install whose record had just been
     // destroyed that record lands at position 0: the chain then reads as a
@@ -852,8 +859,7 @@ chrome.runtime.onMessage.addListener((message: FWMessage, sender, sendResponse) 
       // lost and the badge silently drifted below the real neutralized count.
       await incrementNeutralizedWithRetry();
       const settings = await getSettings();
-      void chrome.action.setBadgeText({ text: String(settings.totalNeutralizedToday) });
-      void chrome.action.setBadgeBackgroundColor({ color: '#00bcd4' });
+      await paintToolbarIcon(settings.totalNeutralizedToday);
     }).catch(err => {
       console.warn('[FeelingWise] NEUTRALIZATION_COMPLETE counter update failed:', err);
     });
@@ -1577,6 +1583,8 @@ chrome.storage.onChanged.addListener((changes) => {
   if (changes.lastResetDate) {
     void chrome.action.setBadgeText({ text: '' });
   }
+  // The relay asked for the reading's go-ahead (a "!" on the icon), or it was given (the count comes back).
+  if (changes[READING_PAUSED_STORAGE_KEY]) void paintToolbarIcon();
   // Entering Strict clears the time-stamp alarm and leaving it arms it again.
   if (changes.mode) armMissingAlarms();
   if (changes[EXCLUSIONS_KEY]) exclusionsCache = null;

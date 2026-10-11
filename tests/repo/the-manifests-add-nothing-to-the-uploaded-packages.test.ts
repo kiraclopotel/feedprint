@@ -5,11 +5,10 @@
 //
 // The two fixtures are the manifest.json of each uploaded package, read from the zip itself (`unzip -p <zip> manifest.json`), never from a
 // worktree's source:
-//   tests/fixtures/release-manifests/receipts-2.5.16.json  from receipts-2.5.16.zip (Saturday's Receipts package, commit ac0cabcb),
-//     zip sha256 47b9788f686adc2996bb26acd956a458c9662ff2aed4be2750978bb2187569d9 (as in its .sha256.txt, checked by sha256sum)
-//   tests/fixtures/release-manifests/off-1.0.11.json       from off-1.0.11.zip (build id fwbid-1c6472d88c8c-r1011),
-//     zip sha256 5b1048b5ba1e09cc30f20f5b3ddd4c159bd9d5d75a3817dba19ef1f969addad3 (its .sha256.txt lists the files inside, not the zip;
-//     this one is from sha256sum of the zip)
+//   tests/fixtures/release-manifests/receipts-2.5.18.json  from receipts-2.5.18.zip (Feedprint, build id fwbid-690dba9d19b8-r2518),
+//     zip sha256 d5b7aabbc3aab64bca4ef4d5f1f288ffef142a107bac934f88aca414cd74a631 (sha256sum of the zip, as in its row of docs/spec/RELEASES.tsv)
+//   tests/fixtures/release-manifests/off-1.0.13.json       from off-1.0.13.zip (build id fwbid-690dba9d19b8-r1013),
+//     zip sha256 4241d4d2b527f7330118ecb95a949669902b48da0c4cf9a5013701128e0ea5d2 (sha256sum of the zip, as in its row of docs/spec/RELEASES.tsv)
 // The source manifest.json is compared with the Receipts fixture and manifest.off.json with the Off fixture: every entry of permissions,
 // host_permissions and content_scripts[].matches in the source is in the fixture's same list. An addition fails and names the entry and
 // the rule. A removal passes (taking a permission away asks nobody anything). optional_permissions are listed in the output, not failed.
@@ -53,8 +52,8 @@ function additions(source: Manifest, uploaded: Manifest, product: string): strin
 }
 
 const PRODUCTS: Array<{ product: string; source: string; fixture: string }> = [
-  { product: 'Receipts', source: 'manifest.json', fixture: 'tests/fixtures/release-manifests/receipts-2.5.16.json' },
-  { product: 'Off', source: 'manifest.off.json', fixture: 'tests/fixtures/release-manifests/off-1.0.11.json' },
+  { product: 'Receipts', source: 'manifest.json', fixture: 'tests/fixtures/release-manifests/receipts-2.5.18.json' },
+  { product: 'Off', source: 'manifest.off.json', fixture: 'tests/fixtures/release-manifests/off-1.0.13.json' },
 ];
 
 describe.each(PRODUCTS)('UP1: $product adds nothing to the uploaded package', ({ product, source, fixture }) => {

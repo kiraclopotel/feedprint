@@ -35,6 +35,7 @@ import { summarizeScanActivity, type ScanActivitySummary } from '../../../forens
 import { readGroqTelemetry } from '../../../ai/telemetry';
 import { summarizeGroqTelemetry, type GroqTelemetrySummary } from '../../../ai/telemetry-summary';
 import { TEXT_CAP_STORAGE_KEY } from '../../../ai/client';
+import { READING_PAUSED_STORAGE_KEY } from '../../../storage/reading-pause';
 import { readNeutralizerDiagnostics } from '../../../forensics/neutralizer-diagnostics';
 import { readRoomMutations, summarizeRoomMutations, type RoomMutationSummary } from '../../../diagnostics/room-attribution-outcome';
 import { getLicense, type LicenseTier } from '../../../storage/license';
@@ -128,6 +129,8 @@ export function OperationalEventsPanel({
   const [buildHistory, setBuildHistory] = useState<BuildRunRow[]>([]);
   const [healLog, setHealLog] = useState<HealEvent[]>([]);
   const [textCapPeriod, setTextCapPeriod] = useState<'daily' | 'monthly' | null>(null);
+  // The relay asked for the reading's go-ahead and nothing has answered since (storage/reading-pause.ts).
+  const [readingPaused, setReadingPaused] = useState(false);
   const [copied, setCopied] = useState(false);
   // Acknowledged (cleared) counter-card baselines, keyed by card key. A card
   // whose count is at or below its baseline stays hidden; when the counter
@@ -254,6 +257,9 @@ export function OperationalEventsPanel({
         const expected = marker.cap === 'monthly' ? month : `${month}-${String(now.getUTCDate()).padStart(2, '0')}`;
         if (!cancelled && marker.periodKey === expected) setTextCapPeriod(marker.cap);
       })
+      .catch(() => { /* marker is best-effort */ });
+    chrome.storage.local.get(READING_PAUSED_STORAGE_KEY)
+      .then(stored => { if (!cancelled && stored[READING_PAUSED_STORAGE_KEY]) setReadingPaused(true); })
       .catch(() => { /* marker is best-effort */ });
     return () => { cancelled = true; };
   }, []);
@@ -611,6 +617,9 @@ export function OperationalEventsPanel({
     } else if (d.status === 'drifting') {
       cards.push({ key: `drift-${d.platform}`, reduced: false, title: t.opsCardPlatformDriftTitle(name), meaning: t.opsCardPlatformDriftMeaning });
     }
+  }
+  if (readingPaused) {
+    cards.push({ key: 'reading-paused', reduced: true, title: t.opsCardReadingPausedTitle, meaning: t.opsCardReadingPausedMeaning, action: t.opsCardReadingPausedAction });
   }
   if (textCapPeriod) {
     cards.push({ key: `text-cap-${textCapPeriod}`, reduced: true, title: t.opsCardTextCapTitle(textCapPeriod), meaning: t.opsCardTextCapMeaning(textCapPeriod), action: t.opsCardTextCapAction(textCapPeriod) });

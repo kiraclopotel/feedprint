@@ -142,3 +142,32 @@ export function chatTokenEquivalents(promptTokens: number, completionTokens: num
       + completionTokens * completionRate / GROQ_BLENDED_RATE_PER_1M_USD,
   );
 }
+
+/**
+ * Claude Haiku (claude-haiku-5-5), the second reader of the paid reading, on prompts of 100K tokens or fewer
+ * (Anthropic's pricing page, read live 2026-10-10). One item is bounded far below that, so the dearer
+ * card above it never applies. Anthropic bills four directions: plain input, input written to the
+ * prompt cache, input read back from it, and output.
+ */
+const CLAUDE_HAIKU_INPUT_RATE_PER_1M_USD = 0.10;
+const CLAUDE_HAIKU_CACHE_WRITE_RATE_PER_1M_USD = 0.125;
+const CLAUDE_HAIKU_CACHE_READ_RATE_PER_1M_USD = 0.01;
+const CLAUDE_HAIKU_OUTPUT_RATE_PER_1M_USD = 0.50;
+
+/** The usage block of a Messages API answer, as Anthropic reports it. */
+export interface ClaudeUsage {
+  input_tokens: number;
+  cache_creation_input_tokens: number;
+  cache_read_input_tokens: number;
+  output_tokens: number;
+}
+
+/** A Claude call in token-equivalents against the same basis as every other call, at Haiku's four prices. */
+export function claudeTokenEquivalents(usage: ClaudeUsage): number {
+  const count = (n: number) => (Number.isFinite(n) && n > 0 ? n : 0);
+  const usd = count(usage.input_tokens) * CLAUDE_HAIKU_INPUT_RATE_PER_1M_USD
+    + count(usage.cache_creation_input_tokens) * CLAUDE_HAIKU_CACHE_WRITE_RATE_PER_1M_USD
+    + count(usage.cache_read_input_tokens) * CLAUDE_HAIKU_CACHE_READ_RATE_PER_1M_USD
+    + count(usage.output_tokens) * CLAUDE_HAIKU_OUTPUT_RATE_PER_1M_USD;
+  return Math.ceil(usd / GROQ_BLENDED_RATE_PER_1M_USD);
+}

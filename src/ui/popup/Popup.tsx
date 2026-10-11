@@ -20,7 +20,7 @@ import './popup-looks.css';
 import './popup-panel.css';
 import { applyLook, eagerApplyStoredLook } from '../shared/looks';
 import { applyPopupLife } from './life';
-import { type ProxyProbeResult, probeProxy, servedProviderName } from '../../ai/client';
+import { type ProxyProbeResult, probeProxy, servedClaudeProviderName, servedProviderName } from '../../ai/client';
 import { resolveUiLanguage } from '../../i18n';
 import { POPUP_STRINGS } from '../../i18n/popup-strings';
 import { I18nProvider } from '../../i18n/react';
@@ -28,6 +28,7 @@ import { FREE_LICENSE, LicenseInfo, getLicense } from '../../storage/license';
 import { levelMakesNoCalls } from '../../types/mode';
 import { type DashboardTheme, FWSettings, getSettings, isPinGraceActive, parentPinUnknown, saveSettings } from '../../storage/settings';
 import { bearerOf, getReadingConsent, recordReadingConsent, type ReadingConsent } from '../../storage/reading-consent';
+import { READING_PAUSED_STORAGE_KEY } from '../../storage/reading-pause';
 import { ReadingConsentScreen, needsReadingConsent } from './panels/ReadingConsentScreen';
 import { applyTheme, eagerApplyStoredTheme, subscribeToSystemThemeChanges } from '../shared/theme';
 import { UpdateNoticeLine, useUpdateNotice } from './UpdateNotice';
@@ -83,9 +84,14 @@ function Popup() {
   const [proxyProbe, setProxyProbe] = useState<ProxyProbeResult | null>(null);
   // The company the proxy says reads the text, from the same probe as the licence check.
   const [servedProvider, setServedProvider] = useState<string | null>(null);
+  // The second company (the paid reading's Claude reader), from the same probe; null while the relay names none.
+  const [servedClaudeProvider, setServedClaudeProvider] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   // undefined until read, so the screen never flashes before the stored consent is known.
   const [consent, setConsent] = useState<ReadingConsent | null | undefined>(undefined);
+  const [claudeConsent, setClaudeConsent] = useState<ReadingConsent | null | undefined>(undefined);
+  // The relay refused the reading for want of the go-ahead and nothing has answered since (storage/reading-pause.ts).
+  const [relayAsked, setRelayAsked] = useState(false);
   // Read on every open, whatever screen this lands on (see UpdateNotice.tsx on why).
   const [updateNotice, updateNoticeDone] = useUpdateNotice();
 
@@ -107,6 +113,11 @@ function Popup() {
     setSettings(s);
     setLicenseState(l);
     setConsent(l.tier === 'free' ? null : await getReadingConsent(bearerOf(l)));
+    setClaudeConsent(l.tier === 'free' ? null : await getReadingConsent(bearerOf(l), 'claude'));
+    try {
+      const stored = await chrome.storage.local.get(READING_PAUSED_STORAGE_KEY);
+      setRelayAsked(!!stored?.[READING_PAUSED_STORAGE_KEY]);
+    } catch { setRelayAsked(false); }
     setLoadError(null);
     return s;
   }, []);
@@ -192,6 +203,7 @@ function Popup() {
     if (license.tier === 'free') {
       setProxyProbe(null);
       setServedProvider(null);
+      setServedClaudeProvider(null);
       return;
     }
     let cancelled = false;
@@ -200,6 +212,7 @@ function Popup() {
       if (cancelled) return;
       setProxyProbe(result);
       setServedProvider(servedProviderName(bearer));
+      setServedClaudeProvider(servedClaudeProviderName(bearer));
     }).catch((e) => console.error(e));
     return () => { cancelled = true; };
   }, [license.tier, license.secret, settings ? levelMakesNoCalls(settings) : null]);
@@ -274,7 +287,7 @@ function Popup() {
       // buttons so both primary actions are reachable with zero scrolling.
       // "Not now" switches the reading off, so switching it back on asks again. The screen waits for the
       // licence probe, so the "company not named" text never shows while the probe is still answering.
-      const needsConsent = proxyProbe !== null && needsReadingConsent({ license, settings, consent, servedProvider, keyRefused: licenseState === 'err' });
+      const needsConsent = proxyProbe !== null && needsReadingConsent({ license, settings, consent, servedProvider, keyRefused: licenseState === 'err', servedClaudeProvider, claudeConsent, relayAsked });
       // Both answers change what the parent set (Start ends the refund right, Not now switches the reading
       // off), so with a parent PIN set, or its state unknown, they wait for the PIN as Settings does.
       const answerWithPin = (answer: () => void) => {
@@ -355,8 +368,11 @@ function Popup() {
           {needsConsent && !consentClosed && (
             <ReadingConsentScreen
               provider={servedProvider}
+              claudeProvider={servedClaudeProvider}
               onClose={() => setConsentClosed(true)}
-              onStart={(shownText, provider) => answerWithPin(() => { void recordReadingConsent(bearerOf(license), shownText, provider).then(reload); })}
+              // One press, both companies: the ordinary consent, then the Claude reading's, each under the name the
+              // proxy served and over the same words the person saw (one line: the PIN-gate pin counts writer lines).
+              onStart={(shownText, provider, second) => answerWithPin(() => { void recordReadingConsent(bearerOf(license), shownText, provider).then(() => (second === null ? undefined : recordReadingConsent(bearerOf(license), shownText, second, new Date(), 'claude'))).then(reload); })}
               onNotNow={() => answerWithPin(() => { void saveSettings({ aiAnalysisEnabled: false }).then(reload); })}
             />
           )}

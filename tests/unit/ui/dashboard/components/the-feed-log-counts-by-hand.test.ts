@@ -6,6 +6,10 @@ import type { ForensicRecord } from '../../../../../src/types/forensic';
 import { PLATFORM_LABELS } from '../../../../../src/ui/dashboard/components/color-maps';
 import { FEED_ACTION_OF_KEY, feedAction, feedLogSlice, feedSeverity, feedWhy, windowReachesBefore, windowStart, OLDER_RUN_STOP } from '../../../../../src/ui/dashboard/components/feed-log';
 import { feedActionKeyFor } from '../../../../../src/forensics/feed-action';
+import { EN } from '../../../../../src/i18n/dashboard/en';
+import { ES } from '../../../../../src/i18n/dashboard/es';
+import { PT_BR } from '../../../../../src/i18n/dashboard/pt-br';
+import { RO } from '../../../../../src/i18n/dashboard/ro';
 
 // Noon on 10 Oct 2026, local time.
 const NOW = new Date(2026, 9, 10, 12, 0, 0);
@@ -40,6 +44,12 @@ describe('what Feedprint did, said in one word per thing', () => {
     expect(feedAction(rec(over as Partial<ForensicRecord>))).toBe(action);
   });
 
+  it.each([['en', EN], ['es', ES], ['pt-br', PT_BR], ['ro', RO]] as const)('the household list has its own words in %s', (lang, strings) => {
+    const word = strings.blockedCategoryLabel('Your own list');
+    expect(word.length).toBeGreaterThan(0);
+    if (lang !== 'en') expect(word, 'translated, not the English key').not.toBe('Your own list');
+  });
+
   it('severity is the worst present technique, and none on an ad', () => {
     const r = rec({ verdict: 'flagged', techniques: [{ name: 'shame-attack', severity: 3 }, { name: 'self-harm', severity: 9 }, { name: 'gone', severity: 10, present: false }] as never });
     expect(feedSeverity(r)).toBe(9);
@@ -49,6 +59,11 @@ describe('what Feedprint did, said in one word per thing', () => {
     // A hidden row says why: the rule's category from the record, or that no reason was saved (never empty).
     expect(feedWhy(rec({ verdict: 'blocked', detectionMode: 'block:hashtag:cheap' } as never))).toEqual({ kind: 'blocked', category: 'Blocked hashtags' });
     expect(feedWhy(rec({ verdict: 'blocked', detectionMode: 'late-after-rotation:block:ai-label:x' } as never))).toEqual({ kind: 'blocked', category: 'AI-content videos' });
+    // A hide by the household's own list says so (11 Oct 2026: the row read "No reason saved" though the record named
+    // the rule), for a word, a phrase and an account alike, and in every language the dashboard speaks.
+    for (const mode of ['blocklist:word:trump', 'blocklist:account:some-user', 'late-after-rotation:blocklist:phrase:a b']) {
+      expect(feedWhy(rec({ verdict: 'flagged-hidden', detectionMode: mode } as never)), mode).toEqual({ kind: 'blocked', category: 'Your own list' });
+    }
     expect(feedWhy(rec({ verdict: 'blocked' }))).toEqual({ kind: 'noReason' });
     expect(feedWhy(rec({ verdict: 'flagged-hidden', detectionMode: 'block:mystery:x' } as never))).toEqual({ kind: 'noReason' });
     expect(PLATFORM_LABELS.twitter, 'the product calls it X').toBe('x.com');

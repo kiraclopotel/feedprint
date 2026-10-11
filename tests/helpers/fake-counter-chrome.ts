@@ -6,11 +6,13 @@ import { applyUsageIncrement } from '../../src/storage/settings';
 
 export interface FakeCounterChrome {
   state: Record<string, unknown>;
+  /** chrome.storage.session: memory only, never the disk. */
+  session: Record<string, unknown>;
   sent: Array<{ type: string; payload: unknown }>;
 }
 
 export function installCounterChrome(initial: Record<string, unknown> = {}): FakeCounterChrome {
-  const fake: FakeCounterChrome = { state: { ...initial }, sent: [] };
+  const fake: FakeCounterChrome = { state: { ...initial }, session: {}, sent: [] };
   (globalThis as unknown as { chrome: unknown }).chrome = {
     storage: {
       local: {
@@ -18,6 +20,11 @@ export function installCounterChrome(initial: Record<string, unknown> = {}): Fak
         get: vi.fn(async () => ({ ...fake.state })),
         set: vi.fn(async (patch: Record<string, unknown>) => { Object.assign(fake.state, patch); }),
         remove: vi.fn(async (keys: string | string[]) => { for (const k of Array.isArray(keys) ? keys : [keys]) delete fake.state[k]; }),
+      },
+      session: {
+        get: vi.fn(async () => ({ ...fake.session })),
+        set: vi.fn(async (patch: Record<string, unknown>) => { Object.assign(fake.session, patch); }),
+        remove: vi.fn(async (keys: string | string[]) => { for (const k of Array.isArray(keys) ? keys : [keys]) delete fake.session[k]; }),
       },
       onChanged: { addListener: vi.fn() },
     },

@@ -86,8 +86,9 @@ describe('the popup names the videos when the videos are not read', () => {
 });
 
 describe('the pages that were already right stay right', () => {
-  it('watch and shorts are untouched', () => {
-    expect(at('/watch').protections.postScan).toBe(false);
+  it('shorts are untouched, and watch reads both the video and its comments (11 Oct 2026)', () => {
+    expect(at('/watch').protections.postScan).toBe(true);
+    expect(at('/watch').protections.comments).toBe(true);
     expect(at('/shorts/abc').protections.reelsBlockable).toBe(true);
   });
 

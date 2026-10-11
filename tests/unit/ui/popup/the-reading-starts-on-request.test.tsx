@@ -140,7 +140,8 @@ describe('the screen', () => {
     expect(document.activeElement).not.toBe(start);
     expect(document.activeElement).not.toBe(notNow);
     await act(async () => { (host.querySelector('[data-testid="consent-start"]') as HTMLButtonElement).click(); });
-    expect(onStart).toHaveBeenCalledWith(readingConsentText(t, PROVIDER), PROVIDER);
+    // The third argument is the second company (the paid reading's Claude reader); null when the proxy names none.
+    expect(onStart).toHaveBeenCalledWith(readingConsentText(t, PROVIDER), PROVIDER, null);
     await act(async () => { (host.querySelector('[data-testid="consent-not-now"]') as HTMLButtonElement).click(); });
     expect(onNotNow).toHaveBeenCalledTimes(1);
   });

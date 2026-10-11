@@ -46,12 +46,13 @@ const LEVELS: Array<[string, FWSettings]> = [
 ];
 
 // The reading's words, as words (a letter before the match means another word). Case is ignored for the words; AI and
-// IA are matched as written.
+// IA are matched as written. Since 11 Oct 2026 the feature's own name, Live Rephrase, is one of the words: a free install
+// never shows it, and it is what marks the surfaces where a key is held.
 const WORDS: Record<Lang, string> = {
-  en: 'reading|rewrit|model(?![\\p{L}])|beta',
-  ro: 'citi|citește|rescri|model(?![\\p{L}])|beta',
-  es: 'lectura|léeme|reescri|modelo|beta',
-  'pt-BR': 'leitura|leia isso|reescri|modelo|beta',
+  en: 'reading|rewrit|model(?![\\p{L}])|beta|live rephrase',
+  ro: 'citi|citește|rescri|model(?![\\p{L}])|beta|live rephrase',
+  es: 'lectura|léeme|reescri|modelo|beta|live rephrase',
+  'pt-BR': 'leitura|leia isso|reescri|modelo|beta|live rephrase',
 } as Record<Lang, string>;
 const ACRONYM: Record<Lang, string> = { en: 'AI', ro: 'AI', es: 'IA|AI', 'pt-BR': 'IA|AI' } as Record<Lang, string>;
 // The words a person meets: the text, and the tooltips and spoken names on the tags; not class names or links.

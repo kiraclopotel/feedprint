@@ -10,7 +10,9 @@ import { childPreset, teenPreset, presetForMode, offStartPreset } from './preset
 import { isContextAlive, isContextError, markContextInvalidated } from './context-guard';
 import { GROQ_BLENDED_RATE_PER_1M_USD } from './usage-weights';
 import { isOffProduct } from '../product';
+import { utcDayKey } from './utc-day';
 import { coerceLegacyMode, SURFACE_FEATURE_IDS, ALL_FEATURE_IDS } from './settings-shape';
+import { shortReadHash, takeNewReadHashes } from './read-keys';
 import type { DashboardTheme, PopupLook, PresetAudit, BlockActionsPlatforms, VideoControls, FWSettings, PickedBlock, ReadCounts, ReadToday } from './settings-shape';
 import { migrateSettings } from './settings-migrations';
 import { getLocalWithRetry } from './local-read';
@@ -22,15 +24,8 @@ export type { DashboardTheme, PopupLook, PresetAudit, BlockActionsPlatforms, Vid
 export { migrateSettings } from './settings-migrations';
 import type { UsageIncrement, AiCallUsage } from '../types/usage';
 
-/**
- * UTC-day boundary helper. Returns 'YYYY-MM-DD' in UTC. Used by
- * `getSettings()` to gate the daily-counter reset. Local `toDateString()`
- * would let timezone changes (travel, DST) trigger spurious resets
- * mid-day. Exported for unit testing.
- */
-export function utcDayKey(d: Date = new Date()): string {
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
-}
+// The UTC-day helper lives in its own leaf module (diagnostics use it too); settings re-exports it for its callers.
+export { utcDayKey };
 
 /**
  * UTC-month boundary helper. Returns 'YYYY-MM' in UTC. Used by
@@ -808,7 +803,14 @@ export function applyUsageIncrement(increment: UsageIncrement): Promise<void> {
         'counter increment dropped: settings read failed, refusing to write a count computed from the synthetic fail-closed snapshot',
       );
     }
-    await chrome.storage.local.set(counterPatch(settings, increment));
+    // A page that counted comments by key sent short hashes of them: only those new today are added, so a comment
+    // opened again counts once a day. The set is memory only (storage/read-keys.ts); this stored count stays numbers.
+    let effective = increment;
+    if (increment.kind === 'items-read' && increment.commentKeys && increment.commentKeys.length > 0) {
+      const fresh = await takeNewReadHashes(settings.lastResetDate, increment.commentKeys);
+      effective = { ...increment, comments: increment.comments + fresh, commentKeys: undefined };
+    }
+    await chrome.storage.local.set(counterPatch(settings, effective));
     // Drop the cache so the next read sees the just-written value rather than a stale count.
     invalidateSettingsCache();
   });
@@ -860,7 +862,7 @@ function recordUsage(increment: UsageIncrement): Promise<void> {
   return sendUsageIncrement(increment);
 }
 
-// What Receipts read (B10-1). A page tells this module each time it accepts an item as read; the
+// What Feedprint read (B10-1). A page tells this module each time it accepts an item as read; the
 // counts are gathered per page and sent as one increment per platform a moment later (or when the
 // tab is hidden or closed), so a scroll does not send one message per item. Numbers only: the
 // item itself never reaches this module. Off reads no items and keeps no count.
@@ -868,6 +870,8 @@ export type ReadKind = 'post' | 'comment' | 'video';
 
 const READ_FLUSH_MS = 2000;
 const pendingReads = new Map<string, ReadCounts>();
+/** Keys of comments read since the last flush, per platform. They wait here in memory until they are hashed and sent. */
+const pendingReadKeys = new Map<string, string[]>();
 let readFlushTimer: ReturnType<typeof setTimeout> | null = null;
 let readFlushHooked = false;
 
@@ -880,10 +884,15 @@ function hookReadFlush(): void {
 }
 
 /** One item was accepted as read on `platform`. Cheap and synchronous; the write is batched. */
-export function recordItemRead(platform: string, kind: ReadKind): void {
+export function recordItemRead(platform: string, kind: ReadKind, key?: string): void {
   if (isOffProduct()) return;
   const counts = pendingReads.get(platform) ?? { posts: 0, comments: 0, videos: 0 };
-  if (kind === 'video') counts.videos += 1;
+  if (kind === 'comment' && key !== undefined) {
+    // Counted by key: the worker counts it once a day (storage/read-keys.ts), so it is not added here.
+    const keys = pendingReadKeys.get(platform) ?? [];
+    keys.push(key);
+    pendingReadKeys.set(platform, keys);
+  } else if (kind === 'video') counts.videos += 1;
   else if (kind === 'comment') counts.comments += 1;
   else counts.posts += 1;
   pendingReads.set(platform, counts);
@@ -895,9 +904,22 @@ export function recordItemRead(platform: string, kind: ReadKind): void {
 export async function flushItemsRead(): Promise<void> {
   if (readFlushTimer !== null) { clearTimeout(readFlushTimer); readFlushTimer = null; }
   const batch = [...pendingReads];
+  const keyed = new Map(pendingReadKeys);
   pendingReads.clear();
+  pendingReadKeys.clear();
   for (const [platform, counts] of batch) {
-    await recordUsage({ kind: 'items-read', platform, ...counts });
+    // The keys become short one-way hashes here, in the page, so the worker never sees a comment's words. A key that
+    // cannot be hashed is counted plainly, as it was before the hashes existed.
+    const commentKeys: string[] = [];
+    let unhashed = 0;
+    for (const key of keyed.get(platform) ?? []) {
+      const hash = await shortReadHash(key);
+      if (hash) commentKeys.push(hash); else unhashed++;
+    }
+    await recordUsage({
+      kind: 'items-read', platform, ...counts, comments: counts.comments + unhashed,
+      ...(commentKeys.length > 0 ? { commentKeys } : {}),
+    });
   }
 }
 
@@ -1000,7 +1022,7 @@ function parseStoredPinHash(stored: string): StoredPinHash | null {
 }
 
 /** Derive the salted stored form of a secret (PIN or recovery phrase). */
-export async function hashSecretForStorage(secret: string): Promise<string> {
+async function hashSecretForStorage(secret: string): Promise<string> {
   const salt = randomSaltHex();
   const digest = await pbkdf2Hex(secret, salt, PBKDF2_ITERATIONS);
   return `${PIN_HASH_PREFIX}$${PBKDF2_ITERATIONS}$${salt}$${digest}`;
@@ -1010,7 +1032,7 @@ export async function hashSecretForStorage(secret: string): Promise<string> {
  * Compare a candidate secret against a stored hash. Returns the verdict and
  * whether the stored form is the legacy unsalted digest (caller migrates).
  */
-export async function checkStoredSecret(
+async function checkStoredSecret(
   secret: string, stored: string,
 ): Promise<{ ok: boolean; legacy: boolean }> {
   const parsed = parseStoredPinHash(stored);
@@ -1117,7 +1139,7 @@ export function generateRecoveryPhrase(): string {
 }
 
 /** Canonical form for hashing and comparison: uppercase, separators dropped. */
-export function normalizeRecoveryPhrase(input: string): string {
+function normalizeRecoveryPhrase(input: string): string {
   return input.toUpperCase().replace(/[^A-Z0-9]/g, '');
 }
 

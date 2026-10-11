@@ -9,6 +9,7 @@ import type { FWSettings } from '../../storage/settings';
 import { isFeatureEnabled } from '../../storage/settings';
 import { markHidden, unmarkHidden } from './mark-hidden';
 import { noteSelectorFamilySweep } from './selector-family-miss';
+import { selectorFamily } from '../../core/repairs/families';
 import { createRafBodyObserver, trailingThrottle } from '../post-path/raf-observer';
 import { ensureStyleTag, removeStyleTag } from './style-tag';
 
@@ -157,13 +158,13 @@ function controlMetrics(settings: FWSettings): void {
     [data-fw-yt-metric="hidden"] {
       visibility: hidden !important;
     }
-    ${TILE_COUNT_SELECTORS.join(',\n    ')} {
+    ${selectorFamily('finder.youtube.tile-counts', TILE_COUNT_SELECTORS).join(',\n    ')} {
       display: none !important;
     }
   `);
 
   let matched = 0;
-  for (const sel of COUNT_SELECTORS) {
+  for (const sel of selectorFamily('finder.youtube.counts', COUNT_SELECTORS)) {
     document.querySelectorAll<HTMLElement>(sel).forEach(el => {
       matched += 1;
       if (!markHidden(el, {
@@ -196,7 +197,7 @@ function controlActions(settings: FWSettings): void {
   `);
 
   let matched = 0;
-  for (const sel of ACTION_SELECTORS) {
+  for (const sel of selectorFamily('finder.youtube.actions', ACTION_SELECTORS)) {
     document.querySelectorAll<HTMLElement>(sel).forEach(el => {
       matched += 1;
       if (!markHidden(el, {
@@ -225,7 +226,7 @@ function controlCommentPosting(settings: FWSettings): void {
   `);
 
   let matched = 0;
-  for (const sel of COMMENT_BLOCK_SELECTORS) {
+  for (const sel of selectorFamily('finder.youtube.comment-block', COMMENT_BLOCK_SELECTORS)) {
     document.querySelectorAll<HTMLElement>(sel).forEach(el => {
       matched += 1;
       if (!markHidden(el, {

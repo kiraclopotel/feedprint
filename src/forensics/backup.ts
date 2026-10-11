@@ -192,7 +192,7 @@ export type RestoreFailureReason =
  * `history-not-restored` is the total loss (nothing the file carried is
  * readable afterwards); `history-partly-restored` is the shortfall.
  */
-export type RestoreHistoryNoteReason =
+type RestoreHistoryNoteReason =
   | 'history-partly-restored'
   | 'history-not-restored';
 

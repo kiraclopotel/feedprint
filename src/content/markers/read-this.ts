@@ -1,4 +1,4 @@
-// Receipts, Adult mode: "Read this for me".
+// Feedprint, Adult mode: "Read this for me".
 //
 // A reading aid that answers when asked and is silent otherwise
 // (docs/design/ADULT-MODE-2026-09-05.md). The popup arms it (a timestamp in

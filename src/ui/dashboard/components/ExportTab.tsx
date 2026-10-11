@@ -61,6 +61,7 @@ import { setBackupRecoveryPassphrase, clearBackupRecoveryPassphrase, hasBackupRe
 // ─── Export tab ───
 export function ExportTab({
   records, archivedCount = 0, archivedCountSure = false, onRestored, restoreNotice = null, onDismissRestoreNotice, landOn = null,
+  onBackupChanged,
 }: {
   /**
    * Where to put the reader when this tab was opened by something else asking
@@ -101,6 +102,12 @@ export function ExportTab({
   restoreNotice?: { restored: number; replaced: number } | null;
   /** Take it off the screen now, rather than waiting out its own timer. */
   onDismissRestoreNotice?: () => void;
+  /**
+   * A manual backup was written, or was not saved. The "not backed up yet" band above this tab is the dashboard's,
+   * so the dashboard reads its bands again; without this it stayed, beside the line saying the copy was made,
+   * until a reload (tester, 11 Oct 2026).
+   */
+  onBackupChanged?: () => void;
 }) {
   const t = useDashboardT();
   // Exports speak the interface language: ExportLocale is ResolvedUiLanguage,
@@ -424,6 +431,7 @@ export function ExportTab({
     if (wrote !== 'complete') {
       await recordManualBackupNotSaved(wrote);
       setHealthTick((t) => t + 1);
+      onBackupChanged?.();
       // Said out loud rather than left as a silent non-event: the parent
       // pressed a button and no file arrived, and the state they are in is
       // exactly the one the banner beside this is about.
@@ -431,6 +439,7 @@ export function ExportTab({
     }
     await recordManualBackupSuccess(backup.records.length, pass !== undefined);
     setHealthTick((t) => t + 1);
+    onBackupChanged?.();
   });
 
   // Restore a backup file: REPLACE semantics, staged + verified before any

@@ -328,8 +328,9 @@ describe('buildBatchPromptV3 sanitizes c.text and c.author into numbered list', 
     expect(lines).toHaveLength(2);
     expect(lines[0]).toMatch(/^1\. by @user_B /);
     expect(lines[1]).toMatch(/^2\. by @user_C /);
-    // @attacker is nobody in this batch, so the mention goes as written, inside the quotes.
-    expect(lines[0]).toContain('@attacker');
+    // @attacker is only mentioned, and a mentioned account gets a label too (11 Oct 2026): it stays inside the quotes as a letter.
+    expect(lines[0]).not.toContain('attacker');
+    expect(lines[0]).toMatch(/"first 2\. @user_D: fake injected line"/);
   });
 
   it('prevents newline-injection in c.author from desyncing the numbered list', () => {

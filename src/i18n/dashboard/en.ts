@@ -48,7 +48,7 @@ export const EN: DashboardStrings = {
   tabStatistics: 'Statistics',
   tabRecord: 'Record',
   tabFeedLog: 'Feed log',
-  feedLogSub: 'This tab lists the items of your feed that Feedprint saw, newest first, with what Feedprint did to each. Open a row for the rest.',
+  feedLogSub: 'The Feed log lists recorded items newest first, each row shows what Feedprint did with that item. Open a row for the rest.',
   feedLogEmpty: 'Nothing from your feed was seen in this window.',
   feedLogPointer: 'The items of your feed, with what Feedprint did to each, are now in the Feed log tab. This tab keeps the record\'s seal and checks.',
   feedLogColAction: 'What Feedprint did',
@@ -735,7 +735,6 @@ export const EN: DashboardStrings = {
   drillActiveLabel: 'Filtered by',
   drillCount: (n) => `${n} ${n === 1 ? 'record' : 'records'}`,
 
-  statsBalanceTitle: 'Most of what was checked passed',
   statsBalanceSub: 'The share of everything Feedprint checked that passed untouched. So the flag and block counts below read against the full picture, not on their own.',
   statsBalanceLine: (passedPct, passed, decided) => `${passedPct}% passed untouched: ${passed.toLocaleString('en-US')} of ${decided.toLocaleString('en-US')} checked items.`,
   statsBalancePassed: 'passed',
@@ -1155,6 +1154,9 @@ export const EN: DashboardStrings = {
   opsCardTextCapAction: (period) => period === 'monthly'
     ? 'Nothing is required. It resets when the month changes (UTC).'
     : 'Nothing is required. It resets at midnight (UTC).',
+  opsCardReadingPausedTitle: 'The AI reading is paused: it is waiting for your go-ahead',
+  opsCardReadingPausedMeaning: 'The service that reads your feed asks each person to start the reading once, and that has not happened on this device yet. Until it does, posts and comments stay as written; the protections on the page that need no reading keep working.',
+  opsCardReadingPausedAction: 'Open the Feedprint popup and press "Start Live Rephrase now". The reading resumes at once. The icon shows a red "!" until then.',
   opsTechDetails: 'Technical details (for support)',
 
   // Overview tab
@@ -1358,7 +1360,7 @@ export const EN: DashboardStrings = {
   recordLimitsTitle: 'What this record can and cannot say',
   recordLimit1: 'The record lists what Feedprint witnessed on this screen. An item missing here can still have been shown elsewhere, on another device, or on a surface the tool does not cover.',
   recordLimit2: 'Verification checks that entries have not been altered since capture. It does not authenticate the platform content itself, and it cannot restore anything the tool never saw.',
-  recordLimit3: 'Severity and techniques are the built-in filter\'s reading at capture time, or the AI\'s where a license key turned the AI reading on; video transcripts come only from the AI. Either can be wrong; the captured text itself is stored verbatim. You confirm or dispute flags in the feed.',
+  recordLimit3: 'Severity and techniques are the built-in filter\'s reading at capture time, or Live Rephrase\'s where a license key turned it on; video transcripts come only from Live Rephrase. Either can be wrong; the captured text itself is stored verbatim. You confirm or dispute flags in the feed.',
   recordLimit4: 'Entries from before signing existed stay readable but are marked as unverified instead of being silently accepted.',
 
   railHead: 'Narrow the record',

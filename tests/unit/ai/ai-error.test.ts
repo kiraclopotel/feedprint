@@ -98,6 +98,7 @@ describe('AIFailure discriminated union narrowing', () => {
       { kind: 'rate-limit', retryAfterMs: 5000 },
       { kind: 'json-refusal' },
       { kind: 'auth-refusal' },
+      { kind: 'consent-required' },
       { kind: 'content-policy' },
       { kind: 'network' },
       { kind: 'network', message: 'fetch failed' },
@@ -124,6 +125,9 @@ describe('AIFailure discriminated union narrowing', () => {
           break;
         case 'auth-refusal':
           label = 'auth-refusal';
+          break;
+        case 'consent-required':
+          label = 'consent-required';
           break;
         case 'content-policy':
           label = 'content-policy';

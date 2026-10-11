@@ -7,11 +7,23 @@
 
 import { sha256 } from '../forensics/hasher';
 import type { LicenseInfo } from './license';
+import { clearReadingPause } from './reading-pause';
 
 /** Moves whenever the screen's words change, so a stored consent names the text it was given to. */
-export const READING_CONSENT_TEXT_VERSION = 'reading-consent-2';
+// 3 since 11 Oct 2026: the screen's title, its no-company line and its button name the feature Live Rephrase.
+export const READING_CONSENT_TEXT_VERSION = 'reading-consent-3';
 
 const STORAGE_KEY = 'readingConsent';
+
+// The Claude reading sends the text to a second company, so it is asked for on its own screen and
+// kept apart: a consent for the ordinary reading never starts it (worker/src/proxy.ts claudeConsentGate).
+const CLAUDE_CONSENT_TEXT_VERSION = 'claude-reading-consent-1';
+const CLAUDE_STORAGE_KEY = 'claudeReadingConsent';
+
+/** Which consent: the ordinary reading's, or the Claude reading's. */
+type ConsentScope = 'reading' | 'claude';
+const KEY_OF: Record<ConsentScope, string> = { reading: STORAGE_KEY, claude: CLAUDE_STORAGE_KEY };
+const VERSION_OF: Record<ConsentScope, string> = { reading: READING_CONSENT_TEXT_VERSION, claude: CLAUDE_CONSENT_TEXT_VERSION };
 
 export interface ReadingConsent {
   textVersion: string;
@@ -34,33 +46,42 @@ async function slotFor(bearer: string): Promise<string> {
   return (await sha256(bearer)).slice(0, 32);
 }
 
-async function readAll(): Promise<Record<string, ReadingConsent>> {
+async function readAll(key = STORAGE_KEY): Promise<Record<string, ReadingConsent>> {
   try {
-    const got = await chrome.storage.local.get(STORAGE_KEY);
-    const all = got[STORAGE_KEY];
+    const got = await chrome.storage.local.get(key);
+    const all = got[key];
     return all && typeof all === 'object' ? (all as Record<string, ReadingConsent>) : {};
   } catch {
     return {};
   }
 }
 
-export async function getReadingConsent(bearer: string): Promise<ReadingConsent | null> {
-  const all = await readAll();
+export async function getReadingConsent(bearer: string, scope: 'reading' | 'claude' = 'reading'): Promise<ReadingConsent | null> {
+  const all = await readAll(KEY_OF[scope]);
   // Every paid call asks, and most installs hold no consent at all: no digest is worth computing then.
   if (Object.keys(all).length === 0) return null;
   return all[await slotFor(bearer)] ?? null;
 }
 
-export async function recordReadingConsent(bearer: string, shownText: string, provider: string, now = new Date()): Promise<ReadingConsent> {
+export async function recordReadingConsent(
+  bearer: string,
+  shownText: string,
+  provider: string,
+  now = new Date(),
+  scope: 'reading' | 'claude' = 'reading',
+): Promise<ReadingConsent> {
+  const key = KEY_OF[scope];
   const consent: ReadingConsent = {
-    textVersion: READING_CONSENT_TEXT_VERSION,
+    textVersion: VERSION_OF[scope],
     textHash: await sha256(shownText),
     at: now.toISOString(),
     provider,
   };
-  const all = await readAll();
+  const all = await readAll(key);
   all[await slotFor(bearer)] = consent;
-  await chrome.storage.local.set({ [STORAGE_KEY]: all });
+  await chrome.storage.local.set({ [key]: all });
+  // The go-ahead the relay asked for is given: whatever paused the key for it ends now (storage/reading-pause.ts).
+  if (scope === 'reading') await clearReadingPause();
   return consent;
 }
 

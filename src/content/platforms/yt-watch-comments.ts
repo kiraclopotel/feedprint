@@ -45,6 +45,8 @@ import { bumpCounter, registerHeapGauge, registerHeapValve } from '../../diagnos
 import { ChurnBreaker } from '../post-path/churn-breaker';
 import { noteGap } from '../record/gap-ledger';
 import { recordItemRead } from '../../storage/settings';
+import { emojiPictureText, TEXT_FROM_PICTURES_ATTRIBUTE } from '../../core/emoji-picture';
+import { onCommentGivenBack } from '../post-path/viewport-tracker';
 import { releaseMarkedElement } from '../injector';
 
 /**
@@ -96,6 +98,26 @@ let onVisibility: (() => void) | null = null;
 let onYtNavigate: (() => void) | null = null;
 
 const seenCommentKeys = new Set<string>();
+/** The comments already counted as read on this page, so one given back and read again is not counted twice. */
+const countedCommentKeys = new Set<string>();
+let stopGivenBack: (() => void) | null = null;
+
+/** The reader's key for a comment, from the same two things it was keyed by when it was read. */
+function commentKeyOf(author: string, text: string): string {
+  return `${author}|${text.slice(0, 160)}`;
+}
+
+/**
+ * The queue gave this comment back (a cooldown refused it, or it was dropped unjudged): forget it here, so the next
+ * scan reads it again. The top comment's stamp sits on its thread, a reply's on its own element.
+ */
+function forgetGivenBackComment(post: PostContent): void {
+  if (post.platform !== 'youtube') return;
+  seenCommentKeys.delete(commentKeyOf(post.author, post.text));
+  const textEl = post.domRef?.deref();
+  const box = textEl?.closest<HTMLElement>(YT_REPLY_SELECTOR) ?? textEl?.closest<HTMLElement>('ytd-comment-thread-renderer');
+  if (box) delete box.dataset.fwYtSeen;
+}
 const emittedVideoIds = new Set<string>();
 registerHeapGauge('ytWatch.seenCommentKeys', () => seenCommentKeys.size);
 
@@ -215,37 +237,49 @@ function scan(): void {
   const threads = container.querySelectorAll<HTMLElement>('ytd-comment-thread-renderer');
   const newComments: PostContent[] = [];
 
-  for (const thread of threads) {
-    if (newComments.length >= YT_WATCH_MAX_COMMENTS_PER_SCAN) break;
-    if (thread.dataset.fwYtSeen === 'true') continue;
+  // One comment, top or reply. `box` is what carries the "seen" mark and holds the author, the link and the body:
+  // the thread for its top comment (the first body in it is the top's, ahead of every reply), the reply's own
+  // element for a reply. Returns whether it was read; an empty body is left unmarked so a later scan reads it.
+  const read = (box: HTMLElement, kind: 'top-comment' | 'reply'): void => {
+    if (newComments.length >= YT_WATCH_MAX_COMMENTS_PER_SCAN) return;
+    if (box.dataset.fwYtSeen === 'true') return;
 
     // Attribute-equality form rather than `#id`: YouTube duplicates these
     // ids across every thread, and scoped `#id` queries hit engine
     // getElementById fast paths (first-in-document match) — jsdom's nwsapi
     // returns null for later threads. `[id="…"]` matches per-subtree.
-    const textEl = thread.querySelector<HTMLElement>('[id="content-text"]');
-    const text = textEl?.textContent?.trim() ?? '';
-    if (text.length < 2) continue;
-    const author = thread.querySelector<HTMLElement>('[id="author-text"]')?.textContent?.trim()
+    const textEl = box.querySelector<HTMLElement>('[id="content-text"]');
+    let text = textEl?.textContent?.trim() ?? '';
+    // A comment made only of emoji has no words: YouTube draws each emoji as a picture whose alt is the emoji. It is
+    // read from the pictures (11 Oct 2026); a comment with words keeps only its words, as before.
+    let fromPictures = false;
+    if (text === '' && textEl) {
+      text = emojiPictureText(textEl);
+      fromPictures = text !== '';
+    }
+    if (text.length < (fromPictures ? 1 : 2)) return;
+    const author = box.querySelector<HTMLElement>('[id="author-text"]')?.textContent?.trim()
       || 'unknown';
 
-    const key = `${author}|${text.slice(0, 160)}`;
+    const key = commentKeyOf(author, text);
     if (seenCommentKeys.has(key)) {
-      thread.dataset.fwYtSeen = 'true';
-      continue;
+      box.dataset.fwYtSeen = 'true';
+      return;
     }
 
     // Prefer YouTube's own comment id (the `lc=` permalink param) so the
     // record id is stable across sessions; fall back to a deterministic
     // author+text hash (never a random UUID — chain-id stability, spec
     // cross-cutting theme A).
-    const lcHref = thread.querySelector<HTMLAnchorElement>('a[href*="lc="]')
+    const lcHref = box.querySelector<HTMLAnchorElement>('a[href*="lc="]')
       ?.getAttribute('href') ?? '';
     const lcMatch = lcHref.match(/[?&]lc=([^&#]+)/);
     const commentId = lcMatch ? lcMatch[1] : hashKey(key);
 
     addCapped(seenCommentKeys, key, YT_WATCH_MAX_SEEN_KEYS);
-    thread.dataset.fwYtSeen = 'true';
+    box.dataset.fwYtSeen = 'true';
+    // So the render gate reads this body the way it was read here (anchor-revalidation.ts).
+    if (fromPictures && textEl) textEl.dataset[TEXT_FROM_PICTURES_ATTRIBUTE] = 'true';
     newComments.push({
       id: `yt-c-${commentId}`,
       text,
@@ -268,22 +302,38 @@ function scan(): void {
       // and TikTok already do and what that recovery table has always named as
       // YouTube's marker host. Found 2026-09-19; the thread is still what
       // carries `fwYtSeen`, so dedup granularity is unchanged.
-      domRef: new WeakRef(textEl ?? thread),
+      domRef: new WeakRef(textEl ?? box),
       feedSource: 'video',
       sourceUrl: `${watchUrl}&lc=${commentId}`,
       // 'top-comment', not the 'comment' alias. The alias is legal and the
       // assemblers accept it again, but the modern kind carries the level
-      // explicitly and needs no resolution step.
-      kind: 'top-comment',
-      depth: 1,
+      // explicitly and needs no resolution step. A reply is a 'reply' one level down.
+      kind,
+      depth: kind === 'reply' ? 2 : 1,
       parentVideoId,
       platform_specific: { platform: 'youtube', surfaceKind: 'youtube-watch' },
     });
+  };
+
+  for (const thread of threads) {
+    if (newComments.length >= YT_WATCH_MAX_COMMENTS_PER_SCAN) break;
+    read(thread, 'top-comment');
+    // The replies a person opens under a comment (11 Oct 2026, the night walk: 104 threads, 4 opened, 102 comments read
+    // and no reply). They load after the thread was first seen, so they are looked for on every scan, whatever became
+    // of the top comment, which may itself be empty (an emoji-only comment).
+    for (const reply of thread.querySelectorAll<HTMLElement>(YT_REPLY_SELECTOR)) {
+      read(reply, 'reply');
+    }
   }
 
   // A thread seen for the first time is a comment read (B10-1); one already seen is not counted again.
   for (const comment of newComments) {
-    recordItemRead('youtube', 'comment');
+    const countedKey = commentKeyOf(comment.author, comment.text);
+    if (!countedCommentKeys.has(countedKey)) {
+      addCapped(countedCommentKeys, countedKey, YT_WATCH_MAX_SEEN_KEYS);
+      // Counted by key (the video, the author and the start of the words) so a revisit does not count it again.
+      recordItemRead('youtube', 'comment', `${videoId}|${countedKey}`);
+    }
     sink.emitPost(comment);
   }
 }
@@ -324,6 +374,8 @@ function attachObserver(container: HTMLElement): void {
   observer.observe(container, { childList: true, subtree: true });
 }
 
+/** A reply under a thread's top comment: the replies box holds one comment element per reply. */
+const YT_REPLY_SELECTOR = 'ytd-comment-replies-renderer ytd-comment-view-model, ytd-comment-replies-renderer ytd-comment-renderer';
 const WATCH_TITLE_SELECTOR = 'h1.ytd-watch-metadata yt-formatted-string, h1.title yt-formatted-string';
 let markedVideoId: string | null = null;
 
@@ -360,6 +412,7 @@ function disarm(clearState: boolean): void {
   }
   if (clearState) {
     seenCommentKeys.clear();
+    countedCommentKeys.clear();
     emittedVideoIds.clear();
   }
 }
@@ -442,10 +495,12 @@ export function initYtWatchComments(commentSink: YtWatchCommentSink): () => void
     onYtNavigate = () => {
       disarm(false);
       seenCommentKeys.clear();
+      countedCommentKeys.clear();
       releaseWatchTitleMark();
       arm();
     };
     document.addEventListener('yt-navigate-finish', onYtNavigate);
+    stopGivenBack = onCommentGivenBack(forgetGivenBackComment);
 
     arm();
   }).catch(() => {
@@ -466,6 +521,8 @@ export function initYtWatchComments(commentSink: YtWatchCommentSink): () => void
       document.removeEventListener('yt-navigate-finish', onYtNavigate);
       onYtNavigate = null;
     }
+    stopGivenBack?.();
+    stopGivenBack = null;
   };
 }
 

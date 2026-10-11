@@ -94,11 +94,11 @@ export interface WordFilterPolicy {
   blocklist: ParentBlocklistValue;
   /** Replace swearing with asterisks (Child mode, or "no swearing" on). */
   starSwearing: boolean;
-  /** Hide slurs. Off beside a Receipts that hides them itself leaves them to it, so a slur is hidden once. */
+  /** Hide slurs. Off beside a Feedprint that hides them itself leaves them to it, so a slur is hidden once. */
   hideSlurs?: boolean;
 }
 
-/** Which of the rules with no switch of their own this filter runs; Off's controller leaves slurs to Receipts. */
+/** Which of the rules with no switch of their own this filter runs; Off's controller leaves slurs to Feedprint. */
 export interface WordFilterRules {
   slurs?: boolean;
 }
@@ -279,10 +279,10 @@ function starSwearingIn(scope: Element): void {
   }
 }
 
-// Receipts' hide, on the post or a box around it. A second hide from Off would keep the post hidden after
-// the person clicks Receipts' Show, so Off leaves a post Receipts hid, or hid and the person showed again.
-// The attribute alone is not enough: a feed reuses its boxes, and Receipts' mark can outlive its hide.
-// Receipts' fold sits on the post's text, inside the box Off would hide, and stays when the person opens it;
+// Feedprint's hide, on the post or a box around it. A second hide from Off would keep the post hidden after
+// the person clicks Feedprint's Show, so Off leaves a post Feedprint hid, or hid and the person showed again.
+// The attribute alone is not enough: a feed reuses its boxes, and Feedprint's mark can outlive its hide.
+// Feedprint's fold sits on the post's text, inside the box Off would hide, and stays when the person opens it;
 // a fold on a comment drawn inside the post's box (Facebook) is the comment's, not the post's.
 const RECORDER_HIDE = '[data-fw-hard-hidden="true"], [data-fw-ad-hidden="true"]';
 const RECORDER_FOLD = '[data-fw-action="collapse"], [data-fw-action="hide"]';
@@ -361,7 +361,7 @@ export function resetWordFilterDOM(): void {
 
 /**
  * Start the word filter for one page. Returns the cleanup. Alone the slur
- * rule is always on; beside a Receipts that hides slurs and stars swearing,
+ * rule is always on; beside a Feedprint that hides slurs and stars swearing,
  * an empty own list leaves this filter nothing to do.
  */
 export function startWordFilter(platform: Platform, settings: FWSettings, rules: WordFilterRules = {}): () => void {

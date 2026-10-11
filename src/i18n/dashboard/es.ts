@@ -58,7 +58,7 @@ export const ES: DashboardStrings = {
   tabStatistics: 'Estadísticas',
   tabRecord: 'Registro',
   tabFeedLog: 'Bitácora del feed',
-  feedLogSub: 'Esta pestaña muestra los elementos de tu feed que Feedprint vio, primero los más recientes, y lo que hizo con cada uno. Abre una fila para ver el detalle.',
+  feedLogSub: 'La Bitácora del feed muestra los elementos registrados, los más recientes primero, y cada fila indica qué hizo Feedprint con ese elemento. Abre una fila para ver el detalle.',
   feedLogEmpty: 'No se vio nada de tu feed en esta ventana.',
   feedLogPointer: 'Los elementos de tu feed, con lo que Feedprint hizo con cada uno, están ahora en la Bitácora del feed. Esta pestaña conserva el sello del registro y las verificaciones.',
   feedLogColAction: 'Qué hizo Feedprint',
@@ -745,7 +745,6 @@ export const ES: DashboardStrings = {
   drillActiveLabel: 'Filtrado por',
   drillCount: (n) => `${esNum(n)} ${n === 1 ? 'registro' : 'registros'}`,
 
-  statsBalanceTitle: 'Casi todo lo revisado pasó',
   statsBalanceSub: 'La parte de todo lo que Feedprint revisó que pasó sin tocarse. Así los recuentos de avisos y bloqueos de abajo se leen contra el cuadro completo, no por su cuenta.',
   statsBalanceLine: (passedPct, passed, decided) => `${esNum(passedPct)}% pasó sin tocarse: ${passed.toLocaleString('es-ES')} de ${decided.toLocaleString('es-ES')} elementos revisados.`,
   statsBalancePassed: 'pasaron',
@@ -1162,6 +1161,9 @@ export const ES: DashboardStrings = {
   opsCardTextCapAction: (period) => period === 'monthly'
     ? 'No hace falta nada. Se reinicia al cambiar el mes (UTC).'
     : 'No hace falta nada. Se reinicia a medianoche (UTC).',
+  opsCardReadingPausedTitle: 'La lectura con IA está en pausa: espera tu visto bueno',
+  opsCardReadingPausedMeaning: 'El servicio que lee tu feed pide que cada persona inicie la lectura una vez, y eso todavía no se hizo en este dispositivo. Mientras tanto, las publicaciones y los comentarios se ven tal como fueron escritos; las protecciones de la página que no necesitan lectura siguen funcionando.',
+  opsCardReadingPausedAction: 'Abre la ventana de Feedprint y pulsa "Empezar Live Rephrase ahora". La lectura se reanuda enseguida. El icono muestra un "!" rojo hasta entonces.',
   opsTechDetails: 'Detalles técnicos (para soporte)',
 
   // Overview tab
@@ -1365,7 +1367,7 @@ export const ES: DashboardStrings = {
   recordLimitsTitle: 'Qué puede y qué no puede decir este registro',
   recordLimit1: 'El registro lista lo que Feedprint presenció en esta pantalla. Un elemento que falta aquí puede haberse mostrado igualmente en otro sitio, en otro dispositivo o en una superficie que la herramienta no cubre.',
   recordLimit2: 'La verificación comprueba que las entradas no se han alterado desde la captura. No autentica el contenido de la plataforma en sí, y no puede recuperar nada que la herramienta nunca viera.',
-  recordLimit3: 'La gravedad y las técnicas son la lectura del filtro integrado en el momento de la captura, o la de la IA donde una clave de licencia activó el análisis con IA; las transcripciones de video solo vienen de la IA. Cualquiera de las dos puede equivocarse; el texto capturado en sí se guarda literal. Tú confirmas o discutes los avisos en el feed.',
+  recordLimit3: 'La gravedad y las técnicas son la lectura del filtro integrado en el momento de la captura, o la de Live Rephrase donde una clave de licencia activó Live Rephrase; las transcripciones de video solo vienen de Live Rephrase. Cualquiera de las dos puede equivocarse; el texto capturado en sí se guarda literal. Tú confirmas o discutes los avisos en el feed.',
   recordLimit4: 'Las entradas anteriores a que existiera la firma siguen siendo legibles, pero se marcan como no verificadas en vez de aceptarse en silencio.',
 
   railHead: 'Acota el registro',

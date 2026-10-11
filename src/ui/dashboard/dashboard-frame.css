@@ -305,3 +305,25 @@
 /* The record's reason sits on its own line under the item's words. Inline, it ran straight on from the text ("ads]Why:",
    "example-app.test/Why:") and read as part of what the feed showed. */
 .fc-decision { display: block; margin-top: 6px; font-size: .875rem; color: var(--fw-muted); }
+
+/* A narrow window (a phone-width side panel, a split screen). Measured 11 Oct 2026 at 375 px on a seeded record: Feed
+   behaviour's cards ran 218 px past the right edge, Overview's week grid 179 px with no way to scroll, the Issues card
+   18 px with its heading one word per line, and three Statistics tiles across clipped their labels. The twelve-column
+   grids used plain 1fr, which never shrinks below its widest line; minmax(0, 1fr) lets a card be the window's width. */
+.fb-grid, .stats-grid { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+.ov-heat-wrap { grid-template-columns: 44px minmax(0, 1fr); min-width: 0; max-width: 100%; }
+/* Below 980 every Feed behaviour card already spans the row, but the twelve tracks kept their eleven 48 px gaps:
+   528 px of gap in a 311 px box. One track instead, and the second card takes its hairline like the rest. */
+@media (max-width: 980px) {
+  .fb-grid { grid-template-columns: minmax(0, 1fr); column-gap: 0 !important; }
+  .fb-grid > *, .fb-grid > .fb-card.fb-card-empty { grid-column: 1 / -1 !important; }
+  .fb-grid > .fb-card:nth-child(2) { border-top: 1px solid var(--fw-line) !important; }
+  .fb-grid > .fb-card.interp:nth-child(2) { border-top: 1px dashed var(--fw-ink) !important; }
+}
+@media (max-width: 640px) {
+  .fb-grid { padding: 0 16px; }
+  .stats-grid > .stats-card.third { grid-column: span 6; }
+  .ops-allgood { grid-template-columns: minmax(0, 1fr); padding: 24px 20px 20px !important; }
+  /* Every six hours instead of every three: nine labels of five characters do not fit in 300 px. */
+  .ov-sess-axis > .ov-sess-hour:nth-child(4n + 3) { display: none; }
+}

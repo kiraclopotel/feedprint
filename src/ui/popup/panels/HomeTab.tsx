@@ -4,11 +4,13 @@
 // lines holding every panel at once. Popup.tsx re-exports the names it exported before.
 
 import { type ProxyProbeResult, TEXT_CAP_STORAGE_KEY } from '../../../ai/client';
+import { CLAUDE_PAUSE_STORAGE_KEY } from '../../../ai/claude-reader';
+import { bearerOf, getReadingConsent } from '../../../storage/reading-consent';
 import { usePopupT, useUiLanguage } from '../../../i18n/react';
 import { formatCount } from '../../shared/format-number';
 import { LicenseInfo, dailyCapForTier, effectiveMonthlyTokenCap, isUncappedTier } from '../../../storage/license';
 import { FWSettings, utcDayKey } from '../../../storage/settings';
-import { levelMakesNoCalls } from '../../../types/mode';
+import { levelMakesNoCalls, makesNoOutsideCall } from '../../../types/mode';
 import { ShieldAlert } from '../../shared/icons/lucide';
 import { PLATFORM_LABELS, type PageCoverage, describePageCoverage } from '../coverage-map';
 import { StatusLine } from '../../shared/StatusLine';
@@ -16,6 +18,8 @@ import { getFwVersion } from '../fw-version';
 import { pageOf, reportMailto, switchesOnFor, type PageKind } from '../report-link';
 import { makerMailto, readLastError, readRecordKeyId } from '../maker-mail';
 import { HomeFoot } from '../HomeFoot';
+import { DescribePage } from '../DescribePage';
+import { sendDomReport } from '../send-dom-report';
 import { receiptsSwitchIds } from './SettingsPanel';
 import type { Platform } from '../../../types/post';
 import { computeAiBannerState } from './status';
@@ -164,6 +168,24 @@ export function KeyUsage({ settings, license, probeResult = null }: {
     ? Math.min(100, Math.round((settings.totalTokensThisMonth / monthlyTokenCap) * 100))
     : 0;
   const [pausedText, setPausedText] = useState<'daily' | 'monthly' | null>(null);
+  // The paid reading's second company: on while a consent for it is stored for this key; paused while the
+  // reader's own marker says a limit or a refusal stopped it (src/ai/claude-reader.ts).
+  const [claudeReading, setClaudeReading] = useState<'off' | 'on' | 'paused'>('off');
+  useEffect(() => {
+    if (typeof chrome === 'undefined' || !chrome.storage?.local || tier === 'free' || !license.secret) return;
+    let cancelled = false;
+    void (async () => {
+      const consent = await getReadingConsent(bearerOf(license), 'claude');
+      if (cancelled) return;
+      if (!consent) { setClaudeReading('off'); return; }
+      const stored = await chrome.storage.local.get([CLAUDE_PAUSE_STORAGE_KEY]).catch(() => ({} as Record<string, unknown>));
+      if (cancelled) return;
+      const marker = stored[CLAUDE_PAUSE_STORAGE_KEY] as { until?: string } | undefined;
+      const until = marker?.until ? Date.parse(marker.until) : NaN;
+      setClaudeReading(Number.isFinite(until) && until > Date.now() ? 'paused' : 'on');
+    })();
+    return () => { cancelled = true; };
+  }, [tier, license.secret]);
   useEffect(() => {
     if (typeof chrome === 'undefined' || !chrome.storage?.local) return;
     let cancelled = false;
@@ -197,6 +219,11 @@ export function KeyUsage({ settings, license, probeResult = null }: {
       )}
       {/* Period-scoped pause lines: the worker said the limit is reached.
           Same facts as the dashboard Issues cards, one line each. */}
+      {claudeReading !== 'off' && !levelMakesNoCalls(settings) && (
+        <div className="meta" data-testid="claude-reading-line" style={{ marginTop: 2 }}>
+          {claudeReading === 'paused' ? t.claudePausedLine : t.claudeStopsFirst}
+        </div>
+      )}
       {pausedText && !levelMakesNoCalls(settings) && (
         // role="status" (accessibility audit, 2026-09-18): the result of
         // hitting a cap is one of the ten the audit found announced to
@@ -297,6 +324,11 @@ export function HomeTab({
             {coverage === null
               ? t.coverageNoSite
               : coverage.fullyProtected ? t.pageRecording(coverage.platformLabel) : t.pageLimited(coverage.platformLabel)}
+            {/* Why the page is only partly covered, in a sentence the coverage map already wrote for it (11 Oct 2026:
+                "limited here" stood alone, the reason computed and never shown). */}
+            {coverage && !coverage.fullyProtected && coverage.gapNote && (
+              <span className="home-status-note">{coverage.gapNote}</span>
+            )}
           </span>
         </div>
       )}
@@ -365,6 +397,14 @@ export function HomeTab({
         {/* One button: "Read this for me" came off Home on the owner's word. */}
         <button className="pop-cta" onClick={onOpenDashboard}>{t.openDashboard}</button>
       </div>
+
+      {/* A closed fold: a picture of how this page is built, no words in it, shown in full before it can be sent (11 Oct 2026).
+          At a level that makes no outside call it can only be copied. */}
+      <DescribePage
+        tabId={async () => (await queryCoverageTab(isDetached))?.id}
+        send={makesNoOutsideCall(settings) ? undefined : sendDomReport}
+        noCalls={makesNoOutsideCall(settings)}
+      />
 
       {/* 4. The bottom row: version, style, theme, the contact menu, privacy. */}
       <HomeFoot

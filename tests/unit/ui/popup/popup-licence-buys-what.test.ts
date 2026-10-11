@@ -62,10 +62,11 @@ describe('the licence sells the reading, not the time stamps', () => {
 
   it.each(UI_LANGUAGES)('%s: the licence copy names the reading instead', lang => {
     const t = POPUP_STRINGS[lang];
-    // Every language writes it its own way, so the check is that the three
-    // lines say something and say it in that language, not a word match.
+    // The lines say something; since 11 Oct 2026 the License tab's active line is the feature's name,
+    // Live Rephrase, the same in every language (the rename pass, crew/site/words-2026-10-11), so the
+    // check for the other languages is that they carry that name, not that they differ from English.
     for (const line of LICENCE_STRINGS(lang)) expect(line.trim().length).toBeGreaterThan(10);
-    if (lang !== 'en') expect(t.keySubActive).not.toBe(POPUP_STRINGS.en.keySubActive);
+    expect(t.keySubActive).toContain('Live Rephrase');
   });
 
   it.each(UI_LANGUAGES)('%s: no line that asks for money sells the key as rewrites', lang => {

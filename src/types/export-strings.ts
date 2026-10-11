@@ -8,6 +8,9 @@ import type { ResolvedUiLanguage } from './ui-language';
 import type { PolicyRowId } from './policy-row';
 import type { DecisionAction } from './forensic';
 
+// The export speaks the interface language: ExportLocale IS ResolvedUiLanguage, so adding an interface language is a
+// compile error in the export tables until they carry it, rather than a silent fall back to English inside a
+// court-facing document.
 export type ExportLocale = ResolvedUiLanguage;
 
 /** One signing key the file carries, by the fingerprint the records name. */

@@ -183,7 +183,10 @@ null, whether swearing was masked), `row` (the policy row that fired), `action`
 (what the policy said), `applied` (what the page showed), `rewrite` (attempted
 and outcome, and `model`, the model whose rewrite the page showed, when a model
 wrote it and its reply named the model; or null) and `note` (one sentence when `applied` differs from
-`action`, else null). A record without `decision` states nothing about why; it
+`action`, else null). `decision` MAY also carry `claude`, present only when the
+paid reading asked Claude Haiku about the item: `model`, `provider`, `hash`,
+`outcome` ('read', or the reason there is no reading) and, when it read, `reading`
+(the same five fields as `reading` above). A record without `decision` states nothing about why; it
 is not an allowance. On a record that carries `decision`, `verdict` is derived from
 `applied`: allow, context, mask and record are `pass`; mark and soften are `flagged`;
 collapse and hide are `flagged-hidden`. The checker does not judge any of it (section 7); it shows

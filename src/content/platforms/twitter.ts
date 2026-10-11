@@ -25,6 +25,7 @@ import { queryWithFallback, queryAllWithFallback } from './selector-chain';
 import { probeMetricsScope } from '../probes/metrics-probe';
 import { noteTwitterPhotoSurface } from '../probes/m98-photo-probe';
 import { requestReExtract, setupScrollExtractionTrigger } from '../post-path/scroll-trigger';
+import { completesCutText, wireFieldsFor } from '../page-world/wire-store';
 import type { AuthorCapture } from '../../types/author-capture';
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -920,16 +921,28 @@ export class TwitterAdapter implements PlatformAdapter {
         // they navigate to the status page (where X loads the full
         // text), the post becomes processable again on the next
         // mutation tick.
+        // The exception: when X's own data for this tweet already holds the
+        // whole text and it begins with what the page shows, the tweet goes on,
+        // marked cut, and the whole text replaces the fragment at detection
+        // (page-world/wire-store.ts). Without that data it is skipped as before.
+        let shownCut = false;
         if (article && tweetIsTruncated(article)) {
-          // Stamp a backoff timestamp so the 3s periodic rescan doesn't
-          // re-process truncated tweets every tick. Expanded text or
-          // status-page navigation removes the truncation node and clears
-          // the gate on next pass.
-          const last = Number(tweetEl.dataset.fwTruncatedAt ?? '0');
-          const now = Date.now();
-          if (now - last < 60_000) continue;
-          tweetEl.dataset.fwTruncatedAt = String(now);
-          continue;
+          const shown = tweetEl.textContent?.trim() ?? '';
+          const status = this._extractStatusIdentity(article, this._extractHandle(article));
+          const whole = status && status !== 'mismatch' ? wireFieldsFor('twitter', status.id)?.text : undefined;
+          if (whole && completesCutText(shown, whole, true)) {
+            shownCut = true;
+          } else {
+            // Stamp a backoff timestamp so the 3s periodic rescan doesn't
+            // re-process truncated tweets every tick. Expanded text or
+            // status-page navigation removes the truncation node and clears
+            // the gate on next pass.
+            const last = Number(tweetEl.dataset.fwTruncatedAt ?? '0');
+            const now = Date.now();
+            if (now - last < 60_000) continue;
+            tweetEl.dataset.fwTruncatedAt = String(now);
+            continue;
+          }
         }
 
         const text = tweetEl.textContent?.trim() ?? '';
@@ -1056,6 +1069,7 @@ export class TwitterAdapter implements PlatformAdapter {
         posts.push({
           id: tweetId,
           text,
+          ...(shownCut ? { textCapture: 'cut' as const } : {}),
           author,
           authorName,
           timestamp: new Date().toISOString(),

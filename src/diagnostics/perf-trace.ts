@@ -27,6 +27,7 @@
 import { isFeatureEnabled } from '../storage/feature-flags';
 import { safeSendMessage } from '../storage/context-guard';
 import { openSimpleStore } from '../forensics/idb-open';
+import { utcDayKey } from '../storage/utc-day';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -118,7 +119,7 @@ interface StageEnd {
  * AI judge resolves to null when it got no reading, and timing that as ok shows the AI step at
  * 100% ok while its calls are being refused.
  */
-export type StageOutcome<T> = (result: T) => { success: boolean; error?: string };
+type StageOutcome<T> = (result: T) => { success: boolean; error?: string };
 
 export interface PerfTracer {
   stage(stage: V2Stage): StageEnd;
@@ -351,14 +352,10 @@ export interface PerfPersistFailureLog {
   lastAt: string;
 }
 
-function persistFailureToday(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
 async function recordPersistFailure(err: unknown): Promise<void> {
   if (typeof chrome === 'undefined' || !chrome?.storage?.local) return;
   try {
-    const today = persistFailureToday();
+    const today = utcDayKey();
     const existing = await chrome.storage.local.get([PERSIST_FAILURE_STORAGE_KEY]);
     const raw = existing[PERSIST_FAILURE_STORAGE_KEY] as PerfPersistFailureLog | undefined;
     const prevCount = raw && raw.date === today ? raw.count : 0;
@@ -377,7 +374,7 @@ async function recordPersistFailure(err: unknown): Promise<void> {
 
 /** Best-effort read for the Dashboard's perf panel. Returns today's log or an empty shell. */
 export async function readPerfPersistFailures(): Promise<PerfPersistFailureLog> {
-  const empty: PerfPersistFailureLog = { date: persistFailureToday(), count: 0, lastError: '', lastAt: '' };
+  const empty: PerfPersistFailureLog = { date: utcDayKey(), count: 0, lastError: '', lastAt: '' };
   if (typeof chrome === 'undefined' || !chrome?.storage?.local) return empty;
   try {
     const existing = await chrome.storage.local.get([PERSIST_FAILURE_STORAGE_KEY]);

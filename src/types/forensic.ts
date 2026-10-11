@@ -145,6 +145,21 @@ export interface DecisionBlock {
     target: string;
     group: string;
   };
+  /**
+   * The paid reading's Claude reader (src/ai/claude-reader.ts ClaudeStamp), present only on a
+   * record whose item it was asked about: who was asked (model, provider, the judge's hash) and
+   * what came of it (`outcome` is 'read' with Haiku's five fields under `reading`, or the reason
+   * there is no reading). Absent, not null, everywhere else, so every block written before it
+   * hashes as it did; inside the signature on new records, so the second company that read an
+   * item cannot be repainted away (11 Oct 2026).
+   */
+  claude?: {
+    model: string;
+    provider: string;
+    hash: string;
+    outcome: string;
+    reading?: { charged: boolean; family: string; severity: number; effect: string; intent: string };
+  };
   /** Every rail that fired, with at most a short match token; empty when none did. */
   rails: Array<{ name: DecisionRail; match: string }>;
   /** The household the action was chosen for. */
@@ -778,6 +793,8 @@ export interface ForensicRecord {
     | 'rate-limit'
     | 'json-refusal'
     | 'auth-refusal'
+    /** The relay asked for the person's go-ahead for the reading and it has not been given. */
+    | 'consent-required'
     | 'content-policy'
     | 'network'
     | 'aborted'
@@ -1257,7 +1274,7 @@ export type InstallType = 'normal' | 'development' | 'sideload' | 'admin' | 'oth
  * How the entry came to be: read off the screen, off the platform's own
  * response, both, written by the extension about itself, or added by hand.
  */
-export type EvidenceKind = 'screen' | 'wire' | 'screen+wire' | 'marker' | 'manual';
+type EvidenceKind = 'screen' | 'wire' | 'screen+wire' | 'marker' | 'manual';
 
 export interface RecordStamp {
   /** The build id baked into the worker that wrote and signed the record (src/core/build-id.ts). */
@@ -1266,7 +1283,7 @@ export interface RecordStamp {
   evidenceKind?: EvidenceKind;
 }
 
-export interface RecordProvenance {
+interface RecordProvenance {
   /** The platform's own ids for the item, as the platform wrote them. */
   platformIds?: { post?: string; author?: string; ad?: string; parent?: string };
   /** SHA-256 hex and byte length of the whole raw response the item was read from. */

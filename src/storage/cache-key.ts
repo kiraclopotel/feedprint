@@ -8,7 +8,9 @@
 // primer (writer) so a reframe computed for a comment is reused when the SAME
 // text is later seen as a focused-tweet post on its permalink.
 //
-// Dimensions: platform | mode | locale | outputLanguage | text.
+// Dimensions: platform | mode | locale | outputLanguage | text, then the text of the post or comment it answers when
+// there is one. The judge is shown that parent, so "same here" under two different posts is two readings; without a
+// parent the key is the same string it always was, so entries for root posts stay valid.
 
 export function verdictCacheKeyInput(
   platform: string,
@@ -16,6 +18,9 @@ export function verdictCacheKeyInput(
   locale: string,
   outputLanguage: string,
   text: string,
+  parentText?: string,
 ): string {
-  return `${platform}|${mode}|${locale}|${outputLanguage}|${text}`;
+  const base = `${platform}|${mode}|${locale}|${outputLanguage}|${text}`;
+  const parent = parentText?.trim();
+  return parent ? `${base}|parent:${parent}` : base;
 }

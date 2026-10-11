@@ -237,10 +237,46 @@ describe('the Teen post judge reads labels and the family reads names', () => {
     expect(result.neutralized?.rewrittenText).toBe('dancequeen here, and anyone who still backs this plan may be mistaken.');
   });
 
-  it('a post whose page shows no author still says unknown, and the text goes as it is', async () => {
+  it('a post whose page shows no author still says unknown, and a name written in the text still leaves as a letter', async () => {
     await process(makePost({ author: '', context: undefined }));
     expect(sent[1].user).toMatch(/AUTHOR: [^\n]*unknown/);
-    expect(sent[1].user).toContain('@the_sharer');
+    expect(sent[1].user).not.toContain('the_sharer');
+    expect(sent[1].user).toMatch(/says @user_[A-Z]/);
+  });
+
+  it('an account only mentioned in the post leaves as a letter and comes back in the rewrite (11 Oct 2026)', async () => {
+    classify.neutralized_text = 'I disagree with @user_C, and I would like to talk about it.';
+    const result = await process(makePost({
+      context: undefined,
+      text: '@anyhandle you are a pathetic little nobody and so is @other_acct, says @the_sharer',
+    }));
+    expect(sent).toHaveLength(2);
+    for (const { user } of sent) {
+      expect(user).not.toContain('anyhandle');
+      expect(user).not.toContain('other_acct');
+      expect(user).not.toContain('the_sharer');
+      expect(user).toContain('@user_B you are a pathetic little nobody and so is @user_C, says @user_A');
+    }
+    expect(result.neutralized?.rewrittenText).toBe('I disagree with @other_acct, and I would like to talk about it.');
+  });
+
+  it('a rewrite that keeps the attack behind an "I think" is not shown: hidden when severe and hostile, marked when milder (11 Oct 2026)', async () => {
+    const text = '@anyhandle you are a pathetic little nobody and everyone at your school knows it. Do us all a favour and disappear.';
+    classify.primary_concern = 'personal attack on @user_B by @user_A';
+    classify.neutralized_text = 'I think you are a pathetic little nobody and everyone at your school knows it. I suggest you disappear.';
+    const severe = await process(makePost({ id: 'k1', context: undefined, text }));
+    expect(severe.action).toBe('hide');
+    expect(severe.neutralized).toBeUndefined();
+    classify.severity = 5;
+    classify.primary_concern = 'hostile shaming of @user_B and the reader by @user_A';
+    const milder = await process(makePost({ id: 'k2', context: undefined, text }));
+    expect(milder.action).toBe('mark');
+    expect(milder.neutralized).toBeUndefined();
+    // A rewrite that really changed the words is still shown.
+    classify.neutralized_text = 'I strongly disagree with @user_B and would like to hear their reasons.';
+    const calm = await process(makePost({ id: 'k3', context: undefined, text }));
+    expect(calm.action).toBe('neutralize');
+    expect(calm.neutralized?.rewrittenText).toBe('I strongly disagree with @anyhandle and would like to hear their reasons.');
   });
 
   it('the Adult judge is unchanged: the text goes as written and no author line exists', async () => {

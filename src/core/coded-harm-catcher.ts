@@ -20,6 +20,8 @@ type CodedHarmCategory =
   | 'sexual-solicitation'
   | 'sexual-explicit'
   | 'doxxing'
+  | 'direct-threat'
+  | 'shaming-harassment'
   | 'coded-scapegoating'
   | 'clickbait-fomo'
   | 'violence-narration';
@@ -151,6 +153,38 @@ const DOXXING: Rule[] = [
   { pattern: 'expone-locator-pt', re: /\b(?:posta|postem|postar|vaza|vazem|vazar|passa|passem|compartilha|compartilhem|solta|soltem)\s+(?:o|a)\s+(?:endereco|numero|telefone|nome\s+real)\s+(?:dele|dela|deles|delas)\b/i },
 ];
 
+// A threat aimed at the reader: that the writer knows where they live, or will find them to hurt
+// them. These hide. The test for each is that it names the reader (you, your kids) and a place or an
+// act, so "I know where the bug lives" and "we'll find you a seat" never fire. "I know where you
+// live" does not fire when it is followed by "now", or by a welcome, a move or a dinner within a
+// few words (the adversarial benign set holds "I know where you live now, congrats on the move!").
+// Left out on purpose: bare "I'll kill you", "you're dead", "I'll hunt you down" and "... make you
+// pay", which are game chat and banter every day; the AI reads those when it runs. Romanian is written without diacritics because
+// detectCodedHarm folds them away.
+const DIRECT_THREAT: Rule[] = [
+  { pattern: 'know-where-you-live', re: /\b(?:i|we|they|everyone|everybody|someone)\s+(?:all\s+)?knows?\s+where\s+(?:you|u)\s+(?:live|stay|sleep|work|study|go\s+to\s+(?:school|class|college|uni))\b(?!\s+now\b)(?!.{0,40}\b(?:congrats|congratulations|welcome|neighbou?rs?|moved?|moving|dinner|lunch|visit|come\s+over|haha+|lol)\b)/i },
+  { pattern: 'know-where-your-people', re: /\b(?:i|we|they|everyone|everybody|someone)\s+(?:all\s+)?knows?\s+where\s+(?:your|ur)\s+(?:kids?|children|family|mom|mother|dad|father|wife|husband|sister|brother|parents)\s+(?:live|stay|sleep|work|go\s+to\s+school|are)\b(?!.{0,40}\b(?:congrats|congratulations|welcome|neighbou?rs?|moved?|moving|dinner|lunch|visit|come\s+over|haha+|lol)\b)/i },
+  { pattern: 'find-you-and-hurt', re: /\b(?:i|we)(?:'ll|\s+will|'m\s+(?:going|gonna)\s+(?:to\s+)?|\s+am\s+(?:going|gonna)\s+(?:to\s+)?|\s+(?:going|gonna)\s+(?:to\s+)?)\s*(?:find|hunt|track)\s+(?:you|u)(?:\s+down)?\s+and\s+(?:kill|hurt|rape|stab|shoot)\b/i },
+  { pattern: 'stiu-unde-locuiesti-ro', re: /\b(?:stiu|stim)\s+unde\s+(?:locuiesti|stai|dormi|lucrezi|inveti)\b/i },
+  { pattern: 'se-donde-vives-es', re: /\b(?:se|sabemos|sabe)\s+donde\s+(?:vives|duermes|trabajas|estudias)\b/i },
+];
+
+// Shaming and exile aimed at the reader, the shape of school bullying online: a claim that nobody
+// likes them or everyone hates them, paired with an order to vanish, or a claim that everyone
+// laughs at them behind their back. A claim alone never fires ("nobody likes you when you're 23" is
+// a song, "everybody hates you" a sitcom title); neither does the order alone ("delete your account"
+// is support talk). Plain insults ("you are an idiot") are left to the AI: a rule for them would
+// hide ordinary rudeness at every level. These hide.
+const SHAME_CLAIM_EN = String.raw`(?:(?:nobody|no\s*one)(?:\s+(?:at|in|from)\s+\w+(?:\s+\w+)?)?\s+(?:likes|wants|loves|cares\s+about|needs|misses)\s+(?:you|u)(?:\s+here)?|(?:everyone|everybody)\s+(?:here\s+)?(?:hates|despises)\s+(?:you|u)|we\s+all\s+hate\s+(?:you|u))`;
+const SHAME_ORDER_EN = String.raw`(?:(?:just\s+)?delete\s+(?:your|ur)\s+(?:account|acc|profile|page|channel)|(?:just\s+)?go\s+away(?:\s+(?:forever|for\s+good))?|(?:just\s+)?disappear(?:\s+(?:forever|for\s+good))?|never\s+(?:come\s+back|post\s+again)|get\s+off\s+(?:the\s+)?(?:internet|here)|leave\s+(?:forever|for\s+good))`;
+const SHAME_CLAIM_RO = String.raw`(?:nimeni\s+nu\s+te\s+(?:place|vrea|iubeste|suporta)|toti\s+te\s+(?:urasc|dispretuiesc)|toata\s+lumea\s+te\s+uraste)`;
+const SHAME_ORDER_RO = String.raw`(?:dispari|pleaca\s+(?:de\s+aici|pentru\s+totdeauna)|nu\s+(?:mai\s+)?reveni\s+(?:niciodata|aici)|sterge[\s-]*ti\s+contul|inchide[\s-]*ti\s+contul)`;
+const SHAMING_HARASSMENT: Rule[] = [
+  { pattern: 'nobody-likes-you-go-away', re: new RegExp(String.raw`\b${SHAME_CLAIM_EN}\b.{0,50}?\b${SHAME_ORDER_EN}\b|\b${SHAME_ORDER_EN}\b.{0,50}?\b${SHAME_CLAIM_EN}\b`, 'i') },
+  { pattern: 'laughs-at-you-behind-your-back', re: /\b(?:everyone|everybody|they\s+all|the\s+whole\s+(?:school|class))\s+(?:is\s+|are\s+)?(?:laughs?|laughing)\s+at\s+(?:you|u)\s+behind\s+(?:your|ur)\s+back\b/i },
+  { pattern: 'nimeni-nu-te-place-ro', re: new RegExp(String.raw`\b${SHAME_CLAIM_RO}\b.{0,50}?\b${SHAME_ORDER_RO}\b|\b${SHAME_ORDER_RO}\b.{0,50}?\b${SHAME_CLAIM_RO}\b`, 'i') },
+];
+
 const CODED_SCAPEGOATING: Rule[] = [
   { pattern: 'these-people-dehumanize', re: /what('s| is) wrong with (these|those|their) people|these people'?s? (heads?|brains?|minds?|problem|agenda|mentality)|what kind of people (are|do) (these|those)/i },
   { pattern: 'group-always-involved', re: /(zionism|zionists?|the jews?|the muslims?|the chinese|the arabs?|the migrants?|the foreigners?|the immigrants?)\s+(is|are|was|were|will be|has been|have been)\s+always\s+(involved|behind|responsible|at fault|to blame|pulling|controlling|running)/i },
@@ -180,7 +214,9 @@ const CATEGORY_RULES: ReadonlyArray<readonly [CodedHarmCategory, Rule[]]> = [
   ['sexual-solicitation', SEXUAL_SOLICITATION],
   ['sexual-explicit', SEXUAL_EXPLICIT],
   ['violence-narration', VIOLENCE_NARRATION],
+  ['direct-threat', DIRECT_THREAT],
   ['doxxing', DOXXING],
+  ['shaming-harassment', SHAMING_HARASSMENT],
   ['coded-scapegoating', CODED_SCAPEGOATING],
   ['clickbait-fomo', CLICKBAIT_FOMO],
 ];
@@ -218,8 +254,8 @@ export type CodedHarmTechnique =
  * higher of it and the AI's, and the post path uses it as its floor. The technique is only a
  * routing bucket; the real why is the reason and the detectionMode or overrideOrigin. A self-harm
  * push and a sexual ask are named 'self-harm' and 'sexual', which are harm categories beside the
- * manipulation techniques and already have titles in every language. Doxxing matches no technique
- * or category, so it goes to 'combined'.
+ * manipulation techniques and already have titles in every language. Doxxing and a direct threat
+ * match no technique or category, so they go to 'combined'; shaming and exile are the shame attack.
  */
 export function codedHarmVerdictFields(coded: CodedHarmHit): {
   technique: CodedHarmTechnique;
@@ -230,6 +266,8 @@ export function codedHarmVerdictFields(coded: CodedHarmHit): {
   const isSelfHarm = coded.category === 'self-harm-encouragement';
   const isSexual = coded.category === 'sexual-solicitation' || coded.category === 'sexual-explicit';
   const isDoxxing = coded.category === 'doxxing';
+  const isThreat = coded.category === 'direct-threat';
+  const isShaming = coded.category === 'shaming-harassment';
   return {
     technique:
       coded.category === 'coded-scapegoating'
@@ -240,11 +278,13 @@ export function codedHarmVerdictFields(coded: CodedHarmHit): {
             ? 'self-harm'
             : isSexual
               ? 'sexual'
-              : isDoxxing
-                ? 'combined'
-                : 'misleading-format',
-    severity: isSelfHarm || isSexual ? 9 : isViolence || isDoxxing ? 8 : 6,
-    hideTier: isViolence || isSelfHarm || isSexual || isDoxxing,
+              : isShaming
+                ? 'shame-attack'
+                : isDoxxing || isThreat
+                  ? 'combined'
+                  : 'misleading-format',
+    severity: isSelfHarm || isSexual ? 9 : isViolence || isDoxxing || isThreat || isShaming ? 8 : 6,
+    hideTier: isViolence || isSelfHarm || isSexual || isDoxxing || isThreat || isShaming,
   };
 }
 

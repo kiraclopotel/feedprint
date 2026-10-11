@@ -47,7 +47,7 @@ import { verifyAnchorMatch, cancelVerdictFor } from '../../forensics/anchor-reva
 import { tryRecoverDomRecycledAnchor, tryRecoverExactPostInterventionAnchor } from './dom-recycle-recovery';
 import { safeSendMessage } from '../../storage/context-guard';
 import { sendHighStakesForensicLog } from '../record/forensic-retry';
-import { GROQ_FAST_MODEL, FALLBACK_AI_PROVIDER } from '../../ai/client';
+import { FALLBACK_AI_PROVIDER } from '../../ai/client';
 import { recordMetricsFromPostContent } from '../record/record-metrics';
 import { swapCommentTextInPlace, hideCommentAsFallback } from '../protection/comment-overlay';
 import { markAiText, rewriteChangesText, writerOfRewrite, type AiWriter } from '../markers/ai-mark';
@@ -1305,7 +1305,7 @@ export function createResultApplier(deps: ResultApplyDeps) {
             textCapture: post.textCapture,
             authorCapture: post.authorCapture,
             mediaUrls: mediaUrlsNow(post),
-            aiModel: answered?.model ?? GROQ_FAST_MODEL,
+            aiModel: answered?.model,
             aiProvider: answered?.provider,
             configSnapshot: buildConfigSnapshot(settings.mode, threshold, settings.dailyCap, settings.features, settings.readFailedFallback),
             kind: post.kind,

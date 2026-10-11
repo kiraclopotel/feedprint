@@ -182,6 +182,7 @@ export const FALLBACK_AI_PROVIDER = 'deepinfra';
 
 import { TEXT_CAP_STORAGE_KEY, licenseFingerprint } from '../storage/cap-markers';
 import { licenseRefusalHolds, noteLicenseRefused } from '../storage/license-refusal';
+import { clearReadingPause, noteReadingPaused, readingPauseHolds } from '../storage/reading-pause';
 import { READING_CONSENT_HEADER, consentHeaderValue, getReadingConsent } from '../storage/reading-consent';
 import { fwDebug } from '../core/fw-log';
 export { TEXT_CAP_STORAGE_KEY };
@@ -198,6 +199,11 @@ function currentCapPeriodKey(cap: ProxyCapPeriod, now = new Date()): string {
 const TOO_MANY_FAILED_KEYS = 'too_many_failed_keys';
 const RELAY_PAUSE_DEFAULT_MS = 60_000;
 let relayPausedUntil = 0;
+// An ordinary 429 (the provider's rate limit, with its Retry-After) pauses every call of this realm for that long, at
+// the moment each would leave, so a burst of posts does not meet the same refusal twenty times in half a minute.
+const RATE_LIMIT_PAUSE_DEFAULT_MS = 5_000;
+const RATE_LIMIT_PAUSE_MAX_MS = 60_000;
+let rateLimitedUntil = 0;
 
 let textCapLatch: { cap: ProxyCapPeriod; periodKey: string; licenseFingerprint?: string } | null = null;
 let textCapLatchHydrated = false;
@@ -242,14 +248,22 @@ export type ProxyProbeResult = 'ok' | 'revoked' | 'unknown';
 // Cache the probe result so the popup doesn't hammer the proxy on every
 // open. Cleared when the bearer changes (`probeProxy` keys the cache by
 // the trimmed bearer string).
-const probeCache = new Map<string, { result: ProxyProbeResult; providerName: string | null; expiresAt: number }>();
+const probeCache = new Map<string, { result: ProxyProbeResult; providerName: string | null; claudeProviderName: string | null; expiresAt: number }>();
 // The header the proxy names its provider in, on the same answer as the licence check.
 const PROVIDER_LEGAL_HEADER = 'x-fw-provider-legal';
+// The second company, the paid reading's Claude reader, named on the same answer only while the relay's
+// Claude route is configured (worker/src/proxy.ts); absent, the Claude reading cannot be offered.
+const CLAUDE_PROVIDER_LEGAL_HEADER = 'x-fw-claude-provider-legal';
 const PROVIDER_LEGAL_MAX_CHARS = 120;
 
 /** The provider's legal name as the proxy last served it for this key, or null when it did not. */
 export function servedProviderName(licenseBearer: string): string | null {
   return probeCache.get(licenseBearer.trim())?.providerName ?? null;
+}
+
+/** The second company's legal name (the Claude reader) as the proxy last served it, or null when it did not. */
+export function servedClaudeProviderName(licenseBearer: string): string | null {
+  return probeCache.get(licenseBearer.trim())?.claudeProviderName ?? null;
 }
 
 function providerNameFrom(header: string | null): string | null {
@@ -309,6 +323,7 @@ export async function probeProxy(licenseBearer: string): Promise<ProxyProbeResul
   const timeout = setTimeout(() => controller.abort(), 5000);
   let result: ProxyProbeResult;
   let providerName: string | null = null;
+  let claudeProviderName: string | null = null;
   try {
     const resp = await fetch(PROXY_MODELS_URL, {
       method: 'GET',
@@ -318,6 +333,7 @@ export async function probeProxy(licenseBearer: string): Promise<ProxyProbeResul
     if (resp.status === 200) {
       result = 'ok';
       providerName = providerNameFrom(resp.headers?.get?.(PROVIDER_LEGAL_HEADER) ?? null);
+      claudeProviderName = providerNameFrom(resp.headers?.get?.(CLAUDE_PROVIDER_LEGAL_HEADER) ?? null);
     }
     else if (resp.status === 401 || resp.status === 403) result = 'revoked';
     else result = 'unknown';
@@ -329,7 +345,7 @@ export async function probeProxy(licenseBearer: string): Promise<ProxyProbeResul
   // Only cache definitive results so a transient network hiccup doesn't
   // freeze the pill at 'unknown' for 5 min.
   if (result !== 'unknown') {
-    probeCache.set(trimmed, { result, providerName, expiresAt: now + PROBE_CACHE_TTL_MS });
+    probeCache.set(trimmed, { result, providerName, claudeProviderName, expiresAt: now + PROBE_CACHE_TTL_MS });
   }
   // The key answered: refresh what it turns on. A new key (the popup probes on every key change) is
   // asked at once; the same key at most every six hours, so a plan change reaches the popup within
@@ -438,6 +454,12 @@ async function callAIInner(
   // already handles it.
   if (await licenseRefusalHolds(fingerprint)) {
     return Err({ kind: 'auth-refusal' });
+  }
+
+  // The relay asked this key for the reading go-ahead lately (403 consent_required): nothing more leaves until the
+  // person gives it or a few minutes pass, and the Issues tab and the toolbar icon say why (storage/reading-pause.ts).
+  if (await readingPauseHolds(fingerprint)) {
+    return Err({ kind: 'consent-required' });
   }
 
   // The relay refused this address for guessing keys (someone else on a shared network, usually). Asking again
@@ -600,8 +622,12 @@ async function callProxyOnce(
     // it sees. A key with none still calls: a key the proxy grandfathered is served without one.
     const consent = await getReadingConsent(licenseBearer);
     const t0 = Date.now();
-    const res = await withProxyFetchSlot(() =>
-      fetchWithDeadline(PROXY_URL, {
+    const sent = await withProxyFetchSlot(async () => {
+      // A call that waited for its turn while another met a 429 does not add to it: it goes back to its caller as the
+      // same refusal, which waits out the Retry-After and tries once more.
+      const waitMs = rateLimitedUntil - Date.now();
+      if (waitMs > 0) return waitMs;
+      const answered = await fetchWithDeadline(PROXY_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -612,8 +638,27 @@ async function callProxyOnce(
         // This call runs inside the social site's page, so without a policy of its own the browser
         // would attach that page's address as the referrer, under the site's rules, not ours.
         referrerPolicy: 'no-referrer',
-      }, PROXY_TEXT_DEADLINE_MS, signal),
-    );
+      }, PROXY_TEXT_DEADLINE_MS, signal);
+      // Set before the slot is let go, so the call queued behind this one meets the pause and not the same refusal. Only a
+      // plain rate limit pauses everyone: a licence cap and the failed-keys refusal have latches of their own, and the
+      // first is bound to the key that earned it.
+      if (answered.status === 429) {
+        let code: unknown;
+        try {
+          const body = await answered.clone().json();
+          code = body?.error?.code ?? body?.code;
+        } catch { /* body unreadable / not JSON: a plain rate limit */ }
+        if (code !== 'cap_daily' && code !== 'cap_monthly' && code !== TOO_MANY_FAILED_KEYS) {
+          rateLimitedUntil = Date.now() + Math.min(parseRetryAfterMs(answered.headers.get('Retry-After')) ?? RATE_LIMIT_PAUSE_DEFAULT_MS, RATE_LIMIT_PAUSE_MAX_MS);
+        }
+      }
+      return answered;
+    });
+    if (typeof sent === 'number') {
+      lastCallMeta = null;
+      return Err({ kind: 'rate-limit', retryAfterMs: sent });
+    }
+    const res = sent;
     const retryAfterMs = parseRetryAfterMs(res.headers.get('Retry-After')) ?? null;
     if (!res.ok) {
       lastCallMeta = null;
@@ -690,6 +735,12 @@ async function callProxyOnce(
       } catch {
         // body unreadable — decide on the status alone
       }
+      // The reading has not been started from the extension (the relay asks every key for the go-ahead from 12 Oct 2026):
+      // a thing for the person to do, not a refusal of the key and not our request being wrong.
+      if (res.status === 403 && code === 'consent_required') {
+        noteReadingPaused(fingerprint);
+        return Err({ kind: 'consent-required' });
+      }
       if ((code !== undefined && PROXY_LICENCE_CODES.has(code))
         || (code === undefined && (res.status === 401 || res.status === 403))) {
         if (code !== undefined) noteLicenseRefused(fingerprint, code);
@@ -702,6 +753,8 @@ async function callProxyOnce(
       return Err({ kind: 'internal-error', status: res.status, code });
     }
     const data = await res.json();
+    // The relay answered a reading: whatever paused this key for the go-ahead has been put right (by another page, say).
+    void clearReadingPause();
     // Hand the caller its OWN call's finish_reason before this attempt's
     // value (or error) is returned. Fired here, on the parsed 2xx body, so a
     // caller that must distinguish a max_tokens cut from a malformed reply

@@ -50,22 +50,6 @@ import { RFC3161_VERIFIER_SOURCE } from './rfc3161-inline.generated';
 // their dashboard against the file they exported got two different words for one
 // record. The labels are display-only and never enter the canonical payload, so
 // they can be served from the envelope; the enum in the signed record is
-
-/**
- * The export speaks the interface language: ExportLocale IS ResolvedUiLanguage,
- * so adding an interface language is a compile error here until this file's
- * I18N table carries it, rather than a silent fall back to English inside a
- * court-facing document.
- */
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
 function isoDateRange(records: ForensicRecord[]): { earliest: string; latest: string } {
   if (records.length === 0) return { earliest: '—', latest: '—' };
   const ts = records.map(r => r.timestamp).sort();
@@ -124,6 +108,7 @@ export {
 };
 import { STYLES } from './html-export-styles';
 import { isBeforeLevels } from '../types/mode';
+import { escapeHtml } from './html-escape';
 
 
 /**

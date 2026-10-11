@@ -61,9 +61,10 @@ describe.each(UI_LANGUAGES)('each switch a parent cannot read from its name says
     });
     const card = container.querySelector('.set-essentials')!;
     const lines = Array.from(card.querySelectorAll('.fr-line')).map(e => e.textContent);
-    expect(lines).toEqual([t.strictLangDescOther, t.featMarkersDesc, t.rulesLine]);
+    // Strict language's line left with its row on 11 Oct 2026 (one-switch-for-swearing.test.tsx).
+    expect(lines).toEqual([t.featMarkersDesc, t.rulesLine]);
     const folds = Array.from(card.querySelectorAll('.fr-info')).map(b => b.getAttribute('aria-label'));
-    for (const name of [t.strictLangName, t.featMarkersName, t.rulesName]) {
+    for (const name of [t.featMarkersName, t.rulesName]) {
       expect(folds).not.toContain(`${t.rowInfoAria}: ${name}`);
     }
     // The rows a name explains keep their fold.
@@ -71,7 +72,7 @@ describe.each(UI_LANGUAGES)('each switch a parent cannot read from its name says
   });
 
   it('each line is one short sentence', () => {
-    for (const line of [t.strictLangDescOther, t.featMarkersDesc, t.rulesLine]) {
+    for (const line of [t.featMarkersDesc, t.rulesLine]) {
       expect([...line].length, line).toBeLessThanOrEqual(130); // the row wraps to two lines at most (pictures, 9 Oct 2026)
       expect(line.trim().endsWith('.'), line).toBe(true);
       expect(line.slice(0, -1), line).not.toContain('. ');
@@ -84,24 +85,13 @@ describe('the words say what the code does', () => {
   // posts, because comments are starred only when the paid reading of them succeeds; it names no site and no "every",
   // because some parts of some sites are not read; it says nothing of slurs, because a hidden post can be shown anyway
   // and that is not this switch's doing.
-  it.each([
-    ['en', /posts/, /stars/],
-    ['ro', /postări/, /steluțe/],
-    ['es', /publicaciones/, /asteriscos/],
-    ['pt-BR', /publicações/, /asteriscos/],
-  ] as const)('%s: the strict line says swear words in posts become stars, and nothing it cannot keep', (lang, posts, stars) => {
-    const line = POPUP_STRINGS[lang].strictLangDescOther;
-    expect(line).toMatch(posts);
-    expect(line).toMatch(stars);
-    expect(line).not.toMatch(/comment|five|cinci|cinco|every|toate|todos|slur|insult|ofensa/i);
-    expect(line).not.toMatch(/swear words (are|get) hidden|ascuns|ocult/i);
-  });
+  // The strict line's claim test left with the line and its row on 11 Oct 2026 (one switch for swearing).
   it('the markers line holds on a free install: a changed post, no rewrite, no original, no comment', () => {
     const line = POPUP_STRINGS.en.featMarkersDesc;
     expect(line).toMatch(/changed/);
     expect(line).not.toMatch(/rewrit|original|comment|\bAI\b/i);
   });
   it.each(UI_LANGUAGES)('%s: the Strict level note names the lock, not softening', (lang) => {
-    expect(POPUP_STRINGS[lang].strictLangDescChild).not.toMatch(/soft|atenu|suaviz/i);
+    expect(POPUP_STRINGS[lang].softenSwearingDescChild).not.toMatch(/soft|atenu|suaviz/i);
   });
 });

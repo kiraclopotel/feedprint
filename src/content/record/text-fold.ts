@@ -211,6 +211,8 @@ export function resolveTextElement(root: Element, text: string, platform: Platfo
  * is gone gets no stamp: an absent field means "not checked", never "whole".
  */
 export function stampTextFold(post: PostContent): void {
+  // A text taken from the platform's own data is not what this element shows, so the element cannot describe it.
+  if (post.textCapture === 'platform') return;
   const el = post.domRef?.deref();
   if (!el || !post.text) return;
   try {

@@ -7,7 +7,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { readSource } from '../../helpers/read-source';
 import { repoPath } from '../../helpers/repo-root';
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { committedBlobs, isPublicPath, publicPaths, scanContent } from '../../../scripts/public-snapshot.mjs';
 import { TREE_READ_TIMEOUT_MS } from '../../helpers/spawn-timeout';
@@ -122,7 +122,11 @@ describe('public snapshot: the split', () => {
       .filter(Boolean),
   );
 
-  it('reads the real tree: about a thousand tracked files, every private prefix absent', () => {
+  // In the public copy of this repository (the one that carries SOURCE-COMMIT, as .github/workflows/ci.yml
+  // and tests/repo/releases.test.ts read it) the tracked tree IS the public half: the excluded side is
+  // empty by construction and the bounds below describe the private repository only, so there the case
+  // stands down and says so.
+  it.skipIf(existsSync(repoPath('SOURCE-COMMIT')))('reads the real tree: about a thousand tracked files, every private prefix absent', () => {
     const paths = valueOf(tree);
     const all = valueOf(tracked);
     const excluded = all.filter((p) => !isPublicPath(p));

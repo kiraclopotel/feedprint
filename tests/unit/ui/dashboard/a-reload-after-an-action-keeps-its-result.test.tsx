@@ -203,10 +203,14 @@ describe('a reload after an action keeps what the action said', () => {
     await click(tab(t.tabFeedLog));
     await click(host.querySelector('[data-testid="feed-log-window-all"]') as HTMLElement);
     await click(host.querySelector('[data-testid="feed-log-row"]') as HTMLElement);
-    vi.stubGlobal('prompt', () => 'a reason');
+    // The reason is asked in the row since 11 Oct 2026, not in window.prompt.
+    await click(button(t.withholdBtn));
+    const field = host.querySelector('.fl-ask textarea') as HTMLTextAreaElement;
+    const setValue = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!;
+    await act(async () => { setValue.call(field, 'a reason'); field.dispatchEvent(new Event('input', { bubbles: true })); });
     const before = reads();
 
-    await click(button(t.withholdBtn));
+    await click(Array.from(host.querySelectorAll('.fl-ask button')).find((b) => b.textContent?.trim() === t.withholdBtn) as HTMLElement);
 
     expect(reads(), 'the record was read again').toBeGreaterThan(before);
     expect(host.textContent).toContain(t.withholdDone);

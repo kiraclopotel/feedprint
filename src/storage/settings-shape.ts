@@ -299,11 +299,12 @@ export interface FWSettings {
   hiddenByFeature?: Record<string, number>;
 
   /**
-   * What Receipts read today, on this device (B10-1): per platform, how many posts, comments
+   * What Feedprint read today, on this device (B10-1): per platform, how many posts, comments
    * and videos it accepted as read. Numbers only, with the UTC day they belong to; no id, no
    * author, no text, no address, and nothing leaves the computer. Written only by the service
    * worker (the usage counters' single writer) and replaced when the UTC day changes, so
-   * yesterday is not kept.
+   * yesterday is not kept. To count a comment once a day the worker also keeps short one-way
+   * hashes of what it counted, in chrome.storage.session only: memory, never the disk (read-keys.ts).
    */
   readToday?: ReadToday;
 

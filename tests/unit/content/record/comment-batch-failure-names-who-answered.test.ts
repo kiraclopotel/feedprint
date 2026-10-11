@@ -143,5 +143,6 @@ describe('an unjudged comment names the provider only when one answered', () => 
 
     expect(payload.failureKind).toBe('content-policy');
     expect(payload.aiProvider).toBeUndefined();
+    expect(payload.aiModel, 'a model nobody got an answer from is not named either').toBeUndefined();
   });
 });

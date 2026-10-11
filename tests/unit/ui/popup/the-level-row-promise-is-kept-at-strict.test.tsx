@@ -98,7 +98,7 @@ describe('Settings at Strict: the level row promises only what the switches belo
   it('at Strict, Strict language and Mask swearing are the switches that are locked', async () => {
     const t = POPUP_STRINGS.en;
     await renderSettings(strictSettings());
-    for (const label of [t.strictLangAriaChild, t.softenSwearingAriaChild]) {
+    for (const label of [t.softenSwearingAriaChild]) {
       const el = toggle(label);
       expect(el, `the switch "${label}" is on the screen`).not.toBeNull();
       expect(el!.getAttribute('aria-disabled'), `"${label}" is locked or greyed at Strict`).toBe('true');

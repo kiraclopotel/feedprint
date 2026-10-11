@@ -195,11 +195,31 @@ class MapBuilder {
 }
 
 interface EncounterLike {
-  post: { author: AuthorLike };
-  ancestors?: Array<{ author: AuthorLike }>;
-  focused?: { author: AuthorLike };
-  children: Array<{ author: AuthorLike }>;
+  post: { author: AuthorLike; text?: string };
+  ancestors?: Array<{ author: AuthorLike; text?: string }>;
+  focused?: { author: AuthorLike; text?: string };
+  children: Array<{ author: AuthorLike; text?: string }>;
   output_language?: string;
+}
+
+/**
+ * An @handle written in a text: not the tail of an address (a@b.com), not a label. The people who SPEAK in a call get
+ * their tokens from the map's authors; the people only MENTIONED are named by whoever wrote the text, so they are found
+ * here and get tokens of their own, or the consent screen's "a label such as @user_A in place of each account name" is
+ * untrue for the very name an attack is aimed at (the Tester's full test, 11 Oct 2026).
+ */
+const MENTION_RE = /(?<![\p{L}\p{N}_@.])@([\p{L}\p{N}_][\p{L}\p{N}_.\-]{1,38})/gu;
+
+function mentionsIn(text: string | undefined): string[] {
+  if (!text) return [];
+  const out: string[] = [];
+  for (const m of text.matchAll(MENTION_RE)) {
+    const handle = m[1].replace(/[.\-]+$/, '');
+    // A span that already looks like one of our labels is bent by the replacement step; it names nobody.
+    if (handle.length < 2 || /^user_[a-z]{1,3}$/i.test(handle)) continue;
+    out.push(handle);
+  }
+  return out;
 }
 
 /** The post's author first, then the thread above, then the commenters as shown. */
@@ -209,6 +229,8 @@ export function buildNameLabelMapForEncounter(encounter: EncounterLike): NameLab
   for (const a of encounter.ancestors ?? []) b.add(a.author);
   if (encounter.focused && encounter.focused.author !== encounter.post.author) b.add(encounter.focused.author);
   for (const c of encounter.children) b.add(c.author);
+  const texts = [encounter.post.text, ...(encounter.ancestors ?? []).map((a) => a.text), encounter.focused?.text, ...encounter.children.map((c) => c.text)];
+  for (const text of texts) for (const handle of mentionsIn(text)) b.add({ handle });
   return b.finish(encounter.output_language);
 }
 
@@ -227,10 +249,26 @@ export interface PostNameLabels extends NameLabelMap {
 }
 
 /** The post path: the author first, then the people quoted in the caption context, in order. */
-export function buildNameLabelMapForPost(author: string | undefined, context: string | undefined): PostNameLabels {
+export function buildNameLabelMapForPost(
+  author: string | undefined,
+  context: string | undefined,
+  /** The texts the call sends besides the context (the post, the post it answers): names only mentioned in them get tokens too. */
+  texts: ReadonlyArray<string | undefined> = [],
+): PostNameLabels {
   const b = new MapBuilder();
   const authorEntry = b.add({ handle: author ?? '' });
   for (const m of (context ?? '').matchAll(CONTEXT_LINE_HANDLE_RE)) b.add({ handle: m[1] });
+  for (const text of texts) for (const handle of mentionsIn(text)) b.add({ handle });
+  // The context's own bodies, without the "• @name:" heads (those are the speakers, added above). A handle the adapter's
+  // 280-character cut left half-written at the end of a body is a name already known, and the replacement step owns it.
+  for (const line of (context ?? '').split('\n')) {
+    const body = line.replace(CONTEXT_LINE_HEAD_RE, '');
+    for (const handle of mentionsIn(body)) {
+      const cutAtEnd = body.length >= CONTEXT_BODY_CUT - 1 && body.toLowerCase().endsWith(`@${handle.toLowerCase()}`);
+      if (cutAtEnd && b.entries.some((e) => !e.unknown && e.handle.length > handle.length && foldName(e.handle).startsWith(foldName(handle)))) continue;
+      b.add({ handle });
+    }
+  }
   const map = b.finish();
   return { ...map, authorValue: authorEntry.unknown ? 'unknown' : authorEntry.token };
 }

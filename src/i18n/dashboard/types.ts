@@ -765,7 +765,6 @@ export interface DashboardStrings {
   drillCount: (n: number) => string;
 
   // StatisticsTab (stats*)
-  statsBalanceTitle: string;
   statsBalanceSub: string;
   statsBalanceLine: (passedPct: number, passed: number, decided: number) => string;
   statsBalancePassed: string;
@@ -1188,6 +1187,9 @@ export interface DashboardStrings {
   opsCardTextCapTitle: (period: 'daily' | 'monthly') => string;
   opsCardTextCapMeaning: (period: 'daily' | 'monthly') => string;
   opsCardTextCapAction: (period: 'daily' | 'monthly') => string;
+  opsCardReadingPausedTitle: string;
+  opsCardReadingPausedMeaning: string;
+  opsCardReadingPausedAction: string;
   opsTechDetails: string;
 
   // Overview tab (the landing surface; every number names its denominator)

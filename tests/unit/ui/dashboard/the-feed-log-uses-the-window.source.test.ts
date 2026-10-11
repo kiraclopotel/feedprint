@@ -65,3 +65,16 @@ describe('a tab under the pointer or the keyboard', () => {
     expect(LOOKS).not.toMatch(/data-look="[a-e]"\][^{]*\.dash-tab:hover/);
   });
 });
+
+// Every other tab starts at the tabs' left edge; the Feed log's title, its filters and its notes reached out with the
+// table and started 22 px further left at 1280 px (crew/visuals/heads-stack.png, 11 Oct 2026). Only the table reaches.
+describe('the Feed log starts where the other tabs start', () => {
+  const TAB = readSource('src/ui/dashboard/components/FeedLogTab.tsx');
+  it('keeps its title, filters and notes outside the wide block, and the table inside it', () => {
+    const wide = TAB.indexOf('className="fl-wrap"');
+    expect(wide).toBeGreaterThan(-1);
+    expect(TAB.indexOf('className="fl-head"')).toBeLessThan(wide);
+    expect(TAB.lastIndexOf('className="fl-chips"')).toBeLessThan(wide);
+    expect(TAB.indexOf('className="fx-ledger fl-log"')).toBeGreaterThan(wide);
+  });
+});

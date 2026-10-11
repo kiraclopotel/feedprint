@@ -4,8 +4,11 @@ import { readSource } from '../../../helpers/read-source';
 import { repoPath } from '../../../helpers/repo-root';
 
 const FLUSH_PATH = 'src/content/comment-batch/flush.ts';
+const DOOR_PATH = 'src/content/comment-batch/door.ts';
 const LEGACY_PIPELINE_PATH = 'src/content/post-path/video-pipeline.ts';
 const source = readSource(FLUSH_PATH);
+// The hide outcome's one body (the notice, the proven-hide cache, the record) lives beside the door since 11 Oct 2026.
+const doorSource = readSource(DOOR_PATH);
 const legacySource = readSource(LEGACY_PIPELINE_PATH);
 
 describe('M60 comment hide terminal wiring', () => {
@@ -18,7 +21,9 @@ describe('M60 comment hide terminal wiring', () => {
 
   it('does not predeclare a hidden forensic outcome before DOM application', () => {
     expect(source).not.toMatch(/analysis:\s*\{[^\n]*action:\s*'hide'/);
-    expect(source).toContain('action: recordedCommentHideAction(hideApplied)');
+    expect(doorSource).not.toMatch(/analysis:\s*\{[^\n]*action:\s*'hide'/);
+    expect(doorSource).toContain('action: recordedCommentHideAction(hideApplied)');
+    expect(source).toContain('hideAndRecordComment({ settings, post, sharedFields, analysisLike, applyCommentHide })');
   });
 
   it('re-applies the prior verdict at both text-dedup skips instead of uncovering the duplicate', () => {

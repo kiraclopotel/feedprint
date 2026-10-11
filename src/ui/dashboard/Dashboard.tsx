@@ -1218,6 +1218,9 @@ function Dashboard() {
             records={allRecords}
             archivesPending={archivesPending}
             allTimeCount={wholeRecordCount}
+            unloadedSummaries={unloadedSummaries}
+            monthSets={monthSets}
+            olderMonthsProgress={olderMonthsProgress}
             stats={stats}
             now={now}
             onDrill={(d) => { setDrill({ ...d, seq: (drill?.seq ?? 0) + 1 }); setTab('activity'); }}
@@ -1254,6 +1257,7 @@ function Dashboard() {
             restoreNotice={restoreNotice.notice}
             onDismissRestoreNotice={restoreNotice.dismiss}
             landOn={exportLandOn}
+            onBackupChanged={() => setAttentionTick(n => n + 1)}
           />
         )}
         </TabPanel>

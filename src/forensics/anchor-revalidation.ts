@@ -24,6 +24,7 @@
 // what chain verdict to stamp.
 
 import { PostContent } from '../types/post';
+import { emojiPictureText, TEXT_FROM_PICTURES_ATTRIBUTE } from '../core/emoji-picture';
 
 /** Three-way outcome of the anchor revalidation gate per ARCH §3. */
 export type AnchorVerification = 'match' | 'dom-recycled' | 'dom-gone';
@@ -71,7 +72,11 @@ function liveTextOf(el: HTMLElement): string {
     clone.querySelectorAll(OWN_COVER).forEach((cover) => cover.remove());
     return (clone.textContent ?? '').trim();
   }
-  return (el.textContent ?? '').trim();
+  const text = (el.textContent ?? '').trim();
+  // A comment made only of emoji pictures was read as their alt text, and its reader stamped the body (it has no words
+  // for textContent to give). Read it the same way, or every verdict for it would be turned away as a recycled element.
+  if (text === '' && el.dataset?.[TEXT_FROM_PICTURES_ATTRIBUTE] === 'true') return emojiPictureText(el);
+  return text;
 }
 
 export function recomputeAnchorFromDom(

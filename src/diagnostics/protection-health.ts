@@ -1,4 +1,5 @@
 import { currentSurfaceSessionId } from '../content/record/impression-order';
+import { utcDayKey } from '../storage/utc-day';
 
 export const PROTECTION_HEALTH_FRESH_MS = 15_000;
 export const PROTECTION_SLOW_MS = 30_000;
@@ -51,10 +52,6 @@ interface ProtectionHealthStore {
   version: 1;
   date: string;
   sessions: Record<string, ProtectionHealthSnapshot>;
-}
-
-function today(): string {
-  return new Date().toISOString().slice(0, 10);
 }
 
 function schedulePersist(): void {
@@ -193,11 +190,11 @@ export function currentProtectionHealthSnapshot(
 function coerceStore(raw: unknown): ProtectionHealthStore {
   if (raw && typeof raw === 'object') {
     const value = raw as Partial<ProtectionHealthStore>;
-    if (value.version === 1 && value.date === today() && value.sessions && typeof value.sessions === 'object') {
+    if (value.version === 1 && value.date === utcDayKey() && value.sessions && typeof value.sessions === 'object') {
       return { version: 1, date: value.date, sessions: { ...value.sessions } };
     }
   }
-  return { version: 1, date: today(), sessions: {} };
+  return { version: 1, date: utcDayKey(), sessions: {} };
 }
 
 async function persistProtectionHealth(): Promise<void> {

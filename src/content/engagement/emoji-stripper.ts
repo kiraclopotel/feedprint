@@ -32,6 +32,8 @@ import { observeAddedRoots } from './added-roots';
 import { countHiddenFor, markHidden } from './mark-hidden';
 import { ensureStyleTag, removeStyleTag } from './style-tag';
 import { isInPrivateChatSubtree } from '../platforms/adapter';
+import { OWN_CHROME_SELECTOR } from '../text-box';
+import { isEmojiAltPicture } from '../../core/emoji-picture';
 
 const EMOJI_HIDDEN_MARKER = 'data-fw-emoji-hidden';
 const STYLE_TAG_ID = 'fw-emoji-stripper-css';
@@ -112,6 +114,19 @@ const SCOPE_SELECTORS: Partial<Record<Platform, string[]>> = {
 
 const processedNodes = new WeakSet<Text>();
 
+// Where the stripper never works, whatever the page is (11 Oct 2026). The switch means "no emoji on my screen", so
+// it cleans every text on the page and these are the exceptions: what the person types, code and styles, and
+// FeelingWise's own words. A private conversation is refused separately (isInPrivateChatSubtree).
+const NEVER_CLEANED_SELECTOR = [
+  'script', 'style', 'noscript', 'template', 'textarea', 'code', 'pre', 'title', 'input', 'select',
+  '[contenteditable]:not([contenteditable="false"])', '[role="textbox"]', '[role="combobox"]',
+  OWN_CHROME_SELECTOR,
+].join(', ');
+
+function isOutOfBounds(el: Element | null): boolean {
+  return !el || isInPrivateChatSubtree(el) || el.closest(NEVER_CLEANED_SELECTOR) !== null;
+}
+
 const HIDDEN_CSS = `
     [${EMOJI_HIDDEN_MARKER}] {
       display: none !important;
@@ -134,7 +149,7 @@ function stripEmojisInScope(scope: Element): void {
       const value = node.nodeValue;
       if (!value || value.length === 0) return NodeFilter.FILTER_REJECT;
       if (!EMOJI_PRESENCE_RE.test(value)) return NodeFilter.FILTER_REJECT;
-      if (isInPrivateChatSubtree(node.parentElement)) return NodeFilter.FILTER_REJECT;
+      if (isOutOfBounds(node.parentElement)) return NodeFilter.FILTER_REJECT;
       return NodeFilter.FILTER_ACCEPT;
     },
   });
@@ -161,18 +176,17 @@ function stripEmojisInScope(scope: Element): void {
   // Twitter/X uses <img alt="🔥" src="…twemoji…"> for some emoji. The
   // text-node walk doesn't catch these because their text-equivalent is
   // in the `alt` attribute, not the visible text content. Hide them.
-  const emojiImgs = scope.querySelectorAll<HTMLImageElement>(
-    'img[src*="twemoji"], img[src*="emoji"], img[alt][draggable="false"][src*="abs-"]',
-  );
+  // A picture is an emoji by what it is: its alt text is nothing but emoji (any file, any site). The older test by
+  // file name is kept beside it. A picture with a name or no alt, an avatar or a photo, is never one.
+  const emojiImgs = Array.from(scope.querySelectorAll<HTMLImageElement>('img[alt]'));
+  if (scope instanceof HTMLImageElement && scope.hasAttribute('alt')) emojiImgs.push(scope);
   for (const img of emojiImgs) {
     if (img.hasAttribute(EMOJI_HIDDEN_MARKER)) continue;
-    if (isInPrivateChatSubtree(img)) continue;
-    // Heuristic: only hide if alt is exactly an emoji-like glyph (1-3 chars
-    // and matches the unicode class). Avoids stripping legit avatar / image
-    // tags that happen to match the src filter.
+    if (isOutOfBounds(img)) continue;
     const alt = img.getAttribute('alt') ?? '';
-    if (alt.length === 0 || alt.length > 8) continue;
-    if (!EMOJI_PRESENCE_RE.test(alt)) continue;
+    const byAddress = /twemoji|emoji|abs-/.test(img.getAttribute('src') ?? '')
+      && alt.length > 0 && alt.length <= 8 && EMOJI_PRESENCE_RE.test(alt);
+    if (!byAddress && !isEmojiAltPicture(img)) continue;
     markHidden(img, {
       marker: EMOJI_HIDDEN_MARKER, value: 'true',
       reason: 'strip-emojis:emoji-img',
@@ -186,13 +200,8 @@ function stripEmojisInScope(scope: Element): void {
 function runOnce(platform: Platform): void {
   const selectors = SCOPE_SELECTORS[platform];
   if (!selectors || selectors.length === 0) return;
-
-  for (const sel of selectors) {
-    const scopes = document.querySelectorAll<HTMLElement>(sel);
-    for (const scope of scopes) {
-      stripEmojisInScope(scope);
-    }
-  }
+  // The whole page, not the list of places the selectors name: a site redraws its page and the list is wrong.
+  stripEmojisInScope(document.body);
 }
 
 // One inserted subtree: the scopes inside it and the nearest scope above it
@@ -200,18 +209,7 @@ function runOnce(platform: Platform): void {
 function runOnRoots(roots: Element[], platform: Platform): void {
   const selectors = SCOPE_SELECTORS[platform];
   if (!selectors || selectors.length === 0) return;
-  const joined = selectors.join(', ');
-  const seen = new Set<Element>();
-  const take = (el: Element | null): void => {
-    if (el && !seen.has(el)) {
-      seen.add(el);
-      stripEmojisInScope(el);
-    }
-  };
-  for (const root of roots) {
-    take(root.closest(joined));
-    root.querySelectorAll<HTMLElement>(joined).forEach(take);
-  }
+  for (const root of roots) stripEmojisInScope(root);
 }
 
 function resetEmojiStripperDOM(): void {

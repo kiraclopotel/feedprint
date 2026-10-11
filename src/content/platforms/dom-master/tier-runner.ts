@@ -25,7 +25,7 @@
 
 import { detectRowsByShape } from './shape-detector';
 import { maybeFireRotationDiagnostic } from './rotation-diagnostic';
-import type { DomMasterAdapter, ExtractionResult } from './types';
+import type { DomMasterAdapter, ExtractionResult, SelectorTier } from './types';
 
 /**
  * Extract comment / post rows from `container` using the adapter's
@@ -93,7 +93,7 @@ export function extractCommentRows(
 }
 
 /** Run a single tier — selector or walk-based — and apply optional filter. */
-function runTier(container: HTMLElement, tier: import('./types').SelectorTier): HTMLElement[] {
+function runTier(container: HTMLElement, tier: SelectorTier): HTMLElement[] {
   if (tier.walk) {
     const rows = tier.walk(container);
     return tier.filter ? rows.filter(tier.filter) : rows;

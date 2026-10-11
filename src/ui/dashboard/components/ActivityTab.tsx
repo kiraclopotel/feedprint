@@ -775,7 +775,7 @@ export function ActivityTab({
                               <div className="fc-tl-row gap">
                                 <div className="fc-tl-gutter" />
                                 <div className="fc-tl-gaplabel">
-                                  {t.feedPlatformSwitch(div.fromPlatform, div.toPlatform, div.gapSeconds)}
+                                  {t.feedPlatformSwitch(PLATFORM_LABELS[div.fromPlatform] ?? div.fromPlatform, PLATFORM_LABELS[div.toPlatform] ?? div.toPlatform, div.gapSeconds)}
                                 </div>
                               </div>
                             )

@@ -96,7 +96,7 @@ const hasOutboundLink = (el: Element): boolean => outboundLink(el) !== null;
 
 /**
  * Hides each sidebar ad module under `root`. With `record` (the running blocker passes it), each module is also
- * written to the record once per page life, read before it is hidden: the record keeps every ad Receipts hides. In
+ * written to the record once per page life, read before it is hidden: the record keeps every ad Feedprint hides. In
  * Off the record call is a no-op (recorder-sink.ts).
  */
 export function hideSidebarAds(root: HTMLElement, record?: { platform: Platform; mode: FWSettings['mode'] }): void {

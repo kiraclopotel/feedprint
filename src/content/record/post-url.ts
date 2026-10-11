@@ -9,7 +9,7 @@ import { bumpCounter } from '../../diagnostics/diagnostics';
 import { currentDocumentHost, isForeignPostUrlHost, normalizePostUrlHost } from './post-url-host';
 
 // A record falls back to the address of the page a post was seen on, and a
-// search box writes what the person typed into that address. Receipts records
+// search box writes what the person typed into that address. Feedprint records
 // no searches, so only the parameters that name a post, a photo, a video or a
 // playlist on that site are kept, and the fragment goes too.
 const PAGE_NAMING_PARAMS: Readonly<Record<string, readonly string[]>> = {

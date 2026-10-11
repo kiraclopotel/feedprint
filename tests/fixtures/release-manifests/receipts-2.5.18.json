@@ -1,7 +1,8 @@
 {
   "manifest_version": 3,
   "name": "__MSG_receiptsName__",
-  "version": "2.5.16",
+  "short_name": "__MSG_receiptsShortName__",
+  "version": "2.5.18",
   "description": "__MSG_receiptsDescription__",
   "default_locale": "en",
   "icons": {
@@ -118,5 +119,6 @@
       "48": "assets/icons/icon-48.png",
       "128": "assets/icons/icon-128.png"
     }
-  }
+  },
+  "version_name": "2.5.18 build fwbid-690dba9d19b8-r2518 source 0cf4ec27c4e96d1c59d6027e2226f264004121587d274a35c22f6c4fd173d9a9"
 }

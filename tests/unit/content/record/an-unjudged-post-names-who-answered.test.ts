@@ -85,6 +85,7 @@ describe('an unjudged post names the provider only when one answered', () => {
     expect(records).toHaveLength(1);
     expect(records[0].failureKind).toBe('network');
     expect(records[0].aiProvider).toBeUndefined();
+    expect(records[0].aiModel, 'a model nobody got an answer from is not named either').toBeUndefined();
   });
 
   it('a judge answered with nothing usable: the record names the model and provider the server named', async () => {

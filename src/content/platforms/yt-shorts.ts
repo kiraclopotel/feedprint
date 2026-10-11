@@ -37,7 +37,7 @@ export const YT_SHORTS_SAME_TITLE_WAIT_POLLS = 4;
 /** Polls after the address changes before a Short with no readable title is counted. */
 export const YT_SHORTS_NO_TITLE_POLLS = 6;
 /** Hard cap on the once-per-Short set (FIFO eviction). */
-export const YT_SHORTS_MAX_EMITTED_IDS = 200;
+const YT_SHORTS_MAX_EMITTED_IDS = 200;
 /** Records written in one page life; past it, Shorts are counted and not read. */
 export const YT_SHORTS_MAX_RECORDS_PER_PAGE = 400;
 

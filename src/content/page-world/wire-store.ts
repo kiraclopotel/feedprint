@@ -34,7 +34,10 @@
 // displayed text it did not. Until that day a caption-less TikTok For You video was
 // judged by its room only (PLAN-2026-09-14 standing decision 3,
 // src/content/post-path/room-verdict.ts); the room still decides where the wire has no
-// caption either. Text the DOM did read is never overwritten.
+// caption either. Text the DOM did read is never overwritten, with one exception: a
+// fragment cut at a "See more" or "Show more" control, when the platform's text for the
+// same item is longer and begins with that fragment. The fragment was judged as if it were
+// the whole post, so the whole text replaces it and the record is marked 'platform' too.
 
 import type { PostContent } from '../../types/post';
 
@@ -98,6 +101,29 @@ export function rememberWireItem(post: PostContent): void {
   prune();
 }
 
+/** Ellipses this close to the end of a text mark a cut; past them is at most the control's own label. */
+const CUT_TAIL = 40;
+
+function squash(text: string): string {
+  return text.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Whether the platform's text is the whole of a text the page cut. `seenCut` is the page's own word that it cut the
+ * text (X's "Show more" leaves no ellipsis); otherwise the shown text must end in an ellipsis, maybe followed by the
+ * control's label, as Facebook's "… See more" does. Either way the shown part, without its ellipsis, must open the
+ * platform's text and be shorter than it. A link the page shortens can break the match, and then the shown text stays.
+ */
+export function completesCutText(shown: string, platformText: string, seenCut = false): boolean {
+  let prefix = squash(shown);
+  const cutAt = Math.max(prefix.lastIndexOf('…'), prefix.lastIndexOf('...'));
+  if (cutAt >= 0 && prefix.length - cutAt <= CUT_TAIL) prefix = prefix.slice(0, cutAt).trim();
+  else if (!seenCut) return false;
+  if (prefix.length < 20) return false;
+  const whole = squash(platformText);
+  return whole.length > prefix.length && whole.startsWith(prefix);
+}
+
 /** What the platform said about this item, or undefined if it said nothing. */
 export function wireFieldsFor(platform: string, id: string): WireFields | undefined {
   return byIdentity.get(wireIdentity(platform, id));
@@ -132,6 +158,10 @@ export function enrichPostFromWire(post: PostContent): string[] {
   // record says where the text came from; a DOM-read text, even a short one, is never replaced.
   const wireText = wire.text?.trim() ?? '';
   if (post.text.trim().length === 0 && wireText.length > 0) {
+    post.text = wireText;
+    post.textCapture = 'platform';
+    filled.push('text');
+  } else if (wireText.length > 0 && completesCutText(post.text, wireText, post.textCapture === 'cut')) {
     post.text = wireText;
     post.textCapture = 'platform';
     filled.push('text');

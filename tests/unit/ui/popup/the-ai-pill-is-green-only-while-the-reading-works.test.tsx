@@ -73,6 +73,6 @@ describe('the closed AI pill is green only while the reading is at work', () => 
     '%s: the quiet pill, with the same words', async (_l, settings) => {
       const drawer = await closedDrawer(settings);
       expect(drawer.classList.contains('idle')).toBe(true);
-      expect(drawer.querySelector('button.ai-drawer-head')!.textContent).toBe(`${t.groupAi}·${t.keySubActive}`);
+      expect(drawer.querySelector('button.ai-drawer-head')!.textContent).toBe(t.keySubActive === t.groupAi ? t.groupAi : `${t.groupAi}·${t.keySubActive}`);
     });
 });

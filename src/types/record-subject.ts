@@ -15,7 +15,7 @@
 import type { RecordStamp } from './forensic';
 
 /** The fields every record of the chain has, with the same names and meanings as on ForensicRecord. */
-export interface ChainFields {
+interface ChainFields {
   id: string;
   /** ISO time the record was written. */
   timestamp: string;
@@ -66,7 +66,7 @@ export interface DocumentSubject {
 }
 
 /** The consent standards a consent record can hold. Each has its own decoder under src/contracts/consent/. */
-export type ConsentStandard = 'tcf-eu-2';
+type ConsentStandard = 'tcf-eu-2';
 
 /** A consent string as a site's consent tool reported it to the page. */
 export interface ConsentSubject {
@@ -99,7 +99,7 @@ export interface NoteSubject {
   fields: { name: string; value: string }[];
 }
 
-export type SubjectRecord = ChainFields & (
+type SubjectRecord = ChainFields & (
   | { kind: 'document'; subject: DocumentSubject }
   | { kind: 'consent'; subject: ConsentSubject }
   | { kind: 'note'; subject: NoteSubject }

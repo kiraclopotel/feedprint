@@ -9,6 +9,8 @@
 // an element's ENTIRE trimmed text, folded (lowercase, diacritics stripped),
 // never a substring: a caption saying "this is not sponsored" is not a label.
 
+import { wordFamily } from '../../core/repairs/families';
+
 const LABELS: readonly string[] = [
   // en
   'sponsored', 'ad', 'promoted', 'paid partnership', 'paid promotion',
@@ -55,7 +57,18 @@ function fold(s: string): string {
     .trim();
 }
 
-const FOLDED = new Set(LABELS.map(fold));
+// The words are a finder family (a repair file may add a language's label). The folded set is rebuilt only when the
+// list in force is a different list.
+let foldedFor: readonly string[] | null = null;
+let folded: ReadonlySet<string> = new Set();
+function foldedLabels(): ReadonlySet<string> {
+  const list = wordFamily('finder.ads.label-words', LABELS);
+  if (list !== foldedFor) {
+    foldedFor = list;
+    folded = new Set(list.map(fold));
+  }
+  return folded;
+}
 
 /** Longest label, in characters, so callers can reject long text early. */
 export const AD_LABEL_MAX_LENGTH = Math.max(...LABELS.map((l) => l.length)) + 4;
@@ -66,7 +79,7 @@ export function isAdLabelText(text: string | null | undefined): boolean {
   if (text.length > AD_LABEL_MAX_LENGTH + 8) return false;
   // Facebook renders the label with its separator in the same node
   // ("Ad · "); the separator is not part of the label.
-  return FOLDED.has(fold(text.replace(ZERO_WIDTH, '').replace(/^[\s·•|,.\-]+|[\s·•|,.\-]+$/g, '')));
+  return foldedLabels().has(fold(text.replace(ZERO_WIDTH, '').replace(/^[\s·•|,.\-]+|[\s·•|,.\-]+$/g, '')));
 }
 
 /**

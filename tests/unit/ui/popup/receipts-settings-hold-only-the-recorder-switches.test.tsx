@@ -96,7 +96,7 @@ describe.each(UI_LANGUAGES)('Receipts settings, %s', (lang) => {
     const essentials = container.querySelector('.set-essentials') as HTMLElement;
     expect(essentials).not.toBeNull();
     const text = essentials.textContent ?? '';
-    const order = [t.featBlockAdsName, t.strictLangName, t.softenSwearingName, t.featMarkersName, t.rulesName];
+    const order = [t.featBlockAdsName, t.softenSwearingName, t.featMarkersName, t.rulesName];
     const at = order.map(name => text.indexOf(name));
     for (const [i, name] of order.entries()) expect(at[i], name).toBeGreaterThanOrEqual(0);
     expect(at).toEqual([...at].sort((a, b) => a - b));

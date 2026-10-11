@@ -66,7 +66,6 @@ describe('honest gaps (zero post-scan, counts still hidden)', () => {
     ['tiktok.com', '/@someuser'],
     ['tiktok.com', '/search?q=x'.replace('?q=x', '')], // '/search'
     ['tiktok.com', '/tag/funny'],
-    ['youtube.com', '/watch'],
   ];
   it.each(gaps)('%s %s is a gap with an honest note', (host, path) => {
     const c = describePageCoverage(host, path);
@@ -76,6 +75,28 @@ describe('honest gaps (zero post-scan, counts still hidden)', () => {
     expect(c!.gapNote).toBeTruthy();
     // Engagement-count hiding still applies on these surfaces.
     expect(c!.protections.metricsHidden).toBe(true);
+  });
+});
+
+describe('a YouTube video page is recorded, so it is not called limited', () => {
+  // 11 Oct 2026, the night walk: the popup said "YouTube · limited here" on the watch page, where the video and every
+  // comment and reply a person opens are read and written into the record. "Fully covered" is the page where Feedprint
+  // reads both the posts and the comments; the watch page is one. Its note (flagged comments are marked or hidden, not
+  // rewritten) stays with the page for the popup to show.
+  it('reads the video and its comments, and says it is recording', () => {
+    const c = describePageCoverage('youtube.com', '/watch');
+    expect(c).not.toBeNull();
+    expect(c!.fullyProtected).toBe(true);
+    expect(c!.protections.postScan).toBe(true);
+    expect(c!.protections.comments).toBe(true);
+    expect(c!.protections.metricsHidden).toBe(true);
+    expect(c!.gapNote, 'the sentence about marking, not rewriting, stays').toBeTruthy();
+  });
+
+  it('while the pages that do not read comments are still called limited', () => {
+    for (const path of ['/', '/results', '/shorts/abc']) {
+      expect(describePageCoverage('youtube.com', path)!.fullyProtected, path).toBe(false);
+    }
   });
 });
 

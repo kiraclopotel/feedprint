@@ -75,7 +75,8 @@ function switchMarkup(html: string, label: string): string {
 // Strict-language row above it says Child mode softens swearing, and this one
 // sat beneath it live and clickable, with no mode branch in the gate to stop a
 // child turning the masking off.
-const CHILD_LOCKED_LABELS = [EN.strictLangAriaChild, EN.softenSwearingAriaChild];
+// Since 11 Oct 2026 Mask swearing is the one switch for swearing; Strict language's row is gone.
+const CHILD_LOCKED_LABELS = [EN.softenSwearingAriaChild];
 
 describe('RECON F4 — locked-ON switches read as held, not as off', () => {
   it('child mode renders every locked row ON and held, and keeps it reachable', () => {
@@ -102,8 +103,7 @@ describe('RECON F4 — locked-ON switches read as held, not as off', () => {
     // The AI card's rows live in their own file since the card left SettingsPanel.
     const panel = ['src/ui/popup/panels/SettingsPanel.tsx', 'src/ui/popup/panels/ai/AiCard.tsx']
       .map((f) => readFileSync(f, 'utf8')).join('\n');
-    expect(panel).toContain('onClick={() => { if (!childMode) void toggleStrictLanguage(); }}');
-    expect(panel).toContain("onClick={() => { if (!childMode && !settings.strictLanguage) void toggle('soften-swearing'); }}");
+    expect(panel).toContain('onClick={() => { if (!childMode) void toggleMask(); }}');
     expect(panel).toContain('onClick={() => { if (!onYouTube) void toggle(r.id); }}');
   });
 
@@ -124,7 +124,7 @@ describe('RECON F4 — locked-ON switches read as held, not as off', () => {
   });
 
   it('an unlocked switch stays plain: no lock styling, no dimming', () => {
-    const markup = switchMarkup(renderPanel('teen'), EN.strictLangAria);
+    const markup = switchMarkup(renderPanel('teen'), EN.softenSwearingName);
     expect(markup).toContain('aria-checked="false"');
     expect(markup).not.toContain('disabled=""');
     expect(markup).not.toContain('locked-on');

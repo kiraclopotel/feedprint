@@ -63,6 +63,8 @@ async function settled(lang: Lang, settings: FWSettings, license: LicenseInfo): 
 const before = (a: Element, b: Element) => !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
 const drawerHead = () => container.querySelector<HTMLButtonElement>('button.ai-drawer-head');
 const drawerBody = () => container.querySelector<HTMLElement>('#fw-ai-drawer-rows');
+// What the drawer header reads: the group, and the plan after a dot only when the plan has a name of its own.
+const headerText = (s: { groupAi: string; keySubActive: string }) => s.keySubActive === s.groupAi ? s.groupAi : `${s.groupAi}·${s.keySubActive}`;
 
 describe.each(UI_LANGUAGES)('%s', (lang) => {
   const t = POPUP_STRINGS[lang];
@@ -79,8 +81,10 @@ describe.each(UI_LANGUAGES)('%s', (lang) => {
       // Nothing sits between the level card and the drawer.
       expect(level!.nextElementSibling).toBe(drawer);
       const head = drawerHead()!;
-      expect(head.textContent).toBe(`${t.groupAi}·${t.keySubActive}`);
-      expect(head.querySelector('.ai-drawer-sep')?.getAttribute('aria-hidden'), 'the dot is not read aloud').toBe('true');
+      // The header names the group, and the plan after a dot only when the plan has a name of its own.
+      expect(head.textContent).toBe(headerText(t));
+      if (t.keySubActive !== t.groupAi) expect(head.querySelector('.ai-drawer-sep')?.getAttribute('aria-hidden'), 'the dot is not read aloud').toBe('true');
+      else expect(head.querySelector('.ai-drawer-sep'), 'one name, no dot').toBeNull();
       expect(head.getAttribute('aria-expanded')).toBe('true');
       expect(head.getAttribute('aria-controls')).toBe('fw-ai-drawer-rows');
       expect(drawerBody()!.hidden).toBe(false);
@@ -113,8 +117,7 @@ describe('the drawer remembers how the person left it', () => {
     expect(drawerHead()!.getAttribute('aria-expanded')).toBe('false');
     expect(drawerBody()!.hidden).toBe(true);
     expect(container.querySelector('.ai-drawer')!.classList.contains('closed'), 'closed, it is the pill').toBe(true);
-    expect(drawerHead()!.textContent).toContain(POPUP_STRINGS.en.groupAi);
-    expect(drawerHead()!.textContent).toContain(POPUP_STRINGS.en.keySubActive);
+    expect(drawerHead()!.textContent).toBe(headerText(POPUP_STRINGS.en));
     expect(fake.state[AI_DRAWER_OPEN_KEY]).toBe(false);
 
     // Settings opened again: the drawer comes back closed.

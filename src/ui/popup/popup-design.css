@@ -804,6 +804,9 @@ html { scrollbar-width: thin; scrollbar-color: color-mix(in oklch, var(--fw-mute
 .ai-drawer-title { font-size: 13px; font-weight: 600; }
 .ai-drawer-sep { font-size: 11px; color: var(--fw-muted); }
 .ai-drawer-plan { flex: 1; font-size: 11px; color: var(--fw-muted); }
+/* With one name for the feature (11 Oct 2026) the plan label is not drawn, so the open header gives the title the room
+   that pushed the chevron to the right edge; the closed pill keeps its compact row. */
+.ai-drawer:not(.closed) .ai-drawer-title:has(+ .ai-drawer-chev) { flex: 1; }
 .ai-drawer.closed .ai-drawer-sep { color: var(--ai-pill-ink); }
 .ai-drawer-chev { color: var(--fw-muted); transform: rotate(-90deg); transition: transform 200ms ease; }
 .ai-drawer-chev.open { transform: none; }

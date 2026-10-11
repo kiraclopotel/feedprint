@@ -38,6 +38,11 @@
 // is no middle tier and those items take the same no-action path as anything else the
 // judges pass (docs/research/provider-2026-09-21/THE-RECOMMENDATION.md).
 //
+// The same mark was measured again for the paid reading's third reader, Claude Haiku: mark what
+// the first judge rated 1 to 6 without firing and Haiku flags. Weighted to a real feed that bucket
+// is right 42.7 percent of the time on the held-out 500 and 40.6 on dev, the same failure as above,
+// so the paid reading adds Haiku only as a second voice that can agree, never as a mark on its own.
+//
 // WHAT THE RECALL COSTS, HONESTLY
 //
 // 13 points, and it is the mildest band. What both judges miss is overwhelmingly severity
@@ -90,6 +95,22 @@ export function pairFires(
   cut: number,
 ): boolean {
   return verdictFires(first, cut) && verdictFires(second, cut);
+}
+
+/**
+ * The paid reading's rule: the first judge fires and either the second or Claude agrees. Claude is
+ * asked wherever the second is (needsSecondOpinion), beside it, even where the second agrees: the
+ * verdict is the same either way, and the record then holds Claude's reading on every item the first
+ * judge fired on, which is what measuring it on a real feed needs. A reader that failed is null and
+ * cannot agree, so a failure leaves the pair's rule.
+ */
+export function actFires(
+  first: JudgeReading | null,
+  second: JudgeReading | null,
+  claude: JudgeReading | null,
+  cut: number,
+): boolean {
+  return verdictFires(first, cut) && (verdictFires(second, cut) || verdictFires(claude, cut));
 }
 
 /**

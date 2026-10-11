@@ -26,4 +26,6 @@ export type UsageIncrement =
   | { kind: 'neutralized' }
   | { kind: 'metrics-hidden'; by: number; byFeature?: Record<string, number> }
   // Items a page read, added to today's count for one platform (B10-1). Numbers only.
-  | { kind: 'items-read'; platform: string; posts: number; comments: number; videos: number };
+  // `commentKeys` are short one-way hashes of comments the page counted: the worker adds only those new today to
+  // `comments` and keeps the set in memory (storage/read-keys.ts), so a revisit does not count them again.
+  | { kind: 'items-read'; platform: string; posts: number; comments: number; videos: number; commentKeys?: string[] };

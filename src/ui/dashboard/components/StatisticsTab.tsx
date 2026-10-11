@@ -31,6 +31,8 @@ import { formatCount } from '../../shared/format-number';
 import { ArchivesPendingNote } from './ArchivesPendingNote';
 import { honestPct } from './overview-data';
 import { countRecordSets, daySpanOf, inRecordSet, isFlaggedItem, isSecondReading, type RecordSetName } from '../record-sets';
+import { wholeRecordSets, type MonthSets, type OlderMonthsProgress } from '../month-sets';
+import type { MonthSummary } from '../../../forensics/archive-summary';
 import {
   KitRow, KitStack, KitLegend, KitCols, KitAxis, KitTile, KitChip, stackedColumn,
 } from './chart-kit';
@@ -48,9 +50,14 @@ export interface StatisticsTabProps {
   allTimeCount?: number;
   /** The install has the AI reading (ai-wording.ts); off, the coverage footnote says nothing about the AI. */
   readingOffered?: boolean;
+  /** The archived months outside `records`, and their saved counts: the feed balance counts them too. */
+  unloadedSummaries?: readonly MonthSummary[];
+  monthSets?: ReadonlyMap<string, MonthSets>;
+  /** How far the older months' recount has come, while it runs. */
+  olderMonthsProgress?: OlderMonthsProgress | null;
 }
 
-export function StatisticsTab({ records, stats, now, onDrill, archivesPending, allTimeCount, readingOffered = true }: StatisticsTabProps) {
+export function StatisticsTab({ records, stats, now, onDrill, archivesPending, allTimeCount, readingOffered = true, unloadedSummaries, monthSets, olderMonthsProgress }: StatisticsTabProps) {
   const t = useDashboardT();
   const lang = useUiLanguage();
   // Local-midnight day boundary — must match the Activity tab's inline "today"
@@ -66,10 +73,16 @@ export function StatisticsTab({ records, stats, now, onDrill, archivesPending, a
   const flagged = sets.flagged;
   const seenALotLabel = (() => { const w = t.techniqueLabel('repeat-exposure'); return w.charAt(0).toLocaleUpperCase(lang) + w.slice(1); })();
   const blocked = sets.blocked;
-  const balancePassed = sets.passed;
-  const balanceFlagged = sets.flagged;
-  const balanceBlocked = sets.blocked;
-  const decided = sets.checked;
+  // The feed balance is the whole record's: every month, loaded or not, so it keeps describing all of it as the record
+  // grows. The tiles below keep the loaded months and say which days they cover.
+  const whole = React.useMemo(
+    () => wholeRecordSets(allTimeCount ?? records.length, records, unloadedSummaries ?? [], monthSets),
+    [allTimeCount, records, unloadedSummaries, monthSets],
+  );
+  const balancePassed = whole.sets.passed;
+  const balanceFlagged = whole.sets.flagged;
+  const balanceBlocked = whole.sets.blocked;
+  const decided = whole.sets.checked;
   // The daily trend counts items, the same set the flagged tile divides by.
   const isBalanceContent = (r: ForensicRecord) => inRecordSet('items', r);
   const passedPct = honestPct(balancePassed, decided);
@@ -226,14 +239,37 @@ export function StatisticsTab({ records, stats, now, onDrill, archivesPending, a
       <ArchivesPendingNote pending={archivesPending} />
       {/* Feed balance — the benign majority, so the harm counts read in context */}
       <div className="stats-card full">
-        <h3>{t.statsBalanceTitle}</h3>
+        {/* The share itself, in the Overview's words: a fixed "Most of what was checked passed" stood over 25% (11 Oct 2026). */}
+        <h3>{decided > 0 ? t.ovBalanceHeadline(passedPct) : t.statsBalanceEmpty}</h3>
         <div className="stats-sub">{t.statsBalanceSub}</div>
-        <FeedBalanceBar
-          passed={balancePassed} flagged={balanceFlagged} blocked={balanceBlocked}
-          decided={decided} passedPct={passedPct}
-          interval={passedShare ? t.shareInterval(passedShare.lowerPct, passedShare.upperPct) : ''}
-        />
-        {prov('checked', decided)}
+        {/* With nothing checked the headline already says so; the bar's own empty line would say it twice. */}
+        {decided > 0 && (
+          <FeedBalanceBar
+            passed={balancePassed} flagged={balanceFlagged} blocked={balanceBlocked}
+            decided={decided} passedPct={passedPct}
+            interval={passedShare ? t.shareInterval(passedShare.lowerPct, passedShare.upperPct) : ''}
+          />
+        )}
+        {whole.sets.firstDay
+          ? <div className="fb-prov">{t.fbProv('checked', decided, dayLabel(whole.sets.firstDay), dayLabel(whole.sets.lastDay))}</div>
+          : null}
+        {/* What the record's entries are, so "checked" is never read as every entry: an item scrolled away or skipped
+            before a verdict, a comment-section summary and the record's own markers are entries too. */}
+        {whole.sets.entries > 0 && (
+          <div className="fb-prov" data-testid="stats-balance-entries">
+            {t.setCount('entries', whole.sets.entries)}: {[
+              t.setCount('checked', whole.sets.checked),
+              t.setCount('notChecked', whole.sets.notChecked),
+              ...(whole.sets.seenALot > 0 ? [t.setCount('seenALot', whole.sets.seenALot)] : []),
+              t.setCount('roomSummaries', whole.sets.roomSummaries),
+              t.setCount('markers', whole.sets.markers),
+            ].join(', ')}
+          </div>
+        )}
+        {whole.olderPending > 0 && olderMonthsProgress && (
+          <div className="fb-prov">{t.hdrCountingOlderMonths(olderMonthsProgress.done, olderMonthsProgress.total)}</div>
+        )}
+        {whole.unread > 0 && <div className="fb-prov">{t.hdrBreakdownUnread(whole.unread)}</div>}
       </div>
 
       {/* Limits box — judge lens: limits stated before conclusions. Every

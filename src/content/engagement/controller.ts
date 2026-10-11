@@ -12,6 +12,9 @@ import type { Platform } from '../../types/post';
 import type { FWSettings } from '../../storage/settings';
 import { getSettings, isFeatureEnabled } from '../../storage/settings';
 import { isContextAlive } from '../../storage/context-guard';
+import { loadRepairs, REPAIRS_STORAGE_KEY } from '../../core/repairs/store';
+import { setRepairEventSink } from '../../core/repairs/families';
+import { recordFinderEvent } from '../../diagnostics/finder-ledger';
 import { bumpCounter } from '../../diagnostics/diagnostics';
 import { startTikTokEngagementControl } from './tiktok-engagement';
 import { startTwitterEngagementControl } from './twitter-engagement';
@@ -59,8 +62,8 @@ import { startYouTubeFeeds, resetYouTubeFeedsDOM, YOUTUBE_FEED_FEATURES, YT_FEED
 import { PLAYER_AD_STYLE_ID } from './youtube-player-ad';
 import { SURFACE_FEATURE_IDS } from '../../storage/settings';
 import { isOffProduct } from '../../product';
-import { withReceiptsScope } from '../../storage/switch-scope';
-import { stopWhenReceiptsGoes, type RecorderFamily } from './recorder-runs';
+import { withFeedprintScope } from '../../storage/switch-scope';
+import { stopWhenFeedprintGoes, type RecorderFamily } from './recorder-runs';
 
 // ─── Style tag IDs (must match platform modules) ───
 
@@ -317,11 +320,11 @@ function resetEngagementDOM(): void {
   });
 }
 
-// ─── Receipts' hides on a page both run ───
+// ─── Feedprint's hides on a page both run ───
 //
-// Receipts hides an ad or a harmful post in the same inline style Off's resets clear, so Off taking back its own
-// hide on that post would show what Receipts hid (docs/spec/TWO-PRODUCTS.md). Off's stops and resets run inside
-// this: what Receipts wrote on its posts is read first and written back after.
+// Feedprint hides an ad or a harmful post in the same inline style Off's resets clear, so Off taking back its own
+// hide on that post would show what Feedprint hid (docs/spec/TWO-PRODUCTS.md). Off's stops and resets run inside
+// this: what Feedprint wrote on its posts is read first and written back after.
 
 const RECORDER_HIDDEN = '[data-fw-ad-hidden="true"], [data-fw-hard-hidden="true"]';
 const RECORDER_HIDE_ATTRS = ['data-fw-hide-mode', 'data-fw-block-reason'] as const;
@@ -418,12 +421,12 @@ function startPlatformEngagement(
   // the extraction pipeline, so the pipeline's Block Ads hide can't reach
   // them — this DOM-tier scan closes that gap (F1; X only).
   const mediaOnlyAdCleanup = runsAds ? keepStart('mediaOnlyAdBlocker', () => startMediaOnlyAdBlocker(platform, settings)) : none();
-  // Feed ads on every platform by the platform's own label. In Receipts the
+  // Feed ads on every platform by the platform's own label. In Feedprint the
   // pipeline hides and records them, and this rule takes only the ad slots the
   // pipeline does not read (feed-ad-blocker.ts).
   const feedAdCleanup = runsAds ? keepStart('feedAdBlocker', () => startFeedAdBlocker(platform, settings)) : none();
-  // Receipts runs the ads and nothing else here: every other module is Off's (storage/switch-scope.ts),
-  // and a copy started in Receipts would fight Off's on a page both run, since their passes and stops
+  // Feedprint runs the ads and nothing else here: every other module is Off's (storage/switch-scope.ts),
+  // and a copy started in Feedprint would fight Off's on a page both run, since their passes and stops
   // remove the same style tags and markers.
   if (!isOffProduct()) return () => stopAll([sidebarAdCleanup, mediaOnlyAdCleanup, feedAdCleanup]);
   // The recorder does the same three text rules inside the pipeline, where
@@ -495,6 +498,9 @@ function startPlatformEngagement(
   ]);
 }
 
+// What a repair does to a finder is counted in the finder ledger.
+setRepairEventSink(recordFinderEvent);
+
 // ─── Main Entry Point ───
 
 export async function initEngagementControl(
@@ -507,17 +513,21 @@ export async function initEngagementControl(
 
   const offRuns = isOffProduct();
   const leaveToRecorder: ReadonlySet<RecorderFamily> = options.leaveToRecorder ?? new Set();
-  // Receipts keeps an "on" stored for a switch it no longer has, and acts as if it were off.
+  // Feedprint keeps an "on" stored for a switch it no longer has, and acts as if it were off.
   const readSettings = async (): Promise<FWSettings> => {
     const stored = await getSettings();
-    return offRuns ? stored : withReceiptsScope(stored);
+    return offRuns ? stored : withFeedprintScope(stored);
   };
-  // Receipts' ad modules undo their own hides when they stop; the page-wide reset would also strip
+  // Feedprint's ad modules undo their own hides when they stop; the page-wide reset would also strip
   // what Off hid on a page both run.
   const resetDOM = offRuns ? resetEngagementDOM : () => {};
   const keepHides = offRuns ? keepingRecorderHides : (run: () => void) => run();
 
+  // The repair file in force (the packaged one, or a newer one Feedprint fetched) is read before any finder starts. It is
+  // started first and awaited with the settings, so the settings read begins in the same turn as it always did.
+  const repairsLoaded = loadRepairs();
   const settings = await readSettings();
+  await repairsLoaded;
   // The extension can be reloaded while settings are read; an orphaned script has nothing left to start.
   if (!isContextAlive()) return () => {};
 
@@ -526,7 +536,7 @@ export async function initEngagementControl(
   let restartSeq = 0;
 
   // Whether the module set is running. While it runs, startPickedBlocks follows the picks itself;
-  // while it does not (Receipts with every switch off), the first pick has to start it.
+  // while it does not (Feedprint with every switch off), the first pick has to start it.
   let controlling = shouldControlEngagement(platform, settings);
   if (controlling) {
     // Each module's start is guarded inside startPlatformEngagement, so a throw there does not reach this line.
@@ -574,7 +584,9 @@ export async function initEngagementControl(
       // until the person reloaded, with no sign that anything was pending. The
       // recorder's own runtime has watched this key all along
       // (protection-runtime-startup.ts), which is why it was only wrong here.
-      !changes.strictLanguage
+      !changes.strictLanguage &&
+      // A new repair file changes what the finders look for, so they start again from it.
+      !changes[REPAIRS_STORAGE_KEY]
     ) {
       return;
     }
@@ -605,6 +617,7 @@ export async function initEngagementControl(
       // read, and each failure moves a counter.
       let newSettings: FWSettings;
       try {
+        if (changes[REPAIRS_STORAGE_KEY]) await loadRepairs();
         newSettings = await readSettings();
       } catch (error) {
         bumpCounter('engagementRebuildThrew');
@@ -667,8 +680,8 @@ export async function initEngagementControl(
       () => chrome.storage?.onChanged?.removeListener(storageListener),
     ]);
   };
-  // A Receipts updated or switched off under an open tab leaves this script running with its ad watchers. Its stamp
+  // A Feedprint updated or switched off under an open tab leaves this script running with its ad watchers. Its stamp
   // leaves then, and Off, seeing no stamp, takes the ads back: both would act on the same ad.
-  if (!offRuns) release = stopWhenReceiptsGoes(stop);
+  if (!offRuns) release = stopWhenFeedprintGoes(stop);
   return stop;
 }

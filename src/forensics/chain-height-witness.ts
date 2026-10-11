@@ -139,7 +139,7 @@ export interface ChainHeightFacts {
 }
 
 /** What was lost, in the two dimensions the note watches. */
-export interface ChainLossFacts {
+interface ChainLossFacts {
   heldPositions: number;
   heldArchivedMonths: number;
   /** Null when the archives were known to exist and their size was never counted. */

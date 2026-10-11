@@ -172,3 +172,27 @@ body:not(.fw-detached) .fw-popup::after {
 }
 body:not(.fw-detached) .fw-popup .pop-header { margin: 0 6px; border-radius: calc(10px * var(--pop-r-scale, 1)) calc(10px * var(--pop-r-scale, 1)) 0 0; }
 body:not(.fw-detached) .fw-popup .foot { margin-left: 6px; margin-right: 6px; }
+
+/* One edge, 11 Oct 2026. The shell's 8 px edge (popup-design.css) and this sheet's 16 px rows left six left edges on
+   one screen, measured at 396 px: cards at 8, tabs, status and button at 16, header and footer boxes at 6 with their
+   content at 14 or 22, Settings' bar and section labels at 0 with text at 8. Every box now stands 16 px in, and the
+   header and footer, which keep their 6 px for the frame line's corners, pad the rest of the way. */
+.fw-popup { --pop-edge: 16px; }
+body:not(.fw-detached) .fw-popup .pop-header,
+body:not(.fw-detached) .fw-popup .foot { padding-left: calc(var(--pop-edge) - 6px); padding-right: calc(var(--pop-edge) - 6px); }
+
+/* A status dot belongs to the first line it leads. Centred on the block, it sat beside the middle of a two-line
+   status ("Open X, Facebook...") and of the License card's four lines (11 Oct 2026). The first line is 17.5 px tall at
+   12.5 px and 1.4 here, and about 17 px for the card's 13 px name. */
+.fw-popup .home-status { align-items: flex-start; }
+.fw-popup .home-status-dot { margin-top: calc(0.7em - 4px); }
+.fw-popup .home-status.idle .home-status-dot { margin-top: calc(0.7em - 3.5px); }
+.fw-popup .key-row > .key-dot { align-self: flex-start; margin-top: 5px; }
+
+/* The setup steps space their parts with the column's 14 px gap; a paragraph's own 13 px margins came on top of it, so
+   Welcome's three paragraphs stood about 40 px apart and read as three loose notes (11 Oct 2026). */
+.setup-step > p.tag { margin: 0; }
+
+/* The reason under "limited here", one quieter line under the page's line. */
+.fw-popup .home-status-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.fw-popup .home-status-note { font-size: 12px; font-weight: 500; line-height: 1.45; color: var(--fw-text-secondary); }

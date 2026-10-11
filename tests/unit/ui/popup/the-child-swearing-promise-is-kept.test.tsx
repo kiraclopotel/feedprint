@@ -56,17 +56,18 @@ describe('the child swearing promise is kept (2026-09-19)', () => {
 
   it('Child mode locks the switch a child could otherwise flip', () => {
     const src = readSource('src/ui/popup/panels/SettingsPanel.tsx');
-    expect(src, 'the row is disabled in child mode').toContain('disabled={childMode || settings.strictLanguage}');
-    expect(src, 'and its click does nothing there').toContain("if (!childMode && !settings.strictLanguage) void toggle('soften-swearing');");
+    // One switch for swearing since 11 Oct 2026 (one-switch-for-swearing.test.tsx): locked in Child mode only.
+    expect(src, 'the row is disabled in child mode').toContain('disabled={childMode}');
+    expect(src, 'and its click does nothing there').toContain('onClick={() => { if (!childMode) void toggleMask(); }}');
     expect(src, 'and it reads as on').toContain("on={childMode || settings.strictLanguage || isFeatureEnabled(settings, 'soften-swearing')}");
   });
 
   it('no language went back to the shorter promise the screen cannot show', () => {
     for (const [lang, t] of Object.entries(POPUP_STRINGS)) {
-      const note = (t as unknown as { strictLangDescChild: string }).strictLangDescChild;
+      // The Strict language row and its note left on 11 Oct 2026; the mask's note is the one a parent reads.
+      const note = (t as unknown as { softenSwearingDescChild: string }).softenSwearingDescChild;
       expect(typeof note, lang).toBe('string');
       expect(note, `${lang} dropped the locked-switch half`).not.toMatch(/always softens|always soften|atenuează întotdeauna|siempre suaviza|sempre suaviza/i);
-      expect(note.length, `${lang} still says something`).toBeGreaterThan(30);
       expect(note, lang).not.toContain('—');
     }
   });

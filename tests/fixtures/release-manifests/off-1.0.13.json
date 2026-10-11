@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "__MSG_offName__",
-  "version": "1.0.11",
+  "version": "1.0.13",
   "description": "__MSG_offDescription__",
   "default_locale": "en",
   "icons": {
@@ -70,5 +70,6 @@
       "48": "assets/icons/icon-48.png",
       "128": "assets/icons/icon-128.png"
     }
-  }
+  },
+  "version_name": "1.0.13 build fwbid-690dba9d19b8-r1013 source 0cf4ec27c4e96d1c59d6027e2226f264004121587d274a35c22f6c4fd173d9a9"
 }

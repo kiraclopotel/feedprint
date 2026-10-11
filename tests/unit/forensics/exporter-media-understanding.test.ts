@@ -63,8 +63,9 @@ describe('CSV export', () => {
     // Two Q21 columns (config_enabled_features, config_settings_read_failed),
     // visual_applied, text_capture and author_capture follow the media
     // columns, empty here because the fixture carries none of them; action
-    // is 'flagged', the fixture's own default verdict.
-    expect(row.endsWith(',platform-excluded,on,,,,,,flagged')).toBe(true);
+    // is 'flagged', the fixture's own default verdict; then paid_reading, empty
+    // because the paid reading's Claude reader was not asked (11 Oct 2026).
+    expect(row.endsWith(',platform-excluded,on,,,,,,flagged,')).toBe(true);
   });
 
   it('leaves the columns EMPTY on a record that predates the field — never "off"', async () => {
@@ -72,7 +73,7 @@ describe('CSV export', () => {
       configSnapshot: { mode: 'adult', threshold: 6, dailyCap: 2000 },
     })]);
     const row = csv.trim().split('\n')[1];
-    expect(row.endsWith(',,,,,,,flagged')).toBe(true);
+    expect(row.endsWith(',,,,,,,flagged,')).toBe(true);
     expect(row).not.toContain('off');
   });
 
@@ -88,8 +89,9 @@ describe('CSV export', () => {
     expect(header).toContain('config_enabled_features,config_settings_read_failed');
     expect(row).toContain('block-ads;parent-blocklist');
     // settings_read_failed=true, then the empty visual_applied, text_capture
-    // and author_capture columns, then action ('flagged', the default verdict).
-    expect(row.endsWith(',true,,,,flagged')).toBe(true);
+    // and author_capture columns, then action ('flagged', the default verdict),
+    // then the empty paid_reading column.
+    expect(row.endsWith(',true,,,,flagged,')).toBe(true);
   });
 
   it('the column count matches the header on every shape', async () => {

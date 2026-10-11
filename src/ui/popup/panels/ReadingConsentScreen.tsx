@@ -28,17 +28,40 @@ export function needsReadingConsent(s: {
   consent: ReadingConsent | null | undefined;
   servedProvider: string | null;
   keyRefused: boolean;
+  /** The second company (the Claude reader) as the proxy names it now; null or absent when it names none. */
+  servedClaudeProvider?: string | null;
+  /** The consent stored for the Claude reading; undefined until read, null when none. */
+  claudeConsent?: ReadingConsent | null | undefined;
+  /** The relay refused the reading for want of the go-ahead (403 consent_required) and has not been answered since. */
+  relayAsked?: boolean;
 }): boolean {
   if (s.license.tier === 'free' || s.settings.aiAnalysisEnabled === false || s.keyRefused) return false;
   if (makesNoOutsideCall(s.settings)) return false;
   if (s.consent === undefined) return false;
   if (s.consent === null) return true;
-  return s.servedProvider !== null && s.consent.provider !== s.servedProvider;
+  // The relay asked for the go-ahead although one is stored here (another key slot, a relay that lost its record): the
+  // screen comes back, and Start tells the relay (storage/reading-pause.ts; the pause ends when it is given).
+  if (s.relayAsked === true) return true;
+  if (s.servedProvider !== null && s.consent.provider !== s.servedProvider) return true;
+  // A second company the proxy names now and the person has not agreed to (or agreed to under another
+  // name) is asked for once, on the same screen; a name not served asks nothing (11 Oct 2026).
+  const second = s.servedClaudeProvider ?? null;
+  if (second === null || s.claudeConsent === undefined) return false;
+  return s.claudeConsent === null || s.claudeConsent.provider !== second;
 }
 
 /** Every line the person reads, in order; the hash stored with the consent is over this text. */
-export function readingConsentText(t: PopupStrings, provider: string): string {
-  return [t.consentTitle, t.consentWhy, t.consentWhatDoesNot, t.consentWhatGoes, t.consentToWhom(provider), t.consentMoney, t.consentStart].join('\n');
+export function readingConsentText(t: PopupStrings, provider: string, claudeProvider: string | null = null): string {
+  return [
+    t.consentTitle,
+    claudeProvider === null ? t.consentWhy : t.consentWhyTwo,
+    t.consentWhatDoesNot,
+    t.consentWhatGoes,
+    t.consentToWhom(provider),
+    ...(claudeProvider === null ? [] : [t.consentToWhomClaude(claudeProvider)]),
+    t.consentMoney,
+    t.consentStart,
+  ].join('\n');
 }
 
 // A guided read, in the order a person needs it: why this differs from a cookie banner, what stays,
@@ -47,8 +70,12 @@ export function readingConsentText(t: PopupStrings, provider: string): string {
 // The panel scrolls because Chrome caps the popup at 600px and sizes it to the page beneath, so
 // the longer languages would otherwise cut off the title or the second answer.
 
-/** provider is the company's name as the proxy served it; null means it was not served and the reading cannot start. */
-export function ReadingConsentScreen({ provider, onStart, onNotNow, onClose }: { provider: string | null; onStart: (shownText: string, provider: string) => void; onNotNow: () => void; onClose?: () => void }) {
+/**
+ * provider is the company's name as the proxy served it; null means it was not served and the reading cannot start.
+ * claudeProvider is the second company (the Claude reader), when the proxy names one: the screen then says two
+ * companies read, names both, and one press agrees to both.
+ */
+export function ReadingConsentScreen({ provider, claudeProvider = null, onStart, onNotNow, onClose }: { provider: string | null; claudeProvider?: string | null; onStart: (shownText: string, provider: string, claudeProvider: string | null) => void; onNotNow: () => void; onClose?: () => void }) {
   const t = usePopupT();
   const titleRef = useRef<HTMLHeadingElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -112,15 +139,16 @@ export function ReadingConsentScreen({ provider, onStart, onNotNow, onClose }: {
           )}
           <h3 id="fw-consent-title" ref={titleRef} tabIndex={-1} style={{ flex: 1, minWidth: 0, order: 1 }}>{t.consentTitle}</h3>
         </div>
-        <p>{t.consentWhy}</p>
+        <p>{claudeProvider === null ? t.consentWhy : t.consentWhyTwo}</p>
         <p>{t.consentWhatDoesNot}</p>
         <p>{t.consentWhatGoes}</p>
         <p>{provider === null ? t.consentProviderUnknown : t.consentToWhom(provider)}</p>
+        {claudeProvider !== null && <p data-testid="consent-second-company">{t.consentToWhomClaude(claudeProvider)}</p>}
         <p><strong>{t.consentMoney}</strong></p>
         {/* The two answers stay pinned at the panel's foot, so both are on screen in a 600 px popup in every language
             while the words above scroll; they still come after the words in the reading order. */}
         <div className="consent-actions">
-          <button type="button" className="pop-cta" data-testid="consent-start" disabled={provider === null} onClick={() => { if (provider !== null) onStart(readingConsentText(t, provider), provider); }}>
+          <button type="button" className="pop-cta" data-testid="consent-start" disabled={provider === null} onClick={() => { if (provider !== null) onStart(readingConsentText(t, provider, claudeProvider), provider, claudeProvider); }}>
             {t.consentStart}
           </button>
           <button type="button" className="pop-cta" data-testid="consent-not-now" onClick={onNotNow} style={{ marginTop: 8 }}>

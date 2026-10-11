@@ -121,9 +121,17 @@ export function SettingsPanel({
   // did until 2026-09-19, described a rail that does not exist; the rows below
   // keep it true for Child by locking both of them. Slurs and detected attacks
   // are acted on regardless.
-  const toggleStrictLanguage = async () => {
-    await saveSettings({ strictLanguage: !settings.strictLanguage });
-    await onChange();
+  // One switch for swearing (11 Oct 2026). "Strict language" and "Mask swearing" were two switches for this one gate,
+  // so turning one off left the other starring words. Mask swearing is left; the strictLanguage bit stays in storage
+  // because the Strict level and Off write it, so pressing the switch off clears that bit too, or the stars would stay.
+  const toggleMask = async () => {
+    if (settings.strictLanguage) {
+      await saveSettings({ strictLanguage: false });
+      if (switchIsOn(settings, 'soften-swearing', platform)) await flipSwitch(settings, 'soften-swearing', platform);
+      await onChange();
+      return;
+    }
+    await toggle('soften-swearing');
   };
   const childMode = settings.mode === 'child';
 
@@ -238,37 +246,19 @@ export function SettingsPanel({
       <div className="grp-hdr">{t.setEssentialsTitle}</div>
       <div className="pop-card set-essentials" style={{ marginTop: 0 }} data-must-show="essentials">
         {featRow(blockAds)}
-        {/* Strict language — a free regex swearing-softener. Child mode keeps it
-            locked-on (informational switch). */}
-        <FeatRow
-          name={t.strictLangName}
-          desc={t.strictLangDescOther}
-          shown
-          note={childMode ? t.strictLangDescChild : undefined}
-          quiet
-          control={(
-            <Toggle
-              on={childMode || settings.strictLanguage}
-              disabled={childMode}
-              onClick={() => { if (!childMode) void toggleStrictLanguage(); }}
-              label={childMode ? t.strictLangAriaChild : t.strictLangAria}
-            />
-          )}
-        />
-        {/* The swear mask puts stars on vulgar words with no model, so every install gets it. Strict
-            language ON implies it (shown locked-on); otherwise the parent controls it, in any mode. */}
+        {/* The swear mask puts stars on vulgar words with no model, so every install gets it. Locked on in Child mode:
+            blanketProfanitySoften has no mode branch, so an unlocked row there really would stop the masking the
+            level promises. */}
         <FeatRow
           name={t.softenSwearingName}
           desc={t.softenSwearingDesc}
-          // Locked in Child mode as well as under Strict language: blanketProfanitySoften has no mode
-          // branch, so an unlocked row in Child mode really would stop the masking the level promises.
-          note={childMode ? t.softenSwearingDescChild : settings.strictLanguage ? t.softenSwearingDescImplied : undefined}
+          note={childMode ? t.softenSwearingDescChild : undefined}
           quiet
           control={(
             <Toggle
               on={childMode || settings.strictLanguage || isFeatureEnabled(settings, 'soften-swearing')}
-              disabled={childMode || settings.strictLanguage}
-              onClick={() => { if (!childMode && !settings.strictLanguage) void toggle('soften-swearing'); }}
+              disabled={childMode}
+              onClick={() => { if (!childMode) void toggleMask(); }}
               label={childMode ? t.softenSwearingAriaChild : t.softenSwearingName}
             />
           )}
