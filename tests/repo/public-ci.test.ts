@@ -32,6 +32,7 @@ describe('the public CI', () => {
     expect(runs(job('checks'))).toEqual([
       'git config --global core.autocrlf true',
       'npm ci',
+      'npx playwright install chromium',
       'npx tsc --noEmit',
       'npx tsc -p tsconfig.tests.json --noEmit',
       'npm run lint',

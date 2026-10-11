@@ -46,6 +46,11 @@ jobs:
       - name: Install dependencies from the lockfile
         run: npm ci
 
+      # One popup test reads computed styles in a real layout engine (Playwright's Chromium), and a fresh runner
+      # has no browser installed.
+      - name: The browser the layout test runs in
+        run: npx playwright install chromium
+
       - name: Type-check
         run: npx tsc --noEmit
 

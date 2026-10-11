@@ -173,7 +173,7 @@ describe('a skeleton of a page', () => {
     expect(count).toBeLessThanOrEqual(500);
     expect(depth).toBeLessThanOrEqual(15);
     expect(JSON.stringify(root).length).toBeLessThanOrEqual(MAX_REPORT_CHARS);
-  });
+  }, 30_000); // building a page of thousands of elements takes a slow shared runner past the default five seconds
 
   it('is accepted by its own grammar', () => {
     const host = mount(PAGE);
