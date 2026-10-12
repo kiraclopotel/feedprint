@@ -78,6 +78,7 @@ export const PUBLIC_ALLOWLIST = [
   'README.md',
   'CHANGELOG.md',
   'LICENSE',
+  'LICENSE-NOTES.md',
   'THIRD-PARTY-NOTICES.md',
   // The line-ending rule the reproducible hash depends on; the public copy carries the same file.
   '.gitattributes',

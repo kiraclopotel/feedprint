@@ -183,9 +183,9 @@ you open.
 Where things are: `src/forensics/` is the record (chain, signing, archives, export, backup);
 `src/content/` reads the five platforms; `src/core/`, `src/ai/` and `src/analysis/` are the
 optional reading; `src/ui/` is the popup and the dashboard; `verifier/` is the public checker,
-generated from `src/forensics/verifier-core-source.ts`; `worker/` is the relay the paid reading
-goes through. The code map is [`docs/spec/README.md`](docs/spec/README.md); the open defects are in
-`known-issues.md` (private).
+generated from `src/forensics/verifier-core-source.ts`; the relay the paid reading goes through
+lives in `worker/`, which stays out of the public copy of this tree. The code map is
+[`docs/spec/README.md`](docs/spec/README.md); the open defects are in `known-issues.md` (private).
 
 ## Privacy
 
@@ -218,7 +218,8 @@ checker are public, and the build is reproducible byte for byte.
 ## License
 
 The recorder and the filter, everything this tree builds, are GNU Affero General Public License
-v3.0 or later (`LICENSE`). The checker and the record format in `verifier/` are Apache License
+v3.0 or later (`LICENSE`, the licence text with the copyright line; the notes that go with it,
+on the names, the checker's licence and authorship, are `LICENSE-NOTES.md`). The checker and the record format in `verifier/` are Apache License
 2.0 (`verifier/LICENSE`), so a second implementer inherits no copyleft from the specification.
 The names FeelingWise, Feedprint, Receipts and Off and the marks are not licensed; a fork must use
 its own name. The relay at `api.feelingwise.org`, the licence counter behind the paid reading, and the

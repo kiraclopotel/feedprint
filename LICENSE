@@ -1,28 +1,4 @@
-Feedprint (called FeelingWise Receipts until October 2026) and FeelingWise Off, the recorder and the filter built
-from this tree.
-
 Copyright (c) 2026 Alin Cristian Alexandru Tincu.
-
-This program is free software: you can redistribute it and/or modify it under the terms of the
-GNU Affero General Public License as published by the Free Software Foundation, either version 3
-of the License, or (at your option) any later version. The full text follows.
-
-Two things sit outside this licence:
-
-  * The checker and the record format in verifier/ are Apache License 2.0 (verifier/LICENSE), so
-    that a second implementer of the format, a court's expert or a company embedding the checker
-    inherits no copyleft from the specification.
-
-  * The names "FeelingWise", "Feedprint", "Receipts" and "Off", the marks and the icons are not
-    licensed by this file (AGPL section 7(e) and Apache section 6). A fork must use its own name.
-
-On authorship: the code in this tree is written by Claude, an AI model, under the copyright
-holder's direction; README.md says which models and how. The licence is granted on whatever
-rights the copyright holder has in it. What does not depend on the licence, and is what the
-recorder's claim rests on, is the reproducible build and the published hash of every store
-upload (docs/spec/RELEASES.tsv).
-
-----------------------------------------------------------------------------------------------------
 
                     GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007

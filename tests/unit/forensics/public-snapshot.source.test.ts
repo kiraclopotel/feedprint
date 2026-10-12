@@ -60,6 +60,7 @@ describe('public snapshot: the split', () => {
       'README.md',
       'CHANGELOG.md',
       'LICENSE',
+      'LICENSE-NOTES.md',
       'THIRD-PARTY-NOTICES.md',
       '.gitattributes',
       '.nvmrc',
