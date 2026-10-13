@@ -11,6 +11,8 @@ import type { ChildProtectionManager } from './child-first-protection';
 import { recordSpan } from '../../diagnostics/perf-trace';
 import { tryRecoverCommentHideAnchor } from '../post-path/dom-recycle-recovery';
 import { buildCommentEntryForRoot, hideCommentTerminal, swapCommentTextInPlace, type CommentHideNotice } from './comment-overlay';
+import { liveTextOf } from '../../forensics/anchor-revalidation';
+import { noteDoorStar } from '../../core/door-star';
 import { renderTeenMarker } from '../markers/teen-marker';
 import { createProtectionSettler } from './settle-protection';
 
@@ -97,9 +99,13 @@ export function createProtectionTerminals(deps: ProtectionTerminalDeps) {
       if (!row) return false;
       const { el, entry } = row;
       if (!prepareCurrentPostMutation(post, el)) return false;
+      const before = { root: liveTextOf(entry.rootEl), entry: entry.text };
       swapCommentTextInPlace(entry, masked);
       const norm = (s: string): string => s.replace(/\s+/g, ' ').trim();
-      return entry.rootEl.dataset.fwRewritten === 'true' && norm(entry.textEl.textContent ?? '') === norm(masked);
+      const landed = entry.rootEl.dataset.fwRewritten === 'true' && norm(entry.textEl.textContent ?? '') === norm(masked);
+      // Noted so that a reading that follows still finds this row by the words it was scored on (core/door-star.ts).
+      if (landed) noteDoorStar(entry.rootEl, entry.textEl, before);
+      return landed;
     } catch {
       return false;
     }

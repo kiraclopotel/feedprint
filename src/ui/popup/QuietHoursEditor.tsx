@@ -146,6 +146,7 @@ export function QuietHoursEditor({ settings, onChanged }: {
               <span>{t.quietEditFrom}</span>
               <input
                 type="time"
+                aria-label={t.quietEditFrom}
                 value={minutesToTime(win.startMin)}
                 onChange={e => { const m = timeToMinutes(e.currentTarget.value); if (m !== null) edit({ startMin: m }); }}
               />
@@ -154,6 +155,7 @@ export function QuietHoursEditor({ settings, onChanged }: {
               <span>{t.quietEditTo}</span>
               <input
                 type="time"
+                aria-label={t.quietEditTo}
                 value={minutesToTime(win.endMin)}
                 onChange={e => { const m = timeToMinutes(e.currentTarget.value); if (m !== null) edit({ endMin: m }); }}
               />

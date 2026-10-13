@@ -53,20 +53,19 @@ const disabledOff = (doc: Document) => switches(doc).filter(s => s.getAttribute(
 const named = (doc: Document, label: string) => switches(doc).find(s => s.getAttribute('aria-label') === label);
 
 describe('a padlock means the level holds the switch (F37)', () => {
-  it('Strict with a key: AI checks is held by the level: a padlock, and not dimmed', () => {
-    const ai = named(render('child', PAID), t.featAiMasterAriaStrict)!;
-    expect(ai, 'AI checks at Strict').toBeDefined();
-    expect(ai.getAttribute('aria-disabled')).toBe('true');
-    expect(ai.querySelector('.toggle-lock'), 'the padlock').not.toBeNull();
-    expect(ai.style.opacity, 'a held switch keeps its full track').toBe('');
+  it('Silent with a key: AI checks is a live switch, held by nothing (Silent reads with a key since 12 Oct 2026)', () => {
+    const ai = named(render('child', PAID), t.featAiMasterName)!;
+    expect(ai, 'AI checks at Silent').toBeDefined();
+    expect(ai.getAttribute('aria-disabled')).toBeNull();
+    expect(ai.querySelector('.toggle-lock'), 'no padlock').toBeNull();
   });
 
-  it('Moderate without a key: no switch that is off and disabled wears a padlock', () => {
+  it('Calm without a key: no switch that is off and disabled wears a padlock', () => {
     const doc = render('teen', FREE);
     for (const s of disabledOff(doc)) expect(s.querySelector('.toggle-lock'), s.getAttribute('aria-label') ?? '').toBeNull();
   });
 
-  it('Moderate with a key: AI checks is a live switch', () => {
+  it('Calm with a key: AI checks is a live switch', () => {
     const ai = named(render('teen', PAID), t.featAiMasterName)!;
     expect(ai.getAttribute('aria-disabled')).toBeNull();
     expect(ai.querySelector('.toggle-lock')).toBeNull();

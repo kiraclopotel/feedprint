@@ -47,6 +47,8 @@ async function show(props: { send?: (text: string) => Promise<SendResult>; noCal
       tabId: async () => ('tab' in props ? props.tab : 7), send: props.send, noCalls: props.noCalls,
     }) }));
   });
+  // The home holds one quiet button; its page, with the choices, opens on the press.
+  await press(t.describeTitle);
 }
 
 const button = (label: string): HTMLButtonElement | undefined =>
@@ -87,6 +89,41 @@ describe('the panel', () => {
     expect(send).toHaveBeenCalledTimes(1);
     expect(send).toHaveBeenCalledWith(REPORT);
     expect(host.textContent).toContain(t.describeSent);
+  });
+
+  it('a second press while the report is on its way sends nothing more, and the button waits', async () => {
+    sendMessage.mockResolvedValue({ ok: true, text: REPORT });
+    let finish: (r: SendResult) => void = () => {};
+    const send = vi.fn(() => new Promise<SendResult>((resolve) => { finish = resolve; }));
+    await show({ send });
+    await press(t.describeStill);
+    // Two presses in the same tick, before anything has re-rendered.
+    await act(async () => { const b = button(t.describeSend)!; b.click(); b.click(); });
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(button(t.describeSend)!.disabled).toBe(true);
+    await act(async () => { finish('sent'); });
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(host.textContent).toContain(t.describeSent);
+  });
+
+  it('after a failed send the button is pressable again', async () => {
+    sendMessage.mockResolvedValue({ ok: true, text: REPORT });
+    const send = vi.fn(async (): Promise<SendResult> => 'failed');
+    await show({ send });
+    await press(t.describeStill);
+    await press(t.describeSend);
+    expect(button(t.describeSend)!.disabled).toBe(false);
+    await press(t.describeSend);
+    expect(send).toHaveBeenCalledTimes(2);
+  });
+
+  it('the summary counts the layers over the page too', async () => {
+    const withLayers = JSON.stringify({ v: 1, product: 'off', site: 'facebook', day: '2026-10-11', page: { t: 'div', c: [{ t: 'div' }, { t: 'span' }] }, layers: [{ t: 'div', c: [{ t: 'a' }] }, { t: 'div' }] });
+    sendMessage.mockResolvedValue({ ok: true, text: withLayers });
+    await show();
+    await press(t.describeStill);
+    // 3 parts on the page, 2 in the first layer, 1 in the second.
+    expect(host.textContent).toContain(t.describeSummary(6, 'Facebook'));
   });
 
   it('says plainly when the relay is busy or the send failed, and keeps the report to copy', async () => {

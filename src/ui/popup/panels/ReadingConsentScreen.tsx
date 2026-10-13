@@ -1,7 +1,8 @@
 // The screen before the first paid reading: what goes out, to whom, what does not, and the money
 // line. It is the person's express request to start now, which ends the 14-day refund right for the
-// period paid, so it is shown once per licence key, in every level that reads: Strict, and an install
-// whose level is not chosen yet, make no outside call and are never asked.
+// period paid, so it is shown once per licence key, in every level that reads: Silent once it reads
+// (types/reading-gate.ts), and an install whose level is not chosen yet, make no outside call and are never asked.
+// At Silent one more paragraph names the level (consentStrictLine), and the hash stored with the agreement covers it.
 //
 // The words are a draft: they are read by the AI native readers and then by the lawyer before the
 // store text or the site says anything about them.
@@ -12,12 +13,12 @@ import type { PopupStrings } from '../../../i18n/popup/types';
 import type { FWSettings } from '../../../storage/settings';
 import type { LicenseInfo } from '../../../storage/license';
 import type { ReadingConsent } from '../../../storage/reading-consent';
-import { makesNoOutsideCall } from '../../../types/mode';
+import { levelMayCallOut } from '../../../types/reading-gate';
 
 /**
  * Whether to ask now: a key, the reading on, no consent stored for this key, and a key the proxy
- * has not refused. Strict never asks, since it sends nothing (makesNoOutsideCall), nor does an install
- * whose level is not chosen yet; Moderate and Relaxed ask. A consent not yet read
+ * has not refused. Strict asks only once it reads (types/reading-gate.ts), and until then never, since it sends
+ * nothing; nor does an install whose level is not chosen yet; Moderate and Relaxed ask. A consent not yet read
  * (undefined) never shows the screen, so it cannot flash before the stored answer is known.
  * A consent given for another company than the one the proxy names now is asked for again; a name
  * not served at the moment (null) asks nothing new, so being offline never re-asks.
@@ -36,7 +37,7 @@ export function needsReadingConsent(s: {
   relayAsked?: boolean;
 }): boolean {
   if (s.license.tier === 'free' || s.settings.aiAnalysisEnabled === false || s.keyRefused) return false;
-  if (makesNoOutsideCall(s.settings)) return false;
+  if (!levelMayCallOut(s.settings)) return false;
   if (s.consent === undefined) return false;
   if (s.consent === null) return true;
   // The relay asked for the go-ahead although one is stored here (another key slot, a relay that lost its record): the
@@ -51,9 +52,10 @@ export function needsReadingConsent(s: {
 }
 
 /** Every line the person reads, in order; the hash stored with the consent is over this text. */
-export function readingConsentText(t: PopupStrings, provider: string, claudeProvider: string | null = null): string {
+export function readingConsentText(t: PopupStrings, provider: string, claudeProvider: string | null = null, atSilent = false): string {
   return [
     t.consentTitle,
+    ...(atSilent ? [t.consentStrictLine] : []),
     claudeProvider === null ? t.consentWhy : t.consentWhyTwo,
     t.consentWhatDoesNot,
     t.consentWhatGoes,
@@ -75,7 +77,7 @@ export function readingConsentText(t: PopupStrings, provider: string, claudeProv
  * claudeProvider is the second company (the Claude reader), when the proxy names one: the screen then says two
  * companies read, names both, and one press agrees to both.
  */
-export function ReadingConsentScreen({ provider, claudeProvider = null, onStart, onNotNow, onClose }: { provider: string | null; claudeProvider?: string | null; onStart: (shownText: string, provider: string, claudeProvider: string | null) => void; onNotNow: () => void; onClose?: () => void }) {
+export function ReadingConsentScreen({ provider, claudeProvider = null, atSilent = false, onStart, onNotNow, onClose }: { provider: string | null; claudeProvider?: string | null; atSilent?: boolean; onStart: (shownText: string, provider: string, claudeProvider: string | null) => void; onNotNow: () => void; onClose?: () => void }) {
   const t = usePopupT();
   const titleRef = useRef<HTMLHeadingElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -139,6 +141,7 @@ export function ReadingConsentScreen({ provider, claudeProvider = null, onStart,
           )}
           <h3 id="fw-consent-title" ref={titleRef} tabIndex={-1} style={{ flex: 1, minWidth: 0, order: 1 }}>{t.consentTitle}</h3>
         </div>
+        {atSilent && <p data-testid="consent-silent-line">{t.consentStrictLine}</p>}
         <p>{claudeProvider === null ? t.consentWhy : t.consentWhyTwo}</p>
         <p>{t.consentWhatDoesNot}</p>
         <p>{t.consentWhatGoes}</p>
@@ -148,7 +151,7 @@ export function ReadingConsentScreen({ provider, claudeProvider = null, onStart,
         {/* The two answers stay pinned at the panel's foot, so both are on screen in a 600 px popup in every language
             while the words above scroll; they still come after the words in the reading order. */}
         <div className="consent-actions">
-          <button type="button" className="pop-cta" data-testid="consent-start" disabled={provider === null} onClick={() => { if (provider !== null) onStart(readingConsentText(t, provider, claudeProvider), provider, claudeProvider); }}>
+          <button type="button" className="pop-cta" data-testid="consent-start" disabled={provider === null} onClick={() => { if (provider !== null) onStart(readingConsentText(t, provider, claudeProvider, atSilent), provider, claudeProvider); }}>
             {t.consentStart}
           </button>
           <button type="button" className="pop-cta" data-testid="consent-not-now" onClick={onNotNow} style={{ marginTop: 8 }}>

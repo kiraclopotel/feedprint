@@ -22,6 +22,7 @@ import { blanketProfanitySoften } from '../../analysis/pipeline';
 import { computeHarmFloor } from '../../core/harm-floor';
 import { filterProfanity, maskProfanity } from '../../core/profanity-filter';
 import { readingAllowed } from '../../ai/client';
+import { postShowsDoorStar } from '../../core/door-star';
 import { getLicense } from '../../storage/license';
 import { resolveUiLanguage } from '../../i18n';
 import { commentRecordRoomFields, roomFieldsForComment } from './queue';
@@ -176,51 +177,71 @@ export function hideAtTheDoor(
   });
 }
 
+/** The record of a mask the door applied: once per comment, the rule engine as the author, nothing read. */
+function recordDoorMask(post: PostContent, settings: FWSettings, masked: string): void {
+  const key = forensicDedupKey(post);
+  if (hasLoggedForensic(key)) return;
+  shouldLogForensic(key);
+  void sendHighStakesForensicLog({
+    type: 'FORENSIC_LOG',
+    payload: {
+      ...doorRecordFields(post, settings, 'fw-profanity-mask-v1', 'profanity-mask'),
+      neutralizedText: masked,
+      analysis: {
+        techniques: [{ name: 'profanity', severity: 4, confidence: 0.95 }],
+        overallScore: 0,
+        overallConfidence: 0.95,
+        isManipulative: false,
+      },
+      decision: decisionForMask(settings.mode),
+      reader: READER_DEFAULT,
+    },
+  } as unknown as Extract<FWMessage, { type: 'FORENSIC_LOG' }>);
+}
+
 /**
- * Star a swearing comment's words at the door, when no reading will follow (11 Oct 2026). The mask is a rule, not a
- * reading, but it was collected inside the batch after scoring, so it never ran where the batch does not: no key, a
- * level that sends nothing (Strict), a video in the failed batch's cooldown. Four of four swearing YouTube comments
- * were left as written at Relaxed with no key, and Strict promises the mask.
+ * Star a swearing comment's words at the door (11 Oct 2026; for a comment a reading follows, 12 Oct 2026). The mask is a
+ * rule, not a reading, so it runs the moment the comment is handed over. It used to be collected inside the batch after
+ * scoring, so it never ran where the batch does not (no key, a level that sends nothing, a video in the failed batch's
+ * cooldown), and with a key it waited for the reading: 6.7 s to 13.5 s, and not at all while the service answered 500.
  *
- * Left to the batch, on purpose: a comment when a reading is allowed (the reading may rewrite it, and a text starred
- * first no longer matches the one it scored), and a comment the rules would escalate instead (an identity slur, a
- * threat, strong harm), whose hide or mark is not a mask. Returns true when the stars landed and the record was
- * written; false leaves the comment untouched for the batch path exactly as before.
+ * Returns 'final' when no reading follows: the stars landed, the comment is remembered for a fresh node and the record
+ * is written. Returns 'provisional' when a reading is allowed: the stars are on the page and nothing else is written or
+ * remembered, because the reading may rewrite or hide the comment and its record is then the batch's. The batch finds the
+ * row by the words it scored (core/door-star.ts), and a reading that cannot finish records the mask through
+ * `settleDoorStar`. Returns false for a comment the rules would escalate instead (an identity slur, a threat, strong
+ * harm), whose hide or mark is not a mask, and when the stars did not land (the row moved or the page refused the text):
+ * the comment is then left exactly as served and nothing says otherwise.
  */
 export async function maskAtTheDoor(
   post: PostContent,
   settings: FWSettings,
   applyMask: (post: PostContent, masked: string) => boolean,
-): Promise<boolean> {
+): Promise<'final' | 'provisional' | false> {
   if (!post.domRef || !blanketProfanitySoften(settings, post.platform)) return false;
   if (!filterProfanity(post.text, settings.mode, { tier: 'profanity' }).filtered) return false;
   const masked = maskProfanity(post.text).masked;
   if (masked === post.text) return false;
-  if (await readingAllowed(settings, await getLicense())) return false;
+  const readingFollows = await readingAllowed(settings, await getLicense());
   if (detectCodedHarm(post.text)) return false;
   // The same two tests the batch's fallback escalates on: an identity slur, or a harm floor of 70.
   if (filterProfanity(post.text, 'teen', { tier: 'slurs' }).filtered || computeHarmFloor(post.text, []).score >= 70) return false;
   if (!applyMask(post, masked)) return false;
+  if (readingFollows) return 'provisional';
   // A fresh node handed the same comment later is starred before it is shown, and never read again.
   rememberResolvedComment(post, { kind: 'rewrite', rewrite: masked });
-  const key = forensicDedupKey(post);
-  if (!hasLoggedForensic(key)) {
-    shouldLogForensic(key);
-    void sendHighStakesForensicLog({
-      type: 'FORENSIC_LOG',
-      payload: {
-        ...doorRecordFields(post, settings, 'fw-profanity-mask-v1', 'profanity-mask'),
-        neutralizedText: masked,
-        analysis: {
-          techniques: [{ name: 'profanity', severity: 4, confidence: 0.95 }],
-          overallScore: 0,
-          overallConfidence: 0.95,
-          isManipulative: false,
-        },
-        decision: decisionForMask(settings.mode),
-        reader: READER_DEFAULT,
-      },
-    } as unknown as Extract<FWMessage, { type: 'FORENSIC_LOG' }>);
-  }
+  recordDoorMask(post, settings, masked);
+  return 'final';
+}
+
+/**
+ * A comment the door starred ('provisional') whose reading could not finish: the batch was abandoned, its call failed or
+ * the flush threw. The stars stay on the page, so the comment is recorded as the mask the rules wrote, never as a cancel
+ * that says nothing changed. Returns true when this comment shows the door's stars (and the caller writes nothing else
+ * for it); false leaves it to the caller's own record.
+ */
+export function settleDoorStar(post: PostContent, settings: FWSettings): boolean {
+  if (!postShowsDoorStar(post.domRef)) return false;
+  recordDoorMask(post, settings, maskProfanity(post.text).masked);
   return true;
 }

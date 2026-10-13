@@ -11,7 +11,8 @@ import { getLicense } from '../storage/license';
 import { bearerOf, consentHeaderValue, getReadingConsent, READING_CONSENT_HEADER } from '../storage/reading-consent';
 import { recordAiCall } from '../storage/settings';
 import { claudeTokenEquivalents } from '../storage/usage-weights';
-import { DeadlineError, fetchWithDeadline } from './fetch-with-deadline';
+import { DeadlineError } from './fetch-with-deadline';
+import { relayFetch } from './relay-fetch';
 
 const CLAUDE_READER_URL = 'https://api.feelingwise.org/v1/claude/verdict';
 // Past the relay's own 15 seconds, so a slow answer is the relay's to name.
@@ -165,7 +166,7 @@ export async function askClaudeReader(item: {
 
   let res: Response;
   try {
-    res = await fetchWithDeadline(CLAUDE_READER_URL, {
+    res = await relayFetch(CLAUDE_READER_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -180,7 +181,7 @@ export async function askClaudeReader(item: {
           ...(item.parentText ? { parentText: item.parentText } : {}),
         },
       }),
-      // Sent from inside the social site's page, like every reading call (client.ts).
+      // Carried out by the worker like every reading call (relay-fetch.ts); where it goes out from a page, this keeps the page's address off it.
       referrerPolicy: 'no-referrer',
     }, CLAUDE_READER_DEADLINE_MS, item.signal);
   } catch (err) {

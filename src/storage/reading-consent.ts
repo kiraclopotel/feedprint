@@ -14,6 +14,8 @@ import { clearReadingPause } from './reading-pause';
 export const READING_CONSENT_TEXT_VERSION = 'reading-consent-3';
 
 const STORAGE_KEY = 'readingConsent';
+/** The slot the agreement is kept in; the worker watches it, since Silent's time stamp follows the agreement. */
+export const READING_CONSENT_STORAGE_KEY = STORAGE_KEY;
 
 // The Claude reading sends the text to a second company, so it is asked for on its own screen and
 // kept apart: a consent for the ordinary reading never starts it (worker/src/proxy.ts claudeConsentGate).

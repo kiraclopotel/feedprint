@@ -207,7 +207,8 @@ describe('a marked TikTok video, by mode', () => {
       post, card.item, rewrite(), { mode: 'child', uiLanguage: 'en', features: {} } as unknown as FWSettings,
     );
     expect(terminal).toBe('skipped');
-    expect(card.item.style.getPropertyValue('display')).toBe('none');
+    expect(card.item.style.getPropertyValue('visibility')).toBe('hidden');
+    expect(card.item.style.getPropertyValue('display'), 'the card keeps its box').toBe('');
     expect(card.item.contains(card.video)).toBe(true);
     expect(card.caption.textContent).toBe(CAPTION);
     expect(card.next.scrollIntoView).toHaveBeenCalledTimes(1);
@@ -226,7 +227,7 @@ describe('a marked TikTok video, by mode', () => {
     } as PipelineResult);
     await settle();
 
-    expect(card.item.style.getPropertyValue('display')).toBe('none');
+    expect(card.item.style.getPropertyValue('visibility')).toBe('hidden');
     const [rec] = records();
     expect(rec.neutralizedText).toBe('');
     const decision = rec.decision as { applied: string; rewrite: unknown };
@@ -290,7 +291,7 @@ describe('the notice on a hidden post speaks to its reader', () => {
     el.textContent = 'some post';
     document.body.appendChild(el);
     injectCollapseOrHide(el, judged(), 'collapse', false, 'some post', 'en', 'child');
-    expect(el.textContent).toContain('Skipped by your Strict filter. Keep scrolling.');
+    expect(el.textContent).toContain('Skipped at your Silent level. Keep scrolling.');
   });
 });
 
@@ -306,7 +307,7 @@ describe('the record of a fold on a video', () => {
     onProcessingResult(postFor(card), foldResult);
     await settle();
 
-    expect(card.item.style.getPropertyValue('display')).toBe('none');
+    expect(card.item.style.getPropertyValue('visibility')).toBe('hidden');
     const [rec] = records();
     const decision = rec.decision as { action: string; applied: string; note: string | null };
     expect(decision.action).toBe('collapse');

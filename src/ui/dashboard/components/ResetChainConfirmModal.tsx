@@ -268,7 +268,7 @@ export function ResetChainConfirmModal({
                   {t.resetReloadBtn}
                 </button>
               )}
-              <button type="button" className="btn ghost" onClick={onClose} disabled={busy}>
+              <button type="button" className="btn" onClick={onClose} disabled={busy}>
                 {partialParts ? t.ok : t.cancel}
               </button>
               {!partialParts && (
@@ -317,7 +317,7 @@ export function ResetChainConfirmModal({
                   {t.resetReloadBtn}
                 </button>
               )}
-              <button type="button" className="btn ghost" onClick={onClose} disabled={busy}>
+              <button type="button" className="btn" onClick={onClose} disabled={busy}>
                 {partialParts ? t.ok : t.cancel}
               </button>
             </div>

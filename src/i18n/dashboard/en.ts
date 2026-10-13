@@ -150,7 +150,7 @@ export const EN: DashboardStrings = {
   techDetail: (name, sev) => `technique: ${name} (sev ${sev})`,
   originalLabel: 'Original',
   softenedLabel: 'Softened',
-  openOriginalPost: 'Open original post ↗',
+  openOriginalPost: 'Open original post',
   withholdBtn: 'Withhold this record',
   withholdPrompt: 'Withhold this record from every export and every view. Its place in the chain, its hash and its signature stay; its text, author, links and media leave. Reason (optional, kept in the signed marker):',
   withholdDone: 'Withheld. A signed marker now names this record.',
@@ -158,7 +158,7 @@ export const EN: DashboardStrings = {
   withheldNote: 'Withheld at your request; a signed marker names this record. The bytes stay in this device\'s store and in your backups.',
   withheldShort: '(withheld)',
   excludeBtn: 'Stop recording this account',
-  excludeDone: 'From now on nothing this account posts is recorded. Records already written stay; withhold them one by one if needed.',
+  excludeDone: 'From now on nothing this account posts is recorded. Records already written stay; withhold them one by one if needed. To record it again, open "Accounts not recorded" above the list and press "Record again".',
   exclusionsTitle: 'Accounts not recorded',
   exclusionsSub: 'Nothing these accounts post enters the record from the moment they were added. Protection on the page is unchanged. The record keeps only a count of what was skipped, never a name.',
   exclusionsNone: 'No account is skipped.',
@@ -205,8 +205,8 @@ export const EN: DashboardStrings = {
   restoreChainNote: (err) => `note: ${err}`,
   restoreChainFallback: 'the restored record did not fully verify',
   restoreKeyRestored: ' Signing key restored. Your record continues as one chain.',
-  restoredMsg: (added, skipped, anchors, chain, key) =>
-    `Restored ${added} entr${added === 1 ? 'y' : 'ies'} (${skipped} already present), ${anchors} timestamp(s): ${chain}.${key}`,
+  restoredMsg: (added, skipped, anchors, chain, key, alsoArchived) =>
+    `Restored ${added} entr${added === 1 ? 'y' : 'ies'} (${skipped} already present)${alsoArchived ? `, ${alsoArchived} also in the monthly archives (counted once)` : ''}, ${anchors} timestamp(s): ${chain}.${key}`,
   restoreDoneNotice: (restored, replaced) => {
     const done = `Restore finished: ${restored} ${restored === 1 ? 'entry is' : 'entries are'} back in the record.`;
     // A restore into an empty record, or from a backup with no entries, took nothing off the record,
@@ -334,7 +334,7 @@ export const EN: DashboardStrings = {
   exportIncluded: (included, total) => `${included} record${included === 1 ? '' : 's'} included of ${total} total`,
   exportNothingFlagged: 'Nothing in this record is flagged, so there is nothing for this file to carry. It stays off until there is. The whole record file beside it is not empty: it carries everything, flagged or not.',
   exportIncludedScope: 'The report, PDF, JSON and CSV carry the flagged records of the active chain:',
-  everythingIncludes: (active, archived) => `${active.toLocaleString('en-US')} record${active === 1 ? '' : 's'} in the active chain plus ${archived.toLocaleString('en-US')} in the monthly archives, nothing held back.`,
+  everythingIncludes: (active, archived, inBoth) => `${active.toLocaleString('en-US')} record${active === 1 ? '' : 's'} in the active chain plus ${archived.toLocaleString('en-US')} in the monthly archives${inBoth ? `, ${inBoth.toLocaleString('en-US')} of them in both and counted once` : ''}, nothing held back.`,
   exportSavedNote: (file, bytes) => `Saved ${file}, ${bytes.toLocaleString('en-US')} bytes.`,
   pdfOpenedNote: (records) => `Opened a print view of ${records} record${records === 1 ? '' : 's'} in a new tab. Use the browser's print dialog to save it as PDF.`,
   pdfFallbackNote: (file, bytes) => `The browser blocked the print tab, so the same report was saved as ${file} (${bytes.toLocaleString('en-US')} bytes). Open it and print to PDF.`,
@@ -531,7 +531,7 @@ export const EN: DashboardStrings = {
   feedOriginalVerbatim: 'Original text',
   feedProtectionsAtCapture: 'Protections on at capture',
   featCommentsPerVideo: 'Comments read per video',
-  feedSettingsReadFailedNote: 'Settings were unreadable when this record was written; the app protected at maximum strength. The mode shown is the fail-safe default, not an attested setting.',
+  feedSettingsReadFailedNote: 'Settings were unreadable when this record was written; the app used its most protective level, Silent. The mode shown is the fail-safe default, not an attested setting.',
   feedMarkerReset: 'RECORD RESET',
   feedMarkerRotation: 'MONTH ARCHIVED',
   feedMarkerPrune: 'OLD ENTRIES PRUNED',
@@ -667,7 +667,7 @@ export const EN: DashboardStrings = {
   feedHiddenLabel: 'Hidden',
   feedOpenUrlTip: (url) => `Open ${url}`,
   feedNoUrlTip: 'No URL recorded for this entry',
-  feedViewOriginal: 'Original Post',
+  feedViewOriginal: 'Original post',
   feedConfirm: 'Confirm',
   feedConfirmed: 'Confirmed',
   feedConfirmTip: 'You agree Feedprint flagged this correctly',
@@ -677,7 +677,7 @@ export const EN: DashboardStrings = {
 
   grpCommentsWord: (n) => (n === 1 ? 'comment' : 'comments'),
   grpOrphanTag: 'ORPHAN THREAD',
-  grpViewOriginal: 'Original Post',
+  grpViewOriginal: 'Original post',
   grpOrphanFootnote: '(post itself not in the chain: showing extracted comments from this thread)',
 
   // ─── Social-feed redesign ───
@@ -975,8 +975,11 @@ export const EN: DashboardStrings = {
   opsAiHealthSub: 'Whether the AI reading is running (it runs only with a license key), and, when it is, how the calls to the AI provider behave (speed, tokens, truncation, rate-limit headroom). Without a key only the built-in harm filter runs.',
   opsLoadingShort: 'Loading…',
   opsAiOff: '● The AI reading is off: this install has no license key. Only the built-in harm filter runs. A license key pasted in the popup turns the AI reading on.',
-  opsAiOffStrict: '● AI is OFF at Strict. This level sends nothing out, so no AI classification runs (only the built-in harm filter). Moderate with a license key turns the AI reading on.',
-  opsAiOffStrictKey: '● AI is OFF at Strict. This level sends nothing out, so no AI classification runs (only the built-in harm filter). Moderate turns the AI reading on with your license key.',
+  opsAiOffStrict: '● AI is OFF at Silent without a key. Nothing is sent out, so no AI classification runs (only the built-in harm filter). Once you add a license key and agree, the AI reading turns on.',
+  opsAiOffStrictKey: '● AI is OFF at Silent for now. Live Rephrase has your key but no agreement yet, so nothing is sent out and only the built-in harm filter runs. Agreeing turns the AI reading on.',
+  strictAllowanceOut: 'Live Rephrase paused: today\'s allowance is used up. Posts are filtered on this computer until it renews.',
+  strictServiceDown: 'Live Rephrase is not answering. Posts are filtered on this computer.',
+  strictNoAgreement: 'Live Rephrase has a key but no agreement yet. Nothing leaves this computer.',
   opsTierMismatch1: '● License reads ',
   opsTierMismatch2: (n) => `, but the pipeline ran without a key ${n} time${n === 1 ? '' : 's'} in the last 24h. The content script may be reading the license as missing (a known read bug). Reload the extension and re-paste the key, then re-check.`,
   opsLicenseActive1: '● License ',
@@ -1060,11 +1063,11 @@ export const EN: DashboardStrings = {
   opsStageHelp: {
     pipeline_total: 'Full scan of one post, start to finish: what the reader waits for.',
     cache_lookup: 'Checking if this post was already scored. Should be tiny (a few ms).',
-    detect: 'First-pass classifier (usually off at Moderate).',
+    detect: 'First-pass classifier (usually off at Calm).',
     combined_call: 'The round-trip to the AI provider. Usually the slowest step: over ~2s means slow network or rate-limiting. It counts as ok only when the AI sent back a reading.',
     neutralize: 'Rewriting flagged text after the AI replies.',
-    first_protection: 'Time from a newly observed item at Strict to its opaque safety cover.',
-    protection_terminal: 'How long an item at Strict stayed covered before PASS, rewrite, hide, or cleanup.',
+    first_protection: 'Time from a newly observed item at Silent to its opaque safety cover.',
+    protection_terminal: 'How long an item at Silent stayed covered before PASS, rewrite, hide, or cleanup.',
   },
   opsPctOk: (pct) => `${pct} ok`,
   opsPctCached: (pct) => ` · ${pct} cached`,
@@ -1157,6 +1160,9 @@ export const EN: DashboardStrings = {
   opsCardReadingPausedTitle: 'The AI reading is paused: it is waiting for your go-ahead',
   opsCardReadingPausedMeaning: 'The service that reads your feed asks each person to start the reading once, and that has not happened on this device yet. Until it does, posts and comments stay as written; the protections on the page that need no reading keep working.',
   opsCardReadingPausedAction: 'Open the Feedprint popup and press "Start Live Rephrase now". The reading resumes at once. The icon shows a red "!" until then.',
+  opsCardReadingTroubleTitle: 'The AI reading is not getting through',
+  opsCardReadingTroubleMeaning: 'For the last few minutes the service that reads your feed has not answered, so posts and comments stayed as written; the protections on the page that need no reading (swearing, threats, ads you hid) kept working.',
+  opsCardReadingTroubleAction: 'Nothing to do: it tries again by itself and this card goes when one call gets through. The icon shows an amber "!" until then. If it stays for hours, check your connection.',
   opsTechDetails: 'Technical details (for support)',
 
   // Overview tab
@@ -1204,7 +1210,7 @@ export const EN: DashboardStrings = {
   ovSourceFlagged: (n) => `${n} flagged`,
   ovSourcesFootnote: 'Every row opens its records. Feedprint counts what appeared; it never scores a person.',
   ovRhythmEyebrow: 'When the feed was on screen',
-  ovRhythmSub: 'All records by hour, last 7 days. A darker square means more items served in that hour.',
+  ovRhythmSub: 'All records by hour, last 7 days. A stronger colour means more items served in that hour.',
   ovRhythmTip: (day, hour, n) => `${day} ${String(hour).padStart(2, '0')}:00, ${n} ${n === 1 ? 'item' : 'items'}`,
   ovRhythmFootnote: 'The record keeps the exact minutes; this is the shape of the week.',
 
@@ -1389,7 +1395,7 @@ export const EN: DashboardStrings = {
   railSeverity: { high: 'High (8-10)', medium: 'Medium (5-7)', low: 'Low (1-4)' },
   railKind: { posts: 'Posts', comments: 'Comments', videos: 'Videos', images: 'Images' },
   railGroupMode: 'Mode at capture',
-  railMode: { relaxed: 'Relaxed', moderate: 'Moderate', strict: 'Strict' },
+  railMode: { relaxed: 'Open', moderate: 'Calm', strict: 'Silent' },
   railGroupModel: 'Model that read it',
   railModelNone: 'No model (rules or none)',
   railGroupSurface: 'Where it appeared',
@@ -1414,8 +1420,9 @@ export const EN: DashboardStrings = {
   showingArchivedOlder: (older) =>
     `${older.toLocaleString('en-US')} older records from months before the last 90 days are counted in every total and kept in the monthly archive; they are not listed here. The complete export includes them.`,
   sidePanelsPending: 'The side panels fill in when the full record has loaded.',
-  recordWindowNote: (from, to, count, cap) =>
-    `The live record runs ${from} to ${to}: ${count.toLocaleString('en-US')} of ${cap.toLocaleString('en-US')}. At ${cap.toLocaleString('en-US')} the oldest move to the monthly archive, which this list and the complete export include.`,
+  recordWindowNote: (from, to, count, cap) => count > cap
+    ? `The live record runs ${from} to ${to}: ${count.toLocaleString('en-US')} entries, above the ${cap.toLocaleString('en-US')} it is kept to. About once a day the oldest move to the monthly archive, which this list and the complete export include, so the count can stand above ${cap.toLocaleString('en-US')} until the next move.`
+    : `The live record runs ${from} to ${to}: ${count.toLocaleString('en-US')} of ${cap.toLocaleString('en-US')}. About once a day, whatever is beyond ${cap.toLocaleString('en-US')} (the oldest) moves to the monthly archive, which this list and the complete export include.`,
   showingBefore: 'Showing ',
   showingBetween: ' of ',
   showingAfter: ' entries',

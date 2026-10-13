@@ -20,4 +20,6 @@ body.fw-detached .fw-popup {
   width: 100%;
   margin-left: 0;
   margin-right: 0;
+  /* The step's 12 px gap is the space above it; the button's own 8 px came on top (13 Oct 2026). */
+  margin-top: 0;
 }

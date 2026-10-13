@@ -55,7 +55,7 @@ describe('provisional Child shield', () => {
     expect(host.getAttribute('aria-busy')).toBe('true');
     expect(host.hasAttribute('inert')).toBe(true);
     expect(host.style.position).toBe('relative');
-    expect(overlay.textContent).toBe('One moment, checking this one…');
+    expect(overlay.textContent, 'a plain veil: no words on it while it waits').toBe('');
     expect(overlay.getAttribute('aria-label')).toBe('Checking…');
     expect(overlay.style.position).toBe('absolute');
     expect(overlay.style.inset).toBe('0px');
@@ -81,14 +81,14 @@ describe('provisional Child shield', () => {
     expect(document.querySelector('.fw-provisional-shield-status')).toBeNull();
   });
 
-  it('renders Romanian checking text and aria-label when the resolved UI language is ro', () => {
+  it('renders a plain veil whose label and screen-reader line are Romanian when the resolved UI language is ro', () => {
     const { host } = makeHost();
 
     const handle = applyChildShield(host, 'ro-lang', { lang: 'ro' });
     const overlay = host.querySelector('.fw-provisional-shield') as HTMLElement;
 
     expect(handle).not.toBeNull();
-    expect(overlay.textContent).toBe('O clipă, verificăm postarea asta…');
+    expect(overlay.textContent, 'a plain veil: no words on it while it waits').toBe('');
     expect(overlay.getAttribute('aria-label')).toBe('Se verifică…');
     const accessibleStatus = document.querySelector('.fw-provisional-shield-status');
     expect(accessibleStatus?.textContent).toBe('O clipă, verificăm postarea asta…');
@@ -96,13 +96,13 @@ describe('provisional Child shield', () => {
     releaseChildShield(handle!);
   });
 
-  it('keeps English checking text and aria-label when lang is explicitly en', () => {
+  it('keeps the English label and screen-reader line when lang is explicitly en', () => {
     const { host } = makeHost();
 
     const handle = applyChildShield(host, 'en-lang', { lang: 'en' });
     const overlay = host.querySelector('.fw-provisional-shield') as HTMLElement;
 
-    expect(overlay.textContent).toBe('One moment, checking this one…');
+    expect(overlay.textContent, 'a plain veil: no words on it while it waits').toBe('');
     expect(overlay.getAttribute('aria-label')).toBe('Checking…');
 
     releaseChildShield(handle!);

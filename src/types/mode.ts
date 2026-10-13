@@ -13,8 +13,9 @@ export function levelOf(mode: Mode): Level {
 }
 
 /**
- * Strict makes no outside call of any kind: no reading, no licence check, no time stamp of the record.
- * The screens ask this to say so; the places that send something out ask makesNoOutsideCall below.
+ * Whether this is the Strict level (named Silent on the screens). Strict sends nothing without a key and the agreement, and
+ * with them it reads like the other levels (types/reading-gate.ts); the screens ask this to pick Silent's words, and the
+ * places that send something out ask the gate.
  */
 export function levelMakesNoCalls(settings: { mode: Mode }): boolean {
   return levelOf(settings.mode) === 'strict';

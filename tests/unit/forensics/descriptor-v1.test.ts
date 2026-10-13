@@ -69,6 +69,19 @@ describe('the step', () => {
     expect(out.analysis!.overallScore).toBe(6);
   });
 
+  it('asks with a letter in place of each name, in the text and in the post it answers (12 Oct 2026)', async () => {
+    const ask = vi.fn(async () => ({ effect: 'threat', target: 'none', group: 'none' })) as never;
+    const named = { ...post, author: '@poster', text: '@anyhandle you are nothing, says @poster', parentText: 'Earlier @poster and @third_party talked about @anyhandle.' } as PostContent;
+    const out = await withDescriptorV1(async () => fired(), ask)(named);
+    await descriptorV1Settled(out.analysis);
+    const sent = (ask as unknown as { mock: { calls: Array<[{ text: string; parentText: string }]> } }).mock.calls[0][0];
+    for (const name of ['anyhandle', 'poster', 'third_party']) {
+      expect(sent.text, name).not.toContain(name);
+      expect(sent.parentText, name).not.toContain(name);
+    }
+    expect(sent.text).toContain('@user_');
+  });
+
   it('asks nothing for a pass, a cancel, a legacy verdict or a rule', async () => {
     const ask = vi.fn(async () => ({ effect: 'threat', target: 'none', group: 'none' })) as never;
     const legacy = fired(); delete legacy.analysis!.judge;

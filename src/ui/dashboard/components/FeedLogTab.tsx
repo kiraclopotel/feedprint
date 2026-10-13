@@ -13,11 +13,12 @@ import { useDashboardT, useUiLanguage } from '../../../i18n/react';
 import { dashboardWords } from '../dashboard-words';
 import { formatDayMonthLongLocal, formatTimeLocal, formatUtcStamp, localDayKey } from '../../shared/format-time';
 import { formatCount } from '../../shared/format-number';
-import { isMarker, isTextPlaceholder } from '../record-sets';
+import { isMarker, isTextPlaceholder, readableText } from '../record-sets';
 import { shownText } from '../shown-text';
 import { addExclusion, exclusionKey, readExclusions } from '../../../forensics/author-exclusions';
 import { PLATFORM_COLORS, PLATFORM_LABELS } from './color-maps';
-import { FileText } from '../../shared/icons/lucide';
+import { feedActionKeyFor } from '../../../forensics/feed-action';
+import { ExternalLink, FileText } from '../../shared/icons/lucide';
 import {
   FEED_ACTIONS, FEED_WINDOWS, feedAction, feedLogSlice, feedSeverity, feedWhy, worstTechnique,
   type FeedAction, type FeedLogFilter, type FeedWindow,
@@ -32,11 +33,12 @@ const PILL_CLASS: Record<FeedAction, string> = {
 function sevColor(s: number): string {
   if (s >= 8) return 'var(--fw-red)';
   if (s >= 5) return 'var(--fw-amber)';
-  return 'var(--fw-teal)';
+  // The low marker, as Statistics' Mild band; the accent teal read as the record's own colour (row 46, 12 Oct 2026).
+  return 'var(--fw-marker-low)';
 }
 
 export function FeedLogTab({
-  records, loadingRest = false, filter, onFilter, integrity, onWithhold, onViewOriginal, now, archivedOlderCount = 0,
+  records, loadingRest = false, filter, onFilter, integrity, onWithhold, onViewOriginal, now, archivedOlderCount = 0, onOpenExclusions,
 }: {
   /** The active record, oldest first, or its newest page while the rest loads (Dashboard.tsx feedRecords). */
   records: readonly ForensicRecord[];
@@ -51,6 +53,8 @@ export function FeedLogTab({
   now?: Date;
   /** Records in archived months older than the ones read (the last 90 days): counted elsewhere, not listed here. */
   archivedOlderCount?: number;
+  /** Opens the list of accounts not recorded, on the Record tab. */
+  onOpenExclusions?: () => void;
 }) {
   const t = useDashboardT();
   const lang = useUiLanguage();
@@ -107,6 +111,9 @@ export function FeedLogTab({
         <span className="fl-sub">{t.feedLogSub}</span>
       </div>
 
+      {/* One bar above the list (his walk of 12 Oct 2026: three lines of filters pushed the list down): the window and
+          the outcome as two joined groups, and which clock the When column is on at its end. */}
+      <div className="fl-bar">
       <div className="fl-chips" role="group" aria-label={t.railGroupWhen}>
         {FEED_WINDOWS.map(w => (
           <button key={w} type="button" className={chip(win === w)} aria-pressed={win === w} data-testid={`feed-log-window-${w}`}
@@ -115,6 +122,11 @@ export function FeedLogTab({
         {filter.platform && (
           <button type="button" className="chip active" onClick={() => onFilter({ ...filter, platform: undefined })}>
             {PLATFORM_LABELS[filter.platform] ?? t.otherSite} ✕
+          </button>
+        )}
+        {filter.account && (
+          <button type="button" className="chip active" onClick={() => onFilter({ ...filter, account: undefined })}>
+            {filter.account.label} ✕
           </button>
         )}
         {filter.day && (
@@ -136,15 +148,20 @@ export function FeedLogTab({
           </button>
         ))}
       </div>
+      {/* Which clock the When column is on, said once and in words (two clocks on one screen, 18 Sep 2026). */}
+      {excludedKeys.size > 0 && onOpenExclusions && (
+        <button type="button" className="chip fl-excluded" data-testid="feed-log-excluded" onClick={onOpenExclusions}>
+          {t.exclusionsTitle} <b>{formatCount(excludedKeys.size, lang)}</b>
+        </button>
+      )}
+      <p className="fl-note fl-clock">{t.feedLogClock}</p>
+      </div>
       {win === 'all' && !loadingRest && archivedOlderCount > 0 && (
         <p className="fl-note">{t.showingArchivedOlder(archivedOlderCount)}</p>
       )}
       {loadingRest && (
         <p className="fl-note">{t.showingLoadingBefore}<b>{formatCount(records.length, lang)}</b>{t.showingLoadingAfter}</p>
       )}
-
-      {/* Which clock the When column is on, said once and in words (two clocks on one screen, 18 Sep 2026). */}
-      <p className="fl-note">{t.feedLogClock}</p>
 
       {/* Only the table reaches out to the window; the title, filters and notes start at the tabs' edge. */}
       <div className="fl-wrap">
@@ -194,7 +211,9 @@ export function FeedLogTab({
                     <span className="fx-ledger-platform" style={{ ['--platform-color' as never]: PLATFORM_COLORS[r.platform] ?? 'var(--fw-muted)' }}>
                       <span className="dot" />{PLATFORM_LABELS[r.platform] ?? t.otherSite}
                     </span>
-                    <span className={'fx-ledger-verdict ' + PILL_CLASS[action]}>{actionLabel(action)}</span>
+                    {/* One colour per meaning (12 Oct 2026): a hidden item that was blocked (an ad, AI content, a blocked tag
+                        or surface) is the noise violet the Timeline gives it; one hidden as harmful keeps the harm red. */}
+                    <span className={'fx-ledger-verdict ' + (action === 'hidden' && feedActionKeyFor(r) === 'blocked' ? 'blocked' : PILL_CLASS[action])}>{actionLabel(action)}</span>
                     <span className="fx-ledger-sev">
                       {sev > 0 && <><span className="dot" style={{ background: sevColor(sev) }} />{sev}</>}
                     </span>
@@ -214,7 +233,7 @@ export function FeedLogTab({
                           ? <div className="fl-muted">{t.withheldNote}</div>
                           : isTextPlaceholder(r)
                             ? <div className="fl-muted">{shownText(r, lang)}</div>
-                            : <div className="fl-text">{r.author ? <strong>{r.author} · </strong> : null}{r.originalText || ''}</div>}
+                            : <div className="fl-text">{r.author ? <strong>{r.author} · </strong> : null}{readableText(r)}</div>}
                       </div>
                       {r.neutralizedText && r.neutralizedText !== r.originalText && (
                         <div className="fl-open-block">
@@ -223,9 +242,9 @@ export function FeedLogTab({
                         </div>
                       )}
                       {canVisit ? (
-                        <a href={r.postUrl} target="_blank" rel="noopener noreferrer" className="fl-link"
+                        <a href={r.postUrl} target="_blank" rel="noopener noreferrer" className="fx-withhold"
                           onClick={(e) => { if (!onViewOriginal) return; e.preventDefault(); onViewOriginal(r, r.postUrl ?? null); }}>
-                          {t.openOriginalPost}
+                          <ExternalLink size={14} />{t.openOriginalPost}
                         </a>
                       ) : (
                         <span className="fl-muted">{r.platform === 'tiktok' ? t.tiktokNoLink : t.noLinkCaptured}</span>

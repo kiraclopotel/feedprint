@@ -9,6 +9,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { installChromeStorageStub } from '../../helpers/chrome-storage';
+import { readingConsentFor } from '../../helpers/reading-consent';
 import { utcDayKey, utcMonthKey, CURRENT_SETTINGS_SCHEMA_VERSION } from '../../../src/storage/settings';
 import type { Encounter, PostNode, CommentNode } from '../../../src/types/post';
 
@@ -83,6 +84,7 @@ beforeEach(() => {
       // A synthetic key in the fw-<tier>-<secret> shape, so the client's tier gate lets the call through.
       fw_license_key: 'fw-starter-abc12345',
       dailyCap: 2500, totalChecksToday: 0, totalTokensThisMonth: 0,
+      ...readingConsentFor('fw-starter-abc12345'),
     },
     sendMessage: () => undefined,
   });

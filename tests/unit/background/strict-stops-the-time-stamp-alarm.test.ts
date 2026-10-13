@@ -1,13 +1,25 @@
 // @vitest-environment jsdom
 //
-// In Strict the six-hourly time-stamp alarm does not exist and does not stamp; entering Strict clears
-// it, leaving Strict arms it again on the person's own switch (the storage change), and a fire that
-// slips through while Strict is on still reaches no time-stamp service. The other alarms, all of
-// them local, are untouched.
+// At Silent (the Strict level) without a key and the agreement the six-hourly time-stamp alarm does not exist and does
+// not stamp; entering Silent clears it, leaving Silent arms it again on the person's own switch (the storage change), and a
+// fire that slips through while Silent is on still reaches no time-stamp service. With a key and the agreement (12 Oct 2026,
+// Silent reads) the alarm is armed like the other levels'. The other alarms, all of them local, are untouched.
 
 import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 
 const SETTINGS = vi.hoisted(() => ({ mode: 'child' as string }));
+// What the gate reads for the key and the agreement (storage/license, storage/reading-consent).
+const HELD = vi.hoisted(() => ({ tier: 'free' as string, agreed: false }));
+
+vi.mock('../../../src/storage/license', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../src/storage/license')>();
+  return { ...actual, getLicense: vi.fn(async () => ({ tier: HELD.tier, secret: HELD.tier === 'free' ? '' : 'abc' })) };
+});
+
+vi.mock('../../../src/storage/reading-consent', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../src/storage/reading-consent')>();
+  return { ...actual, getReadingConsent: vi.fn(async () => (HELD.agreed ? { at: 'x', provider: 'p' } : null)) };
+});
 
 vi.mock('../../../src/storage/settings', () => ({
   incrementNeutralized: vi.fn(async () => undefined),
@@ -139,7 +151,7 @@ function installChromeStub(): void {
 }
 
 function flush(): Promise<void> {
-  return new Promise((r) => setTimeout(r, 0));
+  return new Promise((r) => setTimeout(r, 100));
 }
 
 let armMissingAlarms: () => void;
@@ -161,6 +173,8 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   SETTINGS.mode = 'teen';
+  HELD.tier = 'free';
+  HELD.agreed = false;
   liveAlarms = {};
   localStore = {};
   alarmsCleared = [];
@@ -188,7 +202,7 @@ describe('the time-stamp alarm and the level', () => {
     for (const name of LOCAL_ALARMS) expect(Object.keys(liveAlarms)).toContain(name);
   });
 
-  it('entering Strict clears it and leaves every local alarm running', async () => {
+  it('entering Silent without a key clears it and leaves every local alarm running', async () => {
     modeChanged('child');
     await flush();
     expect(alarmsCleared).toEqual(['forensic-anchor']);
@@ -196,7 +210,34 @@ describe('the time-stamp alarm and the level', () => {
     for (const name of LOCAL_ALARMS) expect(Object.keys(liveAlarms)).toContain(name);
   });
 
-  it('a worker that wakes in Strict does not arm it', async () => {
+  it('Silent with a key but no agreement yet keeps it cleared: nothing leaves until the agreement', async () => {
+    HELD.tier = 'family';
+    modeChanged('child');
+    await flush();
+    expect(Object.keys(liveAlarms)).not.toContain('forensic-anchor');
+  });
+
+  it('Silent with a key and the agreement arms it, like the other levels', async () => {
+    HELD.tier = 'family';
+    HELD.agreed = true;
+    modeChanged('child');
+    await flush();
+    expect(Object.keys(liveAlarms)).toContain('forensic-anchor');
+    expect(alarmsCleared).toEqual([]);
+  });
+
+  it('giving the agreement at Silent arms it without a change of level (the agreement slot is watched)', async () => {
+    HELD.tier = 'family';
+    modeChanged('child');
+    await flush();
+    expect(Object.keys(liveAlarms)).not.toContain('forensic-anchor');
+    HELD.agreed = true;
+    for (const fn of onStorageChanged) fn({ readingConsent: { newValue: { at: 'x' } } });
+    await flush();
+    expect(liveAlarms['forensic-anchor']).toEqual({ periodInMinutes: 60 * 6, delayInMinutes: 15 });
+  });
+
+  it('a worker that wakes in Silent without a key does not arm it', async () => {
     modeChanged('child');
     await flush();
     armMissingAlarms();
@@ -219,7 +260,7 @@ describe('the time-stamp alarm and the level', () => {
     expect(anchorChainHead).toHaveBeenCalledTimes(1);
   });
 
-  it('a fire in Strict stamps nothing', async () => {
+  it('a fire in Silent without a key stamps nothing', async () => {
     SETTINGS.mode = 'child';
     fire('forensic-anchor');
     await flush();

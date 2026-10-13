@@ -150,9 +150,11 @@ describe('a post rewrite that launders lethal language is not shipped', () => {
     mockedCallAI.mockResolvedValueOnce(verdict).mockResolvedValueOnce(verdict);
     const rewrite = vi.fn(async () => LAUNDERED);
     const result = await combinedDetectAndNeutralize(THREAT, L1_TECHNIQUES, 'adult', 'en', 'unknown', undefined, { rewrite });
-    expect(rewrite).toHaveBeenCalledTimes(1);
+    // The first answer is refused and one more is asked for, never a third; it is refused the same way.
+    expect(rewrite).toHaveBeenCalledTimes(2);
     expect(result!.analysis.isManipulative).toBe(true);
     expect(result!.neutralized).toBeNull();
+    expect(result!.rewriteWhy).toBe('harm-laundered+retry');
   });
 });
 

@@ -2,7 +2,8 @@
 // Setup used to say where the key and a post's text go once a key is used; that note left with the setup license
 // screen. The two places a key holder meets say it instead: the License tab, where the key is typed, says the key
 // goes only to FeelingWise's server; the consent screen before the first reading says what goes out and to whom
-// (tests/unit/ui/popup/the-reading-starts-on-request.test.tsx). At Strict nothing goes out and the tab offers no key.
+// (tests/unit/ui/popup/the-reading-starts-on-request.test.tsx). Silent (the Strict level) reads with a key since 12 Oct 2026,
+// so its tab is the same: the key field and the line on where the key goes.
 
 import { describe, expect, it } from 'vitest';
 import { createElement } from 'react';
@@ -43,18 +44,18 @@ const keysTab = (mode: Mode, license: LicenseInfo, lang: Lang) => renderToString
 describe.each(UI_LANGUAGES)('%s: the License tab says where the key goes', (lang) => {
   const t = POPUP_STRINGS[lang];
 
-  it.each([['with no key', FREE], ['with a key', PAID]] as const)('at Moderate, %s', (_name, license) => {
+  it.each([['with no key', FREE], ['with a key', PAID]] as const)('at Calm, %s', (_name, license) => {
     expect(keysTab('teen', license, lang)).toContain(esc(t.licenseStaysOnDevice));
   });
 
-  it.each([['with no key', FREE], ['with a key', PAID]] as const)('at Strict, %s, the tab has no key field and no line on where a key goes', (_name, license) => {
+  it.each([['with no key', FREE], ['with a key', PAID]] as const)('at Silent, %s, the tab has the key field and the line on where a key goes', (_name, license) => {
     const html = keysTab('child', license, lang);
-    expect(html).not.toContain(esc(t.licenseStaysOnDevice));
-    expect(html).not.toContain(`aria-label="${esc(t.licCardName)}"`);
+    expect(html).toContain(esc(t.licenseStaysOnDevice));
+    expect(html).toContain(`aria-label="${esc(t.licCardName)}"`);
   });
 
   // With no key, the line under the card says Receipts is free, so the tab does not read as a gate before a payment.
-  it('at Moderate with no key, the line under the card says Receipts is free', () => {
+  it('at Calm with no key, the line under the card says Receipts is free', () => {
     expect(keysTab('teen', FREE, lang)).toContain(esc(t.keySubFree));
     expect(t.keySubFree).toMatch(/free|gratuit|gratis/i);
   });

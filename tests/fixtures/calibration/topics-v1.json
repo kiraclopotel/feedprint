@@ -1,0 +1,263 @@
+{
+  "note": "Topics U1, 13 Oct 2026. Sentences written by hand for the gambling list v1, two-sided: every `matches` sentence must be found and every `clean` sentence must not be. The clean side is the hard side: ordinary uses of the same letters (better/bet, scraps/craps, bookmarked/bookie) and ordinary English that other languages' lists would catch (the odds, a jackpot, aviator sunglasses). A sentence moves between the sides only with the list's author in the same commit. These are written sentences, not counts: the measured collision count over real posts is Topics U3.",
+  "matches": [
+    {
+      "lang": "en",
+      "text": "Sign up today and get a free bet on your first deposit at bet365"
+    },
+    {
+      "lang": "en",
+      "text": "Anyone else gambling away their paycheck on slot machines tonight?"
+    },
+    {
+      "lang": "en",
+      "text": "My tips for Saturday's football accumulator bet, with the odds boost"
+    },
+    {
+      "lang": "en",
+      "text": "The new online casino gives every new player a no deposit bonus"
+    },
+    {
+      "lang": "en",
+      "text": "The casinos in Vegas are packed this weekend"
+    },
+    {
+      "lang": "en",
+      "text": "He is a recovering gambler, three years clean now"
+    },
+    {
+      "lang": "en",
+      "text": "DraftKings promo code: bet five dollars, get two hundred"
+    },
+    {
+      "lang": "en",
+      "text": "Just won big at blackjack, the dealer could not believe it"
+    },
+    {
+      "lang": "en",
+      "text": "The Powerball drawing is tonight and the pot keeps growing"
+    },
+    {
+      "lang": "en",
+      "text": "Sportsbooks are advertising on every channel now"
+    },
+    {
+      "lang": "en",
+      "text": "Mega Millions numbers are out, check your ticket"
+    },
+    {
+      "lang": "en",
+      "text": "Claim 100 free spins when you join, wagering requirements apply"
+    },
+    {
+      "lang": "en",
+      "text": "Craps is the loudest table in the room"
+    },
+    {
+      "lang": "en",
+      "text": "BET365 and Betfair both changed their offers this week"
+    },
+    {
+      "lang": "ro",
+      "text": "Pariuri sportive cu cote mărite la Superbet, doar astăzi"
+    },
+    {
+      "lang": "ro",
+      "text": "Am câștigat la pacanele aseară, nu-mi vine să cred"
+    },
+    {
+      "lang": "ro",
+      "text": "Casa de pariuri oferă bonus fără depunere pentru oricine"
+    },
+    {
+      "lang": "ro",
+      "text": "Jocuri de noroc distrug familii întregi"
+    },
+    {
+      "lang": "ro",
+      "text": "Joacă blackjack și poker online cu prietenii"
+    },
+    {
+      "lang": "ro",
+      "text": "Ponturi pariuri pentru meciul de diseară"
+    },
+    {
+      "lang": "es",
+      "text": "Las apuestas deportivas en línea están en auge"
+    },
+    {
+      "lang": "es",
+      "text": "Gané cien euros en el casino anoche"
+    },
+    {
+      "lang": "es",
+      "text": "Probé suerte con la lotería de Navidad otra vez"
+    },
+    {
+      "lang": "es",
+      "text": "Descarga Codere y apuesta con tus amigos"
+    },
+    {
+      "lang": "es",
+      "text": "Una casa de apuestas nueva abrió en mi barrio"
+    },
+    {
+      "lang": "es",
+      "text": "Las tragaperras del bar me cuestan una fortuna cada mes"
+    },
+    {
+      "lang": "es",
+      "text": "Cómo ser un apostador responsable"
+    },
+    {
+      "lang": "pt-BR",
+      "text": "Joguei no jogo do tigrinho ontem e perdi tudo"
+    },
+    {
+      "lang": "pt-BR",
+      "text": "As casas de apostas patrocinam metade dos times"
+    },
+    {
+      "lang": "pt-BR",
+      "text": "Aposta esportiva com bônus sem depósito, só hoje"
+    },
+    {
+      "lang": "pt-BR",
+      "text": "Ganhei na Mega Sena e não conto pra ninguém"
+    },
+    {
+      "lang": "pt-BR",
+      "text": "Os cassinos online estão por toda parte"
+    },
+    {
+      "lang": "pt-BR",
+      "text": "O jackpot de hoje está alto, vale a fezinha"
+    },
+    {
+      "lang": "pt-BR",
+      "text": "As odds do jogo de domingo estão ótimas"
+    }
+  ],
+  "clean": [
+    {
+      "lang": "en",
+      "text": "The better team won, and the weather was lovely"
+    },
+    {
+      "lang": "en",
+      "text": "Against all odds, she finished the marathon in the rain"
+    },
+    {
+      "lang": "en",
+      "text": "You hit the jackpot with this recipe, it is the best lasagna ever"
+    },
+    {
+      "lang": "en",
+      "text": "Aviator sunglasses are back in style this summer"
+    },
+    {
+      "lang": "en",
+      "text": "Please do not scrap the plans, the scraps are in the bin"
+    },
+    {
+      "lang": "en",
+      "text": "I bet you a coffee that it rains before noon"
+    },
+    {
+      "lang": "en",
+      "text": "He bookmarked the page and kept the books for the shop"
+    },
+    {
+      "lang": "en",
+      "text": "Let us find a time slot for the meeting on Tuesday"
+    },
+    {
+      "lang": "en",
+      "text": "The lottery of birth decides more than we admit"
+    },
+    {
+      "lang": "en",
+      "text": "She kept a straight poker face through the whole meeting"
+    },
+    {
+      "lang": "en",
+      "text": "I have 365 days to finish the book"
+    },
+    {
+      "lang": "en",
+      "text": "Nothing here but a quiet walk by the river with the dog"
+    },
+    {
+      "lang": "en",
+      "text": "I bet it works, and if it does not I will fix it tomorrow"
+    },
+    {
+      "lang": "en",
+      "text": "Bet. See you at noon"
+    },
+    {
+      "lang": "en",
+      "text": "bets are off on whether the bus comes on time"
+    },
+    {
+      "lang": "en",
+      "text": ""
+    },
+    {
+      "lang": "en",
+      "text": "https://example.com/better-bets-on-the-future"
+    },
+    {
+      "lang": "ro",
+      "text": "Am avut un weekend liniștit la munte cu familia"
+    },
+    {
+      "lang": "ro",
+      "text": "Vremea e frumoasă, mergem la plimbare în parc"
+    },
+    {
+      "lang": "ro",
+      "text": "Primarul a anunțat o nouă sală de sport pentru copii"
+    },
+    {
+      "lang": "ro",
+      "text": "Pariu pe o cafea că plouă mâine"
+    },
+    {
+      "lang": "ro",
+      "text": "Cartea aceasta m-a făcut să plâng și să râd în aceeași seară"
+    },
+    {
+      "lang": "es",
+      "text": "Hoy fuimos a la playa con toda la familia"
+    },
+    {
+      "lang": "es",
+      "text": "Me apuesto un café a que llueve mañana"
+    },
+    {
+      "lang": "es",
+      "text": "El poder de la educación cambia ciudades enteras"
+    },
+    {
+      "lang": "es",
+      "text": "La cocina de mi abuela huele a pan recién hecho"
+    },
+    {
+      "lang": "pt-BR",
+      "text": "Hoje o dia foi lindo e fomos à praia com a família"
+    },
+    {
+      "lang": "pt-BR",
+      "text": "Vou apostar nisso, acho que dá certo"
+    },
+    {
+      "lang": "pt-BR",
+      "text": "Faz uma aposta comigo? Quem chegar primeiro paga o café"
+    },
+    {
+      "lang": "pt-BR",
+      "text": "O melhor do domingo é o almoço em casa"
+    }
+  ]
+}

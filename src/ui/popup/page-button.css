@@ -1,0 +1,57 @@
+/* One shape for a button that opens a page of its own: a pill with its name and a chevron, the height and the corner of
+   the Live Rephrase pill, in the card's colours. Hover lifts it a little and brightens its edge, which is what says
+   "pressable" without a filled colour; the words never move. The quiet variant, for the home, keeps its words muted
+   until the pointer comes, so it does not compete with the one main button above it. Both popups load this sheet. */
+.fw-page-btn {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px 0 14px;
+  background: var(--fw-card); color: var(--fw-text); border: 1px solid var(--fw-border);
+  border-radius: calc(18px * var(--pop-r-scale, 1));
+  font: inherit; font-size: 13px; font-weight: 600; line-height: 1.2; text-align: left; cursor: pointer;
+  transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease, background-color 120ms ease, color 120ms ease;
+}
+.fw-page-btn .fw-page-chev { flex: none; color: var(--fw-muted); transition: transform 120ms ease, color 120ms ease; }
+.fw-page-btn:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--fw-teal) 55%, var(--fw-border));
+  box-shadow: 0 3px 10px -4px color-mix(in srgb, var(--pop-tint, #00bcd4) 45%, transparent);
+}
+.fw-page-btn:hover .fw-page-chev { color: var(--fw-teal); transform: translateX(1px); }
+.fw-page-btn:active { transform: none; box-shadow: none; }
+.fw-page-btn:focus-visible { outline: 2px solid var(--fw-teal); outline-offset: 2px; }
+.fw-page-btn.quiet {
+  min-height: 32px; background: transparent; color: var(--fw-text-secondary);
+  font-size: var(--fw-text-12); font-weight: 500;
+}
+.fw-page-btn.quiet:hover { background: var(--fw-card); color: var(--fw-text); }
+/* A page button that is a row: the whole width, its name at the left and the chevron at the right edge. */
+.fw-page-btn.row { display: flex; width: 100%; justify-content: space-between; min-height: 40px; }
+
+/* The way back in a page's bar carries the same weight as a page button and a hand-sized hit area; its arrow is the
+   drawn chevron every other control uses, and it answers the pointer and the keyboard like the page buttons do. */
+.settings-bar .lnk { font-size: var(--fw-text-12); font-weight: 500; min-height: 32px; padding-right: 6px; gap: 2px; text-decoration: none; }
+.settings-bar .lnk:hover { text-decoration: underline; text-underline-offset: 3px; }
+.settings-bar .lnk:active { opacity: .7; }
+.settings-bar .lnk:focus-visible { outline: 2px solid var(--fw-teal); outline-offset: 2px; border-radius: var(--pop-control-radius); }
+
+/* A page opened over the popup: it takes the window under the brand header (the opener measures the header and sets
+   --fw-subpage-top, so the header stays where every other page keeps it), keeps its bar with the way back at the top
+   while its body scrolls, and sits under the window's frame line and the PIN gate. */
+.fw-subpage {
+  position: fixed; inset: 0; top: var(--fw-subpage-top, 0); z-index: 3; overflow-y: auto;
+  /* The popup's own scrollbar rule does not reach a fixed page, and a bar appearing on a long result re-wraps every line;
+     the wheel, the keys and touch still scroll it. */
+  scrollbar-width: none;
+  background: var(--fw-bg); color: var(--fw-text);
+}
+.fw-subpage .settings-bar { position: sticky; top: 0; z-index: 1; background: var(--fw-bg); }
+.fw-subpage-body { padding: 4px var(--pop-edge, 16px) 16px; max-width: 480px; }
+/* It arrives: a fade and an 8 px rise over 180 ms (Off row 33; Feedprint's pages share it). */
+@keyframes fw-subpage-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.fw-subpage { animation: fw-subpage-in 180ms ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .fw-page-btn, .fw-page-btn .fw-page-chev { transition: none; }
+  .fw-subpage { animation: none; }
+  .fw-page-btn:hover { transform: none; }
+  .fw-page-btn:hover .fw-page-chev { transform: none; }
+}

@@ -1,7 +1,6 @@
 // The AI master row in Settings reads what is true. Without a key there is no row: nothing is sent
 // or spent, so there is nothing for it to stop. With a key and the breaker on, the switch reads on
-// and no note shows; with the breaker off the off-note shows. At Strict the row reads off and locked
-// with a key too, and shows the Strict note.
+// and no note shows; with the breaker off the off-note shows. At Silent (the Strict level) it is the same live row, since Silent reads with a key.
 
 import { describe, it, expect } from 'vitest';
 import { renderToString } from 'react-dom/server';
@@ -77,15 +76,18 @@ describe('the master breaker row', () => {
   });
 });
 
-describe('the master breaker row at Strict', () => {
-  it('reads off and locked with a key, and shows the Strict note in every language', () => {
+describe('the master breaker row at Silent', () => {
+  it('is the live row with a key: on shows no note, off shows the off note, in every language', () => {
     for (const lang of UI_LANGUAGES) {
-      const html = render(settingsWith(true, 'child'), PAID, lang);
-      const master = masterSwitch(html, lang);
+      const on = render(settingsWith(true, 'child'), PAID, lang);
+      const master = masterSwitch(on, lang);
       expect(master, lang + ': the master switch renders').toBeTruthy();
-      expect(master).toContain('aria-checked="false"');
-      expect(master).toContain('disabled');
-      expect(html).toContain(POPUP_STRINGS[lang].featAiMasterStrictNote.replace(/'/g, '&#x27;'));
+      expect(master).toContain('aria-checked="true"');
+      expect(master).not.toContain('aria-disabled');
+      expect(on).not.toContain(POPUP_STRINGS[lang].featAiMasterOffNote.replace(/'/g, '&#x27;'));
+      const off = render(settingsWith(false, 'child'), PAID, lang);
+      expect(masterSwitch(off, lang)).toContain('aria-checked="false"');
+      expect(off).toContain(POPUP_STRINGS[lang].featAiMasterOffNote.replace(/'/g, '&#x27;'));
     }
   });
 });

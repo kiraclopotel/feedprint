@@ -5,6 +5,7 @@
 // wait it out off the network: one request, no retry inside the call, and nothing sent until the minute is over.
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { readingConsentFor } from '../../helpers/reading-consent';
 import { utcDayKey, utcMonthKey, CURRENT_SETTINGS_SCHEMA_VERSION } from '../../../src/storage/settings';
 
 function installStorageStub(initial: Record<string, unknown> = {}): { state: Record<string, unknown> } {
@@ -36,6 +37,7 @@ function paidSettings(): Record<string, unknown> {
     lastResetDate: utcDayKey(),
     lastResetMonth: utcMonthKey(),
     fw_license_key: 'fw-starter-abc12345',
+    ...readingConsentFor('fw-starter-abc12345'),
     dailyCap: 2500,
     totalChecksToday: 0,
     totalTokensThisMonth: 0,

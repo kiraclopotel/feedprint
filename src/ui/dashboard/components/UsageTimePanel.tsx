@@ -177,7 +177,7 @@ export function UsageTimePanel({ records, archivedSummaries = [], readingOffered
   );
 
   return (
-    <div className="stats-card full" style={{ marginTop: 18 }}>
+    <div className="stats-card full" style={{ marginTop: 16 }}>
       <h3>
         {t.usageTitle}
         <span style={{ float: 'right', fontSize: 12, color: 'var(--fw-muted)', fontWeight: 400 }}>
@@ -211,7 +211,7 @@ export function UsageTimePanel({ records, archivedSummaries = [], readingOffered
           <div className="l">{readingOffered ? t.usageRewritesLabel : words.usageFlaggedNoAi}</div>
         </div>
         <div className="usage-summary-item">
-          <div className="v" style={{ color: 'var(--fw-purple)' }}>{totalBlocked}</div>
+          <div className="v" style={{ color: 'var(--fw-noise)' }}>{totalBlocked}</div>
           <div className="l">{t.usageBlocksLabel}</div>
         </div>
         <div className="usage-summary-item">
@@ -230,7 +230,7 @@ export function UsageTimePanel({ records, archivedSummaries = [], readingOffered
         </div>
       </div>
 
-      <div className="usage-chart" aria-label={t.usageChartAria(frame)}>
+      <div className={'usage-chart' + (activeBuckets === 0 ? ' usage-chart-empty' : '')} aria-label={t.usageChartAria(frame)}>
         {buckets.map((b, i) => {
           const heightPct = b.count === 0 ? 2 : Math.max(10, Math.round((b.count / max) * 100));
           const isActive = b.count > 0;
@@ -273,9 +273,9 @@ export function UsageTimePanel({ records, archivedSummaries = [], readingOffered
       <div className="usage-legend">
         <span><span className="sw" style={{ background: 'var(--fw-teal)' }} /> {t.legendPass}</span>
         <span><span className="sw" style={{ background: 'var(--fw-amber)' }} /> {readingOffered ? t.legendRewrite : words.legendMarkNoAi}</span>
-        <span><span className="sw" style={{ background: 'var(--fw-purple)' }} /> {t.legendBlock}</span>
+        <span><span className="sw" style={{ background: 'var(--fw-noise)' }} /> {t.legendBlock}</span>
         {totalUnjudged > 0 && <span><span className="sw" style={{ background: 'var(--fw-muted)', opacity: 0.45 }} /> {t.legendUnjudged}</span>}
-        <span><span className="sw" style={{ background: 'var(--fw-surface-2)' }} /> {t.legendIdle}</span>
+        <span><span className="sw" style={{ background: 'var(--fw-border-strong)' }} /> {t.legendIdle}</span>
         {buckets.some((b) => b.count === 0 && b.gaps > 0) && (
           <span><span className="sw usage-legend-gap" /> {t.legendGap}</span>
         )}

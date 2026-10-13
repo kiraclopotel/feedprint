@@ -15,11 +15,15 @@ import {
 import { neutralizeText } from '../ai/neutralize-only';
 import { askClaudeReader, claudeReadingOn } from '../ai/claude-reader';
 import { getSettings, isFeatureEnabled, type FWSettings } from '../storage/settings';
+import { makesNoOutsideCall } from '../types/mode';
+import { readingActiveNow } from '../ai/gate-with-agreement';
 import type { Platform } from '../types/post';
 import { activeParentBlocklist, matchParentBlocklist } from '../core/parent-blocklist';
+import { activeTopics, matchTopics } from '../core/policy/topic-lexicon';
 import {
   getExposurePressure,
   creativeHash,
+  EXPOSURE_WINDOW_DAYS,
   type AuthorProfile,
   type ExposurePressure,
 } from '../forensics/author-store';
@@ -93,7 +97,12 @@ export type PassReason =
   // controls (engagement/*) still run independently of process();
   // Free-tier installs see only DOM-side hide actions. No forensic
   // record, no recall-instrument sampling.
-  | 'pre-llm-free-tier-no-ai';
+  | 'pre-llm-free-tier-no-ai'
+  // A level that makes no outside call (Strict, or one nobody has chosen yet) reads nothing at all. The rules
+  // above ran; the reading does not, so the post is recorded as not read at this level, not as a call that failed.
+  | 'pre-llm-level-reads-nothing'
+  // The cover's deadline asked for the local result only (child-first-protection.ts): the rules ran, no reading did.
+  | 'pre-llm-deadline-local-only';
 
 interface PassContext {
   reason: PassReason;
@@ -123,6 +132,34 @@ function hideWhenSevereAndHostile(analysis: AnalysisResult): void {
   const t = analysis.primaryTechnique;
   const hostile = t === 'shame-attack' || t === 'scapegoating' || t === 'anger-trigger' || t === 'fear-appeal';
   if (analysis.isManipulative && analysis.action !== 'collapse' && sev >= 7 && hostile) analysis.action = 'hide';
+}
+
+/**
+ * Where the item sits, for the Moderate judge: the site, whether it is a post, a comment or a video, and the post a comment answers.
+ * The Relaxed judge is handed these as fields of its own; the Moderate judge's prompt has no field for them, but it reads a
+ * context block (surrounding discourse, "context only, judge the post above"), so they go there in the words the Relaxed judge's
+ * prompt uses. Before this the Moderate judge read a reply to a thread as a post of no known site (the export study, 12 Oct
+ * 2026). The parent is passed with its names already replaced by letters; the quoted post and the link card are not sent here,
+ * because the card text carries the quoted account's display name, which no letter replaces.
+ */
+export function moderateWhereItSits(
+  platform: string | undefined,
+  kind: 'post' | 'comment' | 'video',
+  parentText: string | undefined,
+  card?: { quotedBody?: string; link?: { title?: string; domain?: string } },
+): string {
+  const lines = [`Platform: ${platform ?? 'unknown'}`, `Kind: ${kind}`];
+  const parent = parentText?.trim();
+  if (parent) lines.push(`THE POST IT REPLIES TO (context only, not the item to judge):\n${parent.slice(0, 600)}`);
+  // The quoted post's body, capped, with no author; a link card's title and domain, nothing else. The caller has already put a
+  // letter in place of every handle in the body (a display name never goes: the card reader does not hand it over).
+  const quoted = card?.quotedBody?.trim();
+  if (quoted) lines.push(`THE POST IT QUOTES (context only, not the item to judge):\n${quoted.slice(0, 400)}`);
+  const link = card?.link;
+  if (link && (link.title || link.domain)) {
+    lines.push(`A LINK CARD UNDER THE POST (context only): ${[link.title, link.domain ? `(${link.domain})` : ''].filter(Boolean).join(' ')}`);
+  }
+  return lines.join('\n');
 }
 
 export function judgeKindFor(kind: PostContent['kind'] | undefined): 'post' | 'comment' | 'video' {
@@ -174,6 +211,8 @@ export interface PipelineResult {
   analysis?: AnalysisResult;
   aiMeta?: { model: string; provider: string };
   detectionMode?: string;
+  /** For a mark: the one fixed word for why the rewrite did not come back (rewrite.why on the decision record). */
+  rewriteWhy?: string;
   passContext?: PassContext;
   /**
    * The mode the pipeline read when it judged (or declined to judge) this
@@ -402,13 +441,11 @@ const NO_EXPOSURE: ExposurePressure = {
  * subsequent post from a frequent source (measured: 10.2% of posts); with it,
  * 3.7%.
  *
- * Module-local, so it resets on every fresh content-script injection, not
- * only when a new tab opens: two tabs open on the same site can each emit
- * one notice for the same source on the same day, and so can one tab
- * reloaded twice. Deliberate — the alternative is a round trip to the
- * service worker on the hot path, and over-firing here is bounded by tab
- * count AND reload count, and errs toward telling the reader rather than
- * staying quiet.
+ * This map is the guard inside one page: the posts of one source arrive in a
+ * burst, before the profile write that records the notice (`lastNoticedDay`,
+ * which is what keeps a second tab or a reload quiet) can land. The measured
+ * export of 12 Oct 2026 had 785 of 1,413 notices as a second or later notice
+ * for the same source on the same day, when this map was the only guard.
  */
 const exposureNotifiedOn = new Map<string, string>();
 
@@ -425,9 +462,11 @@ export function shouldEmitExposureNotice(
 }
 
 /**
- * A confirmed concern with nothing to rewrite: the words are fine, the
- * repetition is the point. Renders as the mark-only tier (severity dot on the
- * original text) — never a rewrite, never a hide.
+ * A count with nothing to rewrite: the words are fine, the repetition is the
+ * point. It is a mark (never a rewrite, never a hide) and renders as a quiet
+ * count pill, not the severity dot. It claims no severity and no manipulation
+ * (13 Oct 2026): it is a number of days or sightings, not a verdict, and the
+ * evidence names the surface the count came from.
  */
 export function exposureMarkResult(
   post: PostContent,
@@ -436,35 +475,50 @@ export function exposureMarkResult(
   aiMeta?: { model: string; provider: string },
   detectionMode?: string,
 ): PipelineResult {
-  const evidence = exposure.reason === 'days'
-    ? [`source seen on ${exposure.distinctDays} separate days`]
-    : [`this exact post seen ${exposure.creativeCount} times`];
+  const reason = exposure.reason === 'creative' ? 'creative' : 'days';
+  const count = reason === 'days' ? exposure.distinctDays : exposure.creativeCount;
+  const surface = exposure.surface ?? 'for-you';
+  const evidence = reason === 'days'
+    ? [`source reached you on ${count} of the last ${EXPOSURE_WINDOW_DAYS} days, on the ${surface} feed`]
+    : [`this exact post reached you ${count} times in the last ${EXPOSURE_WINDOW_DAYS} days, on the ${surface} feed`];
   const analysis: AnalysisResult = {
     postId: post.id,
     techniques: [{
       technique: 'repeat-exposure',
       present: true,
       confidence: 1,
-      severity: 6,
+      severity: 0,
       evidence,
     }],
-    overallScore: 6,
+    overallScore: 0,
     overallConfidence: 1,
-    isManipulative: true,
+    isManipulative: false,
     processingTimeMs: performance.now() - startTime,
     primaryTechnique: 'repeat-exposure',
     explanation: evidence[0],
+    exposure: { reason, count, surface },
   };
-  console.log(`[FeelingWise] Pipeline: MARK (repeat exposure, ${exposure.reason})`);
+  console.log(`[FeelingWise] Pipeline: MARK (repeat exposure, ${reason})`);
   return { action: 'mark', analysis, aiMeta, detectionMode };
+}
+
+export interface ProcessOptions {
+  /**
+   * Stop where the reading would start. The own list, the slur rule, the harm floor and the swear mask run as they do
+   * for any post, and so does a cached verdict; a post none of them acts on comes back as a pass, with no model asked.
+   * The Silent veil's deadline uses it so that a post still waiting for its reading is lifted as what the rules make
+   * of it, never as the raw post.
+   */
+  localOnly?: boolean;
 }
 
 export async function process(
   post: PostContent,
   signal?: AbortSignal,
+  options?: ProcessOptions,
 ): Promise<PipelineResult> {
   let judgedMode: FWSettings['mode'] | undefined;
-  const result = await processUnstamped(post, signal, mode => { judgedMode = mode; });
+  const result = await processUnstamped(post, signal, mode => { judgedMode = mode; }, options);
   return judgedMode !== undefined && result.judgedMode === undefined
     ? { ...result, judgedMode }
     : result;
@@ -488,6 +542,7 @@ async function processUnstamped(
    */
   signal?: AbortSignal,
   onSettings?: (mode: FWSettings['mode']) => void,
+  options?: ProcessOptions,
 ): Promise<PipelineResult> {
   try {
     const startTime = performance.now();
@@ -565,6 +620,25 @@ async function processUnstamped(
           action: 'hide',
           analysis: blocklistAnalysis,
           detectionMode: `blocklist:${hit.kind}:${hit.rule}`,
+        };
+      }
+    }
+
+    // A topic the person chose not to see (Topics U1, 13 Oct 2026): the same kind of gate, one more written list. It sits
+    // right after the household's own words, above the cache for the same reason, and pre-empts the reading entirely.
+    // Its switch is off in every preset, so a person who never chose a topic pays nothing here: no topic is active
+    // and the matcher is never built. It hides at every level (policy row R5) and, like the household's word, claims
+    // nothing about the post: no technique, no severity. The record's detectionMode names the topic and nothing else: the post text it
+    // signs is the evidence of which word it found.
+    {
+      const topics = activeTopics(settings.features);
+      const hit = topics.length > 0 ? matchTopics(topics, post.text, post.card) : null;
+      if (hit) {
+        console.log(`[FeelingWise] Pipeline: topic ${hit.topic} for ${post.id} → HIDE`);
+        return {
+          action: 'hide',
+          analysis: ruleAnalysis({ postId: post.id, startTime, confidence: 1, action: 'hide' }),
+          detectionMode: `topic:${hit.topic}`,
         };
       }
     }
@@ -942,7 +1016,12 @@ async function processUnstamped(
     let exposure: ExposurePressure = NO_EXPOSURE;
     if (post.author) {
       try {
-        exposure = getExposurePressure(authorProfile, creativeHash(post.text));
+        exposure = getExposurePressure(
+          authorProfile,
+          creativeHash(post.text),
+          new Date().toISOString().slice(0, 10),
+          post.feedSource,
+        );
       } catch {
         exposure = NO_EXPOSURE;
       }
@@ -1005,6 +1084,21 @@ async function processUnstamped(
     // synthesized collapse verdicts. Reaching this point on free tier
     // means no structural-harm signal fired — pass without LLM round-
     // trip.
+    // The same for a level that sends nothing out. Strict used to reach the call, which refused it before any network
+    // code, and the refusal was written as a vendor failure (625 of the 1,233 failed posts in his export were Strict's,
+    // read 12 Oct 2026, crew/reading/EXPORT-STUDY-2026-10-12.md) and armed the shared hold for every other level.
+    // Strict with a key, the master switch on and the adult's agreement is not such a level once Strict reads
+    // (types/reading-gate.ts); until then this is the line it always was.
+    if (makesNoOutsideCall(settings) && !(await readingActiveNow(settings, license))) {
+      console.debug('[FeelingWise] Pipeline: PASS (the level makes no outside call) — rules cleared');
+      return passWith('pre-llm-level-reads-nothing');
+    }
+    // The deadline's ask: the rules above have spoken, and nothing below is a rule.
+    if (options?.localOnly) {
+      console.debug('[FeelingWise] Pipeline: PASS (local result only) — rules cleared');
+      return passWith('pre-llm-deadline-local-only');
+    }
+
     if (tierCap === 0) {
       console.debug(`[FeelingWise] Pipeline: PASS (free tier — ${license.tier}) — regex/harm-floor cleared`);
       return passWith('pre-llm-free-tier-no-ai');
@@ -1051,6 +1145,11 @@ async function processUnstamped(
 
     // Step 4: SINGLE AI CALL — detect + neutralize combined.
     // This eliminates the second API round-trip, cutting latency ~50%.
+    //
+    // No cover goes on the post while this call is out. A cover on "the free rules suspect it" was built (71726956) and taken out
+    // again (Board row 363, 12 Oct 2026): on the Tester's feed the pattern scan and the harm floor fired on the calm tulip post and
+    // on one of the five posts the judge went on to rewrite, and stayed silent on the other four (rage, fear, two shaming posts).
+    // Covering on that signal covers the wrong posts. A better signal has to separate flagged from calm before a cover returns.
     //
     // Wrap the network-bound combined call with the perf-tracer. Tracer
     // is a no-op unless `ff_captureV2Metrics` flag is on (default OFF)
@@ -1103,16 +1202,29 @@ async function processUnstamped(
     else signal?.addEventListener('abort', () => rewriteCalls.abort(), { once: true });
     let rewriteCalled = false;
     let rewriteWriter: string | undefined;
-    // Outside Adult mode the judge reads the author's label and copies of the text and the caption
-    // context with the known handles replaced; the post itself is never changed, because the text
-    // is reused below and the queue keys hold it. The Adult judge is a measured instrument and
-    // keeps reading the text as written until its own word comes.
-    const labels = settings.mode !== 'adult' && isNameLabelStepOn()
-      ? buildNameLabelMapForPost(post.author, post.context, [post.text])
+    // In every mode the judge reads the author's label and copies of the text, the post it answers and the
+    // caption context with the known handles replaced; the post itself is never changed, because the text is
+    // reused below and the queue keys hold it. The Adult judge was left reading names as written until the owner
+    // said, on 12 Oct 2026, to label them there too: the consent screen promises a letter in place of each account
+    // name, and those names belong to other people. Its prompt, schema and cut are untouched; only the names in
+    // its input are letters now, which the measurement owner notes on the Board row.
+    const labels = isNameLabelStepOn()
+      ? buildNameLabelMapForPost(post.author, post.context, [post.text, post.parentText, post.card?.quotedBody])
       : null;
     const judgeText = labels ? replaceNamesInText(labels, post.text) : post.text;
+    const judgeParentText = labels && post.parentText ? replaceNamesInText(labels, post.parentText) : post.parentText;
     const judgeAuthor = labels ? labels.authorValue : (post.author ?? 'unknown');
-    const judgeContext = labels && post.context ? replaceNamesInCaptionContext(labels, post.context) : post.context;
+    const labelledContext = labels && post.context ? replaceNamesInCaptionContext(labels, post.context) : post.context;
+    const judgeCard = post.card && (post.card.quotedBody || post.card.link)
+      ? {
+          quotedBody: post.card.quotedBody && labels ? replaceNamesInText(labels, post.card.quotedBody) : post.card.quotedBody,
+          link: post.card.link,
+        }
+      : undefined;
+    // Moderate only: the Relaxed judge takes the site, the kind and the parent as fields of its own, and Strict reads nothing.
+    const judgeContext = settings.mode === 'teen'
+      ? [labelledContext, moderateWhereItSits(post.platform, judgeKindFor(post.kind), judgeParentText, judgeCard)].filter(Boolean).join('\n\n')
+      : labelledContext;
     // The paid reading's Claude reader runs beside the adult judge's second opinion, for a paid key
     // whose person agreed to the second company on the consent screen (the consent is the switch);
     // it checks its own key and consent again before it sends anything.
@@ -1126,7 +1238,7 @@ async function processUnstamped(
         // every item on this path was called a post and shown no parent
         // (docs/audits/2026-09-07-xray, C3).
         kind: judgeKindFor(post.kind),
-        parentText: post.parentText,
+        parentText: judgeParentText,
         rewrite: input => {
           rewriteCalled = true;
           return neutralizeText({
@@ -1158,7 +1270,7 @@ async function processUnstamped(
       const { analysis } = result;
       // Each name comes back as the post itself wrote it, so a bare name is not shown as a handle.
       // The caption context went to the judge too, so words a context comment wrote ("USER A") stay as written.
-      const sentTexts = post.context ? [post.context] : [];
+      const sentTexts = [post.context, post.parentText, post.card?.quotedBody].filter((x): x is string => typeof x === 'string' && x.length > 0);
       if (typeof analysis.explanation === 'string') {
         analysis.explanation = restoreNames(labels, analysis.explanation, 'reason', post.text, sentTexts).text ?? undefined;
       }
@@ -1170,6 +1282,7 @@ async function processUnstamped(
         const back = restoreNames(labels, result.neutralized.rewrittenText, 'rewrite', post.text, sentTexts).text;
         if (back === null) {
           result.neutralized = null;
+          result.rewriteWhy = 'label-lost';
           // The judge's own rule for a missing rewrite ran before this drop, so it runs again here:
           // a severe hostile flag is hidden, as it is when the judge rejects the rewrite itself.
           hideWhenSevereAndHostile(analysis);
@@ -1188,6 +1301,7 @@ async function processUnstamped(
         console.debug(`[FeelingWise] Pipeline: REWRITE DROPPED (${kept}) for ${post.id}`);
         void recordNeutralizerEvent(`rewrite-keeps-attack:${kept}`);
         result.neutralized = null;
+        result.rewriteWhy = `attack-kept:${kept}`;
         hideWhenSevereAndHostile(result.analysis);
       }
     }
@@ -1216,8 +1330,14 @@ async function processUnstamped(
       // signal-aborted case was already handled above and returns before
       // reaching here, so this is a genuine vendor/network failure, not a
       // user-scroll cancel — exactly the BATCH path's exclusion of the
-      // aborted kind.
-      recordFailure();
+      // aborted kind. A refusal is no sign of a failing vendor either (the
+      // master switch, a cap, a refused key), and the BATCH path arms the
+      // hold only for the three transient kinds; so does this one. A kind
+      // nobody stamped still arms it, as before.
+      const failedKind = getLastFailureKind() ?? undefined;
+      if (failedKind === undefined || failedKind === 'rate-limit' || failedKind === 'transient-http' || failedKind === 'network') {
+        recordFailure();
+      }
       // The LLM was attempted and produced nothing usable. There is no
       // analysis to feed the recall instrument — but the caller DOES write a
       // chain record here, because "we could not judge this" and "we judged
@@ -1225,13 +1345,13 @@ async function processUnstamped(
       // the second when the first was true. Carry the real failure kind
       // across the cascade's null so the record can name it.
       return passWith('pre-llm-ai-call-failed', {
-        failureKind: getLastFailureKind() ?? undefined,
+        failureKind: failedKind,
         // A judge that answered with nothing usable is still who answered, and the record names it.
         aiMeta,
       });
     }
 
-    const { analysis, neutralized } = result;
+    const { analysis, neutralized, rewriteWhy } = result;
     analysis.postId = post.id;
     if (neutralized) {
       const writer = rewriteCalled ? rewriteWriter : latestModelFor(judgeCalls.signal) ?? undefined;
@@ -1345,7 +1465,7 @@ async function processUnstamped(
         return { action: 'collapse', analysis, aiMeta, detectionMode: combinedDetectionMode };
       }
       console.log(`[FeelingWise] Pipeline: MARK (confirmed flag, rewrite unavailable) (${totalMs.toFixed(0)}ms)`);
-      return { action: 'mark', analysis, aiMeta, detectionMode: combinedDetectionMode };
+      return { action: 'mark', analysis, aiMeta, detectionMode: combinedDetectionMode, ...(rewriteWhy ? { rewriteWhy } : {}) };
     }
 
     // Code-side language guard. The combined prompt instructs "same
@@ -1375,7 +1495,7 @@ async function processUnstamped(
       console.log(
         `[FeelingWise] Pipeline: MARK (rewrite language mismatch — expected ${expectedLang}, rewrite drifted; rewrite discarded, flag kept visible)`,
       );
-      return { action: 'mark', analysis, aiMeta, detectionMode: combinedDetectionMode };
+      return { action: 'mark', analysis, aiMeta, detectionMode: combinedDetectionMode, rewriteWhy: 'language-drift' };
     }
 
     // Set the postId on the neutralized content

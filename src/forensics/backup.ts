@@ -676,6 +676,13 @@ export interface RestoreResult {
   recordsAdded: number;
   recordsSkipped: number;
   /**
+   * Of the restored active-chain entries, how many also stand in the monthly archives. A reset moves the whole chain into the
+   * archives and never destroys it, so a restore after one puts the same entries back in the active chain and they then stand
+   * in both places (the export of the whole record carries each once). Read-only; left undefined when the archives could not
+   * be read, which says nothing either way.
+   */
+  recordsAlsoArchived?: number;
+  /**
    * Active-chain entries that were read back and DECODED after the write. The
    * companion to `recordsAdded`, on the same footing as `archivedRestored`
    * beside `archivedExpected`: written is one fact and readable is another,
@@ -1039,6 +1046,7 @@ async function restoreFromBackupUnderChainLock(raw: string | unknown, passphrase
   let chainError: string | undefined;
   let recordsReadable: number | undefined;
   let recordsUnreadable: number | undefined;
+  let recordsAlsoArchived: number | undefined;
   try {
     // getRecordsDetailed, never getRecords, and no longer getRecordsOrThrow.
     //
@@ -1064,6 +1072,11 @@ async function restoreFromBackupUnderChainLock(raw: string | unknown, passphrase
     const read = await getRecordsDetailed();
     recordsReadable = read.records.length;
     recordsUnreadable = read.unreadable.length;
+    try {
+      const archivedIds = new Set<string>();
+      for (const month of await loadArchivesOldestFirst()) for (const r of month.records) archivedIds.add(r.id);
+      recordsAlsoArchived = read.records.reduce((n, r) => (archivedIds.has(r.id) ? n + 1 : n), 0);
+    } catch { /* archives that cannot be read: say nothing rather than guess */ }
     // The chain is walked over what came back READABLE. A row that did not
     // decode leaves a real hole in the links, and the walk reporting that hole
     // is honest; what would not be honest is walking a list the hole was
@@ -1128,6 +1141,7 @@ async function restoreFromBackupUnderChainLock(raw: string | unknown, passphrase
     recordsAdded,
     recordsReadable,
     recordsUnreadable,
+    recordsAlsoArchived,
     recordsSkipped: 0,
     // The screen that reports the restore says how many entries it replaced,
     // and after the swap that number is gone from the store. A backup with no

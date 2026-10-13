@@ -1,0 +1,673 @@
+{
+ "topic": "gambling",
+ "version": 1,
+ "language": "en",
+ "madeOn": "2026-10-13",
+ "entries": [
+  {
+   "term": "gambling",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "The plain word. Rare in ordinary senses; 'gambling on a startup' is still about risk-taking money."
+  },
+  {
+   "term": "gambler",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "gamblers is reached by the s ending. Mostly literal."
+  },
+  {
+   "term": "casino",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "casinos reached by s. Casino Royale and film or town names are rare and still about the same subject."
+  },
+  {
+   "term": "sportsbook",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "The US word for a bookmaker; essentially only betting."
+  },
+  {
+   "term": "sportsbetting",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Written as one token on social media; the two-token form is covered by the phrase sports betting."
+  },
+  {
+   "term": "bettor",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "bettors reached by s. Almost only sports betting."
+  },
+  {
+   "term": "bookie",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "UK, Irish and Australian slang for a bookmaker. bookies reached by s."
+  },
+  {
+   "term": "bookmaker",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "bookmakers reached by s. The shop and company word, nothing else."
+  },
+  {
+   "term": "blackjack",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Card game; a weapon or a character name is very rare."
+  },
+  {
+   "term": "baccarat",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Card game and a crystal brand name; both rare."
+  },
+  {
+   "term": "craps",
+   "kind": "word",
+   "exact": true,
+   "risk": "low",
+   "note": "Dice game. Whole word only so it never grows into anything near the crude 'crap' family."
+  },
+  {
+   "term": "lotto",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Lottery slang; lottos reached by s."
+  },
+  {
+   "term": "powerball",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "US lottery game; only about the lottery."
+  },
+  {
+   "term": "keno",
+   "kind": "word",
+   "exact": true,
+   "risk": "low",
+   "note": "Lottery-style game. Whole word only because it is short and also a surname."
+  },
+  {
+   "term": "pokies",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Australian and New Zealand slang for slot machines."
+  },
+  {
+   "term": "moneyline",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "A kind of sports bet; used in sports talk almost only with betting."
+  },
+  {
+   "term": "igaming",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Industry word for online betting and casino business, common in news and job posts."
+  },
+  {
+   "term": "slot machine",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "slot machines reached by the s ending on machine. Bare 'slot' and 'slots' are left out (time slot)."
+  },
+  {
+   "term": "online slots",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Safe way to catch the plural slots without a bare 'slots' entry."
+  },
+  {
+   "term": "slot game",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "slot games reached by s. Covers app-store style promotions."
+  },
+  {
+   "term": "fruit machine",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "UK word for a slot machine; the fruit-themed arcade sense is the same kind of machine."
+  },
+  {
+   "term": "online casino",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "online casinos reached by s."
+  },
+  {
+   "term": "crypto casino",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Common in spam and sponsored posts."
+  },
+  {
+   "term": "sweepstakes casino",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "US social casinos that run on coin systems; plain 'sweepstakes' is left out."
+  },
+  {
+   "term": "place your bets",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Casino call; also used as a joke, which is acceptable."
+  },
+  {
+   "term": "free bet",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Bookmaker promotion. bet has three letters so the plural is listed apart."
+  },
+  {
+   "term": "free bets",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Plural of the above."
+  },
+  {
+   "term": "sports bet",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Singular form of a bet on a match."
+  },
+  {
+   "term": "sports betting",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "The standard news and promotion phrase."
+  },
+  {
+   "term": "online betting",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Betting by app or site."
+  },
+  {
+   "term": "betting site",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "betting sites reached by s."
+  },
+  {
+   "term": "betting app",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "betting apps reached by s."
+  },
+  {
+   "term": "bet slip",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "The list of chosen bets; bet slips reached by s."
+  },
+  {
+   "term": "prop bet",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "A side bet on a player or event; plural not reached because bet is short. Also used between friends for small jokes."
+  },
+  {
+   "term": "accumulator bet",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "UK term for a multi-pick bet. The short form 'acca' is left out because it collides with an accountancy body."
+  },
+  {
+   "term": "odds boost",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Bookmaker promotion; odds boosts reached by s."
+  },
+  {
+   "term": "no deposit bonus",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Casino promotion, very common in spam."
+  },
+  {
+   "term": "no deposit bonuses",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "The endings do not reach es, so the plural is listed apart."
+  },
+  {
+   "term": "casino bonus",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Casino promotion; the plural bonuses is not reached by s."
+  },
+  {
+   "term": "scratch card",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Lottery product; scratch cards reached by s."
+  },
+  {
+   "term": "online poker",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Money poker on a site; also caught by the word poker, listed here as a clear signal."
+  },
+  {
+   "term": "bet365",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Largest bookmaker in the UK and strong across English-speaking markets."
+  },
+  {
+   "term": "betfair",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "UK and Irish betting exchange."
+  },
+  {
+   "term": "betway",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Bookmaker with heavy sponsorship in UK, Ireland and South Africa."
+  },
+  {
+   "term": "unibet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Bookmaker active in the UK, Ireland and Australia."
+  },
+  {
+   "term": "bovada",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Offshore betting and casino site popular with US users."
+  },
+  {
+   "term": "draftkings",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Major US sportsbook and daily fantasy site."
+  },
+  {
+   "term": "fanduel",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Major US sportsbook and daily fantasy site."
+  },
+  {
+   "term": "betmgm",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "US sportsbook and casino app."
+  },
+  {
+   "term": "betrivers",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "US sportsbook and casino app."
+  },
+  {
+   "term": "ladbrokes",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "UK high-street bookmaker with shops and an app."
+  },
+  {
+   "term": "betfred",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "UK bookmaker with shops and an app."
+  },
+  {
+   "term": "william hill",
+   "kind": "brand",
+   "exact": false,
+   "risk": "medium",
+   "note": "UK bookmaker. The two tokens are also a plain personal name, so a post about a person of that name can hit."
+  },
+  {
+   "term": "paddy power",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Irish and UK bookmaker known for loud adverts."
+  },
+  {
+   "term": "pokerstars",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Largest online poker room."
+  },
+  {
+   "term": "prizepicks",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "US pick'em betting app, heavily promoted by sports creators."
+  },
+  {
+   "term": "bet builder",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "UK bookmaker feature for combining picks in one match; bet builders reached by s."
+  },
+  {
+   "term": "betting odds",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Standard betting wording; bare odds stays out."
+  },
+  {
+   "term": "betting tips",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Very common in spam and tipster posts; betting tip reached because tips is the listed form."
+  },
+  {
+   "term": "betting shop",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "UK high-street bookmaker; betting shops reached by s."
+  },
+  {
+   "term": "betting exchange",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Peer-to-peer betting sites; betting exchanges reached by es-free s on the last word."
+  },
+  {
+   "term": "wagering requirement",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Casino bonus terms; wagering requirements reached by s."
+  },
+  {
+   "term": "progressive jackpot",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Slot machine jackpot pooled across games; the figurative bare jackpot is rejected."
+  },
+  {
+   "term": "lottery ticket",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "medium",
+   "note": "Mostly the real ticket; occasionally figurative as in \"that stock is a lottery ticket\"."
+  },
+  {
+   "term": "mega millions",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "US lottery game, as common as powerball."
+  },
+  {
+   "term": "texas holdem",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "The main poker game; the spelling with an apostrophe splits depending on how the matcher handles it, so the plain form is listed."
+  },
+  {
+   "term": "poker tournament",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "medium",
+   "note": "Mostly money events; a home tournament between friends also hits."
+  },
+  {
+   "term": "free spins",
+   "kind": "phrase",
+   "exact": true,
+   "risk": "low",
+   "note": "Casino promotion in the plural, the form spam uses. Exact so it never reaches a spin class."
+  },
+  {
+   "term": "daily fantasy",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "medium",
+   "note": "Paid fantasy contests such as DraftKings runs; a free fantasy league post can also say daily fantasy."
+  },
+  {
+   "term": "prop bets",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Plural of prop bet, listed apart because bet is short."
+  },
+  {
+   "term": "sports bets",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Plural of sports bet, listed apart because bet is short."
+  },
+  {
+   "term": "accumulator bets",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Plural of accumulator bet, listed apart because bet is short."
+  },
+  {
+   "term": "skybet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Written as one word in the brand and its hashtags; replaces the rejected two-token form."
+  },
+  {
+   "term": "espnbet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "One-token form used in hashtags; replaces the rejected two-token form."
+  },
+  {
+   "term": "sportybet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Large bookmaker in Nigeria, Ghana and Kenya, heavy in English-language posts."
+  },
+  {
+   "term": "bet9ja",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Largest Nigerian bookmaker."
+  },
+  {
+   "term": "1xbet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Offshore bookmaker with constant spam and sponsorship posts."
+  },
+  {
+   "term": "mostbet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Offshore betting and casino site, common in spam."
+  },
+  {
+   "term": "melbet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Offshore betting site, common in spam."
+  },
+  {
+   "term": "parimatch",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Bookmaker with football sponsorships."
+  },
+  {
+   "term": "22bet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Offshore betting site, common in spam."
+  },
+  {
+   "term": "betano",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Bookmaker active in several English-language and other markets."
+  },
+  {
+   "term": "pointsbet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Australian and US sportsbook."
+  },
+  {
+   "term": "betonline",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Offshore betting and casino site popular with US users."
+  },
+  {
+   "term": "mybookie",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Offshore US-facing sportsbook."
+  },
+  {
+   "term": "roobet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Crypto casino promoted heavily by streamers."
+  },
+  {
+   "term": "bwin",
+   "kind": "brand",
+   "exact": true,
+   "risk": "low",
+   "note": "European bookmaker. Exact because it is short."
+  },
+  {
+   "term": "betsson",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Nordic and international bookmaker and casino."
+  },
+  {
+   "term": "betvictor",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "UK bookmaker."
+  },
+  {
+   "term": "sportsbet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Largest Australian bookmaker."
+  },
+  {
+   "term": "888casino",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Written as one token, so the word casino does not reach it."
+  },
+  {
+   "term": "partypoker",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Online poker room, listed because bare poker is rejected."
+  },
+  {
+   "term": "ggpoker",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Online poker room, listed because bare poker is rejected."
+  },
+  {
+   "term": "hollywoodbets",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "South African bookmaker with heavy advertising."
+  },
+  {
+   "term": "betking",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Nigerian bookmaker."
+  }
+ ]
+}

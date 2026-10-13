@@ -36,10 +36,12 @@ import { readGroqTelemetry } from '../../../ai/telemetry';
 import { summarizeGroqTelemetry, type GroqTelemetrySummary } from '../../../ai/telemetry-summary';
 import { TEXT_CAP_STORAGE_KEY } from '../../../ai/client';
 import { READING_PAUSED_STORAGE_KEY } from '../../../storage/reading-pause';
+import { READING_TROUBLE_STORAGE_KEY, readingTroubleStands } from '../../../storage/reading-trouble';
 import { readNeutralizerDiagnostics } from '../../../forensics/neutralizer-diagnostics';
 import { readRoomMutations, summarizeRoomMutations, type RoomMutationSummary } from '../../../diagnostics/room-attribution-outcome';
 import { getLicense, type LicenseTier } from '../../../storage/license';
 import { getSettings } from '../../../storage/settings';
+import { bearerOf, getReadingConsent } from '../../../storage/reading-consent';
 import { levelMakesNoCalls } from '../../../types/mode';
 import { getRecordsDetailed } from '../../../forensics/store';
 import { verifyChainIntegrity, type IntegrityResult } from '../../../forensics/chain-integrity';
@@ -116,9 +118,12 @@ export function OperationalEventsPanel({
   const [neutralizerCounters, setNeutralizerCounters] =
     useState<Record<string, number> | null>(null);
   const [licenseTier, setLicenseTier] = useState<LicenseTier | null>(null);
-  // At Strict a key turns nothing on, so the AI-off card and the AI health line never ask for one
-  // and never say classification is enabled.
-  const [strictLevel, setStrictLevel] = useState(false);
+  // Whether the level is Silent, null until the settings are read: until then no reading card shows, because a
+  // Silent install without a key has no reading to fail and an old marker of one would be shown as a fault for as long
+  // as the licence takes to be read (a missing key is read again twice, about 150 ms).
+  const [strictLevel, setStrictLevel] = useState<boolean | null>(null);
+  // At Silent with a key: whether the agreement is stored (null until read). Silent reads only once it is given.
+  const [strictAgreed, setStrictAgreed] = useState<boolean | null>(null);
   const [forensicIntegrity, setForensicIntegrity] = useState<ForensicIntegritySummary | null>(null);
   // Whether a verdict from the dashboard has reached the panel. The panel's own
   // walk of the chain runs only while none has, and never overwrites one.
@@ -131,6 +136,8 @@ export function OperationalEventsPanel({
   const [textCapPeriod, setTextCapPeriod] = useState<'daily' | 'monthly' | null>(null);
   // The relay asked for the reading's go-ahead and nothing has answered since (storage/reading-pause.ts).
   const [readingPaused, setReadingPaused] = useState(false);
+  // The reading service has not answered several calls in a row (storage/reading-trouble.ts).
+  const [readingTrouble, setReadingTrouble] = useState(false);
   const [copied, setCopied] = useState(false);
   // Acknowledged (cleared) counter-card baselines, keyed by card key. A card
   // whose count is at or below its baseline stays hidden; when the counter
@@ -231,8 +238,19 @@ export function OperationalEventsPanel({
     getLicense()
       .then(lic => { if (!cancelled) setLicenseTier(lic.tier); })
       .catch(() => { /* license read is best-effort */ });
+    // The level alone does not wait for the licence.
     getSettings()
       .then(st => { if (!cancelled) setStrictLevel(levelMakesNoCalls(st)); })
+      .catch(() => { if (!cancelled) setStrictLevel(false); });
+    Promise.all([getSettings(), getLicense()])
+      .then(async ([st, lic]) => {
+        if (cancelled) return;
+        const silent = levelMakesNoCalls(st);
+        if (!silent || lic.tier === 'free') return;
+        // An unreadable agreement is no agreement (the gate reads it the same way).
+        const agreed = await getReadingConsent(bearerOf(lic)).then(c => c !== null && c !== undefined, () => false);
+        if (!cancelled) setStrictAgreed(agreed);
+      })
       .catch(() => { /* the level only picks the card's wording */ });
     return () => { cancelled = true; };
   }, []);
@@ -260,6 +278,9 @@ export function OperationalEventsPanel({
       .catch(() => { /* marker is best-effort */ });
     chrome.storage.local.get(READING_PAUSED_STORAGE_KEY)
       .then(stored => { if (!cancelled && stored[READING_PAUSED_STORAGE_KEY]) setReadingPaused(true); })
+      .catch(() => { /* marker is best-effort */ });
+    chrome.storage.local.get(READING_TROUBLE_STORAGE_KEY)
+      .then(stored => { if (!cancelled && readingTroubleStands(stored[READING_TROUBLE_STORAGE_KEY])) setReadingTrouble(true); })
       .catch(() => { /* marker is best-effort */ });
     return () => { cancelled = true; };
   }, []);
@@ -482,7 +503,7 @@ export function OperationalEventsPanel({
   const sectionStyle = {
     background: 'var(--fw-card)',
     border: '1px solid var(--fw-border)',
-    borderRadius: 2,
+    borderRadius: 'var(--fw-radius-lg)',
     padding: 16,
     marginBottom: 12,
     fontFamily: 'var(--fw-font-sans)',
@@ -490,6 +511,12 @@ export function OperationalEventsPanel({
 
   const headingStyle = { fontSize: 13, fontWeight: 600, color: 'var(--fw-text)', margin: '0 0 8px' } as const;
   const lineStyle = { fontSize: 12, color: 'var(--fw-muted)', margin: '4px 0' } as const;
+
+  // Silent with a key: the level that reads once the agreement is given; and Silent with nothing to read (no key, or a key
+  // whose agreement is not given), which says so in the AI-health section instead of failing at anything.
+  const strictWithKey = strictLevel === true && licenseTier !== null && licenseTier !== 'free';
+  const strictOff = strictLevel === true && licenseTier !== null && (licenseTier === 'free' || strictAgreed === false);
+  const strictPending = strictWithKey && strictAgreed === null;
 
   // Plain-language triage cards. Each card answers: what happened, what it
   // means for the child's protection, what (if anything) the parent should do.
@@ -499,7 +526,8 @@ export function OperationalEventsPanel({
     key: string;
     reduced: boolean;
     title: string;
-    meaning: string;
+    /** Absent where the title is the whole sentence (the Silent cards). */
+    meaning?: string;
     action?: string;
     info?: boolean;
     /** A standing state the person has not chosen against, not a fault: plain
@@ -618,11 +646,34 @@ export function OperationalEventsPanel({
       cards.push({ key: `drift-${d.platform}`, reduced: false, title: t.opsCardPlatformDriftTitle(name), meaning: t.opsCardPlatformDriftMeaning });
     }
   }
-  if (readingPaused) {
-    cards.push({ key: 'reading-paused', reduced: true, title: t.opsCardReadingPausedTitle, meaning: t.opsCardReadingPausedMeaning, action: t.opsCardReadingPausedAction });
-  }
-  if (textCapPeriod) {
-    cards.push({ key: `text-cap-${textCapPeriod}`, reduced: true, title: t.opsCardTextCapTitle(textCapPeriod), meaning: t.opsCardTextCapMeaning(textCapPeriod), action: t.opsCardTextCapAction(textCapPeriod) });
+  if (strictLevel === null) {
+    // The level is not read yet: no reading card for a level that may not read (see strictLevel above).
+  } else if (strictLevel) {
+    // Silent says what it does in its own one sentence each, because the cards below speak of posts that "stay as written"
+    // and at Silent they are filtered on this computer. Silent without a key reads nothing, so it has no reading to fail.
+    if (strictWithKey) {
+      if (strictAgreed === false || readingPaused) {
+        cards.push({ key: 'strict-no-agreement', reduced: true, title: t.strictNoAgreement });
+      }
+      if (readingTrouble) {
+        cards.push({ key: 'strict-service-down', reduced: true, title: t.strictServiceDown });
+      }
+      if (textCapPeriod === 'daily') {
+        cards.push({ key: 'strict-allowance-out', reduced: true, title: t.strictAllowanceOut });
+      } else if (textCapPeriod) {
+        cards.push({ key: `text-cap-${textCapPeriod}`, reduced: true, title: t.opsCardTextCapTitle(textCapPeriod), meaning: t.opsCardTextCapMeaning(textCapPeriod), action: t.opsCardTextCapAction(textCapPeriod) });
+      }
+    }
+  } else {
+    if (readingPaused) {
+      cards.push({ key: 'reading-paused', reduced: true, title: t.opsCardReadingPausedTitle, meaning: t.opsCardReadingPausedMeaning, action: t.opsCardReadingPausedAction });
+    }
+    if (readingTrouble) {
+      cards.push({ key: 'reading-trouble', reduced: true, title: t.opsCardReadingTroubleTitle, meaning: t.opsCardReadingTroubleMeaning, action: t.opsCardReadingTroubleAction });
+    }
+    if (textCapPeriod) {
+      cards.push({ key: `text-cap-${textCapPeriod}`, reduced: true, title: t.opsCardTextCapTitle(textCapPeriod), meaning: t.opsCardTextCapMeaning(textCapPeriod), action: t.opsCardTextCapAction(textCapPeriod) });
+    }
   }
   if (llmFailureTotal > 0) {
     // "This resolves on its own" is true of `network` and `transient-http`, and
@@ -732,7 +783,9 @@ export function OperationalEventsPanel({
             : t.opsIssueSeenRange(hourLabel(c.firstSeenAt), hourLabel(c.lastSeenAt))}
         </p>
       )}
-      <p style={lineStyle}><strong style={{ color: 'var(--fw-text)' }}>{t.opsWhatItMeansLabel}</strong>{c.meaning}</p>
+      {c.meaning !== undefined && (
+        <p style={lineStyle}><strong style={{ color: 'var(--fw-text)' }}>{t.opsWhatItMeansLabel}</strong>{c.meaning}</p>
+      )}
       {c.action && !cleared && (
         <p style={lineStyle}><strong style={{ color: 'var(--fw-text)' }}>{t.opsWhatToDoLabel}</strong>{c.action}</p>
       )}
@@ -902,9 +955,9 @@ export function OperationalEventsPanel({
           {t.opsAiHealthSub}
         </p>
 
-        {licenseTier === null ? (
+        {licenseTier === null || strictPending ? (
           <p style={lineStyle}>{t.opsLoadingShort}</p>
-        ) : strictLevel ? (
+        ) : strictOff ? (
           <p style={lineStyle}>
             {licenseTier === 'free' ? t.opsAiOffStrict : t.opsAiOffStrictKey}
           </p>
@@ -937,7 +990,7 @@ export function OperationalEventsPanel({
               </p>
             )}
           </>
-        ) : licenseTier !== null && licenseTier !== 'free' && !strictLevel ? (
+        ) : licenseTier !== null && licenseTier !== 'free' && !strictOff ? (
           <p style={lineStyle}>
             {t.opsNoAiCalls}
           </p>
@@ -1050,8 +1103,8 @@ export function OperationalEventsPanel({
           <h3 style={headingStyle}>{t.opsMemoryTitle}</h3>
           <button
             type="button"
+            className="btn"
             onClick={copyDiagnostics}
-            style={{ fontSize: 12, padding: '4px 8px', borderRadius: 0, border: '1px solid var(--fw-border)', background: 'transparent', color: 'var(--fw-text)', cursor: 'pointer' }}
           >
             {copied ? t.opsCopied : t.opsCopyDiagnostics}
           </button>

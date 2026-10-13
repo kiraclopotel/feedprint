@@ -1,5 +1,6 @@
 // The install fetch through the real module, with a public key set as a shipped build will carry: a free install
-// and a key at Strict make no network call at all; a paid key away from Strict asks once. The free return comes
+// and a key on a level nobody has chosen make no network call at all; a paid key at any chosen level, Silent included
+// (12 Oct 2026: Silent reads with a key), asks once. The free return comes
 // before the key check and before the fetch (src/storage/license-entitlements.ts, refreshEntitlements).
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -42,13 +43,19 @@ describe('the install fetch, with a public key set', () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it('a paid key at Strict makes no call', async () => {
-    installChromeStorageStub({ initial: { ...BASE, fw_license_key: PAID_KEY, mode: 'child', levelChosen: true }, sendMessage: () => undefined });
+  it('a paid key on a level nobody has chosen makes no call', async () => {
+    installChromeStorageStub({ initial: { ...BASE, fw_license_key: PAID_KEY, mode: 'child', levelChosen: false }, sendMessage: () => undefined });
     await install('update');
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it('a paid key away from Strict asks once', async () => {
+  it('a paid key at Silent asks once, like the other levels', async () => {
+    installChromeStorageStub({ initial: { ...BASE, fw_license_key: PAID_KEY, mode: 'child', levelChosen: true }, sendMessage: () => undefined });
+    await install('update');
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('a paid key at Calm asks once', async () => {
     installChromeStorageStub({ initial: { ...BASE, fw_license_key: PAID_KEY, mode: 'teen', levelChosen: true }, sendMessage: () => undefined });
     await install('update');
     expect(fetchSpy).toHaveBeenCalledTimes(1);

@@ -6,13 +6,17 @@
 // placeholder, a hidden post or comment, a hide notice. A post's record names the writer when the
 // page showed its rewrite.
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+// The level the mocked settings answer with: Open reads its rewrite behind a red dot, so the cases that look at a rewrite
+// written onto the page run as Calm.
+const level = vi.hoisted(() => ({ mode: 'adult' as 'adult' | 'teen' }));
 
 vi.mock('../../../../src/storage/settings', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../../../src/storage/settings')>();
   return {
     ...actual,
-    getSettings: vi.fn(async () => ({ mode: 'adult', uiLanguage: 'en', dailyCap: 2000, features: {} })),
+    getSettings: vi.fn(async () => ({ mode: level.mode, uiLanguage: 'en', dailyCap: 2000, features: {} })),
     isFeatureEnabled: vi.fn(() => true),
   };
 });
@@ -64,7 +68,7 @@ import type { PipelineResult } from '../../../../src/analysis/pipeline';
 import type { PostContent } from '../../../../src/types/post';
 import type { PlatformAdapter } from '../../../../src/content/platforms/adapter';
 import type { CommentEntry } from '../../../../src/content/protection/comment-overlay';
-import type { FWSettings } from '../../../../src/storage/settings';
+import { isFeatureEnabled, type FWSettings } from '../../../../src/storage/settings';
 
 const ORIGINAL = 'Everyone who believes this is an idiot and should be ashamed of themselves.';
 const REWRITE = 'I strongly disagree with people who believe this, and it frustrates me.';
@@ -347,14 +351,16 @@ describe('the record says who wrote what the page showed', () => {
     expect(rewriteStage(false, { model: WRITER })).toEqual({ attempted: true, outcome: 'failed' });
   });
 
-  describe('an adult post the judge read and a model rewrote', () => {
+  describe('a Calm post the judge read and a model rewrote', () => {
     beforeEach(() => {
+      level.mode = 'teen';
       _resetForensicDedupForTesting();
       _clearSessionVerdictCachesOnModeChangeForTesting();
       _resetDiagnosticsForTesting();
       _setActiveAdapterForTesting({ platform: 'twitter' } as unknown as PlatformAdapter);
       vi.mocked(sendHighStakesForensicLog).mockClear();
     });
+    afterEach(() => { level.mode = 'adult'; });
 
     async function settle(): Promise<void> {
       for (let i = 0; i < 6; i++) await new Promise((r) => setTimeout(r, 5));
@@ -419,7 +425,24 @@ describe('the record says who wrote what the page showed', () => {
       expect(records).toHaveLength(1);
       expect(records[0].neutralizedText).toBe('');
       const decision = records[0].decision as { rewrite: unknown };
-      expect(decision.rewrite).toEqual({ attempted: true, outcome: 'failed' });
+      // The page did not take the text: the record says so in one fixed word.
+      expect(decision.rewrite).toEqual({ attempted: true, outcome: 'failed', why: 'not-written' });
+    });
+
+    it('a flagged post kept as written names, in the record, the check that refused its rewrite', async () => {
+      const { post } = postOnPage(ORIGINAL);
+      const judged = judgedResult(ORIGINAL);
+      onProcessingResult(post, {
+        action: 'mark',
+        analysis: judged.neutralized!.analysis,
+        aiMeta: judged.aiMeta,
+        detectionMode: 'combined-detect-neutralize',
+        rewriteWhy: 'meta-talk+retry',
+      } as PipelineResult);
+      await settle();
+      const decision = rewriteRecords()[0].decision as { applied: string; rewrite: unknown };
+      expect(decision.applied).toBe('mark');
+      expect(decision.rewrite).toEqual({ attempted: true, outcome: 'failed', why: 'meta-talk+retry' });
     });
 
     it('a rewrite that kept the original words names no writer, on the page or in the record', async () => {
@@ -430,6 +453,102 @@ describe('the record says who wrote what the page showed', () => {
       expect(body.hasAttribute(AI_TEXT_ATTR)).toBe(false);
       const decision = rewriteRecords()[0].decision as { rewrite: Record<string, unknown> };
       expect(decision.rewrite.model).toBeUndefined();
+    });
+  });
+
+  describe('an Open post the judge read and a model rewrote', () => {
+    beforeEach(() => {
+      level.mode = 'adult';
+      _resetForensicDedupForTesting();
+      _clearSessionVerdictCachesOnModeChangeForTesting();
+      _resetDiagnosticsForTesting();
+      _setActiveAdapterForTesting({ platform: 'twitter' } as unknown as PlatformAdapter);
+      vi.mocked(sendHighStakesForensicLog).mockClear();
+    });
+
+    async function settle(): Promise<void> {
+      for (let i = 0; i < 6; i++) await new Promise((r) => setTimeout(r, 5));
+    }
+
+    function offeredResult(): PipelineResult {
+      const judged: AnalysisResult = {
+        ...analysis(),
+        judge: {
+          id: 'judge-v1', hash: 'judge-hash', model: 'openai/gpt-oss-120b',
+          charged: true, family: 'hostile', severity: 7, effect: 'recruit', intent: 'react',
+        },
+      } as AnalysisResult;
+      return {
+        action: 'neutralize',
+        neutralized: { ...neutralized({ analysis: judged }), postId: 'j1' },
+        aiMeta: { model: 'openai/gpt-oss-120b', provider: 'deepinfra' },
+        detectionMode: 'combined-detect-neutralize',
+      } as PipelineResult;
+    }
+
+    function rewriteRecords(): Record<string, unknown>[] {
+      return vi.mocked(sendHighStakesForensicLog).mock.calls
+        .map(c => c[0] as { type: string; payload: Record<string, unknown> })
+        .filter(m => m.type === 'FORENSIC_LOG')
+        .map(m => m.payload);
+    }
+
+    function openPost(): { post: PostContent; body: HTMLElement } {
+      const { body } = xPost(ORIGINAL);
+      const post = {
+        id: 'j1', text: ORIGINAL, author: '@someone', timestamp: '2026-09-23T08:00:00Z',
+        platform: 'twitter', domRef: new WeakRef(body), kind: 'post',
+      } as unknown as PostContent;
+      return { post, body };
+    }
+
+    it("the page keeps the author's words with no model's mark on it, and the record says marked and offered", async () => {
+      const { post, body } = openPost();
+      onProcessingResult(post, offeredResult());
+      await settle();
+
+      expect(body.textContent).toContain(ORIGINAL);
+      expect(body.querySelector('.fw-teen-marker')).not.toBeNull();
+      expect(body.dataset.fwMarkerState).toBe('red');
+      expect(marked()).toEqual([]);
+      const records = rewriteRecords();
+      expect(records).toHaveLength(1);
+      expect(records[0].neutralizedText, "nothing was shown in the original's place").toBe('');
+      const decision = records[0].decision as { applied: string; rewrite: unknown };
+      expect(decision.applied).toBe('mark');
+      expect(decision.rewrite).toEqual({ attempted: true, outcome: 'offered' });
+    });
+
+    it("the model is named on the page only once the person has opened its version", async () => {
+      const { post, body } = openPost();
+      onProcessingResult(post, offeredResult());
+      await settle();
+      const dot = body.querySelector<HTMLButtonElement>('.fw-teen-marker')!;
+
+      dot.click(); // the reason
+      expect(marked()).toEqual([]);
+      dot.click(); // the calm version
+      expect(body.textContent).toContain(REWRITE);
+      expect(body.getAttribute(AI_TEXT_ATTR)).toBe('rewrite');
+      expect(body.getAttribute(AI_MODEL_ATTR)).toBe(WRITER);
+      dot.click(); // the author's words again
+      expect(body.textContent).toContain(ORIGINAL);
+      expect(marked()).toEqual([]);
+    });
+
+    it('with the marks switched off nothing can carry the tap, so the rewrite is written as it was before', async () => {
+      const { post, body } = openPost();
+      vi.mocked(isFeatureEnabled).mockImplementation((_settings, key) => key !== 'show-reframe-markers');
+      try {
+        const terminal = applyNeutralizedRewriteTerminal(
+          post, body, neutralized(), { mode: 'adult', uiLanguage: 'en', features: {} } as unknown as FWSettings,
+        );
+        expect(terminal).toBe('released');
+        expect(body.textContent).toBe(REWRITE);
+        expect(marked()).toEqual([body]);
+      } finally {
+        vi.mocked(isFeatureEnabled).mockImplementation(() => true);
+      }
     });
   });
 });

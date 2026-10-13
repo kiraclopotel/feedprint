@@ -125,7 +125,7 @@ describe('what the popup calls the switch', () => {
     for (const lang of langs) {
       const t = POPUP_STRINGS[lang];
       expect(t.featBlockAiName, `${lang} name`).not.toMatch(AI_CONTENT_CLAIM);
-      expect(t.modeExplainChildBody, `${lang} Child mode line`).not.toMatch(AI_CONTENT_CLAIM);
+      expect(t.levelSentenceChild, `${lang} Child mode line`).not.toMatch(AI_CONTENT_CLAIM);
     }
   });
 });

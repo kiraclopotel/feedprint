@@ -37,6 +37,7 @@ import type { AnalysisResult } from './analysis';
 import type { ConfigSnapshot, ForensicRecord } from './forensic';
 import type { Mode } from './mode';
 import type { Platform } from './post';
+import type { RelayFetchRequest } from './relay-fetch';
 
 // --- SCAN_LOG -------------------------------------------------------------
 interface ScanLogMessage {
@@ -262,6 +263,12 @@ interface AuthorUpdateMessage {
      */
     day?: string;
     textHash?: string;
+    /**
+     * Where the sighting came from (a FeedSource) and whether the "seen a lot" notice spoke on it. Optional so every
+     * older sender stays valid; a sighting without a surface is not counted by the exposure gate.
+     */
+    surface?: string;
+    noticed?: boolean;
   };
 }
 
@@ -520,6 +527,17 @@ export interface ChainDebugStatsResponse {
   }>;
 }
 
+// --- RELAY_FETCH (the reading's calls go out through the worker, not from the site's page) ----
+interface RelayFetchMessage {
+  type: 'RELAY_FETCH';
+  payload: RelayFetchRequest;
+}
+
+interface RelayFetchCancelMessage {
+  type: 'RELAY_FETCH_CANCEL';
+  payload: { id: string };
+}
+
 // --- Discriminated union ---------------------------------------------------
 export type FWMessage =
   | ScanLogMessage
@@ -550,7 +568,9 @@ export type FWMessage =
   | OpenOriginalMessage
   | IsInspectionTabMessage
   | GetChainDebugStatsMessage
-  | RunRecordTidyMessage;
+  | RunRecordTidyMessage
+  | RelayFetchMessage
+  | RelayFetchCancelMessage;
 
 /** All message-type discriminator values, useful for runtime validation. */
 export const FW_MESSAGE_TYPES: ReadonlyArray<FWMessage['type']> = [
@@ -583,4 +603,6 @@ export const FW_MESSAGE_TYPES: ReadonlyArray<FWMessage['type']> = [
   'IS_INSPECTION_TAB',
   'GET_CHAIN_DEBUG_STATS',
   'RUN_RECORD_TIDY',
+  'RELAY_FETCH',
+  'RELAY_FETCH_CANCEL',
 ] as const;

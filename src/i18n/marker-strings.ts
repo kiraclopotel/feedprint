@@ -19,6 +19,7 @@ import type { ResolvedUiLanguage } from './index';
 import type { TechniqueName } from '../types/analysis';
 
 import type { PolicyRowId } from '../types/policy-row';
+import type { TopicId } from '../types/topic-id';
 export type { PolicyRowId };
 
 export interface MarkerStrings {
@@ -47,6 +48,9 @@ export interface MarkerStrings {
   // just removed.
   matchedTermsLine: (n: number) => string;   // profanity / slur floor
   harmSignalsLine: (n: number) => string;    // harm-floor signals
+  // "Seen a lot" pill (src/content/markers/seen-a-lot-pill.ts): a count about a source or a post, never a verdict.
+  seenDaysLine: (n: number) => string;       // the recommended feed brought this account on n days in the last month
+  seenPostLine: (n: number) => string;       // ... brought this exact post n times
   // Collapse / hide placeholder line (injector.ts reasonTextFor) — the calm
   // text left in place of a folded or hidden post, with a category label.
   hidLine: (category: string) => string;
@@ -103,6 +107,12 @@ export interface MarkerStrings {
    * fragment in every language.
    */
   whyByRow: Readonly<Record<PolicyRowId, string>>;
+  /**
+   * The words for R5, a topic the person chose, one line per topic ("Mentions gambling"). Said on the page's hide
+   * notice in place of the row's generic line, which names no topic; read by src/i18n/why-words.ts. At most 32
+   * characters each (the notice line stays one line). Locked by tests/unit/core/policy/policy-why-strings.test.ts.
+   */
+  whyByTopic: Readonly<Record<TopicId, string>>;
   /**
    * The words for a family the measured reader answered, used in place of a band row's
    * words (J1, J2, J7, J8) when the record or the caller knows the family. Those four rows
@@ -188,13 +198,15 @@ const STRINGS_EN: MarkerStrings = {
   harmSignalsLine: (n) => n === 1
     ? 'One sign of harmful content was found in this text.'
     : `${n} signs of harmful content were found in this text.`,
+  seenDaysLine: (n) => `This account reached you on ${n} days this month`,
+  seenPostLine: (n) => `This same post reached you ${n} times`,
   hidLine: (category) => `Hidden: ${category}`,
   foldedLine: (category) => `Folded: ${category}`,
   foldedLineNoReason: 'Folded',
   hidLineTeen: (category) => `Hidden here: ${category}`,
   foldedLineTeen: (category) => `Folded away: ${category}`,
   foldedLineNoReasonTeen: 'Folded away',
-  skipLineChild: 'Skipped by your Strict filter. Keep scrolling.',
+  skipLineChild: 'Skipped at your Silent level. Keep scrolling.',
   catAdvertisement: 'advertisement',
   catGraphicViolence: 'graphic violence',
   catSexual: 'sexual content',
@@ -208,7 +220,7 @@ const STRINGS_EN: MarkerStrings = {
   hideNoticePlain: 'This post is hidden',
   hideNoticeByTeen: (handle) => `A post by ${handle} is hidden here`,
   hideNoticePlainTeen: 'A post is hidden here',
-  hideNoticeChild: 'Skipped by your Strict filter. Keep scrolling.',
+  hideNoticeChild: 'Skipped at your Silent level. Keep scrolling.',
   coverStrandedNotice: 'An update was installed. Refresh this page to check posts again.',
   hideShowAnyway: 'show anyway',
   hideHideAgain: 'hide again',
@@ -233,6 +245,7 @@ const STRINGS_EN: MarkerStrings = {
     R2: 'an identity slur',
     R3: 'harm in coded words',
     R4: 'an advertisement',
+    R5: 'a topic this household chose not to see',
     P1: 'an adult seeking contact with a minor',
     P2: 'self-harm content',
     P3: 'sexual content',
@@ -248,8 +261,10 @@ const STRINGS_EN: MarkerStrings = {
     J7: 'charged content',
     J8: 'mildly charged content',
     T1: 'a topic this household chose not to see',
-    T2: 'gambling',
     D1: 'no harm found',
+  },
+  whyByTopic: {
+    gambling: 'Mentions gambling',
   },
   whyByFamily: {
     hostile: 'hostility',
@@ -330,13 +345,16 @@ const STRINGS_RO: MarkerStrings = {
   harmSignalsLine: (n) => n === 1
     ? 'Un semn de conținut dăunător a fost găsit în acest text.'
     : `${n} semne de conținut dăunător au fost găsite în acest text.`,
+  // Words route pending (13 Oct 2026): English until the translated lines arrive.
+  seenDaysLine: (n) => `Zile în care acest cont ți-a ajuns luna aceasta: ${n}`,
+  seenPostLine: (n) => `De câte ori ți-a ajuns aceeași postare: ${n}`,
   hidLine: (category) => `Postare ascunsă: ${category}`,
   foldedLine: (category) => `Postare restrânsă: ${category}`,
   foldedLineNoReason: 'Postare restrânsă',
   hidLineTeen: (category) => `Postare ascunsă: ${category}`,
   foldedLineTeen: (category) => `Postare restrânsă: ${category}`,
   foldedLineNoReasonTeen: 'Postare restrânsă',
-  skipLineChild: 'Filtrul tău Strict a sărit peste asta. Continuă să derulezi.',
+  skipLineChild: 'Filtrul tău Silențios a sărit peste asta. Continuă să derulezi.',
   catAdvertisement: 'reclamă',
   catGraphicViolence: 'violență explicită',
   catSexual: 'conținut sexual',
@@ -350,7 +368,7 @@ const STRINGS_RO: MarkerStrings = {
   hideNoticePlain: 'Postarea aceasta e ascunsă',
   hideNoticeByTeen: (handle) => `O postare de la ${handle} e ascunsă aici`,
   hideNoticePlainTeen: 'O postare e ascunsă aici',
-  hideNoticeChild: 'Filtrul tău Strict a sărit peste asta. Continuă să derulezi.',
+  hideNoticeChild: 'Filtrul tău Silențios a sărit peste asta. Continuă să derulezi.',
   coverStrandedNotice: 'S-a instalat o actualizare. Reîncarcă pagina ca postările să fie verificate din nou.',
   hideShowAnyway: 'arată oricum',
   hideHideAgain: 'ascunde din nou',
@@ -361,6 +379,7 @@ const STRINGS_RO: MarkerStrings = {
     R2: 'o insultă legată de identitate',
     R3: 'vătămare în cuvinte codificate',
     R4: 'o reclamă',
+    R5: 'un subiect pe care această familie a ales să nu-l vadă',
     P1: 'un adult care caută contact cu un minor',
     P2: 'conținut despre autovătămare',
     P3: 'conținut sexual',
@@ -376,8 +395,10 @@ const STRINGS_RO: MarkerStrings = {
     J7: 'conținut încărcat',
     J8: 'conținut ușor încărcat',
     T1: 'un subiect pe care această familie a ales să nu-l vadă',
-    T2: 'jocuri de noroc',
     D1: 'nu s-a găsit nimic dăunător',
+  },
+  whyByTopic: {
+    gambling: 'Menționează jocuri de noroc',
   },
   whyByFamily: {
     hostile: 'ostilitate',
@@ -391,8 +412,8 @@ const STRINGS_RO: MarkerStrings = {
   hidCommentLineTeen: (why) => `Comentariu ascuns: ${why}`,
   hidCommentPlainTeen: 'Comentariu ascuns',
   adSlotNote: 'Reclama de aici e ascunsă. Instagram păstrează locul gol.',
-  ytHomeHidden: 'Off ascunde feedul de pe prima pagină YouTube. Căutarea, abonamentele și paginile tale merg în continuare.',
-  ytHomeShow: 'Arată-l de data asta',
+  ytHomeHidden: 'Off ascunde prima pagină YouTube. Căutarea, abonamentele și paginile tale merg în continuare.',
+  ytHomeShow: 'Arată-o de data asta',
   pickHint: 'Dă clic pe ce vrei să dispară. Esc pentru a opri.',
   pickHintMany: 'Dă clic pe tot ce vrei să dispară, pe rând. Esc la final.',
   pickHiddenShape: (product) => `Ascuns. Rămâne ascuns când revine; anulezi din fereastra ${product}.`,
@@ -459,13 +480,16 @@ const STRINGS_ES: MarkerStrings = {
   harmSignalsLine: (n) => n === 1
     ? 'Se encontró una señal de contenido dañino en este texto.'
     : `Se encontraron ${n} señales de contenido dañino en este texto.`,
+  // Words route pending (13 Oct 2026): English until the translated lines arrive.
+  seenDaysLine: (n) => `Esta cuenta te llegó ${n} días este mes`,
+  seenPostLine: (n) => `Esta misma publicación te llegó ${n} veces`,
   hidLine: (category) => `Publicación oculta: ${category}`,
   foldedLine: (category) => `Publicación contraída: ${category}`,
   foldedLineNoReason: 'Publicación contraída',
   hidLineTeen: (category) => `Publicación escondida: ${category}`,
   foldedLineTeen: (category) => `Publicación contraída: ${category}`,
   foldedLineNoReasonTeen: 'Publicación contraída',
-  skipLineChild: 'Omitido por tu filtro Estricto. Sigue bajando.',
+  skipLineChild: 'Omitido por tu filtro Silencioso. Sigue bajando.',
   catAdvertisement: 'publicidad',
   catGraphicViolence: 'violencia explícita',
   catSexual: 'contenido sexual',
@@ -479,7 +503,7 @@ const STRINGS_ES: MarkerStrings = {
   hideNoticePlain: 'Esta publicación está oculta',
   hideNoticeByTeen: (handle) => `Una publicación de ${handle} quedó escondida aquí`,
   hideNoticePlainTeen: 'Una publicación quedó escondida aquí',
-  hideNoticeChild: 'Omitido por tu filtro Estricto. Sigue bajando.',
+  hideNoticeChild: 'Omitido por tu filtro Silencioso. Sigue bajando.',
   coverStrandedNotice: 'Se instaló una actualización. Vuelve a cargar esta página para revisar las publicaciones otra vez.',
   hideShowAnyway: 'mostrar de todos modos',
   hideHideAgain: 'ocultar de nuevo',
@@ -490,6 +514,7 @@ const STRINGS_ES: MarkerStrings = {
     R2: 'un insulto discriminatorio',
     R3: 'daño en palabras en clave',
     R4: 'un anuncio',
+    R5: 'un tema que este hogar eligió no ver',
     P1: 'un adulto que busca contacto con un menor',
     P2: 'contenido sobre autolesiones',
     P3: 'contenido sexual',
@@ -505,8 +530,10 @@ const STRINGS_ES: MarkerStrings = {
     J7: 'contenido cargado',
     J8: 'contenido levemente cargado',
     T1: 'un tema que este hogar eligió no ver',
-    T2: 'apuestas',
     D1: 'no se encontró nada dañino',
+  },
+  whyByTopic: {
+    gambling: 'Menciona los juegos de azar',
   },
   whyByFamily: {
     hostile: 'hostilidad',
@@ -587,13 +614,16 @@ const STRINGS_PT_BR: MarkerStrings = {
   harmSignalsLine: (n) => n === 1
     ? 'Foi encontrado um sinal de conteúdo nocivo neste texto.'
     : `Foram encontrados ${n} sinais de conteúdo nocivo neste texto.`,
+  // Words route pending (13 Oct 2026): English until the translated lines arrive.
+  seenDaysLine: (n) => `Esta conta chegou até você em ${n} dias neste mês`,
+  seenPostLine: (n) => `Esta mesma publicação chegou até você ${n} vezes`,
   hidLine: (category) => `Publicação oculta: ${category}`,
   foldedLine: (category) => `Publicação minimizada: ${category}`,
   foldedLineNoReason: 'Publicação minimizada',
   hidLineTeen: (category) => `Publicação escondida: ${category}`,
   foldedLineTeen: (category) => `Publicação minimizada: ${category}`,
   foldedLineNoReasonTeen: 'Publicação minimizada',
-  skipLineChild: 'Pulado pelo seu filtro Rigoroso. Pode continuar rolando.',
+  skipLineChild: 'Pulado pelo seu filtro Silencioso. Pode continuar rolando.',
   catAdvertisement: 'publicidade',
   catGraphicViolence: 'violência explícita',
   catSexual: 'conteúdo sexual',
@@ -607,7 +637,7 @@ const STRINGS_PT_BR: MarkerStrings = {
   hideNoticePlain: 'Esta publicação está oculta',
   hideNoticeByTeen: (handle) => `Uma publicação de ${handle} ficou escondida aqui`,
   hideNoticePlainTeen: 'Uma publicação ficou escondida aqui',
-  hideNoticeChild: 'Pulado pelo seu filtro Rigoroso. Pode continuar rolando.',
+  hideNoticeChild: 'Pulado pelo seu filtro Silencioso. Pode continuar rolando.',
   coverStrandedNotice: 'Uma atualização foi instalada. Recarregue esta página para verificar as publicações de novo.',
   hideShowAnyway: 'mostrar mesmo assim',
   hideHideAgain: 'ocultar de novo',
@@ -618,6 +648,7 @@ const STRINGS_PT_BR: MarkerStrings = {
     R2: 'uma ofensa ligada à identidade',
     R3: 'dano em palavras em código',
     R4: 'um anúncio',
+    R5: 'um assunto que esta família escolheu não ver',
     P1: 'um adulto buscando contato com um menor',
     P2: 'conteúdo sobre automutilação',
     P3: 'conteúdo sexual',
@@ -633,8 +664,10 @@ const STRINGS_PT_BR: MarkerStrings = {
     J7: 'conteúdo carregado',
     J8: 'conteúdo levemente carregado',
     T1: 'um assunto que esta família escolheu não ver',
-    T2: 'apostas',
     D1: 'não se encontrou nada nocivo',
+  },
+  whyByTopic: {
+    gambling: 'Menciona apostas',
   },
   whyByFamily: {
     hostile: 'hostilidade',

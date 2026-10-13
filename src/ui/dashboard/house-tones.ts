@@ -6,10 +6,17 @@
 export const TONE = {
   ink: 'var(--fw-ink, var(--fw-text))',
   mid: 'var(--fw-muted)',
-  light: 'var(--fw-line, var(--fw-border))',
+  /** A neutral quantity drawn as a bar: 3:1 and above against the card (row 6, 12 Oct 2026); hairlines keep --fw-line. */
+  light: 'var(--fwc-neutral, var(--fw-line, var(--fw-border)))',
+  /** Flagged, in the colour the Feed log, the pills and the usage bar give it (row 4, 12 Oct 2026). */
+  flagged: 'var(--fw-warn, var(--fw-amber))',
   noise: 'var(--fw-noise, var(--fw-red))',
   /** Receipts' own colour: a thing it wrote down and left as it was, the passed share. */
   record: 'var(--fw-record, var(--fw-teal))',
   /** A second taken-out quantity beside the first in one stacked bar. */
   noiseSoft: 'color-mix(in oklch, var(--fw-noise, var(--fw-red)) 50%, var(--fw-ground, var(--fw-bg)))',
+  /** The tone of the comment sections, a diverging scale (his walk of 12 Oct 2026: three greys read as nothing). */
+  tonePos: 'var(--fw-tone-pos, var(--fw-ink))',
+  toneNeu: 'var(--fw-tone-neu, var(--fw-muted))',
+  toneNeg: 'var(--fw-tone-neg, var(--fw-line))',
 } as const;

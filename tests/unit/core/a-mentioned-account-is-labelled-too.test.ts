@@ -12,6 +12,8 @@ import {
   replaceNamesInText,
   restoreNames,
   resetNameLabelCountsForTests,
+  labelledPair,
+  setNameLabelStep,
 } from '../../../src/core/name-labels';
 import type { Encounter, PostNode, CommentNode } from '../../../src/types/post';
 
@@ -92,5 +94,34 @@ describe('the comment path: a name written inside a comment gets a token', () =>
     const p = post('creator', 'x');
     const m = buildNameLabelMapForEncounter(encounter(p, [{ ...comment('first', ''), text: undefined as unknown as string }]));
     expect(m.entries.map((e) => e.handle)).toEqual(['creator', 'first']);
+  });
+});
+
+describe('labelledPair: the call that sends a text and the post it answers (12 Oct 2026, Relaxed too)', () => {
+  const text = '@anyhandle you are a pathetic little nobody, says @poster.';
+  const parent = 'Earlier @poster wrote about @anyhandle and @third_party.';
+
+  it('both texts carry letters, the same person the same letter', () => {
+    const out = labelledPair({ author: '@poster', text, parentText: parent });
+    for (const name of ['anyhandle', 'poster', 'third_party']) {
+      expect(out.text).not.toContain(name);
+      expect(out.parentText).not.toContain(name);
+    }
+    const letterOf = (s: string, after: string) => new RegExp(`${after}(@user_[A-Z]+)`).exec(s)?.[1];
+    expect(letterOf(out.text, 'says ')).toBe(letterOf(out.parentText ?? '', 'Earlier '));
+  });
+
+  it('no post to answer stays no post to answer', () => {
+    expect(labelledPair({ author: '@poster', text }).parentText).toBeUndefined();
+    expect(labelledPair({ author: '@poster', text, parentText: '' }).parentText).toBe('');
+  });
+
+  it('with the step off (a measurement arm) both go as written', () => {
+    setNameLabelStep('off');
+    try {
+      expect(labelledPair({ author: '@poster', text, parentText: parent })).toEqual({ text, parentText: parent });
+    } finally {
+      setNameLabelStep('on');
+    }
   });
 });

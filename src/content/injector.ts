@@ -13,6 +13,7 @@ import { AnalysisResult } from '../types/analysis';
 import type { Platform } from '../types/post';
 import { Mode } from '../types/mode';
 import { renderTeenMarker, resyncMarkerToGreen } from './markers/teen-marker';
+import { renderSeenALotPill } from './markers/seen-a-lot-pill';
 import { clearRewriteMarks, markAiText, writerOfRewrite } from './markers/ai-mark';
 import type { ResolvedUiLanguage } from '../i18n';
 import { MARKER_STRINGS } from '../i18n/marker-strings';
@@ -26,6 +27,7 @@ import {
   snapshotCommentPanel,
   snapshotWatched,
   afterFeedItemHidden,
+  keepsItemBox,
 } from './protection/video-feed-hide';
 import { isInspectionTab } from './post-path/inspection-mode';
 import { bumpCounter } from '../diagnostics/diagnostics';
@@ -448,6 +450,45 @@ export function injectIntoElement(
 }
 
 /**
+ * The Open level's first view: the author's own words stay on the page and a red dot offers the rest: a tap shows the
+ * reason, a second the calm version, a third the original again. Nothing is swapped here, so the page is as the platform
+ * drew it until the first tap (no guard, no stamp, no AI mark: no model's words are on the page yet).
+ *   'offered'            the three-state walk is in place;
+ *   'offered-unwritable' the body holds more than words (a picture, a control), so the calm version cannot be written in
+ *                        place and the dot opens the reason alone;
+ *   false                no dot could be placed; the original stays as served.
+ */
+export function offerRewriteBehindMark(
+  el: HTMLElement,
+  neutralized: NeutralizedContent,
+  originalText: string,
+  lang: ResolvedUiLanguage = 'en',
+): 'offered' | 'offered-unwritable' | false {
+  // Inspection pass (dashboard-opened tab): observe only, never mutate.
+  if (isInspectionTab()) return false;
+  try {
+    const writable = !holdsMoreThanWords(el);
+    const writer = writerOfRewrite(neutralized, originalText);
+    const mounted = renderTeenMarker({
+      el,
+      analysis: neutralized.analysis,
+      originalText,
+      kind: 'rewrite',
+      rewriteText: writable ? neutralized.rewrittenText : '',
+      lang,
+      ...(writable ? { entry: 'original' as const, flatten: () => replaceText(el, originalText) } : {}),
+      ...(writable && writer ? { aiRewrite: writer } : {}),
+    });
+    // A marker that is already there (a replay on the same element) renders nothing and is still the dot.
+    const present = mounted !== null || el.querySelector('.fw-teen-marker') !== null;
+    if (!present) return false;
+    return writable ? 'offered' : 'offered-unwritable';
+  } catch {
+    return false;
+  }
+}
+
+/**
  * MARK-ONLY render: the detector confirmed a flag but no usable rewrite was
  * produced (validator rejected it, came back empty, etc.). Render the severity
  * dot on the ORIGINAL text — no swap — so the flag is still visible and the
@@ -467,7 +508,12 @@ export function markOnlyElement(
   if (isInspectionTab()) return;
   try {
     if (showMarkers) {
-      renderTeenMarker({ el, analysis, originalText, kind: 'rewrite', rewriteText: '', lang });
+      // The "seen a lot" count is a pill with its sentence, not the severity dot.
+      if (analysis.primaryTechnique === 'repeat-exposure' && analysis.exposure) {
+        renderSeenALotPill({ el, analysis, lang });
+      } else {
+        renderTeenMarker({ el, analysis, originalText, kind: 'rewrite', rewriteText: '', lang });
+      }
     }
   } catch {
     // Consistency rule 13: failure = original stays
@@ -680,10 +726,11 @@ function resolveAdContainer(textEl: HTMLElement, platform?: Platform): HTMLEleme
  * Returns true when an ad container was resolved and hidden; false → the
  * caller degrades to the fold so the ad is never left fully visible.
  *
- * TikTok caveat: on the For-You vertical feed, `display:none` lets TikTok's
- * IntersectionObserver auto-advance past the (sparse) ad — the desired skip.
- * Adjacent ads are rare; if a URL-flip loop appears (see ai-content-blocker.ts
- * for the failure shape), switch the TikTok branch to `visibility:hidden`.
+ * TikTok: a For-You card keeps its box like Instagram's (13 Oct 2026). With
+ * `display:none` the feed snapped back up to the post before two or three times
+ * while the person scrolled down, and the same card was hidden nine times in
+ * the console (video-feed-hide.ts keepsItemBox). The card is hidden by
+ * visibility, its video is paused, and one quiet line stands in the middle of it.
  */
 export function injectAdHide(textEl: HTMLElement, platform?: Platform, lang: ResolvedUiLanguage = 'en'): boolean {
   // Inspection pass (dashboard-opened tab): observe only, never mutate.
@@ -692,8 +739,13 @@ export function injectAdHide(textEl: HTMLElement, platform?: Platform, lang: Res
     const container = resolveAdContainer(textEl, platform);
     if (!container) return false;
     if (leftToOff('ad', textEl, container, () => injectAdHide(textEl, platform, lang))) return true;
+    const keepBox = platform === 'instagram' || keepsItemBox(container);
     if (container.getAttribute('data-fw-ad-hidden') === 'true') {
-      if (platform === 'tiktok') rememberTikTokAdHide(container);
+      if (platform === 'tiktok') {
+        rememberTikTokAdHide(container);
+        // TikTok redraws a card it reuses; the line goes back with it (idempotent).
+        if (keepBox) noteAdSlot(container, MARKER_STRINGS[lang].videoHiddenScrollOn, true);
+      }
       return true;
     }
     container.setAttribute('data-fw-ad-hidden', 'true');
@@ -710,7 +762,7 @@ export function injectAdHide(textEl: HTMLElement, platform?: Platform, lang: Res
     // Silence the ad's media before hiding it — display:none alone does not
     // reliably stop a playing video's audio.
     muteAndPauseMedia(container);
-    if (platform === 'instagram') {
+    if (keepBox) {
       // Q87 (measured live 2026-08-11): Instagram renders a WINDOW of
       // articles in normal flow inside one flex column whose padding-bottom
       // reserves space for unrendered posts, and positions/loads from its
@@ -723,8 +775,10 @@ export function injectAdHide(textEl: HTMLElement, platform?: Platform, lang: Res
       // deliberate price of a working feed on this platform.
       container.setAttribute('data-fw-hide-mode', 'visibility');
       container.setAttribute('data-fw-prev-visibility', container.style.visibility);
+      // TikTok's For-You column is the same case in another shape (keepsItemBox).
       container.style.setProperty('visibility', 'hidden', 'important');
-      noteAdSlot(container, MARKER_STRINGS[lang].adSlotNote);
+      if (platform === 'instagram') noteAdSlot(container, MARKER_STRINGS[lang].adSlotNote);
+      else noteAdSlot(container, MARKER_STRINGS[lang].videoHiddenScrollOn, true);
     } else {
       container.setAttribute('data-fw-prev-display', container.style.display);
       container.style.setProperty('display', 'none', 'important');
@@ -898,6 +952,14 @@ function guardHideNotice(container: HTMLElement, notice: HTMLElement): void {
   queueMicrotask(check);
 }
 
+/** The notice inside a kept TikTok card: it fills the hidden card, or, once the card is shown, is the button alone. */
+const SLIDE_NOTICE_HIDDEN_CSS = 'visibility:visible;position:absolute;top:0;left:0;right:0;bottom:0;z-index:100;'
+  + 'display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;'
+  + 'font:14px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#8e8e8e;text-align:center;pointer-events:none;';
+const SLIDE_NOTICE_REVEALED_CSS = 'visibility:visible;position:absolute;top:12px;left:12px;z-index:100;display:flex;'
+  + 'align-items:center;padding:2px;background:rgba(0,0,0,.55);border-radius:8px;'
+  + 'font:12px system-ui,sans-serif;color:#fff;pointer-events:none;';
+
 function mountHideNotice(container: HTMLElement, opts: HardHideRevealOpts): void {
   // Identity, not adjacency: the previous check read
   // `container.previousElementSibling`, so anything the platform inserted
@@ -946,6 +1008,13 @@ function mountHideNotice(container: HTMLElement, opts: HardHideRevealOpts): void
   btn.style.cssText = 'margin-left:auto;font:12px system-ui,sans-serif;color:inherit;'
     + 'background:none;border:1px solid rgba(136,136,136,.5);border-radius:5px;'
     + 'padding:2px 10px;cursor:pointer;white-space:nowrap;';
+  // A card of TikTok's For-You column keeps its box (keepsItemBox), so its notice stands INSIDE the card: a sibling
+  // would add a block of its own to the snapping column. Hidden, it fills the card; revealed, it shrinks to the button.
+  const inSlide = keepsItemBox(container);
+  if (inSlide) {
+    btn.style.setProperty('margin-left', '0');
+    btn.style.setProperty('pointer-events', 'auto');
+  }
   const revealed = (): boolean => container.getAttribute(USER_REVEALED_ATTR) === 'true';
   const syncLabel = (): void => { btn.textContent = revealed() ? opts.hideLabel : opts.showLabel; };
   // X cell anatomy only (the notice's parent is the virtualizer cell): the
@@ -967,6 +1036,11 @@ function mountHideNotice(container: HTMLElement, opts: HardHideRevealOpts): void
   // "more" menu stays reachable; the post's header and text are left whole.
   // Hidden again, the full sentence returns in flow.
   const syncGeometry = (): void => {
+    if (inSlide) {
+      notice.style.cssText = revealed() ? SLIDE_NOTICE_REVEALED_CSS : SLIDE_NOTICE_HIDDEN_CSS;
+      label.hidden = revealed();
+      return;
+    }
     if (!inCell()) return;
     if (revealed()) {
       notice.style.setProperty('position', 'absolute');
@@ -997,7 +1071,8 @@ function mountHideNotice(container: HTMLElement, opts: HardHideRevealOpts): void
   });
   syncLabel();
   notice.append(label, btn);
-  container.before(notice);
+  if (inSlide) container.prepend(notice);
+  else container.before(notice);
   syncGeometry();
   noticeByContainer.set(container, notice);
   guardHideNotice(container, notice);
@@ -1041,6 +1116,8 @@ export function injectHardHide(
     const container = resolveHardHideTarget(textEl, platform);
     if (!container) return false;
     if (leftToOff('hard', textEl, container, () => injectHardHide(textEl, platform, revealOpts, lang))) return true;
+    // A card of TikTok's For-You column keeps its box, as Instagram's does (keepsItemBox).
+    const keepBox = platform === 'instagram' || keepsItemBox(container);
     // The user's explicit reveal outranks every re-apply path (cache replay,
     // guard re-assert, rescan): never silently re-hide a revealed post.
     //
@@ -1063,6 +1140,7 @@ export function injectHardHide(
       && isContainerHardHidden(container)
     ) {
       if (revealOpts) mountHideNotice(container, revealOpts);
+      else if (keepsItemBox(container)) noteAdSlot(container, MARKER_STRINGS[lang].hideNoticeChild, true);
       return true;
     }
     container.setAttribute('data-fw-hard-hidden', 'true');
@@ -1072,7 +1150,7 @@ export function injectHardHide(
     // physics: removing it truncates the windowed feed). Stamp the mode
     // BEFORE applying so applyHiddenState / isContainerHardHidden and the
     // notice guard all agree on which property owns the hidden state.
-    if (platform === 'instagram') {
+    if (keepBox) {
       container.setAttribute('data-fw-hide-mode', 'visibility');
       container.setAttribute('data-fw-prev-visibility', container.style.visibility);
     } else {
@@ -1091,6 +1169,9 @@ export function injectHardHide(
       // BEFORE the notice mounts so its button label reads the true state.
       if (revealOpts.initiallyRevealed) applyHiddenState(container, false);
       mountHideNotice(container, revealOpts);
+    } else if (keepsItemBox(container)) {
+      // Child's card is not named: the one calm line that moves on stands in the kept box.
+      noteAdSlot(container, MARKER_STRINGS[lang].hideNoticeChild, true);
     }
     if (feedItem && watch && !revealOpts?.initiallyRevealed) {
       afterFeedItemHidden(container, feedItem.surface, commentSnapshot, watch, lang);
@@ -1231,8 +1312,8 @@ function hidePostMedia(textEl: HTMLElement): void {
   }
 }
 
-/** The policy rows a rule fires: the household's word, a slur, coded harm, the platform's ad marker. */
-const RAIL_ROWS: ReadonlySet<string> = new Set(['R1', 'R2', 'R3', 'R4']);
+/** The policy rows a rule fires: the household's word, a slur, coded harm, the platform's ad marker, a chosen topic. */
+const RAIL_ROWS: ReadonlySet<string> = new Set(['R1', 'R2', 'R3', 'R4', 'R5']);
 
 function reasonTextFor(
   kind: 'collapse' | 'hide',

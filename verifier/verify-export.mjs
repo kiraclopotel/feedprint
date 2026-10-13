@@ -1101,6 +1101,8 @@ var __FW_RFC3161__ = (() => {
   var OID_ATTR_CONTENT_TYPE = "1.2.840.113549.1.9.3";
   var OID_EKU = "2.5.29.37";
   var OID_SUBJECT_KEY_ID = "2.5.29.14";
+  var OID_BASIC_CONSTRAINTS = "2.5.29.19";
+  var OID_KEY_USAGE = "2.5.29.15";
   var OID_KP_TIMESTAMPING = "1.3.6.1.5.5.7.3.8";
   var OID_RSA_ENCRYPTION = "1.2.840.113549.1.1.1";
   var OID_EC_PUBLIC_KEY = "1.2.840.10045.2.1";
@@ -1173,6 +1175,8 @@ var __FW_RFC3161__ = (() => {
     const extendedKeyUsage = [];
     let ekuCritical = false;
     let subjectKeyIdentifierHex = null;
+    let isCa = false;
+    let keyCertSign = null;
     for (let k = i; k < tbsKids.length; k++) {
       if (tbsKids[k].tag !== 163) continue;
       const extSeq = children(b, tbsKids[k])[0];
@@ -1187,6 +1191,25 @@ var __FW_RFC3161__ = (() => {
             const innerSki = readTlv(b, octetSki.contentStart);
             subjectKeyIdentifierHex = toHex(content(b, innerSki));
           } catch {
+          }
+          continue;
+        }
+        if (oid === OID_BASIC_CONSTRAINTS) {
+          try {
+            const bc = readTlv(b, kids[kids.length - 1].contentStart);
+            const first = children(b, bc)[0];
+            isCa = (first == null ? void 0 : first.tag) === 1 && content(b, first)[0] !== 0;
+          } catch {
+            isCa = false;
+          }
+          continue;
+        }
+        if (oid === OID_KEY_USAGE) {
+          try {
+            const ku = content(b, readTlv(b, kids[kids.length - 1].contentStart));
+            keyCertSign = ku.length > 1 && (ku[1] & 4) !== 0;
+          } catch {
+            keyCertSign = false;
           }
           continue;
         }
@@ -1216,8 +1239,15 @@ var __FW_RFC3161__ = (() => {
       signatureValue: content(b, sigValue).subarray(1),
       extendedKeyUsage,
       ekuCritical,
-      subjectKeyIdentifierHex
+      subjectKeyIdentifierHex,
+      isCa,
+      keyCertSign
     };
+  }
+  function validAt(cert, time) {
+    if (!time || !cert.notBefore || !cert.notAfter) return false;
+    const t = Date.parse(time);
+    return Number.isFinite(t) && t >= Date.parse(cert.notBefore) && t <= Date.parse(cert.notAfter);
   }
   function sameBytes(a, c) {
     if (a.length !== c.length) return false;
@@ -1311,7 +1341,7 @@ var __FW_RFC3161__ = (() => {
     return { status, token };
   }
   async function verifyTimeStampToken(tokenDer, expectedHashHex, expectedNonceHex = null) {
-    var _a, _b, _c, _d;
+    var _a, _b, _c, _d, _e;
     const result = {
       ok: false,
       genTime: null,
@@ -1487,10 +1517,22 @@ var __FW_RFC3161__ = (() => {
           cursor.signatureValue,
           cursor.tbsDer
         );
-        links.push({ child: cursor, issuer, ok: v.ok, detail: v.detail });
+        let ok = v.ok;
+        let detail = v.detail;
+        if (ok && !issuer.isCa) {
+          ok = false;
+          detail = `${issuer.subjectString} is not marked as a certificate authority`;
+        } else if (ok && issuer.keyCertSign === false) {
+          ok = false;
+          detail = `${issuer.subjectString} is not allowed to sign certificates`;
+        } else if (ok && !validAt(issuer, result.genTime)) {
+          ok = false;
+          detail = `${issuer.subjectString} was not valid at ${(_e = result.genTime) != null ? _e : "the stamp time"}`;
+        }
+        links.push({ child: cursor, issuer, ok, detail });
         chain.push(issuer);
         cursor = issuer;
-        if (!v.ok) break;
+        if (!ok) break;
       }
       const terminal = chain[chain.length - 1];
       const selfSigned = sameBytes(terminal.subjectDer, terminal.issuerDer);

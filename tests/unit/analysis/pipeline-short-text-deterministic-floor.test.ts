@@ -25,6 +25,7 @@ type Mode = FWSettings['mode'];
 let currentMode: Mode = 'teen';
 let currentStrict = false;
 let currentOn = new Set<string>();
+let currentFeatures: Record<string, unknown> = {};
 let currentTier = 'family';
 const combinedMock = vi.fn();
 
@@ -32,7 +33,7 @@ function makeSettings(mode: Mode): FWSettings {
   return {
     mode,
     strictLanguage: currentStrict,
-    features: {},
+    features: currentFeatures,
     dailyCap: 0,
     monthlyUsdCapOverride: null,
     locale: 'en',
@@ -109,6 +110,7 @@ beforeEach(() => {
   currentTier = 'family';
   currentStrict = false;
   currentOn = new Set();
+  currentFeatures = {};
 });
 
 describe('short-text deterministic floors are not shadowed by the LLM-noise reject', () => {
@@ -259,5 +261,67 @@ describe('the pipeline looks up a reply under its parent', () => {
     }
     expect(lookups).toHaveLength(2);
     expect(lookups[0]).not.toBe(lookups[1]);
+  });
+});
+
+// 12 Oct 2026: the Silent veil's deadline asks the pipeline for the local result only, so a post still waiting for its
+// reading is lifted as what the rules make of it and never as the raw post. The rules are the ones every post meets.
+describe('localOnly: the rules answer and no model is asked', () => {
+  const localOnly = { localOnly: true };
+
+  it('a post the rules leave alone passes, with no call placed', async () => {
+    const result = await process(makePost('I really enjoyed the sunset at the beach today with my family'), undefined, localOnly);
+    expect(result.action).toBe('pass');
+    expect(result.passContext?.reason).toBe('pre-llm-deadline-local-only');
+    expect(combinedMock).not.toHaveBeenCalled();
+  });
+
+  it('without the option the same post places its call, so the option is what stops it', async () => {
+    combinedMock.mockResolvedValue(null);
+    await process(makePost('I really enjoyed the sunset at the beach today with my family'));
+    expect(combinedMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('a slur is hidden', async () => {
+    const result = await process(makePost('faggot'), undefined, localOnly);
+    expect(result.action).toBe('hide');
+    expect(result.detectionMode).toContain('slur');
+    expect(combinedMock).not.toHaveBeenCalled();
+  });
+
+  it('directed self-harm is hidden', async () => {
+    const result = await process(makePost('kill yourself'), undefined, localOnly);
+    expect(result.action).toBe('hide');
+    expect(result.detectionMode).toContain('coded-harm');
+  });
+
+  it('swearing is starred when the mask is on', async () => {
+    currentStrict = true;
+    const result = await process(makePost('well that was a shit game last night'), undefined, localOnly);
+    expect(result.action).toBe('neutralize');
+    expect(result.detectionMode).toContain('profanity-mask');
+    const masked = (result as { neutralized?: { rewrittenText: string } }).neutralized?.rewrittenText ?? '';
+    expect(masked).not.toMatch(/shit/i);
+    expect(masked).toContain('*');
+    expect(combinedMock).not.toHaveBeenCalled();
+  });
+
+  it('the person\'s own list hides', async () => {
+    currentFeatures = { 'parent-blocklist': { enabled: true, value: { words: ['sunset'], phrases: [], accounts: [] } } };
+    const result = await process(makePost('I really enjoyed the sunset at the beach today with my family'), undefined, localOnly);
+    expect(result.action).toBe('hide');
+    expect(result.detectionMode).toContain('blocklist:');
+    expect(combinedMock).not.toHaveBeenCalled();
+  });
+
+  it('a cached verdict is served as it is, since it costs nothing', async () => {
+    currentOn = new Set(['reframe-rewrites']);
+    vi.mocked(processingCache.getPersistent).mockResolvedValueOnce(
+      { analysis: { isManipulative: true }, neutralizedText: 'a calmer sentence about the game', timestamp: Date.now() } as never,
+    );
+    const result = await process(makePost('well that was an absolutely terrible game last night'), undefined, localOnly);
+    expect(result.action).toBe('neutralize');
+    expect((result as { neutralized?: { rewrittenText: string } }).neutralized?.rewrittenText).toBe('a calmer sentence about the game');
+    expect(combinedMock).not.toHaveBeenCalled();
   });
 });

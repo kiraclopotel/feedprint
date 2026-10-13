@@ -30,7 +30,7 @@ import { REPO_ROOT as ROOT } from '../helpers/repo-root';
 // of 115 on dev, against 78.4 percent for the single judge it replaces.
 const FROZEN: Record<string, string> = {
   'src/ai/prompts.ts': '76b4183dd8a448e060bbf87ac95e4f267054f36e1409b147ba4c5da5a0127686',
-  'src/core/neutralizer.ts': 'e7ec26dce8ff2b757ddaf0caf105658a48a523442484f4ca3656a83434c705ce',
+  'src/core/neutralizer.ts': 'ec6a72f10eabb42c332cd219413ef9776150cccc11efa43e4e81759dd3bd1517',
 };
 
 describe('frozen judge files', () => {
@@ -51,3 +51,4 @@ describe('frozen judge files', () => {
 // UNLOCKED, 2026-09-22, on his word, typed by his hand at the desktop file's prompt: two comment lines reworded, no code changed, A/B build identical (37 files).
 // UNLOCKED again, on the owner's word to apply the judge patch. What changed is docs/plans/frozen-judge-patch-2026-09-23.md, applied as its patch.
 // UNLOCKED again, 11 Oct 2026, on the owner's word ("yes", typed in the chat that asked for it) for the paid reading's Claude Haiku reader: neutralizer.ts gained an injected claudeReader option, asked beside the second judge where the first fired, an item now acting when either agrees, and its stamp on the record. JUDGE-V1's prompt, schema, model, cut and hash 4f32b70b07b7 did not move; prompts.ts is untouched.
+// UNLOCKED again, 13 Oct 2026 16:34, on the owner's word ("yes, change the rewrite file", typed in the chat that asked him, in answer to: note on the record why each rewrite failed, and try a failed rewrite once more, about 13 extra small calls a day): neutralizer.ts names the check that refused a rewrite (neutralizationFault) and the rewrite-only call is asked once more when the judge asked for a rewrite and sent none usable. JUDGE-V1's prompt, schema, model, cut and hash 4f32b70b07b7 did not move; prompts.ts is untouched.

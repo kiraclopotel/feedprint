@@ -27,7 +27,7 @@ import { sendHighStakesForensicLog } from '../record/forensic-retry';
 import { buildConfigSnapshot } from '../record/config-snapshot';
 import { postPayloadBase } from '../record/forensic-emit';
 import { settleRoomVerdict, type RoomVerdict } from '../post-path/room-verdict';
-import { rememberResolvedComment, rememberSessionPass } from '../post-path/late-verdict-cache';
+import { rememberResolvedComment, rememberSessionPass, type ResolvedCommentVerdict } from '../post-path/late-verdict-cache';
 import { filterToViewed, setParentCooldown, unmarkPostsForReExtraction } from '../post-path/viewport-tracker';
 import { chainCommentDepth } from '../record/chain-depth';
 import { blanketProfanitySoften, hideOnRewriteUnavailable } from '../../analysis/pipeline';
@@ -50,12 +50,14 @@ import { findDuplicateRewriteIndices } from '../../core/neutralizer';
 import type { ChainDebugStatsResponse } from '../../types/messages';
 import type { DecisionBlock } from '../../types/forensic';
 import { neutralizeText } from '../../ai/neutralize-only';
-import { buildCommentEntryForRoot, recordedCommentHideAction, type CommentEntry } from '../protection/comment-overlay';
+import { buildCommentEntryForRoot, flattenCommentEntryToOriginal, recordedCommentHideAction, type CommentEntry } from '../protection/comment-overlay';
+import { opensOnOriginal } from '../markers/entry-view';
+import { hasTeenMarker } from '../markers/teen-marker';
 import type { renderTeenMarker } from '../markers/teen-marker';
-import { AI_TEXT_ATTR, type AiWriter } from '../markers/ai-mark';
+import { AI_TEXT_ATTR, rewriteChangesText, type AiWriter } from '../markers/ai-mark';
 import type { CommentHideNotice } from '../protection/comment-overlay';
 import { commentHideNoticeFor } from '../markers/comment-hide-notice';
-import { hideAndRecordComment } from './door';
+import { hideAndRecordComment, settleDoorStar } from './door';
 import { decisionForLegacy, decisionForMask, NOTE_NOT_APPLIED, READER_DEFAULT, rewriteStage } from '../record/decision';
 import { filterProfanity, maskProfanity } from '../../core/profanity-filter';
 import { detectDehumanization } from '../../core/dehumanization-filter';
@@ -307,6 +309,8 @@ export async function flushBatch(parentVideoId: string, deps: FlushDeps): Promis
       for (const post of bucket.posts) protectionsToRetain.add(post);
     }
     for (const post of bucket.posts) {
+      // A swearing comment starred at the door is changed on the page: its record is the mask, never a cancel.
+      if (settleDoorStar(post, settings)) continue;
       if (hasLoggedForensic(forensicDedupKey(post)) || !shouldLogCancelForensic(forensicDedupKey(post))) continue;
       void sendHighStakesForensicLog({
         type: 'CANCEL_LOG',
@@ -551,6 +555,8 @@ export async function flushBatch(parentVideoId: string, deps: FlushDeps): Promis
       for (const post of bucket.posts) protectionsToRetain.add(post);
     }
     for (const post of bucket.posts) {
+      // A swearing comment starred at the door is changed on the page: its record is the mask, never a cancel.
+      if (settleDoorStar(post, settings)) continue;
       if (hasLoggedForensic(forensicDedupKey(post)) || !shouldLogCancelForensic(forensicDedupKey(post))) continue;
       void sendHighStakesForensicLog({
         type: 'CANCEL_LOG',
@@ -713,6 +719,9 @@ export async function flushBatch(parentVideoId: string, deps: FlushDeps): Promis
         escalatedCount++;
         continue;
       }
+      // A swearing comment starred at the door (a reading was allowed, so the door starred it before the batch) is
+      // changed on the page whatever the reading did: its record is the mask the rules wrote, not a cancel and not a silence.
+      if (settleDoorStar(post, settings)) continue;
       // Free-tier / cap-reached: this non-harm comment is a silent DOM-only
       // pass (the tier does no AI by design) — do NOT write a 'cancelled'
       // record (and don't consume the dedup entry: if the cap resets or the
@@ -1293,6 +1302,9 @@ export async function flushBatch(parentVideoId: string, deps: FlushDeps): Promis
   // must skip, not guess); absent = the marker pass never verified this
   // post (swap falls back to its own deref, the old behavior).
   const resolvedAnchorByPost = new Map<PostContent, HTMLElement | null>();
+  // Open (adult) with the mark shown: a comment whose calm version sits behind a red dot instead of on the page. The marker
+  // pass fills it; the swap loop reads it, records the offer and swaps nothing.
+  const offeredComments = new Map<PostContent, NonNullable<ResolvedCommentVerdict['offer']>>();
   /**
    * The same verification the marker pass does, for a post the marker pass
    * never reached (2026-09-19).
@@ -1353,7 +1365,7 @@ export async function flushBatch(parentVideoId: string, deps: FlushDeps): Promis
     entry.textEl.getAttribute(AI_TEXT_ATTR) === 'rewrite' ? swap.writer ?? null : null;
   const sendSwapRecord = (
     swap: PendingCommentSwap,
-    outcome: 'rewrite' | 'hidden' | 'unresolved',
+    outcome: 'rewrite' | 'hidden' | 'unresolved' | 'offered',
     /** Read only for a landed rewrite: the writer its record names. */
     shownWriter: AiWriter | null = null,
   ): void => {
@@ -1385,6 +1397,20 @@ export async function flushBatch(parentVideoId: string, deps: FlushDeps): Promis
               ),
               reader: READER_DEFAULT,
             }),
+        },
+      } as unknown as Extract<FWMessage, { type: 'FORENSIC_LOG' }>);
+      return;
+    }
+    if (outcome === 'offered') {
+      // The calm version is behind the dot, not on the page: neutralizedText stays empty (the field is what the reader was
+      // shown instead), and the block says the comment was marked and the rewrite offered.
+      void sendHighStakesForensicLog({
+        type: 'FORENSIC_LOG',
+        payload: {
+          ...swap.record.sharedFields,
+          neutralizedText: '',
+          analysis: swap.record.analysisLike,
+          ...(hasOwnBlock ? {} : { decision: commentDecision(swap.record.sharedFields, swap.record.analysisLike, 'mark', { attempted: true, outcome: 'offered' }, platform), reader: READER_DEFAULT }),
         },
       } as unknown as Extract<FWMessage, { type: 'FORENSIC_LOG' }>);
       return;
@@ -1877,17 +1903,36 @@ export async function flushBatch(parentVideoId: string, deps: FlushDeps): Promis
         // appended inside is clipped out of view ("dot in the wall"). The
         // 'after' mount escapes the clamp while staying in the row. Other
         // platforms keep the default inline 'inside' mount (byte-identical).
+        const host = el;
+        const markerMount = post.platform === 'tiktok' ? 'after' : 'inside';
+        const markerLang = resolveUiLanguage(settings.uiLanguage);
+        // Open opens a rewritten comment on the author's own words: the dot starts red, and the calm version is its second tap.
+        const opensOnTheOriginal = commentRewrite !== undefined
+          && opensOnOriginal(settings.mode, true)
+          && rewriteChangesText(commentRewrite, post.text);
         const marker = renderCommentMarkerForCurrentClassification(post, {
           el,
           analysis,
           originalText: post.text,
           kind: 'rewrite',
           rewriteText: commentRewrite,
-          mount: post.platform === 'tiktok' ? 'after' : 'inside',
-          lang: resolveUiLanguage(settings.uiLanguage),
+          mount: markerMount,
+          lang: markerLang,
           aiRewrite: writerByPostId.get(post.id),
+          ...(opensOnTheOriginal
+            ? {
+                entry: 'original' as const,
+                flatten: () => {
+                  const entryNow = buildCommentEntryForRoot(host, post.platform);
+                  return entryNow !== null && flattenCommentEntryToOriginal(entryNow, post.text);
+                },
+              }
+            : {}),
         });
         if (marker) markersRendered++;
+        if (opensOnTheOriginal && (marker !== null || hasTeenMarker(host))) {
+          offeredComments.set(post, { analysis, lang: markerLang, mount: markerMount });
+        }
       }
       if (markersRendered > 0) {
         fwDebug(`[FW comment-batch] rendered ${markersRendered} teen markers across ${bucket.posts.length} comments`);
@@ -1944,6 +1989,20 @@ export async function flushBatch(parentVideoId: string, deps: FlushDeps): Promis
        if (!prepareCurrentPostMutation(swap.post)) { retainOnFailure(); continue; }
        const entry = buildCommentEntryForRoot(el, swap.platform);
       if (!entry) { retainOnFailure(); continue; }
+      // Open: the row keeps the author's words behind its red dot; nothing is swapped. The record says marked and offered,
+      // and a fresh row of the same comment gets its dot back from the remembered offer.
+      const offer = swap.kind !== 'mask' ? offeredComments.get(swap.post) : undefined;
+      if (offer) {
+        sendSwapRecord(swap, 'offered');
+        settleProtection(swap.post, { record: 'batch', reason: 'comment-rewrite-offered' });
+        rememberResolvedComment(swap.post, {
+          kind: 'rewrite',
+          rewrite: swap.rewrite,
+          ...(swap.writer ? { writer: swap.writer } : {}),
+          offer,
+        });
+        continue;
+      }
       // preserve the marker across the swap.
       // For X/FB/YT, `textEl` IS the same element renderTeenMarker
       // appended its `<button class="fw-teen-marker">` child to (the
@@ -2035,6 +2094,7 @@ export async function flushBatch(parentVideoId: string, deps: FlushDeps): Promis
       const read = settingsRead;
       try {
         for (const post of bucket.posts) {
+          if (settleDoorStar(post, read)) continue;
           if (hasLoggedForensic(forensicDedupKey(post)) || !shouldLogCancelForensic(forensicDedupKey(post))) continue;
           void sendHighStakesForensicLog({
             type: 'CANCEL_LOG',

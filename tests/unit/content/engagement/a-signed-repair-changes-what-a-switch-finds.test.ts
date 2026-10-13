@@ -73,19 +73,20 @@ describe('YouTube counts: a renamed count is found once a repair names it', () =
 });
 
 describe('YouTube comment block: a family can be switched off', () => {
-  const PAGE = '<ytd-comments id="comments"><div id="inside">comments</div></ytd-comments>';
+  const PAGE = '<ytd-comments id="comments"><ytd-comment-simplebox-renderer id="box">write</ytd-comment-simplebox-renderer></ytd-comments>';
 
-  it('blocks the comments by default', () => {
+  it('blocks the box by default', () => {
     document.body.innerHTML = PAGE;
     stop = startYouTubeEngagementControl(settingsWith('block-comment-posting'));
-    expect(shown('comments')).toBe(false);
+    expect(shown('box')).toBe(false);
+    expect(shown('comments')).toBe(true);
   });
 
-  it('leaves them when a repair switches the family off (a selector that began hiding too much)', () => {
+  it('leaves it when a repair switches the family off (a selector that began hiding too much)', () => {
     document.body.innerHTML = PAGE;
     repair(2, { family: 'finder.youtube.comment-block', off: true });
     stop = startYouTubeEngagementControl(settingsWith('block-comment-posting'));
-    expect(shown('comments')).toBe(true);
+    expect(shown('box')).toBe(true);
   });
 });
 

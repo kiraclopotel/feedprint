@@ -79,7 +79,7 @@ function clickButton(text: string): Promise<void> {
 
 beforeEach(() => {
   (globalThis as unknown as { chrome: unknown }).chrome = {
-    storage: { local: { get: vi.fn(async () => ({})), set: vi.fn(async () => undefined) }, onChanged: { addListener: vi.fn() } },
+    storage: { local: { get: vi.fn(async () => ({})), set: vi.fn(async () => undefined) }, onChanged: { addListener: vi.fn(), removeListener: vi.fn() } },
     runtime: { sendMessage: vi.fn(async () => undefined), getManifest: () => ({ version: '2.2.0' }) },
   };
   licenseMocks.clearLicense.mockClear();
@@ -98,7 +98,7 @@ describe('Keys tab PIN gate', () => {
   it('with a parent PIN set, Remove opens the PIN modal and does not clear the licence', async () => {
     await renderKeys('sha256-of-pin');
     await clickButton('Remove license');
-    await clickButton('remove');
+    await clickButton('Remove');
     expect(host.querySelector('.pin-overlay')).not.toBeNull();
     expect(licenseMocks.clearLicense).not.toHaveBeenCalled();
   });
@@ -106,7 +106,7 @@ describe('Keys tab PIN gate', () => {
   it('a wrong PIN keeps the licence; the right PIN removes it', async () => {
     await renderKeys('sha256-of-pin');
     await clickButton('Remove license');
-    await clickButton('remove');
+    await clickButton('Remove');
     const inputs = () => Array.from(host.querySelectorAll<HTMLInputElement>('.pin-overlay input'));
     expect(inputs().length).toBeGreaterThan(0);
 
@@ -125,7 +125,7 @@ describe('Keys tab PIN gate', () => {
     settingsMocks.grace = true;
     await renderKeys('sha256-of-pin');
     await clickButton('Remove license');
-    await clickButton('remove');
+    await clickButton('Remove');
     expect(host.querySelector('.pin-overlay')).toBeNull();
     expect(licenseMocks.clearLicense).toHaveBeenCalledTimes(1);
   });
@@ -133,7 +133,7 @@ describe('Keys tab PIN gate', () => {
   it('with no parent PIN, Remove runs directly (setup not complete)', async () => {
     await renderKeys('');
     await clickButton('Remove license');
-    await clickButton('remove');
+    await clickButton('Remove');
     expect(host.querySelector('.pin-overlay')).toBeNull();
     expect(licenseMocks.clearLicense).toHaveBeenCalledTimes(1);
   });

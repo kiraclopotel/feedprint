@@ -236,6 +236,7 @@ export function aggregateByActionFamily(records: ForensicRecord[]): Record<Actio
     // the household picked, and moving it is a product decision, not a fix.
     if (
       dm.startsWith('blocklist')
+      || dm.startsWith('topic:')
       || dm.startsWith('block:hashtag')
       || dm.startsWith('profanity')
       || dm.startsWith('pre-rewrite-hide')

@@ -6,8 +6,9 @@
 // asked, and the failed batch's 30 s cooldown drops every comment that arrives meanwhile. A mask needs no reading, so it
 // runs the moment the extractor hands a comment over, exactly as the household list and the threat rules do (65ecbde4).
 // Here the batch path is dead on purpose (a cooldown, and a reader that must not be asked), so only the door can be the
-// reason a comment ends starred. With a reading allowed the batch keeps the mask, because the reading may rewrite the
-// comment and a text starred first would no longer match the one it scored.
+// reason a comment ends starred. With a reading allowed the door stars the page too (12 Oct 2026), but writes no record and
+// remembers nothing: the reading may rewrite or hide the comment, and its record is then the batch's. That hand-over is
+// pinned in the-door-stars-before-the-reading.test.ts.
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
@@ -195,12 +196,12 @@ describe('where the mask is not the door\'s to apply', () => {
     expect(recordsFor(SWEAR)).toHaveLength(0);
   });
 
-  it('with a reading to follow the batch keeps the mask: the door leaves the words as served', async () => {
+  it('with a reading to follow the door only stars the page: no record, and the batch keeps the comment', async () => {
     state.reading = true;
     const { post, textEl } = makeComment(SWEAR);
     await detect(post);
-    expect(textEl.textContent).toBe(SWEAR);
-    expect(recordsFor(SWEAR)).toHaveLength(0);
+    expect(textEl.textContent, 'starred at once, not after the reading').toMatch(/\*{3,}/);
+    expect(recordsFor(SWEAR), 'the record is the reading\'s to write, or the mask\'s if the reading fails').toHaveLength(0);
   });
 
   it('a comment the rules escalate (an identity slur, a threat) is not starred: the hide or mark is theirs', async () => {

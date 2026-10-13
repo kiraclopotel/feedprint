@@ -38,6 +38,7 @@ import { readCardContext } from '../record/card-context';
 import { filterProfanity } from '../../core/profanity-filter';
 import { observeAddedRoots } from './added-roots';
 import { isInPrivateChatSubtree } from '../platforms/adapter';
+import { keepsItemBox } from '../protection/video-feed-hide';
 import { countHiddenFor, markHidden, hideElement } from './mark-hidden';
 import { ensureStyleTag, removeStyleTag } from './style-tag';
 import { TEXT_SCOPE_SELECTORS } from './emoji-stripper';
@@ -228,12 +229,15 @@ function hideContainer(post: HTMLElement, decision: WordFilterDecision, platform
   // Keep the box on Instagram: see HIDDEN_CSS. Through the door since
   // 2026-09-20, so a refusal stops the mute as well: muting somebody's call is
   // not a smaller thing to do to them than hiding it.
-  if (platform === 'instagram') container.setAttribute('data-fw-hide-mode', 'visibility');
+  // TikTok's For-You card keeps its box too: removing it makes the snapping column put the person back on the card
+  // they were scrolling from (video-feed-hide.ts keepsItemBox).
+  const keepBox = platform === 'instagram' || keepsItemBox(container);
+  if (keepBox) container.setAttribute('data-fw-hide-mode', 'visibility');
   if (!hideElement(container, {
     marker: WORD_FILTER_HIDDEN_MARKER, value: WORD_FILTER_HIDDEN_VALUE,
     reason: `word-filter:${reason}`,
     count: 0,
-    mode: platform === 'instagram' ? 'visibility' : 'display',
+    mode: keepBox ? 'visibility' : 'display',
   })) return;
   muteMedia(container);
 }

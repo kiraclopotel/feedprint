@@ -138,9 +138,16 @@ describe.each(UI_LANGUAGES)('%s: a free setup', (lang) => {
 
   it.each(['modeChild', 'modeTeen', 'modeAdult'] as const)('at %s names no AI on any screen and asks for no key', async (level) => {
     const screens = await walkSetup(lang, level);
+    // The level lines say what the person sees at a level (posts arrive rephrased), which is the level's behaviour and
+    // not a pitch for a key; so does the welcome, whose one clause says the rephrasing the levels describe needs a key
+    // and that without one every level filters on this computer (12 Oct 2026, packet 33: the Tester's twenty-first read
+    // found the wizard promising rephrasing while saying nothing is sent). Every other word on the screens is still
+    // held to the stems.
+    const levelLines = [t.setupLevelChildLine, t.setupLevelTeenLine, t.setupLevelAdultLine, t.levelSentenceChild, t.levelSentenceTeen, t.levelSentenceAdult, t.setupWelcomeBody1];
     for (const [i, text] of screens.entries()) {
       expect(text, `screen ${i + 1}`).not.toMatch(AI_WORD);
-      expect(text, `screen ${i + 1}`).not.toMatch(aiWords(lang));
+      const rest = levelLines.reduce((acc, line) => acc.split(line).join(' '), text);
+      expect(rest, `screen ${i + 1}`).not.toMatch(aiWords(lang));
     }
     expect(host.querySelector(`input[aria-label="${t.licCardName}"]`)).toBeNull();
   });

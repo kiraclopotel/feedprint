@@ -3,8 +3,8 @@
 // buttons, left with the license step: setup runs with no key (a-free-setup-says-no-ai-word.test.tsx).
 //   P3-2  at Strict there is no FREE pill on Home, no "Free" on the License tab, and the header chip does
 //         not read LICENSE (it reads the level).
-//   P3-3  at Strict the three locked switches wear one locked look (a padlock) and their accessible names
-//         end with "at Strict" in words.
+//   P3-3  at Strict the locked switches wear one locked look (a padlock) and their accessible names
+//         end with "at Strict" in words. (Since 12 Oct 2026 the reading switch is not one of them: Silent reads with a key.)
 //   A1    at Strict the phrase step's note does not talk of a server or a company reading posts.
 //   A3    Home at Moderate with no key does not show "0 AI readings today".
 
@@ -53,8 +53,8 @@ const home = (mode: Mode, license: LicenseInfo, lang: Lang) => wrap(lang, create
 const keys = (mode: Mode, license: LicenseInfo, lang: Lang) => wrap(lang, createElement(KeysTab, {
   settings: settingsWith(mode), license, probeResult: 'unknown', onChange: async () => {},
 }));
-const settingsPanel = (mode: Mode, license: LicenseInfo, lang: Lang) => wrap(lang, createElement(SettingsPanel, {
-  settings: settingsWith(mode), license, onBack: () => {}, onChange: async () => {},
+const settingsPanel = (mode: Mode, license: LicenseInfo, lang: Lang, openOn: 'main' | 'general' = 'main') => wrap(lang, createElement(SettingsPanel, {
+  settings: settingsWith(mode), license, onBack: () => {}, onChange: async () => {}, openOn,
 }));
 const header = (lang: Lang, props: Record<string, unknown>) => wrap(lang, createElement(PopHeader, { licenseState: 'free', ...props } as never));
 
@@ -80,7 +80,7 @@ describe.each(UI_LANGUAGES)('Strict without a key, %s (P3-2)', (lang) => {
     expect(html).not.toContain(`>${esc(t.licenseLabel)}<`);
     expect(html).not.toContain(esc(t.statusFree));
     expect(html).toContain(`>${esc(t.modeChild)}<`);
-    expect(html).toContain(esc(t.strictNoCallsLine));
+    expect(html).toContain(esc(t.strictNoKeyLine));
   });
 
   // Since 9 Oct 2026 a free install away from Strict shows no chip: it read LICENSE beside the License tab.
@@ -89,9 +89,9 @@ describe.each(UI_LANGUAGES)('Strict without a key, %s (P3-2)', (lang) => {
     expect(header(lang, { strict: false })).not.toContain('status-chip');
   });
 
-  it('a key held at Strict still says the key is saved', () => {
-    const html = header(lang, { strict: true, keyHeld: true, licenseState: 'unchecked' });
-    expect(html).toContain(esc(t.statusKeyHeldShort));
+  it('a key at Silent: the chip is the key\'s, and its tooltip says what Silent does with it', () => {
+    expect(header(lang, { strict: true, licenseState: 'ok' })).toContain(esc(t.strictKeyLine));
+    expect(header(lang, { strict: true, agreementWaits: true, licenseState: 'ok' })).toContain(esc(t.strictNeedsAgreement));
   });
 });
 
@@ -100,33 +100,22 @@ describe.each(UI_LANGUAGES)('Strict without a key, %s (P3-2)', (lang) => {
 describe.each(UI_LANGUAGES)('Settings at Strict, %s (P3-3)', (lang) => {
   const t = POPUP_STRINGS[lang];
 
-  // Without a key there is no AI card, so the AI switch is held only where a key is. One fewer since 11 Oct 2026: Strict
-  // language's row left, Mask swearing is the one switch for swearing (one-switch-for-swearing.test.tsx).
-  it.each([['free', FREE, 1], ['paid', PAID, 2]] as const)('%s: AI checks and Mask swearing name the level, and every locked switch wears a padlock', (n, license, held) => {
-    const html = settingsPanel('child', license, lang);
-    expect(html.includes(`aria-label="${esc(t.featAiMasterAriaStrict)}"`)).toBe(n === 'paid');
+  // Since 12 Oct 2026 the AI switch is a live switch at Silent too (a key lets Silent read), so the one switch the level
+  // holds is Mask swearing, with a key or without: it wears the padlock and names the level.
+  it.each([['free', FREE], ['paid', PAID]] as const)('%s: Mask swearing names the level and every locked switch wears a padlock; AI checks is live', (n, license) => {
+    // The AI switch sits on the first page and the swear mask on the General page, so both pages are read.
+    const html = settingsPanel('child', license, lang) + settingsPanel('child', license, lang, 'general');
+    expect(html.includes(`aria-label="${esc(t.featAiMasterName)}"`)).toBe(n === 'paid');
     expect(html).toContain(`aria-label="${esc(t.softenSwearingAriaChild)}"`);
-    expect(t.featAiMasterAriaStrict).toContain(t.modeChild);
     expect(t.softenSwearingAriaChild).toContain(t.modeChild);
 
     const doc = new DOMParser().parseFromString(html, 'text/html');
     const locked = Array.from(doc.querySelectorAll('[role="switch"][aria-disabled="true"]'));
-    expect(locked.length, 'the locked switches').toBeGreaterThanOrEqual(held);
+    expect(locked.length, 'the locked switches').toBeGreaterThanOrEqual(1);
     for (const sw of locked) {
       const padlock = sw.classList.contains('locked-on') || sw.querySelector('.toggle-lock') !== null;
       expect(padlock, sw.getAttribute('aria-label') ?? '').toBe(true);
-    }
-  });
-
-  // The knob is the switch's ::after, painted after its children, so a padlock without a stacking value sat
-  // under it and could not be seen (critic 2, HOLD 06:16). The span must be stacked above the knob.
-  it('the padlock on a locked-off switch is stacked above the knob', () => {
-    const doc = new DOMParser().parseFromString(settingsPanel('child', PAID, lang), 'text/html');
-    const off = Array.from(doc.querySelectorAll('[role="switch"][aria-disabled="true"]')).filter((sw) => sw.querySelector('.toggle-lock'));
-    expect(off.length, 'a locked-off switch carrying a padlock').toBeGreaterThanOrEqual(1);
-    for (const sw of off) {
-      const lock = sw.querySelector<HTMLElement>('.toggle-lock')!;
-      expect(Number(lock.style.zIndex), sw.getAttribute('aria-label') ?? '').toBeGreaterThanOrEqual(1);
+      expect(sw.getAttribute('aria-label'), 'the reading switch is not locked').not.toBe(t.featAiMasterName);
     }
   });
 });

@@ -154,7 +154,8 @@ describe('applyPreset (LOOP-029 / DESIGN §10.3)', () => {
     const patch = applyPreset('child');
     // Child preset: core ON + every Additional protection ON.
     expect(patch.features['rewritten-comments-first'].enabled).toBe(true);
-    expect(patch.features['show-reframe-markers'].enabled).toBe(true);
+    // Silent has no dot to press: the marker starts off (the owner's yes, 12 Oct 2026).
+    expect(patch.features['show-reframe-markers'].enabled).toBe(false);
     expect(patch.features['hide-action-buttons'].enabled).toBe(true);
     expect(patch.features['block-comment-posting'].enabled).toBe(true);
     expect(patch.features['strip-emojis'].enabled).toBe(true);

@@ -9,6 +9,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 import { utcDayKey, utcMonthKey, CURRENT_SETTINGS_SCHEMA_VERSION } from '../../../src/storage/settings';
 import { installChromeStorageStub } from '../../helpers/chrome-storage';
+import { readingConsentFor } from '../../helpers/reading-consent';
 
 const plan = vi.hoisted(() => ({ holdsReading: true, refreshes: 0, kind: 'signed', refreshGives: 'stored', refreshTurnsOn: false }));
 
@@ -22,6 +23,7 @@ function installStore(): void {
       dailyCap: 2500,
       totalChecksToday: 0,
       totalTokensThisMonth: 100,
+      ...readingConsentFor('fw-starter-abc12345'),
     },
     sendMessage: () => undefined,
   });

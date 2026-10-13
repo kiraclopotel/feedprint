@@ -10,6 +10,7 @@
 // expire by UTC period-key comparison.
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { readingConsentFor } from '../../helpers/reading-consent';
 import { utcDayKey, utcMonthKey, CURRENT_SETTINGS_SCHEMA_VERSION } from '../../../src/storage/settings';
 
 function installStorageStub(initial: Record<string, unknown> = {}): { state: Record<string, unknown> } {
@@ -41,6 +42,7 @@ function paidSettings(): Record<string, unknown> {
     lastResetDate: utcDayKey(),
     lastResetMonth: utcMonthKey(),
     fw_license_key: 'fw-starter-abc12345',
+    ...readingConsentFor('fw-starter-abc12345', 'fw-family-newkey999'),
     dailyCap: 2500,
     totalChecksToday: 0,
     totalTokensThisMonth: 0,

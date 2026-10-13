@@ -84,7 +84,7 @@ export function BlockAiHashtagEditor({
       {hashtags.length === 0 && (
         <div style={{ fontSize: 11, color: 'var(--fw-muted)', marginBottom: 8, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <span>{t.hashtagsEmpty}</span>
-          <button type="button" className="iconbtn" style={{ fontSize: 11 }} onClick={() => { void saveHashtags([...DEFAULT_AI_BLOCKLIST_HASHTAGS]); }}>
+          <button type="button" className="iconbtn" style={{ fontSize: 12, minHeight: 32 }} onClick={() => { void saveHashtags([...DEFAULT_AI_BLOCKLIST_HASHTAGS]); }}>
             {t.hashtagsRestoreDefaults}
           </button>
         </div>
@@ -151,10 +151,10 @@ export function BlockAiHashtagEditor({
           aria-label={t.addHashtagAria}
           style={{
             flex: 1,
-            padding: '4px 8px',
+            padding: '8px 10px',
             borderRadius: 'var(--fw-r-md)',
             border: '1px solid var(--fw-border)',
-            background: 'var(--fw-surface)',
+            background: 'var(--fw-card)',
             color: 'var(--fw-text)',
             fontSize: 12,
           }}
@@ -164,7 +164,7 @@ export function BlockAiHashtagEditor({
           onClick={() => { void addHashtag(); }}
           disabled={!draft.trim()}
           style={{
-            padding: '4px 12px',
+            padding: '8px 12px',
             borderRadius: 'var(--fw-r-md)',
             border: '1px solid var(--fw-border)',
             background: draft.trim() ? 'var(--fw-accent)' : 'var(--fw-surface-2)',

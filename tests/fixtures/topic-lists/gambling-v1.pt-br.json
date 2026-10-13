@@ -1,0 +1,603 @@
+{
+ "topic": "gambling",
+ "version": 1,
+ "language": "pt-br",
+ "madeOn": "2026-10-13",
+ "entries": [
+  {
+   "term": "apostas",
+   "kind": "word",
+   "exact": false,
+   "risk": "medium",
+   "note": "Plural; listed separately because pt gets no endings. Same figurative collision as aposta."
+  },
+  {
+   "term": "apostador",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Bettor. Almost always gambling in the Brazilian press and feeds."
+  },
+  {
+   "term": "apostadores",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Plural bettors. Used heavily in the news about the betting law."
+  },
+  {
+   "term": "cassino",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Casino. Rare ordinary uses: a city name, a beach in Rio Grande do Sul (Cassino), the film."
+  },
+  {
+   "term": "cassinos",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Plural of cassino."
+  },
+  {
+   "term": "bet",
+   "kind": "word",
+   "exact": true,
+   "risk": "medium",
+   "note": "Brazilian slang for a betting site ('as bets', 'bet liberada'). Collides with the BET channel, 'bet' as English slang for yes, and the name Bet; whole word only."
+  },
+  {
+   "term": "bets",
+   "kind": "word",
+   "exact": true,
+   "risk": "medium",
+   "note": "Plural slang, 'as bets'. Rarely ordinary; whole word only so no stray stem match."
+  },
+  {
+   "term": "blackjack",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Card game. Rare ordinary use (a candy, a film)."
+  },
+  {
+   "term": "baccarat",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Casino card game, also the crystal brand Baccarat; rare in feeds. Brazilian spelling bacara is too rare to list."
+  },
+  {
+   "term": "loteria",
+   "kind": "word",
+   "exact": false,
+   "risk": "medium",
+   "note": "Lottery. Collides with figurative 'a loteria da vida' and 'ganhar na loteria' as a wish."
+  },
+  {
+   "term": "lotofacil",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Caixa lottery game, name always about the lottery."
+  },
+  {
+   "term": "lotomania",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Caixa lottery game."
+  },
+  {
+   "term": "megasena",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Single-word form of Mega-Sena, the main Brazilian lottery; the two-word form is a phrase."
+  },
+  {
+   "term": "raspadinha",
+   "kind": "word",
+   "exact": false,
+   "risk": "medium",
+   "note": "Scratch card. In some regions also the name of a shaved-ice treat."
+  },
+  {
+   "term": "tigrinho",
+   "kind": "word",
+   "exact": false,
+   "risk": "medium",
+   "note": "Slang for the Fortune Tiger slot, huge in Brazil since 2023. Also a pet name or a small tiger."
+  },
+  {
+   "term": "aviator",
+   "kind": "word",
+   "exact": false,
+   "risk": "medium",
+   "note": "The Aviator crash game. Also an English word and sunglasses style; Portuguese 'aviador' is a different word and is not matched."
+  },
+  {
+   "term": "odds",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Betting odds, used as an English loanword in Brazilian betting talk. Rarely ordinary in pt."
+  },
+  {
+   "term": "jackpot",
+   "kind": "word",
+   "exact": false,
+   "risk": "medium",
+   "note": "Top prize. Also used loosely: 'ganhei na sorte, foi um jackpot'."
+  },
+  {
+   "term": "ludopatia",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Gambling addiction. A mention of it is a mention of gambling."
+  },
+  {
+   "term": "fezinha",
+   "kind": "word",
+   "exact": false,
+   "risk": "medium",
+   "note": "'Fazer uma fezinha' is to place a small bet, usually on a lottery or the bicho. Rare in other senses."
+  },
+  {
+   "term": "bicheiro",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Operator of the jogo do bicho. Ordinary sense is almost nil."
+  },
+  {
+   "term": "casa de apostas",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Betting house, the standard term for a bookmaker."
+  },
+  {
+   "term": "casas de apostas",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Plural of the above."
+  },
+  {
+   "term": "jogo do tigrinho",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Tiger game, the best-known slang of the market. Covered by tigrinho too; kept so the reason shown can be exact."
+  },
+  {
+   "term": "jogo do bicho",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Illegal animal lottery, a Brazilian tradition."
+  },
+  {
+   "term": "jogo do aviaozinho",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Crash game 'little plane'. The single word aviaozinho is left out because it also means a drug courier in slang and a toy plane."
+  },
+  {
+   "term": "mega sena",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Two-word form of Mega-Sena. Hyphen splits to two tokens, so the hyphenated form is caught here."
+  },
+  {
+   "term": "caca niquel",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Slot machine ('caca-niquel'); the hyphen splits tokens so this matches both forms."
+  },
+  {
+   "term": "caca niqueis",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Plural of caca-niquel."
+  },
+  {
+   "term": "jogo de azar",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Game of chance, the legal term for gambling in Brazil."
+  },
+  {
+   "term": "jogos de azar",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Plural of the above; frequent in news on the betting law."
+  },
+  {
+   "term": "apostas esportivas",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Sports betting, the market's own category name."
+  },
+  {
+   "term": "aposta gratis",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Free bet, a bookmaker promotion."
+  },
+  {
+   "term": "bonus sem deposito",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "No-deposit bonus, a typical bookmaker and casino hook."
+  },
+  {
+   "term": "rodadas gratis",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Free spins, the Portuguese term. Rarely ordinary."
+  },
+  {
+   "term": "free spins",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "English form of free spins, used as-is in Brazilian ads."
+  },
+  {
+   "term": "odds turbinadas",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Boosted odds, a promotion type. The singular and the word 'turbinada' are not listed because turbinada alone is ordinary."
+  },
+  {
+   "term": "fortune tiger",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "The slot behind the tiger craze."
+  },
+  {
+   "term": "fortune ox",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Sister slot from the same studio, promoted as the ox game."
+  },
+  {
+   "term": "fortune rabbit",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Sister slot, the rabbit game."
+  },
+  {
+   "term": "fortune mouse",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Sister slot, the mouse game."
+  },
+  {
+   "term": "fortune dragon",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Sister slot, the dragon game."
+  },
+  {
+   "term": "pg soft",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Slot studio whose name appears in the same promos."
+  },
+  {
+   "term": "pragmatic play",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Slot and casino studio, appears in the same promos."
+  },
+  {
+   "term": "esportes da sorte",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Major Brazilian bookmaker, football shirt sponsor."
+  },
+  {
+   "term": "galera bet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Bookmaker with heavy influencer promotion in Brazil."
+  },
+  {
+   "term": "bet365",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Global bookmaker, strong in Brazil."
+  },
+  {
+   "term": "betano",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Bookmaker with large sports sponsorship in Brazil."
+  },
+  {
+   "term": "blaze",
+   "kind": "brand",
+   "exact": true,
+   "risk": "high",
+   "note": "Crash and casino site very visible in Brazil. Ordinary English word, and a stem of blazer, blazing; whole word only."
+  },
+  {
+   "term": "sportingbet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Long-running bookmaker in Brazil."
+  },
+  {
+   "term": "betnacional",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Brazilian bookmaker."
+  },
+  {
+   "term": "pixbet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Bookmaker known for fast Pix withdrawals."
+  },
+  {
+   "term": "betfair",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Betting exchange, used in Brazil."
+  },
+  {
+   "term": "estrelabet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Brazilian bookmaker, sports sponsor."
+  },
+  {
+   "term": "vaidebet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Bookmaker with heavy advertising."
+  },
+  {
+   "term": "bet7k",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Bookmaker with heavy influencer ads."
+  },
+  {
+   "term": "1xbet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Global bookmaker with a Portuguese-language presence."
+  },
+  {
+   "term": "parimatch",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Global bookmaker active in Brazil."
+  },
+  {
+   "term": "novibet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Bookmaker active in Brazil."
+  },
+  {
+   "term": "betway",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Global bookmaker with Brazilian football deals."
+  },
+  {
+   "term": "brazino777",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Online casino built for the Brazilian market."
+  },
+  {
+   "term": "f12bet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Brazilian bookmaker."
+  },
+  {
+   "term": "kto",
+   "kind": "brand",
+   "exact": true,
+   "risk": "medium",
+   "note": "Bookmaker advertised heavily in Brazil. Short, so whole word only; also an Spanish and Polish word elsewhere."
+  },
+  {
+   "term": "superbet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Bookmaker with major sports sponsorship."
+  },
+  {
+   "term": "slot machine",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "The two-word form is gambling; replaces the bare slot and slots entries that were rejected."
+  },
+  {
+   "term": "poker online",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Online poker for money; replaces the bare poker entry that hit the poker face joke."
+  },
+  {
+   "term": "poquer online",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Portuguese spelling (pôquer) with accents folded; the bare word collides with the idiom cara de pôquer, the phrase does not."
+  },
+  {
+   "term": "aposta esportiva",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Singular of apostas esportivas; the bare aposta was rejected, so the singular needs this phrase."
+  },
+  {
+   "term": "aposta online",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Singular betting phrase used in ads and news about the betting law."
+  },
+  {
+   "term": "apostar online",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Verb form with online; covers the infinitive in betting talk without the figurative apostar."
+  },
+  {
+   "term": "giros gratis",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Free spins in the Brazilian wording (giros grátis), common in ads for Fortune Tiger and similar slots."
+  },
+  {
+   "term": "dupla sena",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Caixa lottery game, always about the lottery."
+  },
+  {
+   "term": "mega da virada",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "The year-end special Mega-Sena draw, a big lottery topic every December."
+  },
+  {
+   "term": "timemania",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Caixa lottery game tied to football clubs."
+  },
+  {
+   "term": "ludopata",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Person with gambling addiction; ludopatia does not match it by stem, ludopatas is covered by this entry."
+  },
+  {
+   "term": "estrela bet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Two-word spelling of the brand, widely used in posts; estrelabet is already listed."
+  },
+  {
+   "term": "vai de bet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Brand name is written as three words in its own ads; vaidebet is already listed."
+  },
+  {
+   "term": "bet nacional",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Two-word spelling of betnacional."
+  },
+  {
+   "term": "betsson",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Bookmaker active in Brazil with football sponsorship."
+  },
+  {
+   "term": "betmotion",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Bookmaker aimed at Brazil and Latin America."
+  },
+  {
+   "term": "jonbet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Bookmaker with heavy influencer promotion in Brazil."
+  },
+  {
+   "term": "betfast",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Bookmaker advertised in Brazil."
+  },
+  {
+   "term": "betsul",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Brazilian bookmaker."
+  },
+  {
+   "term": "22bet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Global bookmaker with Portuguese-language ads in Brazil."
+  },
+  {
+   "term": "mcgames",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Brazilian online casino and bookmaker."
+  }
+ ]
+}

@@ -31,6 +31,7 @@ const RAIL_BY_ROW: Readonly<Partial<Record<PolicyRowId, Rail>>> = {
   R2: 'identity-slur',
   R3: 'coded-harm',
   R4: 'sponsored',
+  R5: 'topic',
 };
 
 export const NOTE_NOT_APPLIED = 'the page could not apply the action; the item stayed as the record says under applied';
@@ -119,8 +120,11 @@ export function decisionForLegacy(f: LegacyDecisionFacts): DecisionBlock | undef
       { judge: null, descriptor: null, rails: [rail] },
       { mode: f.mode, topicRules: {}, swearing: f.mask ? 'mask' : 'show' },
     );
-    const rails: DecisionBlock['rails'] = [{ name: rail as DecisionRail, match: why.match ?? '' }];
-    return adHidden(rail, block(f, d.row, d.action, rails));
+    // A chosen topic carries no quoted match: the topic is the household's rule (household.topicRule), so the card
+    // reads "Mentions gambling" and not a word of the post.
+    const rails: DecisionBlock['rails'] = [{ name: rail as DecisionRail, match: rail === 'topic' ? '' : (why.match ?? '') }];
+    const made = adHidden(rail, block(f, d.row, d.action, rails));
+    return rail === 'topic' ? { ...made, household: { ...made.household, topicRule: why.topic ?? null } } : made;
   }
   return block(f, why.row, f.applied, []);
 }
@@ -246,6 +250,11 @@ export function decisionForJudge(f: JudgeDecisionFacts): DecisionBlock {
   };
 }
 
+/** A reason for the record is a short fixed token: lower case letters, digits and - : + only, never a quote. */
+export function cleanWhy(why: string): string {
+  return why.toLowerCase().replace(/[^a-z0-9:+-]/g, '-').slice(0, 40);
+}
+
 /**
  * The rewrite stage of a block whose rewrite was tried. `model` is the model
  * whose words the page showed under its machine-readable AI mark
@@ -256,8 +265,9 @@ export function decisionForJudge(f: JudgeDecisionFacts): DecisionBlock {
 export function rewriteStage(
   landed: boolean,
   writer: { model?: string } | null | undefined,
+  why?: string,
 ): NonNullable<DecisionBlock['rewrite']> {
-  if (!landed) return { attempted: true, outcome: 'failed' };
+  if (!landed) return { attempted: true, outcome: 'failed', ...(why ? { why: cleanWhy(why) } : {}) };
   return writer?.model
     ? { attempted: true, outcome: 'applied', model: writer.model }
     : { attempted: true, outcome: 'applied' };

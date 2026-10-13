@@ -9,8 +9,13 @@
 // existing hold check (video-feed-hide.test.ts, 'when the hidden card above moved the one on screen, it is put back, once')
 // is not edited: it is the no-scroll control here too.
 
+// Since 13 Oct 2026 a TikTok card is hidden with its box kept (video-feed-hide.ts keepsItemBox), so a test of the move or the
+// hold that needs a card to lose its box makes the collapse itself (tests/helpers/collapse-a-card.ts): the timing belongs to
+// any hide that moves the feed, whichever card takes it.
+
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { injectHardHide, injectAdHide } from '../../../../src/content/injector';
+import { injectAdHide } from '../../../../src/content/injector';
+import { collapseCard } from '../../../helpers/collapse-a-card';
 import {
   _resetAdvanceBreakerForTesting,
   _setHostForTesting,
@@ -82,14 +87,14 @@ afterEach(() => {
 describe('F47 site B: the hold does nothing while the person is scrolling', () => {
   it('control: nobody is scrolling, the watched card is put back, once', () => {
     const { past, back } = feedWhereTheHideMovesTheWatchedCard();
-    injectHardHide(past.desc, 'tiktok');
+    collapseCard(past.item);
     expect(back).toHaveBeenCalledTimes(1);
   });
 
   it('a wheel just before the hide: the feed is not scrolled back', () => {
     const { past, back } = feedWhereTheHideMovesTheWatchedCard();
     document.body.dispatchEvent(new WheelEvent('wheel', { bubbles: true, deltaY: 120 }));
-    injectHardHide(past.desc, 'tiktok');
+    collapseCard(past.item);
     expect(past.item.style.getPropertyValue('display'), 'the hide still landed').toBe('none');
     expect(back, 'the feed is not scrolled back while the person scrolls').not.toHaveBeenCalled();
   });
@@ -97,21 +102,21 @@ describe('F47 site B: the hold does nothing while the person is scrolling', () =
   it('a touch move just before the hide: the feed is not scrolled back', () => {
     const { past, back } = feedWhereTheHideMovesTheWatchedCard();
     document.body.dispatchEvent(new Event('touchmove', { bubbles: true }));
-    injectHardHide(past.desc, 'tiktok');
+    collapseCard(past.item);
     expect(back).not.toHaveBeenCalled();
   });
 
   it('a navigation key just before the hide: the feed is not scrolled back', () => {
     const { past, back } = feedWhereTheHideMovesTheWatchedCard();
     document.body.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'ArrowDown' }));
-    injectHardHide(past.desc, 'tiktok');
+    collapseCard(past.item);
     expect(back).not.toHaveBeenCalled();
   });
 
   it('a key that does not scroll does not count: the card is put back', () => {
     const { past, back } = feedWhereTheHideMovesTheWatchedCard();
     document.body.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'a' }));
-    injectHardHide(past.desc, 'tiktok');
+    collapseCard(past.item);
     expect(back).toHaveBeenCalledTimes(1);
   });
 
@@ -119,19 +124,15 @@ describe('F47 site B: the hold does nothing while the person is scrolling', () =
     const { past, back } = feedWhereTheHideMovesTheWatchedCard();
     document.body.dispatchEvent(new WheelEvent('wheel', { bubbles: true, deltaY: 120 }));
     vi.advanceTimersByTime(1000);
-    injectHardHide(past.desc, 'tiktok');
+    collapseCard(past.item);
     expect(back).toHaveBeenCalledTimes(1);
   });
 
-  it('the ad hide path holds the same way: put back when nobody scrolls, left alone when someone does', () => {
+  it('the ad hide keeps the box of a TikTok card, so there is nothing to put back: the watched card is left alone', () => {
     const quiet = feedWhereTheHideMovesTheWatchedCard();
     injectAdHide(quiet.past.desc, 'tiktok');
-    expect(quiet.back, 'nobody scrolling: put back').toHaveBeenCalledTimes(1);
-
-    document.body.innerHTML = '';
-    const busy = feedWhereTheHideMovesTheWatchedCard();
-    document.body.dispatchEvent(new WheelEvent('wheel', { bubbles: true, deltaY: 120 }));
-    injectAdHide(busy.past.desc, 'tiktok');
-    expect(busy.back, 'someone scrolling: left alone').not.toHaveBeenCalled();
+    expect(quiet.past.item.style.getPropertyValue('visibility')).toBe('hidden');
+    expect(quiet.past.item.style.getPropertyValue('display'), 'the card keeps its box').toBe('');
+    expect(quiet.back).not.toHaveBeenCalled();
   });
 });

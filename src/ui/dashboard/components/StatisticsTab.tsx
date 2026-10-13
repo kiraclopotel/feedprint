@@ -17,7 +17,7 @@
 import * as React from 'react';
 import type { ForensicRecord } from '../../../types/forensic';
 import type { ForensicStats } from '../../../forensics/store';
-import { PLATFORM_LABELS } from './color-maps';
+import { PLATFORM_COLORS, PLATFORM_LABELS, techniqueFill } from './color-maps';
 import { TONE } from '../house-tones';
 import { dashboardWords } from '../dashboard-words';
 import { canonicalizeTechniqueForStats } from '../../../forensics/store';
@@ -220,6 +220,7 @@ export function StatisticsTab({ records, stats, now, onDrill, archivesPending, a
       .filter((p) => p.total > 0)
       .sort((a, b) => b.total - a.total);
   }, [records]);
+  const platTechMax = Math.max(1, ...platTech.map((p) => p.top[0]?.[1] ?? 0));
 
   // Provenance (lens contract): every count names its set and the days that set
   // spans in the entries this tab holds, never the wall clock.
@@ -298,17 +299,19 @@ export function StatisticsTab({ records, stats, now, onDrill, archivesPending, a
             {/* Column chart (mockup: 84px plot, 80px usable). Height encodes the
                 severity-weighted sum; the tooltip carries the item count. */}
             <KitCols
-              height={84}
+              height={104}
+              capped
               cols={recentWeeks.map((b) => ({
                 tip: `${formatDayMonthLocal(dayKeyAsLocalDate(b.bucket), lang)} · ${b.count}`,
-                parts: [{ h: Math.round((b.severitySum / maxSeverity) * 80), color: TONE.ink }],
+                value: formatCount(b.count, lang),
+                parts: [{ h: Math.max(2, Math.round((b.severitySum / maxSeverity) * 80)), color: TONE.flagged }],
               }))}
             />
             {/* The bucket key is the Monday that starts the week. It was
                 printed as a raw "09-15" cut out of the key, which is a date
                 shape in no language sitting beside formatDayMonthLocal dates
                 on the same tab (2026-09-18). */}
-            <KitAxis perCol labels={recentWeeks.map((b) => formatDayMonthLocal(dayKeyAsLocalDate(b.bucket), lang))} />
+            <KitAxis perCol capped labels={recentWeeks.map((b) => formatDayMonthLocal(dayKeyAsLocalDate(b.bucket), lang))} />
             {/* Q42 (W49): records with unreadable timestamps used to vanish
                 from this chart with no surface anywhere; the count existed
                 on ExposureTimeline since day one and was never rendered. */}
@@ -383,13 +386,13 @@ export function StatisticsTab({ records, stats, now, onDrill, archivesPending, a
               <KitRow
                 key={name}
                 label={t.techniqueLabel(name)}
-                color={TONE.ink}
+                color={techniqueFill(name) ?? TONE.ink}
                 width={(share / Math.max(0.01, topTechniqueShares[0][1])) * 100}
-                count={(() => {
+                {...(() => {
                   const sh = wilson(skew.byTechnique.counts[name] ?? Math.round(share * techniqueN), techniqueN);
                   return sh
-                    ? <>{sh.k}/{sh.n} · {sh.pct}% <span className="fwc-pct">· {t.shareInterval(sh.lowerPct, sh.upperPct)}</span></>
-                    : `${Math.round(share * 100)}%`;
+                    ? { count: <>{sh.k}/{sh.n} · {sh.pct}%</>, note: t.shareInterval(sh.lowerPct, sh.upperPct) }
+                    : { count: `${Math.round(share * 100)}%` };
                 })()}
                 onClick={onDrill ? () => onDrill({ platform: 'all', recordIds: dominantIds.get(name) ?? [] }) : undefined}
                 title={onDrill ? t.statsDrillHint : undefined}
@@ -425,7 +428,7 @@ export function StatisticsTab({ records, stats, now, onDrill, archivesPending, a
               height={96}
               cols={daily.map((d) => ({
                 tip: `${formatDayMonthLocal(dayKeyAsLocalDate(d.key), lang)} · ${t.statsDailyFlaggedOf(d.flagged, d.total)}`,
-                parts: stackedColumn(d.total, d.flagged, dailyMax, 92, TONE.ink),
+                parts: stackedColumn(d.total, d.flagged, dailyMax, 92, TONE.flagged),
               }))}
             />
             {/* The axis used to print the raw key's "MM-DD" tail, which is
@@ -435,7 +438,7 @@ export function StatisticsTab({ records, stats, now, onDrill, archivesPending, a
               style={{ marginTop: 10 }}
               items={[
                 { color: 'var(--fwc-neutral)', label: t.statsDailyItemsLegend },
-                { color: TONE.ink, label: t.kpiFlagged },
+                { color: TONE.flagged, label: t.kpiFlagged },
               ]}
             />
           </>
@@ -465,11 +468,11 @@ export function StatisticsTab({ records, stats, now, onDrill, archivesPending, a
                   label={label}
                   color={color}
                   width={(n / sevMax) * 100}
-                  count={(() => {
+                  {...(() => {
                     const sh = wilson(n, sevTotal);
                     return sh
-                      ? <>{n} <span className="fwc-pct">· {sh.pct}% · {t.shareInterval(sh.lowerPct, sh.upperPct)}</span></>
-                      : <>{n}</>;
+                      ? { count: <>{n} · {sh.pct}%</>, note: t.shareInterval(sh.lowerPct, sh.upperPct) }
+                      : { count: <>{n}</> };
                   })()}
                 />
               ))}
@@ -496,8 +499,9 @@ export function StatisticsTab({ records, stats, now, onDrill, archivesPending, a
                 <KitRow
                   key={name}
                   label={t.techniqueLabel(name)}
-                  color={TONE.ink}
-                  width={(n / p.top[0][1]) * 100}
+                  color={techniqueFill(name) ?? TONE.ink}
+                  // One scale for the card (row 22, 12 Oct 2026): each group ran on its own, so a 5 and a 6 both filled the row.
+                  width={(n / platTechMax) * 100}
                   count={n}
                   onClick={onDrill ? () => onDrill({ platform: p.platform as ForensicRecord['platform'], technique: name }) : undefined}
                   title={onDrill ? t.statsDrillHint : undefined}
@@ -519,14 +523,15 @@ export function StatisticsTab({ records, stats, now, onDrill, archivesPending, a
           plus the active chain, Dashboard.tsx wholeRecordCount), the same one
           the header's Records chip shows (wiring audit 13 Sep, D1-3, C3).
           `records` is the walk window since item 7's second slice. */}
-      <SnapshotTile value={recordsToday} label={t.kpiRecordsToday} sub={t.statsAllTime(formatCount((allTimeCount ?? records.length), lang))} spark={daily.map((d) => d.total)} />
+      {/* Four tiles, one row (row 19, 12 Oct 2026): at a third each, 'blocked' sat alone on a second row. */}
+      <SnapshotTile quarter value={recordsToday} label={t.kpiRecordsToday} sub={t.statsAllTime(formatCount((allTimeCount ?? records.length), lang))} spark={daily.map((d) => d.total)} />
       {/* Q40 (W48): the "of N records seen" denominator is content only —
           markers and room summaries are not things the child saw. */}
-      <SnapshotTile value={flagged} label={t.kpiFlagged} color={TONE.ink} sub={itemsSpan.firstDay ? t.statsOfRecordsSeen(sets.items, dayLabel(itemsSpan.firstDay), dayLabel(itemsSpan.lastDay)) : undefined} spark={daily.map((d) => d.flagged)} sparkHot />
+      <SnapshotTile quarter value={flagged} label={t.kpiFlagged} color={TONE.flagged} sub={itemsSpan.firstDay ? t.statsOfRecordsSeen(sets.items, dayLabel(itemsSpan.firstDay), dayLabel(itemsSpan.lastDay)) : undefined} spark={daily.map((d) => d.flagged)} sparkHot />
       {/* Seen a lot, beside flagged and never inside it (the Head, 10 Oct 2026): a post or source that came back often,
           marked with no reading of its content. The technique's own words, as on the Feed log. */}
-      <SnapshotTile value={sets.seenALot} label={seenALotLabel} color={TONE.noise} />
-      <SnapshotTile value={blocked} label={t.kpiBlocked} color={TONE.noise} sub={blockedSpan.firstDay ? t.statsBlockedSub(dayLabel(blockedSpan.firstDay), dayLabel(blockedSpan.lastDay)) : undefined} />
+      <SnapshotTile quarter value={sets.seenALot} label={seenALotLabel} />
+      <SnapshotTile quarter value={blocked} label={t.kpiBlocked} color={TONE.noise} sub={blockedSpan.firstDay ? t.statsBlockedSub(dayLabel(blockedSpan.firstDay), dayLabel(blockedSpan.lastDay)) : undefined} />
 
       {/* Platform breakdown */}
       <StatsCard
@@ -548,6 +553,7 @@ export function StatisticsTab({ records, stats, now, onDrill, archivesPending, a
                 dot
                 label={PLATFORM_LABELS[p] ?? p}
                 color={TONE.mid}
+                swatch={PLATFORM_COLORS[p]}
                 width={(n / max) * 100}
                 count={n}
                 onClick={onDrill ? () => onDrill({ platform: p as ForensicRecord['platform'], technique: null }) : undefined}
@@ -558,7 +564,7 @@ export function StatisticsTab({ records, stats, now, onDrill, archivesPending, a
         )}
       </StatsCard>
 
-      <SnapshotTile value={platforms24h} label={t.kpiActivePlatforms} color="var(--fw-teal)" />
+      <SnapshotTile value={platforms24h} label={t.kpiActivePlatforms} />
       <SnapshotTile value={Object.keys(stats.byTechnique).length} label={t.statsTechniquesObserved} sub={t.statsTechniquesSub} />
       <SnapshotTile value={stats.unsignedRecordsCount} label={t.statsUnsigned} color={TONE.mid} sub={t.statsUnsignedSub} />
     </div>
@@ -579,27 +585,29 @@ function FeedBalanceBar({
   // crowd; identity is carried by the legend labels + segment tooltips.
   const legend: Array<{ label: string; n: number; color: string }> = [
     { label: t.statsBalancePassed, n: passed, color: TONE.record },
-    { label: t.statsBalanceFlagged, n: flagged, color: TONE.ink },
+    { label: t.statsBalanceFlagged, n: flagged, color: TONE.flagged },
     { label: t.statsBalanceBlocked, n: blocked, color: TONE.noise },
   ];
   return (
     <div>
-      <div style={{ fontSize: 22, fontWeight: 700 }}>{t.statsBalanceLine(passedPct, passed, decided)}</div>
-      {interval && <div className="fwc-pct" style={{ fontSize: 12, marginTop: 2 }}>{interval}</div>}
+      {interval && <div className="fwc-pct" style={{ fontSize: 13, marginTop: 2, color: 'var(--fw-muted)' }}>{interval}</div>}
       <KitStack segs={legend.map((s) => ({ n: s.n, color: s.color, title: `${s.label} ${s.n}` }))} />
       <KitLegend items={legend.map((s) => ({ color: s.color, strong: formatCount(s.n, lang), label: s.label }))} />
+      {/* The share is the card's heading. This line said it again as a second 22px headline over the bar (the walk
+          of 12 Oct 2026); it stays for the whole record's checked total it carries, as a caption under the legend. */}
+      <div className="fb-prov fwc-balance-line">{t.statsBalanceLine(passedPct, passed, decided)}</div>
     </div>
   );
 }
 
 function SnapshotTile({
-  value, label, color, sub, spark, sparkHot,
+  value, label, color, sub, spark, sparkHot, quarter,
 }: {
   value: number; label: string; color?: string; sub?: string;
-  spark?: number[]; sparkHot?: boolean;
+  spark?: number[]; sparkHot?: boolean; quarter?: boolean;
 }) {
   return (
-    <div className="stats-card third">
+    <div className={quarter ? 'stats-card quarter' : 'stats-card third'}>
       <KitTile value={value} label={label} sub={sub} color={color} spark={spark} sparkHot={sparkHot} />
     </div>
   );

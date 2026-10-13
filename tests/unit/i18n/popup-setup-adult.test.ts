@@ -35,7 +35,7 @@ describe('first run for an adult: nothing to type', () => {
   it('Adult finishes on the mode step with one button and sets no PIN; Child and Teen still set one', () => {
     expect(popup).toContain('data-testid="setup-start-free"');
     expect(popup).toContain("mode === 'adult'\n            ? <button");
-    expect(popup).toContain("if (mode !== 'adult' && pinDigits.length === 4) {");
+    expect(popup).toContain("if (!withoutPin && mode !== 'adult' && pinDigits.length === 4) {");
     expect(popup).toContain('await saveSettings({ setupDone: true });');
     // finishSetup is declared before the step renders, so step 1 can call it.
     expect(popup.indexOf('const finishSetup = async')).toBeLessThan(popup.indexOf('if (step === 0) {'));

@@ -24,9 +24,8 @@ export interface PopupStrings {
   statusChecking: string;
   statusCheckingShort: string;
   statusUnchecked: string;
+  statusLevelPending: string;
   statusUncheckedShort: string;
-  statusKeyHeld: string;
-  statusKeyHeldShort: string;
 
   // Tab bar
   tabHome: string;
@@ -71,6 +70,8 @@ export interface PopupStrings {
   setupAdultNoPin: string;
   setupChooseFirst: string;
   setupPinNext: string;
+  setupPinSkip: string;
+  setupPinSkipNote: string;
   setupStartFree: string;
   choose: string;
   confirm: string;
@@ -159,6 +160,8 @@ export interface PopupStrings {
   // even though the pills/toggles look active. Mirrors the free-tier banner
   // instead of leaving the small header dot as the only signal (POP-5).
   licenseInvalidTitle: string;
+  readingTroubleTitle: string;
+  readingTroubleBody: string;
   licenseInvalidBody: string;
   // The hero is bound to `totalNeutralizedToday`, which increments once per
   // intervention of any kind (hide, collapse, softening), not once per rewrite. It
@@ -207,7 +210,6 @@ export interface PopupStrings {
   removeLicense: string;
   removeConfirmBody: string;
   remove: string;
-  cancelLower: string;
   dailyLimit: string;
   unlimitedCalls: string;
   callsPerDay: (cap: number) => string;
@@ -238,6 +240,10 @@ export interface PopupStrings {
   themeDark: string;
   themeAuto: string;
   lookAria: string;
+  /** Off's picker of its two looks, in its footer: the group's name and each look's name. */
+  offLookAria: string;
+  offLookA: string;
+  offLookB: string;
   lookA: string;
   lookB: string;
   lookC: string;
@@ -259,6 +265,8 @@ export interface PopupStrings {
   featDiffersOnPlatforms: string;
   featMarkersName: string;
   featMarkersDesc: string;
+  /** The dot's line where there is no reading (a free install's General fold): every install draws the dot. */
+  featMarkersDescFree: string;
   featBlockAiName: string;
   featBlockAiDesc: string;
   featBlockReelsName: string;
@@ -308,16 +316,14 @@ export interface PopupStrings {
   quietEditDayNames: readonly string[];
   quietEditHint: string;
   featAiMasterName: string;
-  /** The AI switch's accessible name while it is locked off at Strict (B2F, P3-3). */
-  featAiMasterAriaStrict: string;
   featAiMasterDesc: string;
   featAiMasterOffNote: string;
-  /** The master reading switch's note in Strict, where it is off and cannot be turned on. */
-  featAiMasterStrictNote: string;
-  /** The licence card's line in Strict, which asks the server nothing. */
-  keySubStrict: string;
-  /** What Strict means, in the words the site and the store use. */
-  strictNoCallsLine: string;
+  /** The header chip's line at Silent with no key: the filter runs here and nothing is read. */
+  strictNoKeyLine: string;
+  /** The same chip at Silent with a key the relay accepts and the agreement given: what is read and what is replaced. */
+  strictKeyLine: string;
+  /** The same chip at Silent with a key and no agreement yet: nothing leaves until it is given. */
+  strictNeedsAgreement: string;
   outputLangName: string;
   outputLangAria: string;
   outputLangAuto: string;
@@ -327,22 +333,19 @@ export interface PopupStrings {
   modeSegChild: string;
   modeSegTeen: string;
   modeSegAdult: string;
-  // Names the mode the explanation below the segment row is about. The state
-  // line beside it already says "Standard <Mode> protection."; the explanation
-  // named no mode at all, so "Maximum protection." read as a second, competing
-  // description of nothing in particular (parent install read, 18 Sep 2026).
-  // `mode` is the human label of the mode being described.
-  modeExplainPrefix: (mode: string) => string;
-  modeExplainChildBody: string;
-  modeExplainTeenBody: string;
-  modeExplainAdultBody: string;
   // Mode-switch confirmation (POP-3). Applying a preset is a clean slate that
   // overwrites every custom toggle, so a switch that would change something
   // asks first. `mode` is the human label of the target mode.
   modeSwitchConfirmBody: (mode: string) => string;
   modeResetConfirmBody: (mode: string) => string;
-  modeStateCustomized: (mode: string) => string;
+  /** The one link under the level's list when the switches differ from the level's defaults. */
   modeStateReset: string;
+  /** Under the level buttons: one sentence on what the chosen level shows (the owner's card, 12 Oct 2026). */
+  levelSentenceChild: string;
+  levelSentenceTeen: string;
+  levelSentenceAdult: string;
+  /** One paragraph the Reading consent screen adds at Silent, covered by the hash stored with the agreement. */
+  consentStrictLine: string;
   modeSwitchConfirmYes: string;
 
   // Own rules: the word / phrase / account list editor (shared by both popups)
@@ -365,8 +368,9 @@ export interface PopupStrings {
   rulesSearch: string;
   /** Said under a search box when no rule or pick matches. */
   searchNoMatch: string;
-  /** Receipts settings: the first card, the switches a daily user reaches for. */
-  setEssentialsTitle: string;
+  /** Receipts settings: the two pages under the level, each a button on the first page and the title of its own page. */
+  setGeneralTitle: string;
+  setDeviceTitle: string;
   /** Receipts settings: the closed fold over the switches that take parts of a page away. */
   rulesCount: (n: number) => string;
   /** The chip editor (2026-09-03): the empty input's prompt, and the remove button's label. */
@@ -482,6 +486,10 @@ export interface PopupStrings {
   offPinSave: string;
   offPinMismatch: string;
   offPinLockedNote: string;
+  /** Off's "Remove PIN" row: the name on the row and its button, what it does, and the confirming button (12 Oct 2026). */
+  offPinRemoveName: string;
+  offPinRemoveDesc: string;
+  offPinRemoveSave: string;
   /** Receipts' note when a PIN is already set (Settings ask for it); Off has its own, offPinLockedNote. */
   pinLockedNote: string;
   /** One line over the PIN lock while a reading answer waits: why even an answer asks for the PIN (V1). */
@@ -511,4 +519,9 @@ export interface PopupStrings {
   contactReport: string;
   /** The word beside Home's figure since 9 Oct 2026: the posts and comments Receipts saw today. */
   homeSeenLabel: string;
+  /** The Topics fold (13 Oct 2026): subjects the person does not want in their feed, one switch each. */
+  topicsFoldName: string;
+  topicsFoldLead: string;
+  topicGamblingName: string;
+  topicGamblingDesc: string;
 }

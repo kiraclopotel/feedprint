@@ -49,7 +49,7 @@ describe('L9: the dashboard classes have rules', () => {
 
   it('the Export tab field has a field look with a focus ring, and a disabled button looks off', () => {
     const tab = read('src/ui/dashboard/components/ExportTab.tsx');
-    expect(tab.match(/className="dash-input"/g) ?? [], 'the passphrase field and the name field at the top').toHaveLength(2);
+    expect(tab.match(/className="dash-input"/g) ?? [], 'the name field, the backup passphrase, the restore PIN and the recovery passphrase').toHaveLength(4);
     expect(CSS).toMatch(/\.dash-input\s*\{[^}]*background: var\(--fw-surface\)/);
     expect(CSS).toMatch(/\.dash-input:focus\s*\{[^}]*box-shadow: 0 0 0 2px var\(--fw-accent\)/);
     expect(CSS).toMatch(/\.btn:disabled\s*\{[^}]*opacity: 0\.5;[^}]*cursor: not-allowed/);
@@ -70,8 +70,8 @@ describe('L10: an export card that cannot be used looks off', () => {
 });
 
 describe('L11: the Record tab cards have inner room', () => {
-  it('.entries-table-wrap has the 16 px step as padding', () => {
-    expect(CSS).toMatch(/\.entries-table-wrap\s*\{\s*padding: var\(--fw-s-7\);\s*\}/);
+  it('.entries-table-wrap has the same 24 px of inner room as every other card', () => {
+    expect(CSS).toMatch(/\.entries-table-wrap\s*\{\s*padding: 24px;\s*\}/);
   });
 });
 

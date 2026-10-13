@@ -4,8 +4,8 @@
 // fresh check of aba7c504, 9 Oct 2026): the feed moves on from it, past a second
 // hidden ad card; a card hidden while off screen moves the feed on when the
 // person lands on it, once; a card the site reuses for a real Short is shown
-// again; the kept-box hide is the Shorts ad card's alone (TikTok's For-You ad
-// keeps its own hide); and an ad delivered before its slot is recorded once.
+// again; the kept-box hide is the Shorts ad card's, Instagram's and, since 13 Oct
+// 2026, TikTok's For-You card's; and an ad delivered before its slot is recorded once.
 // The head's recheck of eff1e046 (9 Oct 2026) added four: a move held while the
 // person scrolls, which then gives up, still leaves the landing move; a person
 // going back up lands past the card upwards; TikTok and Instagram with boxes;
@@ -93,7 +93,7 @@ describe('the feed moves on from a hidden Shorts ad card', () => {
 });
 
 describe('the kept-box hide is the Shorts ad card\'s alone', () => {
-  it('a TikTok For-You ad on screen keeps its own hide (display:none), no feed move from this rule', () => {
+  it('a TikTok For-You ad on screen keeps its box with a line, and the feed moves on once (13 Oct 2026)', () => {
     _setHostForTesting('www.tiktok.com');
     document.body.innerHTML = `<div><div data-e2e="recommend-list-item-container" id="tt"><video></video>
       <div><span>Sponsored</span></div></div><div data-e2e="recommend-list-item-container" id="tt2"><video></video></div></div>`;
@@ -102,9 +102,12 @@ describe('the kept-box hide is the Shorts ad card\'s alone', () => {
     byId('tt2').scrollIntoView = vi.fn();
     scanFeedAds(document, 'tiktok');
     expect(hidden('tt')).toBe(true);
-    expect(byId('tt').style.display).toBe('none');
-    expect(byId('tt').style.visibility).toBe('');
-    expect(byId('tt2').scrollIntoView).not.toHaveBeenCalled();
+    // display:none took the card's box away, the snapping column put the person back on the card before it, and TikTok
+    // redrew the card so it was hidden again: the owner's report of 13 Oct 2026.
+    expect(byId('tt').style.display).toBe('');
+    expect(byId('tt').style.visibility).toBe('hidden');
+    expect(byId('tt').querySelector('[data-fw-ad-slot-note]')?.textContent).toBe('Skipped this video. Scroll on to keep going.');
+    expect(byId('tt2').scrollIntoView).toHaveBeenCalledTimes(1);
   });
 
   it('an Instagram feed ad on screen keeps its box with a note, no feed move from this rule', () => {

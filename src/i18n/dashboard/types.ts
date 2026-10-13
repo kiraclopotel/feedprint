@@ -225,7 +225,7 @@ export interface DashboardStrings {
   restoreChainNote: (err: string) => string;
   restoreChainFallback: string;
   restoreKeyRestored: string;
-  restoredMsg: (added: number, skipped: number, anchors: number, chain: string, key: string) => string;
+  restoredMsg: (added: number, skipped: number, anchors: number, chain: string, key: string, alsoArchived?: number) => string;
   /**
    * The restore's own confirmation, held by the dashboard so it survives the
    * refresh the restore starts. When the restore replaced nothing it says only
@@ -360,7 +360,7 @@ export interface DashboardStrings {
   /** Names which exports the included-of-total line describes (D2-6). */
   exportIncludedScope: string;
   /** What the Everything export holds: the active chain plus the archives (D2-6). */
-  everythingIncludes: (active: number, archived: number) => string;
+  everythingIncludes: (active: number, archived: number, inBoth?: number) => string;
   /** Receipt for a download that has no digest (JSON, CSV) (D2-5). */
   exportSavedNote: (file: string, bytes: number) => string;
   /** The PDF print tab opened (D2-5). */
@@ -999,6 +999,10 @@ export interface DashboardStrings {
   /** The same line at Strict, where a key turns nothing on. */
   opsAiOffStrict: string;
   opsAiOffStrictKey: string;
+  /** The Issues cards at Silent once it reads: the day's allowance used up, the service not answering, the key without the agreement. */
+  strictAllowanceOut: string;
+  strictServiceDown: string;
+  strictNoAgreement: string;
   opsTierMismatch1: string;
   opsTierMismatch2: (n: number) => string;
   opsLicenseActive1: string;
@@ -1190,6 +1194,9 @@ export interface DashboardStrings {
   opsCardReadingPausedTitle: string;
   opsCardReadingPausedMeaning: string;
   opsCardReadingPausedAction: string;
+  opsCardReadingTroubleTitle: string;
+  opsCardReadingTroubleMeaning: string;
+  opsCardReadingTroubleAction: string;
   opsTechDetails: string;
 
   // Overview tab (the landing surface; every number names its denominator)

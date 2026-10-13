@@ -46,7 +46,7 @@ import { appendRedactionMarker, isRedactionMarkerInput } from '../forensics/reda
 import { EXCLUSIONS_KEY, excludableAuthor, isExcludedAuthor, noteExcludedSkip, readExclusions, type AuthorExclusion } from '../forensics/author-exclusions';
 import { HEARTBEAT_INTERVAL_MINUTES } from '../forensics/heartbeat';
 import { syncRepairsIfDue } from './repairs-sync';
-import { makesNoOutsideCall } from '../types/mode';
+import { mayCallOutNow } from '../ai/gate-with-agreement';
 import { noteBuildRun } from '../storage/build-history';
 import { refreshEntitlementsOnInstall } from './entitlements-on-install';
 import { rememberRecheckTab, forgetRecheckTab, sweepOrphanRecheckTabs } from './recheck-tab-ledger';
@@ -64,8 +64,12 @@ import {
 } from '../types/messages';
 import { openSetupOnInstall } from './open-setup-on-install';
 import { provideBuildId } from '../core/build-id';
+import { LICENSE_STORAGE_KEY } from '../storage/license';
+import { READING_CONSENT_STORAGE_KEY } from '../storage/reading-consent';
 import { READING_PAUSED_STORAGE_KEY } from '../storage/reading-pause';
+import { READING_TROUBLE_STORAGE_KEY } from '../storage/reading-trouble';
 import { paintToolbarIcon } from './toolbar-icon';
+import { cancelRelayFetch, carryOutRelayFetch } from './relay-fetch';
 
 declare const __FW_BUILD_ID__: string;
 
@@ -129,13 +133,14 @@ async function withAuthorLock<T>(authorKey: string, work: () => Promise<T>): Pro
 const ANCHOR_ALARM = 'forensic-anchor';
 
 /**
- * Whether the time-stamp alarm may exist and fire: never in Strict, which makes no outside call. A
+ * Whether the time-stamp alarm may exist and fire: never in Strict while Strict reads nothing, which makes no
+ * outside call; once Strict reads, the time stamp follows its reading (types/reading-gate.ts). A
  * snapshot that cannot be read reads as Strict (settings.ts), so a failed read holds the alarm back
  * until the next wake rather than sending a hash out on a guess.
  */
 async function anchoringAllowed(): Promise<boolean> {
   try {
-    return !makesNoOutsideCall(await getSettings());
+    return await mayCallOutNow(await getSettings());
   } catch {
     return false;
   }
@@ -823,6 +828,16 @@ chrome.runtime.onMessage.addListener((message: FWMessage, sender, sendResponse) 
     return false;
   }
 
+  // The reading's calls: carried out here, not from the social site's page (background/relay-fetch.ts).
+  if (message.type === 'RELAY_FETCH' && message.payload) {
+    void carryOutRelayFetch(message.payload).then(sendResponse, () => sendResponse({ ok: false, kind: 'network' }));
+    return true; // async response
+  }
+  if (message.type === 'RELAY_FETCH_CANCEL' && message.payload) {
+    cancelRelayFetch((message.payload as { id?: unknown }).id);
+    return false;
+  }
+
   if (message.type === 'SCAN_LOG' && message.payload) {
     logScanEvent(message.payload).catch(err => {
       console.warn('[FeelingWise] Scan log failed:', err);
@@ -994,7 +1009,13 @@ chrome.runtime.onMessage.addListener((message: FWMessage, sender, sendResponse) 
     // an @handle on X vs FB is treated as separate identity (matches
     // the underlying author-store keying).
     const authorKey = `${p.author}@${p.platform}`;
-    withAuthorLock(authorKey, () => updateAuthorProfile(p.author, p.platform, p.flagged, p.techniques, p.day, p.textHash))
+    // The surface of the sighting and whether the "seen a lot" notice spoke are passed on only when the sender has them.
+    const exposure = p.surface !== undefined || p.noticed !== undefined
+      ? { surface: p.surface, noticed: p.noticed }
+      : undefined;
+    withAuthorLock(authorKey, () => exposure
+      ? updateAuthorProfile(p.author, p.platform, p.flagged, p.techniques, p.day, p.textHash, exposure)
+      : updateAuthorProfile(p.author, p.platform, p.flagged, p.techniques, p.day, p.textHash))
       .then(() => sendResponse({ ok: true }))
       .catch(err => {
         console.error('[FeelingWise] Author profile update failed:', err);
@@ -1584,8 +1605,9 @@ chrome.storage.onChanged.addListener((changes) => {
     void chrome.action.setBadgeText({ text: '' });
   }
   // The relay asked for the reading's go-ahead (a "!" on the icon), or it was given (the count comes back).
-  if (changes[READING_PAUSED_STORAGE_KEY]) void paintToolbarIcon();
-  // Entering Strict clears the time-stamp alarm and leaving it arms it again.
-  if (changes.mode) armMissingAlarms();
+  if (changes[READING_PAUSED_STORAGE_KEY] || changes[READING_TROUBLE_STORAGE_KEY]) void paintToolbarIcon();
+  // The time-stamp alarm follows the gate: entering Strict without a key and the agreement clears it, and leaving Strict, or
+  // adding the key and giving the agreement at Strict, arms it again.
+  if (changes.mode || changes[LICENSE_STORAGE_KEY] || changes[READING_CONSENT_STORAGE_KEY]) armMissingAlarms();
   if (changes[EXCLUSIONS_KEY]) exclusionsCache = null;
 });

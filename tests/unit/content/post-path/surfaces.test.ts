@@ -148,19 +148,17 @@ describe('the surface inventory', () => {
     }
   });
 
-  it('a stand-down is counted once per page life under its surface name; an unmodeled path under its first segment; a modeled page not at all', () => {
+  it('a stand-down is counted once per page life under its surface name; an unmodeled path under its site alone; a modeled page not at all', () => {
     noteSurfaceSighting('youtube', '/live_chat?v=1', classifySurface('youtube', '/live_chat?v=1'));
     noteSurfaceSighting('youtube', '/live_chat?v=2', classifySurface('youtube', '/live_chat?v=2'));
     noteSurfaceSighting('facebook', '/brand_new/thing/', classifySurface('facebook', '/brand_new/thing/'));
     noteSurfaceSighting('twitter', '/home', classifySurface('twitter', '/home'));
     const c = _getDiagnosticCountersForTesting();
     expect(c['surface.standDown:youtube-live-chat']).toBe(1);
-    const unmodeled = Object.keys(c).filter((k) => k.startsWith('surface.unmodeled:facebook:'));
-    expect(unmodeled).toHaveLength(1);
-    // The segment is often an account handle and the counters are pasted to
-    // support: the key carries an 8-character hash of it, never the word.
-    expect(unmodeled[0]).toMatch(/^surface\.unmodeled:facebook:[0-9a-f]{8}$/);
-    expect(unmodeled[0]).not.toContain('brand_new');
+    const unmodeled = Object.keys(c).filter((k) => k.startsWith('surface.unmodeled:facebook'));
+    // The first segment is often an account handle and the counters are pasted to
+    // support: the key names the site and nothing from the path, not even a hash.
+    expect(unmodeled).toEqual(['surface.unmodeled:facebook']);
     expect(Object.keys(c).filter((k) => k.startsWith('surface.'))).toHaveLength(2);
   });
 

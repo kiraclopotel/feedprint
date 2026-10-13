@@ -327,17 +327,17 @@ function youtubeFixture(): { action: HTMLElement; metric: HTMLElement; commentBl
       <span class="ytSpecButtonShapeNextButtonTextContent">1.2K</span>
     </like-button-view-model>
     <ytd-video-view-count-renderer>1.2K views</ytd-video-view-count-renderer>
-    <ytd-comments-header-renderer>239 Comments</ytd-comments-header-renderer>
+    <ytd-comment-simplebox-renderer>Add a comment</ytd-comment-simplebox-renderer>
   `;
   return {
     action: document.querySelector('like-button-view-model') as HTMLElement,
     metric: document.querySelector('ytd-video-view-count-renderer') as HTMLElement,
-    commentBlock: document.querySelector('ytd-comments-header-renderer') as HTMLElement,
+    commentBlock: document.querySelector('ytd-comment-simplebox-renderer') as HTMLElement,
   };
 }
 
 describe('cosmetic-hides-not-recorded — youtube', () => {
-  it('hides the action button, the view-count metric and the comment header, moves the popup counter, and never touches the chain', () => {
+  it('hides the action button, the view-count metric and the comment box, moves the popup counter, and never touches the chain', () => {
     const { action, metric, commentBlock } = youtubeFixture();
     const stop = startYouTubeEngagementControl(settingsWith(childPreset()));
     try {

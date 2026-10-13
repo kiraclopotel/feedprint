@@ -5,13 +5,14 @@
 
 import { type ProxyProbeResult, TEXT_CAP_STORAGE_KEY } from '../../../ai/client';
 import { CLAUDE_PAUSE_STORAGE_KEY } from '../../../ai/claude-reader';
-import { bearerOf, getReadingConsent } from '../../../storage/reading-consent';
+import { bearerOf, getReadingConsent, type ReadingConsent } from '../../../storage/reading-consent';
 import { usePopupT, useUiLanguage } from '../../../i18n/react';
 import { formatCount } from '../../shared/format-number';
 import { LicenseInfo, dailyCapForTier, effectiveMonthlyTokenCap, isUncappedTier } from '../../../storage/license';
 import { FWSettings, utcDayKey } from '../../../storage/settings';
-import { levelMakesNoCalls, makesNoOutsideCall } from '../../../types/mode';
-import { ShieldAlert } from '../../shared/icons/lucide';
+import { levelMakesNoCalls } from '../../../types/mode';
+import { mayCallOut } from '../../../types/reading-gate';
+import { ChevronRight, ShieldAlert } from '../../shared/icons/lucide';
 import { PLATFORM_LABELS, type PageCoverage, describePageCoverage } from '../coverage-map';
 import { StatusLine } from '../../shared/StatusLine';
 import { getFwVersion } from '../fw-version';
@@ -133,11 +134,6 @@ export function KeyUsage({ settings, license, probeResult = null }: {
   // headline is the shape this repository keeps meeting. Seen on a real
   // install after a refund revoked its key server-side.
   const keyRejected = aiBanner === 'revoked';
-  // Strict with a key (N1, 29 Sep 2026): Strict makes no outside call, so the
-  // key is held and nothing reads. The card said "Active" and "0 of 2,000 AI
-  // calls today" there, which a fresh reader of 2.5.16 took as the AI running.
-  // It now says the key is held, for the two levels where it counts.
-  const strictHeld = levelMakesNoCalls(settings) && tier !== 'free' && !keyRejected;
   // Effective daily cap: the smaller of the per-tier ceiling and the
   // user-configurable settings.dailyCap. settings.dailyCap can dial DOWN
   // (more conservative) but cannot exceed the tier ceiling. Free tier =
@@ -206,7 +202,7 @@ export function KeyUsage({ settings, license, probeResult = null }: {
 
   // The key's state is said once, by the header chip (his word, 8 Oct 2026: a "KEY SAVED" chip over a "KEY HELD"
   // pill said it twice). This keeps only what the chip cannot hold: an active key's numbers.
-  if (tier === 'free' || keyRejected || strictHeld) return null;
+  if (tier === 'free' || keyRejected) return null;
   return (
     <div className="pop-tier">
       <div className="meta">{uncapped ? t.metaUnlimited(dailyUsed) : t.metaUsage(dailyUsed, dailyCap, dailyPct)}</div>
@@ -224,7 +220,7 @@ export function KeyUsage({ settings, license, probeResult = null }: {
           {claudeReading === 'paused' ? t.claudePausedLine : t.claudeStopsFirst}
         </div>
       )}
-      {pausedText && !levelMakesNoCalls(settings) && (
+      {pausedText && (
         // role="status" (accessibility audit, 2026-09-18): the result of
         // hitting a cap is one of the ten the audit found announced to
         // nobody. The hardcoded #d98a00 ignored the theme; --fw-amber is
@@ -244,13 +240,17 @@ export function KeyUsage({ settings, license, probeResult = null }: {
 // is off" banner to the License tab, which says it beside the key. A refused key still says so here: that is a fault,
 // not an explanation.
 export function HomeTab({
-  settings, license, probeResult = null, onOpenDashboard, onOpenDashboardSection,
-  isDetached = false, onChange,
+  settings, license, probeResult = null, readingTrouble = false, onOpenDashboard, onOpenDashboardSection,
+  isDetached = false, onChange, consent,
 }: {
   settings: FWSettings;
   license: LicenseInfo;
   // Live proxy-probe outcome (POP-5). Drives the refused-key alert.
   probeResult?: ProxyProbeResult | null;
+  // The reading service has not answered several calls in a row: posts stay as written, and Home says so.
+  readingTrouble?: boolean;
+  // The reading agreement stored for this key (null when none, undefined until read): Silent reads only once it is given.
+  consent?: ReadingConsent | null;
   onOpenDashboard: () => void;
   onOpenDashboardSection: (section: 'all' | 'blocked') => void;
   // True when rendered inside the standalone popup.html?detached=1 window —
@@ -341,6 +341,16 @@ export function HomeTab({
         </div>
       )}
 
+      {/* The reading service is not answering. Nothing for the person to do, and the licence is fine, so it is a warning and not
+          the key alert above (the Tester's full test, 11 Oct 2026). Not shown at Silent: its words say posts show as written,
+          and at Silent they are filtered here; the dashboard's Issues card says it for Silent in its own words. */}
+      {readingTrouble && aiBanner === 'none' && !levelMakesNoCalls(settings) && (
+        <div className="pop-bn warn" role="status">
+          <div className="ttl"><ShieldAlert size={14} /> {t.readingTroubleTitle}</div>
+          <div className="body">{t.readingTroubleBody}</div>
+        </div>
+      )}
+
       {/* 2. Today, led by ONE figure: what Receipts saw today, split by site in the bar under it. What it handled
           (hid, marked, rewrote) is the small figure at the right, when there is any. The card opens the feed. */}
       <div className="pop-card today-card">
@@ -359,10 +369,11 @@ export function HomeTab({
               {settings.totalNeutralizedAllTime > 0 && <span>{t.kpiTotal(formatCount(settings.totalNeutralizedAllTime, uiLang))}</span>}
             </span>
           )}
+          <ChevronRight size={16} className="pop-hero-chev" aria-hidden={true} />
         </button>
-        {/* What Receipts looked at today (stage 3, 10 Oct 2026). One site: the sentence alone, naming the site, from that
-            site's own numbers, so no bar stands without words. Two or more: the same sentence shown above a calm bar in
-            tints of the accent, largest first, and a legend whose keys carry their own words as their title. */}
+        {/* What Receipts looked at today. One site: the sentence alone, naming the site, from that site's own numbers, so
+            no bar stands without words. Two or more: the same sentence shown above a calm bar, largest first, each site
+            in its own fixed colour, and a legend whose keys carry their own words as their title. */}
         {bySite.length === 1 ? (
           <div className="pop-count-line" data-testid="home-read-count">
             {t.homeReadCount(bySite[0].posts, bySite[0].comments, (n) => formatCount(n, uiLang), PLATFORM_LABELS[bySite[0].site])}
@@ -371,14 +382,14 @@ export function HomeTab({
           <div className="site-read" data-testid="home-read-count" title={readSentence}>
             <div className="site-read-line">{readSentence}</div>
             <div className="site-bar" aria-hidden={true}>
-              {bySite.map((s, i) => <span key={s.site} className={`site-seg rank-${Math.min(i, 4)}`} style={{ flexGrow: s.n }} />)}
+              {bySite.map((s) => <span key={s.site} className={`site-seg site-${s.site}`} style={{ flexGrow: s.n }} />)}
             </div>
             <div className="site-legend" aria-hidden={true}>
-              {bySite.map((s, i) => {
+              {bySite.map((s) => {
                 const words = `${PLATFORM_LABELS[s.site]} ${formatCount(s.n, uiLang)}`;
                 return (
                   <span key={s.site} className="site-key" title={words}>
-                    <i className={`site-dot rank-${Math.min(i, 4)}`} />{words}
+                    <i className={`site-dot site-${s.site}`} />{words}
                   </span>
                 );
               })}
@@ -399,11 +410,11 @@ export function HomeTab({
       </div>
 
       {/* A closed fold: a picture of how this page is built, no words in it, shown in full before it can be sent (11 Oct 2026).
-          At a level that makes no outside call it can only be copied. */}
+          Where nothing may leave now (Silent without a key or the agreement, a level not chosen) it can only be copied. */}
       <DescribePage
         tabId={async () => (await queryCoverageTab(isDetached))?.id}
-        send={makesNoOutsideCall(settings) ? undefined : sendDomReport}
-        noCalls={makesNoOutsideCall(settings)}
+        send={mayCallOut(settings, license, consent) ? sendDomReport : undefined}
+        noCalls={!mayCallOut(settings, license, consent)}
       />
 
       {/* 4. The bottom row: version, style, theme, the contact menu, privacy. */}

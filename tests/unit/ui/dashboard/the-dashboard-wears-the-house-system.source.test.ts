@@ -7,7 +7,7 @@
 // Source-scan style on purpose: the drift is "someone adds a 12px radius or a drop shadow", which no behavioural test sees.
 
 import { describe, it, expect } from 'vitest';
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { readSource } from '../../../helpers/read-source';
 import { repoPath } from '../../../helpers/repo-root';
 
@@ -48,13 +48,26 @@ describe('the dashboard wears the house system', () => {
     const frame = readSource(FRAME);
     expect(frame).toMatch(/--fw-font-mono: var\(--fw-font\);/);
     expect(frame).toMatch(/font-variant-numeric: tabular-nums;/);
-    // Until the font file ships in the package, a url() would be a failed load on every open of the page.
-    expect(css).not.toMatch(/@font-face \{[^}]*url\(/);
+  });
+
+  it('ships the face in the package: the rule names the file first, the file is there, local() stays as the fallback', () => {
+    const css = readSource(HOUSE);
+    const face = css.match(/@font-face \{[^}]*font-family: "Bricolage Grotesque"[^}]*\}/)![0];
+    const src = face.match(/src:([^;]+);/)![1];
+    expect(src.trim().startsWith("url('./fonts/BricolageGrotesque-Variable.woff2') format('woff2')"), 'the file comes first').toBe(true);
+    expect(src).toContain('local("Bricolage Grotesque")');
+    // A url() to a file that is not there is a failed load on every open of the page.
+    const file = repoPath('src', 'ui', 'dashboard', 'fonts', 'BricolageGrotesque-Variable.woff2');
+    expect(existsSync(file), 'the font file sits beside the stylesheet').toBe(true);
+    const bytes = readFileSync(file);
+    expect(bytes.subarray(0, 4).toString('latin1')).toBe('wOF2');
+    expect(bytes.length).toBeGreaterThan(50_000);
+    expect(existsSync(repoPath('src', 'ui', 'dashboard', 'fonts', 'OFL.txt')), 'the licence travels with the file').toBe(true);
   });
 
   it('the active tab is ink over the record colour, the product\'s own, and the bars are ink', () => {
     const css = readSource(FRAME);
-    expect(css).toMatch(/\.dash-tab\.active \{ background: transparent; color: var\(--fw-ink\); font-weight: 700; border-bottom-color: var\(--fw-record\); \}/);
+    expect(css).toMatch(/\.dash-tab\.active \{ background: transparent; color: var\(--fw-ink\); font-weight: 500; border-bottom-color: var\(--fw-record\); \}/);
     expect(css).toMatch(/\.bar-fill \{ background: var\(--fw-ink\) !important; \}/);
   });
 
@@ -68,7 +81,7 @@ describe('the dashboard wears the house system', () => {
     expect(round).toEqual([]);
     const shadows = [...css.matchAll(/box-shadow: ([^;]+);/g)].map((m) => m[1].trim())
       .filter((v) => v !== 'none' && !v.startsWith('var(--fw-shadow') && v !== '0 0 0 2px var(--fw-accent)'
-        && !/^0 0 0 (0|4px) color-mix/.test(v)); // the unused hint keyframes, never animated now
+        && !/^0 0 0 4px color-mix/.test(v)); // the Timeline marker's faint halo
     expect(shadows).toEqual([]);
     const loops = [...css.matchAll(/animation: ([^;]+);/g)].map((m) => m[1]).filter((v) => /infinite/.test(v));
     expect(loops).toEqual(['fw-spin 0.8s linear infinite']);

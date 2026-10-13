@@ -37,7 +37,7 @@ afterEach(() => { act(() => root.unmount()); container.remove(); });
 async function panel(s: FWSettings): Promise<void> {
   fake = installCounterChrome({ features: s.features, strictLanguage: s.strictLanguage, mode: s.mode });
   await act(async () => {
-    root.render(createElement(I18nProvider, { lang: 'en', children: createElement(SettingsPanel, { settings: s, license: FREE, onBack: () => {}, onChange: async () => {} }) }));
+    root.render(createElement(I18nProvider, { lang: 'en', children: createElement(SettingsPanel, { settings: s, license: FREE, onBack: () => {}, onChange: async () => {}, openOn: 'general' }) }));
   });
 }
 const sw = (label: string) => container.querySelector(`[role="switch"][aria-label="${label}"]`) as HTMLElement | null;

@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
-// B2 unit 4 (M1; QUALITY Q5). At Strict, Settings with a key held showed "Calmer rewrites (AI)" and "Rewrite
-// flagged comments", though Strict sends nothing and neither can work there. At Strict neither shows; at
-// Moderate and Relaxed both are still there. The stored choices are not touched (leaving Strict gives them back).
+// B2 unit 4 (M1; QUALITY Q5) hid "Calmer rewrites (AI)" and "Rewrite flagged comments" at Strict, because Strict sent
+// nothing and neither could work there. Since 12 Oct 2026 Silent (the Strict level) reads once a key is added and agreed to,
+// and rephrases what it reads, so both switches show at all three levels. The stored choices are never touched.
 
 import { describe, expect, it, vi } from 'vitest';
 import { createElement } from 'react';
@@ -51,13 +51,7 @@ const settingsPanel = (mode: Mode, lang: (typeof UI_LANGUAGES)[number]) => rende
 describe.each(UI_LANGUAGES)('Settings with a key held, %s', (lang) => {
   const t = POPUP_STRINGS[lang];
 
-  it('at Strict neither AI rewrite switch shows', () => {
-    const html = settingsPanel('child', lang);
-    expect(html).not.toContain(esc(t.reframeRewritesName));
-    expect(html).not.toContain(esc(t.featRewriteName));
-  });
-
-  it.each(['teen', 'adult'] as const)('at %s both still show', (mode) => {
+  it.each(['child', 'teen', 'adult'] as const)('at %s both AI rewrite switches show', (mode) => {
     const html = settingsPanel(mode, lang);
     expect(html).toContain(esc(t.reframeRewritesName));
     expect(html).toContain(esc(t.featRewriteName));

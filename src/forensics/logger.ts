@@ -6,6 +6,7 @@ import { AnalysisResult } from '../types/analysis';
 import { Platform, FeedSource } from '../types/post';
 import { Mode, levelOf } from '../types/mode';
 import { sha256 } from './hasher';
+import { withoutStuckFoldLabel } from './stuck-fold-label';
 import { addRecord, getChainState } from './store';
 import { finalizeRecord } from './record-stamp';
 import { verdictFor } from '../core/policy/table';
@@ -70,8 +71,10 @@ export async function logPassEvent(
   capturedAt?: string,
   disposition?: ForensicDeliveryDisposition,
 ): Promise<void> {
+  // The page's button, not the author's words: stored without it (stuck-fold-label.ts).
+  const originalText = withoutStuckFoldLabel(input.originalText, input.platform, input.textCapture);
   try {
-    const originalHash = await sha256(input.originalText);
+    const originalHash = await sha256(originalText);
     // Even for pass records, capture the techniques the L1 detector saw
     // (sub-floor signals). The recall instrument uses these to decide
     // whether to sample-re-judge: a pass with several near-floor techniques
@@ -89,9 +92,9 @@ export async function logPassEvent(
         id: `fr-pass-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         timestamp: resolveCaptureTimestamp(capturedAt),
         platform: input.platform,
-        originalText: input.originalText,
+        originalText,
         originalHash,
-        originalLength: input.originalText.length,
+        originalLength: originalText.length,
         // Pass records carry no neutralization — the post is unchanged on the
         // page. Empty string keeps the canonical-payload shape uniform.
         neutralizedText: '',
@@ -271,7 +274,7 @@ export async function logForensicEvent(
   disposition?: ForensicDeliveryDisposition,
 ): Promise<void> {
   const {
-    originalText,
+    originalText: textAsHeld,
     neutralizedText,
     analysis,
     mode,
@@ -311,6 +314,8 @@ export async function logForensicEvent(
     mediaUrls,
     verdictOrigin,
   } = input;
+  // The page's button, not the author's words: stored without it (stuck-fold-label.ts).
+  const originalText = withoutStuckFoldLabel(textAsHeld, platform, textCapture);
   try {
     const originalHash = await sha256(originalText);
 
@@ -543,8 +548,10 @@ export async function logCancelEvent(
   capturedAt?: string,
   disposition?: ForensicDeliveryDisposition,
 ): Promise<void> {
+  // The page's button, not the author's words: stored without it (stuck-fold-label.ts).
+  const originalText = withoutStuckFoldLabel(input.originalText, input.platform, input.textCapture);
   try {
-    const originalHash = await sha256(input.originalText);
+    const originalHash = await sha256(originalText);
     // When the LLM ran (mid-flight + render-gate cancels), preserve the
     // techniques the detector saw so the chain record contains the
     // determination FW made even though the verdict never rendered. When the
@@ -573,9 +580,9 @@ export async function logCancelEvent(
         id: `fr-cancel-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         timestamp: resolveCaptureTimestamp(capturedAt),
         platform: input.platform,
-        originalText: input.originalText,
+        originalText,
         originalHash,
-        originalLength: input.originalText.length,
+        originalLength: originalText.length,
         neutralizedText: '',
         author: input.author || '',
         authorName: input.authorName || undefined,
@@ -638,8 +645,10 @@ export async function logSkippedEvent(
   capturedAt?: string,
   disposition?: ForensicDeliveryDisposition,
 ): Promise<void> {
+  // The page's button, not the author's words: stored without it (stuck-fold-label.ts).
+  const originalText = withoutStuckFoldLabel(input.originalText, input.platform, input.textCapture);
   try {
-    const originalHash = await sha256(input.originalText);
+    const originalHash = await sha256(originalText);
 
     await withChainWriteLock(async () => {
       const chainState = await getChainState();
@@ -647,9 +656,9 @@ export async function logSkippedEvent(
         id: `fr-skp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         timestamp: resolveCaptureTimestamp(capturedAt),
         platform: input.platform,
-        originalText: input.originalText,
+        originalText,
         originalHash,
-        originalLength: input.originalText.length,
+        originalLength: originalText.length,
         // Nothing was rewritten and nothing was hidden.
         neutralizedText: '',
         author: input.author || '',

@@ -86,6 +86,7 @@ async function renderSettings(settings: FWSettings): Promise<void> {
         onBack: () => {},
         onChange,
         platform: null,
+        openOn: 'device',
       }),
     }));
   });

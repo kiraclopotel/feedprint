@@ -77,7 +77,8 @@ export async function donateExport(
 ): Promise<DonationOutcome> {
   // The level is asked first: at Strict, and before a level is chosen, nothing leaves this computer, whatever the roster holds.
   // A settings read that fails reads as Strict (getSettings fails closed), as it does for the time-stamp client (tsa-client.ts):
-  // not knowing the level is no reason to send a file out.
+  // not knowing the level is no reason to send a file out. This stays makesNoOutsideCall when Strict reads: a donation
+  // sends the person's whole record to a research recipient, which is not the reading the adult agreed to at Strict.
   const settings = await getSettings();
   if (makesNoOutsideCall(settings)) return { kind: 'refused', reason: 'strict' };
   const recipient = activeDonationRecipient();
@@ -86,7 +87,9 @@ export async function donateExport(
   if (filter.included.length === 0) return { kind: 'refused', reason: 'nothing-to-send' };
 
   const build = deps.buildDocument ?? buildHtmlExportDocument;
-  const html = await build(records, filter, locale);
+  // The file leaves this computer, so it states how many accounts were set aside and not whose: the names are the person's
+  // to show, in the file they keep (forensics/exporter.ts excludedAccountsForExport).
+  const html = await build(records, filter, locale, undefined, { nameExcludedAccounts: false });
   const doFetch = deps.fetch ?? fetch;
   try {
     const response = await doFetch(recipient.endpoint, {

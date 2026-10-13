@@ -1,5 +1,5 @@
-// The whole-record export's "How items were identified" section names the levels Strict, Moderate
-// and Relaxed in its labels and notes: no "Adult reader", no "child and teen mode", no floor table
+// The whole-record export's "How items were identified" section names the levels Silent, Calm
+// and Open (the names on the screens since 12 Oct 2026) in its labels and notes: no "Adult reader", no "child and teen mode", no floor table
 // headed Child and Teen. The prompts are printed verbatim, as the model received them, and are left
 // out of the name check.
 
@@ -40,19 +40,24 @@ describe('the methodology section of the export', () => {
     expect(hit?.[0] ?? null).toBeNull();
   });
 
-  it('calls the reader of Relaxed posts the Relaxed reader, and heads the floor table Strict and Moderate', () => {
+  it('calls the reader of Open posts the Open reader, and heads the floor table Silent and Calm', () => {
     const words = methodologyWords();
-    expect(words).toContain('Relaxed reader');
-    expect(words).toContain('<th>Strict</th><th>Moderate</th>');
+    expect(words).toContain('Open reader');
+    expect(words).toContain('<th>Silent</th><th>Calm</th>');
   });
 
-  it('the per-record note on a hide that did not land names Strict, in all four languages', () => {
+  it('keeps no level of the old names in the section outside the verbatim prompts, so the file speaks in one set of names', () => {
+    const words = methodologyWords();
+    expect(words.match(/\bStrict\b|\bModerate\b|\bRelaxed\b/i)?.[0] ?? null).toBeNull();
+  });
+
+  it('the per-record note on a hide that did not land names Silent, in all four languages', () => {
     const src = readFileSync(join(process.cwd(), 'src/forensics/exporter.ts'), 'utf8');
     const notes = src.split('\n').filter((l) => l.trim().startsWith('visualNotAppliedNote:'));
     expect(notes).toHaveLength(4);
     for (const n of notes) {
       expect(n).not.toMatch(/Child|Copil|Niño|Criança/);
-      expect(n).toMatch(/Strict|Estricto|Rigoroso/);
+      expect(n).toMatch(/Silent|Silențios|Silencioso/);
     }
   });
 

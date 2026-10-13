@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Walk fixture: a home feed with a gambling topic in it</title>
+<!--
+  A frozen, synthetic home feed for scripts/walk/topics-walk.mjs (Topics U1, 13 Oct 2026).
+
+  Nothing here is copied from a real feed. Every handle, every id and every sentence was written for this file. The shapes
+  are the ones tests/fixtures/walk/x-home-feed.html documents (the X adapter reads them).
+
+  Six posts mention gambling (two in English, two in Romanian, one in Spanish, one in Portuguese) and
+  name it with a word, a phrase or a brand from the written list (src/core/topic-lists/gambling-v1.json). Six are ordinary,
+  and three of them are the near misses the list must leave alone: "the better team" (not "bet"), "against all odds" and
+  "aviator sunglasses" (ordinary English words that other languages' lists carry). With the Topics switch on, the walk expects
+  the first six hidden behind "Mentions gambling" and the second six untouched; with it off, all twelve untouched.
+  No model is asked: the free tier does all of it.
+-->
+<style>
+  body { font: 15px system-ui, sans-serif; margin: 0; background: #fff; color: #0f1419; }
+  main { max-width: 600px; margin: 0 auto; }
+  [data-testid="cellInnerDiv"] { border-bottom: 1px solid #eff3f4; padding: 12px 16px; }
+  [data-testid="User-Name"] { font-weight: 700; }
+  [data-testid="User-Name"] a { color: inherit; text-decoration: none; }
+  [data-testid="tweetText"] { margin: 6px 0 10px; }
+  [role="group"] { display: flex; gap: 48px; color: #536471; font-size: 13px; }
+  time { font-weight: 400; color: #536471; }
+</style>
+</head>
+<body>
+<div data-testid="primaryColumn" aria-label="Home timeline">
+  <main role="main">
+
+    <div data-testid="cellInnerDiv" data-walk="gamble-en-1">
+      <article role="article" tabindex="0">
+        <div data-testid="User-Name">
+          <a href="/walktopic1" role="link"><span>Walk Topic 1</span></a>
+          <a href="/walktopic1/status/1900000000000010001" role="link"><time datetime="2026-10-13T02:00:00.000Z">1h</time></a>
+        </div>
+        <div data-testid="tweetText" lang="en"><span>Sign up today and get a free bet on your first deposit at bet365</span></div>
+        <div role="group">
+          <div data-testid="reply"><span data-testid="app-text-transition-container"><span>1</span></span></div>
+          <div data-testid="retweet"><span data-testid="app-text-transition-container"></span></div>
+          <div data-testid="like"><span data-testid="app-text-transition-container"><span>3</span></span></div>
+        </div>
+      </article>
+    </div>
+
+    <div data-testid="cellInnerDiv" data-walk="clean-en-1">
+      <article role="article" tabindex="0">
+        <div data-testid="User-Name">
+          <a href="/walktopic2" role="link"><span>Walk Topic 2</span></a>
+          <a href="/walktopic2/status/1900000000000010002" role="link"><time datetime="2026-10-13T03:00:00.000Z">2h</time></a>
+        </div>
+        <div data-testid="tweetText" lang="en"><span>The better team won, and the weather was lovely for the whole match</span></div>
+        <div role="group">
+          <div data-testid="reply"><span data-testid="app-text-transition-container"><span>2</span></span></div>
+          <div data-testid="retweet"><span data-testid="app-text-transition-container"></span></div>
+          <div data-testid="like"><span data-testid="app-text-transition-container"><span>6</span></span></div>
+        </div>
+      </article>
+    </div>
+
+    <div data-testid="cellInnerDiv" data-walk="gamble-ro-1">
+      <article role="article" tabindex="0">
+        <div data-testid="User-Name">
+          <a href="/walktopic3" role="link"><span>Walk Topic 3</span></a>
+          <a href="/walktopic3/status/1900000000000010003" role="link"><time datetime="2026-10-13T04:00:00.000Z">3h</time></a>
+        </div>
+        <div data-testid="tweetText" lang="ro"><span>Pariuri sportive cu cote mărite la Superbet, doar astăzi</span></div>
+        <div role="group">
+          <div data-testid="reply"><span data-testid="app-text-transition-container"><span>3</span></span></div>
+          <div data-testid="retweet"><span data-testid="app-text-transition-container"></span></div>
+          <div data-testid="like"><span data-testid="app-text-transition-container"><span>9</span></span></div>
+        </div>
+      </article>
+    </div>
+
+    <div data-testid="cellInnerDiv" data-walk="clean-en-2">
+      <article role="article" tabindex="0">
+        <div data-testid="User-Name">
+          <a href="/walktopic4" role="link"><span>Walk Topic 4</span></a>
+          <a href="/walktopic4/status/1900000000000010004" role="link"><time datetime="2026-10-13T05:00:00.000Z">4h</time></a>
+        </div>
+        <div data-testid="tweetText" lang="en"><span>Against all odds, she finished the marathon in the rain and still smiled at the end</span></div>
+        <div role="group">
+          <div data-testid="reply"><span data-testid="app-text-transition-container"><span>4</span></span></div>
+          <div data-testid="retweet"><span data-testid="app-text-transition-container"></span></div>
+          <div data-testid="like"><span data-testid="app-text-transition-container"><span>12</span></span></div>
+        </div>
+      </article>
+    </div>
+
+    <div data-testid="cellInnerDiv" data-walk="gamble-es-1">
+      <article role="article" tabindex="0">
+        <div data-testid="User-Name">
+          <a href="/walktopic5" role="link"><span>Walk Topic 5</span></a>
+          <a href="/walktopic5/status/1900000000000010005" role="link"><time datetime="2026-10-13T06:00:00.000Z">5h</time></a>
+        </div>
+        <div data-testid="tweetText" lang="es"><span>Las apuestas deportivas en línea están en auge, pero yo prefiero jugar al dominó</span></div>
+        <div role="group">
+          <div data-testid="reply"><span data-testid="app-text-transition-container"><span>5</span></span></div>
+          <div data-testid="retweet"><span data-testid="app-text-transition-container"></span></div>
+          <div data-testid="like"><span data-testid="app-text-transition-container"><span>15</span></span></div>
+        </div>
+      </article>
+    </div>
+
+    <div data-testid="cellInnerDiv" data-walk="clean-es-1">
+      <article role="article" tabindex="0">
+        <div data-testid="User-Name">
+          <a href="/walktopic6" role="link"><span>Walk Topic 6</span></a>
+          <a href="/walktopic6/status/1900000000000010006" role="link"><time datetime="2026-10-13T07:00:00.000Z">6h</time></a>
+        </div>
+        <div data-testid="tweetText" lang="es"><span>Hoy fuimos a la playa con toda la familia y comimos pan recién hecho</span></div>
+        <div role="group">
+          <div data-testid="reply"><span data-testid="app-text-transition-container"><span>6</span></span></div>
+          <div data-testid="retweet"><span data-testid="app-text-transition-container"></span></div>
+          <div data-testid="like"><span data-testid="app-text-transition-container"><span>18</span></span></div>
+        </div>
+      </article>
+    </div>
+
+    <div data-testid="cellInnerDiv" data-walk="gamble-pt-1">
+      <article role="article" tabindex="0">
+        <div data-testid="User-Name">
+          <a href="/walktopic7" role="link"><span>Walk Topic 7</span></a>
+          <a href="/walktopic7/status/1900000000000010007" role="link"><time datetime="2026-10-13T08:00:00.000Z">7h</time></a>
+        </div>
+        <div data-testid="tweetText" lang="pt"><span>Joguei no jogo do tigrinho ontem e perdi tudo, nunca mais</span></div>
+        <div role="group">
+          <div data-testid="reply"><span data-testid="app-text-transition-container"><span>7</span></span></div>
+          <div data-testid="retweet"><span data-testid="app-text-transition-container"></span></div>
+          <div data-testid="like"><span data-testid="app-text-transition-container"><span>21</span></span></div>
+        </div>
+      </article>
+    </div>
+
+    <div data-testid="cellInnerDiv" data-walk="clean-en-3">
+      <article role="article" tabindex="0">
+        <div data-testid="User-Name">
+          <a href="/walktopic8" role="link"><span>Walk Topic 8</span></a>
+          <a href="/walktopic8/status/1900000000000010008" role="link"><time datetime="2026-10-13T01:00:00.000Z">8h</time></a>
+        </div>
+        <div data-testid="tweetText" lang="en"><span>Aviator sunglasses are back in style this summer, and they suit everyone</span></div>
+        <div role="group">
+          <div data-testid="reply"><span data-testid="app-text-transition-container"><span>8</span></span></div>
+          <div data-testid="retweet"><span data-testid="app-text-transition-container"></span></div>
+          <div data-testid="like"><span data-testid="app-text-transition-container"><span>24</span></span></div>
+        </div>
+      </article>
+    </div>
+
+    <div data-testid="cellInnerDiv" data-walk="gamble-en-2">
+      <article role="article" tabindex="0">
+        <div data-testid="User-Name">
+          <a href="/walktopic9" role="link"><span>Walk Topic 9</span></a>
+          <a href="/walktopic9/status/1900000000000010009" role="link"><time datetime="2026-10-13T02:00:00.000Z">9h</time></a>
+        </div>
+        <div data-testid="tweetText" lang="en"><span>The new online casino gives every new player a no deposit bonus</span></div>
+        <div role="group">
+          <div data-testid="reply"><span data-testid="app-text-transition-container"><span>9</span></span></div>
+          <div data-testid="retweet"><span data-testid="app-text-transition-container"></span></div>
+          <div data-testid="like"><span data-testid="app-text-transition-container"><span>27</span></span></div>
+        </div>
+      </article>
+    </div>
+
+    <div data-testid="cellInnerDiv" data-walk="clean-pt-1">
+      <article role="article" tabindex="0">
+        <div data-testid="User-Name">
+          <a href="/walktopic10" role="link"><span>Walk Topic 10</span></a>
+          <a href="/walktopic10/status/1900000000000010010" role="link"><time datetime="2026-10-13T03:00:00.000Z">10h</time></a>
+        </div>
+        <div data-testid="tweetText" lang="pt"><span>Hoje o dia foi lindo e fomos à praia com a família inteira</span></div>
+        <div role="group">
+          <div data-testid="reply"><span data-testid="app-text-transition-container"><span>10</span></span></div>
+          <div data-testid="retweet"><span data-testid="app-text-transition-container"></span></div>
+          <div data-testid="like"><span data-testid="app-text-transition-container"><span>30</span></span></div>
+        </div>
+      </article>
+    </div>
+
+    <div data-testid="cellInnerDiv" data-walk="gamble-ro-2">
+      <article role="article" tabindex="0">
+        <div data-testid="User-Name">
+          <a href="/walktopic11" role="link"><span>Walk Topic 11</span></a>
+          <a href="/walktopic11/status/1900000000000010011" role="link"><time datetime="2026-10-13T04:00:00.000Z">11h</time></a>
+        </div>
+        <div data-testid="tweetText" lang="ro"><span>Am câștigat la pacanele aseară, nu-mi vine să cred ce noroc</span></div>
+        <div role="group">
+          <div data-testid="reply"><span data-testid="app-text-transition-container"><span>11</span></span></div>
+          <div data-testid="retweet"><span data-testid="app-text-transition-container"></span></div>
+          <div data-testid="like"><span data-testid="app-text-transition-container"><span>33</span></span></div>
+        </div>
+      </article>
+    </div>
+
+    <div data-testid="cellInnerDiv" data-walk="clean-ro-1">
+      <article role="article" tabindex="0">
+        <div data-testid="User-Name">
+          <a href="/walktopic12" role="link"><span>Walk Topic 12</span></a>
+          <a href="/walktopic12/status/1900000000000010012" role="link"><time datetime="2026-10-13T05:00:00.000Z">12h</time></a>
+        </div>
+        <div data-testid="tweetText" lang="ro"><span>Am avut un weekend liniștit la munte cu familia, fără telefon</span></div>
+        <div role="group">
+          <div data-testid="reply"><span data-testid="app-text-transition-container"><span>12</span></span></div>
+          <div data-testid="retweet"><span data-testid="app-text-transition-container"></span></div>
+          <div data-testid="like"><span data-testid="app-text-transition-container"><span>36</span></span></div>
+        </div>
+      </article>
+    </div>
+
+  </main>
+</div>
+</body>
+</html>

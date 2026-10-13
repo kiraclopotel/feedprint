@@ -6,6 +6,37 @@ Store "What's new" blurb.
 
 ---
 
+## Feedprint 2.5.19, not yet packaged (on master since 13 October 2026)
+
+Kept as the work lands, so the Updates page and the store blurb are written from it when the package is frozen.
+Three of the changes make a request the 2.5.18 store build never makes, and the Help, Home and Privacy pages are
+updated for them before 2.5.19 ships.
+
+### New outside requests
+
+1. **A signed repair file.** Every six hours, at the Calm and Open levels, with or without a key, Feedprint asks
+   `api.feelingwise.org/v1/repairs` for a small file that can add or remove the page selectors and words its finders
+   use, or switch a finder off. It carries no code, is signed (Ed25519) under keys in the package, and is refused when
+   older than the copy already held.
+2. **Describe this page.** When the person asks, it sends a map of the page's structure to `/v1/dom-report` that
+   includes label words and address shapes from closed lists, with no free text, ids or classes. The person can open
+   the map before sending.
+3. **A second reader at the Open level.** Flagged items also go to Anthropic through `/v1/claude/verdict`. This
+   happens only after its own consent screen.
+
+### Fixes from the cold audit of 13 October 2026
+
+1. **Stricter time stamp check.** Every certificate above the signing one must be a certificate authority, allowed to
+   sign certificates, and valid at the stamp's time.
+2. **Live Rephrase now asks first.** No post text leaves the computer until the person's go ahead is stored, whereas
+   before only the relay enforced this.
+3. **Export names the independent checker.** It lists feelingwise.org/check and the open checker repository and calls
+   its built-in verdict a convenience.
+4. **Diagnostics omit page address trace.** A page with no rule is counted under its site alone, not under a short
+   hash of the address's first part, which is often an account name.
+
+---
+
 ## Receipts 2.5.18 and Off 1.0.13, packaged 7 October 2026
 
 Written on 7 October 2026 from the commits since the two packages of 6 October, Receipts 2.5.17

@@ -31,7 +31,7 @@ function post(author: string | undefined): PostContent {
 }
 
 const fired: ExposurePressure = {
-  fired: true, reason: 'days', distinctDays: 33, creativeCount: 0,
+  fired: true, reason: 'days', distinctDays: 33, creativeCount: 0, surface: 'for-you',
 };
 const quiet: ExposurePressure = {
   fired: false, reason: null, distinctDays: 2, creativeCount: 1,
@@ -84,16 +84,34 @@ describe('exposure mark result', () => {
     expect(r.analysis?.techniques.map(t => t.technique)).toEqual(['repeat-exposure']);
   });
 
-  it('carries the count as its evidence, so the marker can say why', () => {
+  it('carries the count as its evidence, naming the window and the surface', () => {
     const r = exposureMarkResult(post('@evidence'), fired, 0);
-    expect(r.analysis?.techniques[0].evidence[0]).toContain('33');
+    expect(r.analysis?.techniques[0].evidence[0]).toBe('source reached you on 33 of the last 30 days, on the for-you feed');
   });
 
   it('reports the creative count when that is what crossed the line', () => {
     const creative: ExposurePressure = {
-      fired: true, reason: 'creative', distinctDays: 1, creativeCount: 7,
+      fired: true, reason: 'creative', distinctDays: 1, creativeCount: 7, surface: 'for-you',
     };
     const r = exposureMarkResult(post('@creative'), creative, 0);
-    expect(r.analysis?.techniques[0].evidence[0]).toContain('7');
+    expect(r.analysis?.techniques[0].evidence[0]).toBe('this exact post reached you 7 times in the last 30 days, on the for-you feed');
+  });
+
+  it('claims no severity and no manipulation: it is a count, not a verdict', () => {
+    const r = exposureMarkResult(post('@claims'), fired, 0);
+    expect(r.analysis?.isManipulative).toBe(false);
+    expect(r.analysis?.overallScore).toBe(0);
+    expect(r.analysis?.techniques[0].severity).toBe(0);
+    expect(r.analysis?.techniques[0].present).toBe(true);
+  });
+
+  it('hands the page the count, the reason and the surface, to say in a sentence', () => {
+    const days = exposureMarkResult(post('@pill-days'), fired, 0);
+    expect(days.analysis?.exposure).toEqual({ reason: 'days', count: 33, surface: 'for-you' });
+    const creative: ExposurePressure = {
+      fired: true, reason: 'creative', distinctDays: 1, creativeCount: 7, surface: 'for-you',
+    };
+    expect(exposureMarkResult(post('@pill-post'), creative, 0).analysis?.exposure)
+      .toEqual({ reason: 'creative', count: 7, surface: 'for-you' });
   });
 });

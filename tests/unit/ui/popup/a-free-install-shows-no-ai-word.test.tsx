@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 // The Subscription seat's outcome, 9 Oct 2026 ("a free install shows no AI button"), in the popup: an install without
-// a key reads no AI word on Home, in the header (at every level, Strict included), on the License tab or in Settings, in
-// any language, but the License tab's one line on what a key adds, outside Strict. One gate decides it
+// a key reads no AI word on Home, in the header (at every level, Silent included), on the License tab or in Settings, in
+// any language, but the License tab's one line on what a key adds. One gate decides it
 // (src/ui/popup/reading-gate.ts). Every screen is read settled: mounted, its effects run, its late parts (Home's page
 // status line) drawn. The reading's own words are matched without regard to case
 // (reading, rewrite, model, beta and their translations); "AI" and "IA" are matched as written, because "ai" is an
@@ -42,7 +42,7 @@ const base = {
 } as unknown as FWSettings;
 const LEVELS: Array<[string, FWSettings]> = [
   ['Relaxed', base],
-  ['Strict', { ...base, mode: 'child', strictLanguage: true } as unknown as FWSettings],
+  ['Silent', { ...base, mode: 'child', strictLanguage: true } as unknown as FWSettings],
 ];
 
 // The reading's words, as words (a letter before the match means another word). Case is ignored for the words; AI and
@@ -91,8 +91,8 @@ const home = (settings: FWSettings, license: LicenseInfo, probeResult: string) =
   createElement(HomeTab, { settings, license, probeResult, onOpenDashboard: () => {}, onOpenDashboardSection: () => {} } as never);
 const keys = (settings: FWSettings, license: LicenseInfo) =>
   createElement(KeysTab, { settings, license, probeResult: 'ok', onChange: async () => {} });
-const settingsPanel = (settings: FWSettings, license: LicenseInfo) =>
-  createElement(SettingsPanel, { settings, license, onBack: () => {}, onChange: async () => {} });
+const settingsPanel = (settings: FWSettings, license: LicenseInfo, openOn: 'main' | 'general' = 'main') =>
+  createElement(SettingsPanel, { settings, license, onBack: () => {}, onChange: async () => {}, openOn });
 
 describe.each(UI_LANGUAGES)('an install without a key, %s', (lang) => {
   it.each(LEVELS)('Home, settled, has no AI word, at %s', async (_level, settings) => {
@@ -102,23 +102,28 @@ describe.each(UI_LANGUAGES)('an install without a key, %s', (lang) => {
   });
 
   it.each([false, true])('the header has no AI word (strict: %s)', async (strict) => {
-    expect(found(await settled(lang, createElement(PopHeader, { licenseState: 'free', keyHeld: false, strict })), lang)).toBeNull();
+    expect(found(await settled(lang, createElement(PopHeader, { licenseState: 'free', strict })), lang)).toBeNull();
   });
 
   it.each(LEVELS)('the License tab, settled, has no AI word but its one line on what a key adds, at %s', async (level, settings) => {
     const html = await settled(lang, keys(settings, FREE));
-    // Outside Strict the tab says once what a key adds, beside its link; that sentence is the reading's only word here.
+    // At every level the tab says once what a key adds, beside its link; that sentence is the reading's only word here.
     const line = esc(POPUP_STRINGS[lang].keyAdds);
-    expect(html.split(line).length - 1, 'the line on what a key adds').toBe(level === 'Strict' ? 0 : 1);
+    expect(html.split(line).length - 1, `the line on what a key adds, at ${level}`).toBe(1);
     expect(found(html.replace(line, ''), lang)).toBeNull();
-    // Strict makes no outside call, so its License tab has no key field to keep.
-    if (level !== 'Strict') expect(container.querySelector('input'), 'the key field has drawn').not.toBeNull();
+    expect(container.querySelector('input'), 'the key field has drawn').not.toBeNull();
   });
 
-  it.each(LEVELS)('Settings, settled, has no AI word, at %s', async (_level, settings) => {
+  it.each(LEVELS)('Settings, settled, has no AI word on the level page or the General page, at %s', async (_level, settings) => {
     const html = await settled(lang, settingsPanel(settings, FREE));
-    expect(container.querySelector('.feat-row'), 'the switches have drawn').not.toBeNull();
+    expect(container.querySelector('.mode-segmented'), 'the level has drawn').not.toBeNull();
     expect(found(html, lang)).toBeNull();
+    // A fresh tree: the page a panel opens on is read once, when it mounts.
+    await act(async () => { root.unmount(); });
+    root = createRoot(container);
+    const general = await settled(lang, settingsPanel(settings, FREE, 'general'));
+    expect(container.querySelector('.feat-row'), 'the switches have drawn').not.toBeNull();
+    expect(found(general, lang)).toBeNull();
   });
 });
 
@@ -137,7 +142,7 @@ describe.each(UI_LANGUAGES)('the words the test looks for show where a key is he
   // spoken name (where an AI word on the header would sit), and it would catch one there.
   it('the header, settled, with a refused key: the scan reads the chip\'s tooltip and would catch an AI word in it', async () => {
     const t = POPUP_STRINGS[lang];
-    const html = await settled(lang, createElement(PopHeader, { licenseState: 'err', keyHeld: true, strict: false }));
+    const html = await settled(lang, createElement(PopHeader, { licenseState: 'err', strict: false }));
     expect(readable(html)).toContain(esc(t.statusRevoked));
     const acronym = ACRONYM[lang].split('|')[0];
     expect(found(html.replace(`title="${esc(t.statusRevoked)}"`, `title="${acronym} ${esc(t.statusRevoked)}"`), lang)).not.toBeNull();

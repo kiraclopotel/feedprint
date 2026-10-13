@@ -63,6 +63,9 @@ export const PUBLIC_ALLOWLIST = [
   'assets/',
   'verifier/',
   'docs/spec/',
+  // The relay's source, public since 13 Oct 2026 (cold audit, finding 1): every claim about post text after it leaves
+  // the browser rests on this code. Its operator scripts stay private (below).
+  'worker/',
   '.githooks/',
   'manifest.json',
   'manifest.off.json',
@@ -76,6 +79,7 @@ export const PUBLIC_ALLOWLIST = [
   'package.json',
   'package-lock.json',
   'README.md',
+  'SECURITY.md',
   'CHANGELOG.md',
   'LICENSE',
   'LICENSE-NOTES.md',
@@ -161,7 +165,11 @@ export const PRIVATE_DENYLIST = [
   'corpus/',
   'past-forensics/',
   '.fw-chain.json',
-  'worker/',
+  // The relay's operator tools: they mint keys and print the licence ledger, the operator's and not a reader's.
+  'worker/scripts/',
+  // The relay's deploy config names the Cloudflare account, which the scan refuses in public. Its settings that bear on
+  // a claim (when consent is required, when the second company starts) are described in docs/spec/subsystems/worker.md.
+  'worker/wrangler.toml',
   'landing/',
   'store/',
   'OUTBOX/',
@@ -181,9 +189,8 @@ export const PRIVATE_DENYLIST = [
   // checked file establishes, what it does not, and what is missing from a record by construction.
   // Source comments still cite it by entry number, and KNOWN-LIMITS says where it is and why.
   'docs/spec/known-issues.md',
-  // The relay's page and the audit ledger both describe a weakness of the live relay that is still
-  // open. A description of an open weakness is not published; each comes back when it is fixed.
-  'docs/spec/subsystems/worker.md',
+  // The audit ledger of 23 Aug. Its open weakness (key guessing, D-A1) is fixed and live since the relay deploy of
+  // 10 Oct 2026, and the relay's own page is public again; the ledger is a working paper and stays here.
   'docs/spec/AUDIT-2026-08-23-APPLIED.md',
   'docs/history/2026-09/LONG-PLAN.md',
   'docs/VOICE.md',
@@ -308,7 +315,9 @@ export function publicPackageJson(buf) {
   const dropped = new Set();
   const privateByPath = (cmd) =>
     [...cmd.matchAll(COMMAND_PATH)].some((m) => !isPublicPath(m[1])) ||
-    [...cmd.matchAll(COMMAND_PREFIX)].some((m) => !isPublicPath(`${m[1].replace(/\/$/, '')}/package.json`));
+    // A folder's commands run on its package.json and, for the relay, its deploy config, which stays private.
+    [...cmd.matchAll(COMMAND_PREFIX)].some((m) =>
+      ['package.json', 'wrangler.toml'].some((f) => !isPublicPath(`${m[1].replace(/\/$/, '')}/${f}`)));
   for (const [name, cmd] of Object.entries(scripts)) if (privateByPath(cmd)) dropped.add(name);
   // A kept script that calls a dropped one would fail the same way, so the drop spreads until still.
   for (let grew = true; grew; ) {
@@ -340,13 +349,20 @@ export const SCAN_PATTERNS = [
   { name: 'github-token', re: /\bghp_[A-Za-z0-9]{30,}/ },
   // TOML's `account_id =`, and the YAML or JSON forms a workflow or a config would use.
   { name: 'account-id', re: /^\s*["']?(?:account_id|CLOUDFLARE_ACCOUNT_ID)["']?\s*[:=]/m },
-  // A path on the owner's machine: a Windows profile's AppData, or the folder the project lives in.
-  { name: 'owner-path', re: /[A-Za-z]:[\\/]Users[\\/][^\\/\s]+[\\/]AppData|\bE:[\\/]HQ\b/ },
+  // A path on the owner's machine: a Windows profile's AppData, the folder the project lives in, or the sessions'
+  // folder (a relay comment named two files there until 13 Oct 2026).
+  { name: 'owner-path', re: /[A-Za-z]:[\\/]Users[\\/][^\\/\s]+[\\/]AppData|\bE:[\\/](?:HQ|sessions)\b/ },
   { name: 'private-key-block', re: /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/ },
 ];
 
 /** Pages that already carry the support address in public. */
-const SUPPORT_ADDRESS_ALLOWED = new Set(['README.md', 'LICENSE', 'verifier/README.md', 'docs/METHODOLOGY.md']);
+const SUPPORT_ADDRESS_ALLOWED = new Set([
+  'README.md', 'SECURITY.md', 'LICENSE', 'verifier/README.md', 'docs/METHODOLOGY.md',
+  // The relay's licence email gives the address the site already prints.
+  'worker/src/proxy.ts',
+  // The "Tell us" line in both popups writes to the same address, and its page in the spec quotes it.
+  'src/ui/popup/report-link.ts', 'docs/spec/subsystems/off-product.md',
+]);
 const SUPPORT_ADDRESS = /support@feelingwise\.org/;
 
 export function scanContent(path, text) {
@@ -437,6 +453,9 @@ const HANDLE_ALLOWED = new Set([
   // was read on the line it appears on before it was put here.
   'username', 'userX', 'name', 'news', 'viewer', 'someone', 'person', 'anyhandle',
   'mentions', 'creatorY', 'example_commenter', 'synthetic_author', 'somecreator', 'unknown',
+  // The labels a reading sends in place of a name (src/core/name-labels.ts) and the stand-ins the comments beside
+  // them use, each read on its line on 13 Oct 2026.
+  'user_A', 'user_B', 'user_Z', 'user_AA', 'USER_A', 'user_', 'pat_99', 'viewer_t', 'names', 'jane', 'alice',
   // A Facebook group whose own name begins with an at sign, quoted in a comment that explains
   // why a group can be read as a user. The group is public and the line is about its shape.
   'Claude',
@@ -447,6 +466,7 @@ const SCANNER = 'scripts/public-snapshot.mjs';
 const SCOPE_FILES = new Set([
   'package.json', 'package-lock.json', 'eslint.config.mjs', 'knip.json', 'vite.config.ts',
   'vitest.config.ts', 'tsconfig.json', 'tsconfig.tests.json',
+  'worker/package.json', 'worker/package-lock.json', 'worker/tsconfig.json',
 ]);
 
 function trackedFiles(rev = 'HEAD') {
@@ -533,7 +553,19 @@ function sha256(buf) {
  * never changes after that commit.
  */
 export const SOURCE_DIGEST_NAME = 'SOURCE-DIGEST';
-const NOT_IN_THE_DIGEST = new Set([RELEASES_PATH, 'MANIFEST.txt', 'SOURCE-COMMIT', SOURCE_DIGEST_NAME]);
+const NOT_IN_THE_DIGEST = new Set([RELEASES_PATH, 'MANIFEST.txt', 'SOURCE-COMMIT', SOURCE_DIGEST_NAME, '.gitignore']);
+
+/**
+ * The public copy's own ignore file. This repository's .gitignore names its private folders and stays here; a
+ * stranger who installs, builds and tests in the copy needs these lines so nothing they make looks like source
+ * (cold audit 13 Oct 2026: node_modules, both builds, a build id and the per-machine dev secret sat untracked).
+ */
+const PUBLIC_GITIGNORE = [
+  'node_modules/', 'dist/', 'dist-off/', 'dist-firefox/', 'dist-off-firefox/', 'coverage/', '.vitest/',
+  'test-results/', 'playwright-report/', '/release/', '/public-snapshot/', '*.zip', '*.sha256.txt',
+  '.fw-build-id', '.fw-dev-secret', '.env', '.env.*', '!.env.example',
+  'worker/.dev.vars', 'worker/.dev.vars.*', '!worker/.dev.vars.example', 'worker/.wrangler/', '',
+].join('\n');
 
 const byteOrder = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 
@@ -700,6 +732,7 @@ async function main(argv) {
   // The build id is derived from a commit, and the public repository's own commit is a new one: the
   // snapshot names the commit it came from so scripts/reproducible-build.mjs builds the same bytes.
   writeFileSync(join(out, 'SOURCE-COMMIT'), `${commit}\n`);
+  writeFileSync(join(out, '.gitignore'), PUBLIC_GITIGNORE);
   const digest = sourceDigestOf(entries);
   writeFileSync(join(out, SOURCE_DIGEST_NAME), `${digest}\n`);
   console.log(`public-snapshot: ${paths.length} files written to ${SNAPSHOT_DIR}/ from ${commit.slice(0, 7)}; scan clean`);

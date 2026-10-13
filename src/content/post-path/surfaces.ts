@@ -177,31 +177,22 @@ const sighted = new Set<string>();
 
 /**
  * Count a sighting once per page life: `surface.standDown:<surface>` when the
- * recorder stood down there, `surface.unmodeled:<platform>:<first path
- * segment>` when no rule named the path. Both reach Copy Diagnostics, so the
- * next paste says where the recorder chose not to work and which paths the
- * inventory still lacks. Bounded: after 200 distinct keys nothing new is counted.
+ * recorder stood down there, `surface.unmodeled:<platform>` when no rule
+ * named the path. Both reach Copy Diagnostics, so the next paste says where the
+ * recorder chose not to work and on which site the inventory still lacks a path.
+ * Bounded: after 200 distinct keys nothing new is counted.
  *
  * The first path segment is often an account handle (facebook.com/<name>,
- * x.com/<handle>) and diagnostics are pasted to support, so the segment goes
- * into the key as a short FNV-1a hash, never as the word. Two sightings of the
- * same path still count once, and the same hash on two pastes means the same
- * path, which is all the inventory needs. Item 3b, 2026-09-13.
+ * x.com/<handle>) and diagnostics are pasted to support. Until 13 Oct 2026 it
+ * went into the key as an 8-character hash, which a list of handles can turn
+ * back into the name (cold audit, finding on diagnostics); the key now names the
+ * site alone.
  */
-function shortHash(text: string): string {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < text.length; i++) {
-    h ^= text.charCodeAt(i);
-    h = Math.imul(h, 0x01000193) >>> 0;
-  }
-  return h.toString(16).padStart(8, '0');
-}
 
-export function noteSurfaceSighting(platform: Platform, pathname: string, cls: SurfaceClass): void {
+export function noteSurfaceSighting(platform: Platform, _pathname: string, cls: SurfaceClass): void {
   let key: string;
   if (cls.treatment === 'unmodeled') {
-    const head = pathname.split('/').filter(Boolean)[0] ?? '';
-    key = `surface.unmodeled:${platform}:${head ? shortHash(head.toLowerCase()) : 'root'}`;
+    key = `surface.unmodeled:${platform}`;
   } else if (cls.treatment === 'stand-down' || cls.treatment === 'excluded') {
     key = `surface.standDown:${cls.surface}`;
   } else {

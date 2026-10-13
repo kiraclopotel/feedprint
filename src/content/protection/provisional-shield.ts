@@ -272,7 +272,9 @@ function createOverlay(element: HTMLElement, lang: ResolvedUiLanguage): HTMLElem
   overlay.className = 'fw-provisional-shield';
   overlay.setAttribute('aria-label', MARKER_STRINGS[lang].checkingAria);
   overlay.setAttribute('aria-hidden', 'true');
-  overlay.textContent = MARKER_STRINGS[lang].checkingText;
+  // A plain veil: no words on it while it waits (the owner's yes, 12 Oct 2026). The screen-reader status line
+  // (acquireAccessibleStatus) still says it, once for the page. The two notices that ARE news, a verdict that could not
+  // be carried out and an extension that went away, keep their sentences below.
   const colors = protectionSurfaceColors(element);
 
   const criticalStyles: Record<string, string> = {

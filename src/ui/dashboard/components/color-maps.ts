@@ -34,7 +34,7 @@ export const TECHNIQUE_COLORS: Record<string, string> = {
   'repeat-exposure':          '#8a8f98',
   'anger-trigger':            '#ef5350',
   'shame-attack':             '#ab47bc',
-  'false-urgency':            '#ffab40',
+  'false-urgency':            '#ffee58',
   'bandwagon':                '#42a5f5',
   'scapegoating':             '#ec407a',
   'fomo':                     '#ff7043',
@@ -58,6 +58,21 @@ export const TECHNIQUE_COLORS: Record<string, string> = {
   'unsafe-health-experiment': '#ff8f00',
   'extreme-toxicity':         '#b71c1c',
 };
+
+// The five techniques the dashboard names take the page's theme (their --fw-tech-* tokens carry a light value since
+// 12 Oct 2026); TECHNIQUE_COLORS stays hex for the readers that need a value. A chart fill reads this.
+const THEMED_TECHNIQUE_TOKENS: Record<string, string> = {
+  'anger-trigger': '--fw-tech-anger-trigger',
+  'fear-appeal':   '--fw-tech-fear-appeal',
+  'false-urgency': '--fw-tech-false-urgency',
+  'shame-attack':  '--fw-tech-shame-attack',
+  'scapegoating':  '--fw-tech-scapegoating',
+};
+export function techniqueFill(name: string): string | undefined {
+  const hex = TECHNIQUE_COLORS[name];
+  const token = THEMED_TECHNIQUE_TOKENS[name];
+  return token && hex ? `var(${token}, ${hex})` : hex;
+}
 
 // Maps the `<reason>` segment of `detectionMode = 'block:<reason>:<token>'`
 // to a parent-readable category label. `ai-label` collapses under "AI-content

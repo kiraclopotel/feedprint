@@ -75,6 +75,7 @@ async function renderSettings(): Promise<void> {
         license: { tier: 'free', secret: '' },
         onBack: () => {},
         onChange: async () => {},
+        openOn: 'device',
       }),
     }));
   });

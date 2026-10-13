@@ -20,8 +20,9 @@ import {
   isFeatureEnabled, isPinGraceActive, parentPinUnknown, readPinEvidence, notePinWasSet,
 } from '../../../storage/settings';
 import { eagerApplyStoredTheme, applyTheme, subscribeToSystemThemeChanges } from '../../../ui/shared/theme';
+import { applyLook, eagerApplyStoredLook } from '../../../ui/shared/looks';
 import type { Platform } from '../../../types/post';
-import { Toggle, FeatRow, PinOverlay, ChangePinPanel, SetPinPanel } from '../../../ui/popup/controls';
+import { Toggle, FeatRow, PinOverlay, ChangePinPanel, RemovePinPanel, SetPinPanel } from '../../../ui/popup/controls';
 import { modeSwitchRequiresPin } from '../../../ui/popup/switches';
 import { BlocklistEditor } from '../../../ui/popup/BlocklistEditor';
 import { BlockAiHashtagEditor } from '../../../ui/popup/BlockAiHashtagEditor';
@@ -37,6 +38,7 @@ import { offPrivacyUrl, sitePageUrl } from '../../../core/site-links';
 import { OFF_SITES, SWITCH_REACH, pageOf, reportMailto, switchesOnFor as switchesOnAt, type PageKind } from '../../../ui/popup/report-link';
 
 eagerApplyStoredTheme();
+eagerApplyStoredLook();
 
 function getVersion(): string {
   try {
@@ -183,15 +185,6 @@ const LANGUAGES: { value: UiLanguage; label: (t: PopupStrings) => string }[] = [
   })),
 ];
 
-const SELECT_STYLE = {
-  padding: '6px 8px',
-  background: 'var(--fw-bg)',
-  color: 'var(--fw-text)',
-  border: '1px solid var(--fw-border)',
-  borderRadius: 'var(--fw-r-md)',
-  fontSize: 12,
-} as const;
-
 const PLATFORMS: { id: Platform; label: string }[] = [
   { id: 'tiktok', label: 'TikTok' },
   { id: 'instagram', label: 'Instagram' },
@@ -214,7 +207,7 @@ function SetPinCard({ open, phraseShowing, onToggle, onPhraseShown, onDone }: {
         name={t.offPinSetName}
         desc={t.offPinSetDesc}
         control={phraseShowing ? undefined : (
-          <button type="button" className="lnk" onClick={onToggle}>
+          <button type="button" className="fw-page-btn" onClick={onToggle}>
             {open ? t.cancel : t.offPinSave}
           </button>
         )}
@@ -229,12 +222,37 @@ function SetPinCard({ open, phraseShowing, onToggle, onPhraseShown, onDone }: {
 const ADS_BLIND_AFTER = 80;
 
 
+/** Off's two looks in its footer (13 Oct 2026): A, the crimson frame with teal controls; B, a quiet frame with the mark's
+ *  crimson as the one accent (off-popup.css). A radio group: the arrow keys move the choice and the focus with it. */
+function OffLooks({ settings }: { settings: FWSettings }) {
+  const t = usePopupT();
+  const [look, setLook] = useState<'a' | 'b'>(settings.popupLook === 'b' ? 'b' : 'a');
+  const pick = (l: 'a' | 'b') => { applyLook(l); setLook(l); void saveSettings({ popupLook: l }); };
+  return (
+    <span className="look-row" role="radiogroup" aria-label={t.offLookAria} onKeyDown={(e) => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      e.preventDefault();
+      const next = look === 'a' ? 'b' : 'a';
+      pick(next);
+      e.currentTarget.querySelector<HTMLElement>(`[data-look="${next}"]`)?.focus();
+    }}>
+      {(['a', 'b'] as const).map((l) => (
+        <button key={l} type="button" role="radio" data-look={l} aria-checked={look === l} tabIndex={look === l ? 0 : -1}
+          aria-label={l === 'a' ? t.offLookA : t.offLookB} title={l === 'a' ? t.offLookA : t.offLookB} className="look-btn" onClick={() => pick(l)}>
+          <span className={`look-swatch ${l}`} aria-hidden={true} />
+        </button>
+      ))}
+    </span>
+  );
+}
+
 export function OffBody({ settings, reload }: { settings: FWSettings; reload: () => Promise<void> }) {
   const t = usePopupT();
   const uiLang = useUiLanguage();
   const setupUrl = sitePageUrl(uiLang, 'off-setup');
   const pageInFront = usePageInFront();
   const [changePinOpen, setChangePinOpen] = useState(false);
+  const [removePinOpen, setRemovePinOpen] = useState(false);
   const [setPinOpen, setSetPinOpen] = useState(false);
   const [phraseShowing, setPhraseShowing] = useState(false);
   const closeSetPin = () => { setSetPinOpen(false); setPhraseShowing(false); void reload(); };
@@ -403,12 +421,22 @@ export function OffBody({ settings, reload }: { settings: FWSettings; reload: ()
               desc={t.changePinDesc}
               note={t.offPinLockedNote}
               control={(
-                <button type="button" className="lnk" onClick={() => setChangePinOpen(o => !o)}>
+                <button type="button" className="fw-page-btn" onClick={() => setChangePinOpen(o => !o)}>
                   {changePinOpen ? t.cancel : t.changePinTitle}
                 </button>
               )}
             />
             {changePinOpen && <ChangePinPanel onDone={() => { setChangePinOpen(false); void reload(); }} />}
+            <FeatRow
+              name={t.offPinRemoveName}
+              desc={t.offPinRemoveDesc}
+              control={(
+                <button type="button" className="fw-page-btn" onClick={() => setRemovePinOpen(o => !o)}>
+                  {removePinOpen ? t.cancel : t.offPinRemoveName}
+                </button>
+              )}
+            />
+            {removePinOpen && <RemovePinPanel onDone={() => { setRemovePinOpen(false); void reload(); }} />}
           </>
         ) : (
           <SetPinCard
@@ -433,7 +461,8 @@ export function OffBody({ settings, reload }: { settings: FWSettings; reload: ()
               value={settings.uiLanguage || 'auto'}
               onChange={(e) => { void pickLanguage(e.target.value as UiLanguage); }}
               aria-label={t.uiLangAria}
-              style={{ ...SELECT_STYLE, width: '100%' }}
+              className="set-select"
+              style={{ width: '100%' }}
             >
               {LANGUAGES.map(l => <option key={l.value} value={l.value}>{l.label(t)}</option>)}
             </select>
@@ -444,6 +473,7 @@ export function OffBody({ settings, reload }: { settings: FWSettings; reload: ()
 
       <div className="foot">
         <span>{getVersion()}</span>
+        <OffLooks settings={settings} />
         <a href={offPrivacyUrl(uiLang)} target="_blank" rel="noopener noreferrer">{t.offPrivacy}</a>
       </div>
     </>
@@ -476,6 +506,7 @@ function OffPopup() {
       setSettings(s);
       setLoadError(false);
       applyTheme(s.dashboardTheme ?? 'system');
+      applyLook(s.popupLook === 'b' ? 'b' : 'a');
     } catch {
       setLoadError(true);
     }

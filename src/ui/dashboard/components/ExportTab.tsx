@@ -23,6 +23,7 @@ import { importIdsDigest } from '../../../forensics/import-marker';
 // buttons on this tab are the most consequential in the product and were left
 // on the pre-audit pattern until 2026-09-19.
 import { StatusLine } from '../../shared/StatusLine';
+import { scrollBehavior } from '../../shared/motion';
 import { activeDonationRecipient, donateExport } from '../../../forensics/donation';
 
 /**
@@ -60,7 +61,7 @@ import { setBackupRecoveryPassphrase, clearBackupRecoveryPassphrase, hasBackupRe
 
 // ─── Export tab ───
 export function ExportTab({
-  records, archivedCount = 0, archivedCountSure = false, onRestored, restoreNotice = null, onDismissRestoreNotice, landOn = null,
+  records, archivedCount = 0, inBothCount = 0, archivedCountSure = false, onRestored, restoreNotice = null, onDismissRestoreNotice, landOn = null,
   onBackupChanged,
 }: {
   /**
@@ -83,6 +84,8 @@ export function ExportTab({
   records: ForensicRecord[];
   /** Records held in the month archives, so the Everything card can say what it adds (D2-6). */
   archivedCount?: number;
+  /** Of the active chain's records, how many also stand in the archives (a restore after a reset puts them in both); the line counts them once. */
+  inBothCount?: number;
   /**
    * True only when `archivedCount` was read, completely, on this load. A count still on its way, or one that failed or
    * missed a month, is not a zero, so it never switches the whole-record export off.
@@ -162,7 +165,7 @@ export function ExportTab({
     const btn = backupBtnRef.current;
     if (!btn) return;
     const id = window.setTimeout(() => {
-      btn.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      btn.scrollIntoView({ block: 'center', behavior: scrollBehavior() });
       btn.focus({ preventScroll: true });
     }, 60);
     return () => window.clearTimeout(id);
@@ -495,7 +498,7 @@ export function ExportTab({
         ? t.restoreKeyRestored
         : restoreKeyNoteText(result.keyNoteReason, result.keyNote, t);
       setRestoreMsg(
-        t.restoredMsg(result.recordsAdded, result.recordsSkipped, result.anchorsAdded, chain, keyMsg),
+        t.restoredMsg(result.recordsAdded, result.recordsSkipped, result.anchorsAdded, chain, keyMsg, result.recordsAlsoArchived),
       );
       // What it replaced: the count the restore read before it swapped the
       // chain. `replacedCount` is what the confirmation pause named on the
@@ -539,7 +542,7 @@ export function ExportTab({
 
   return (
     <>
-      <div className="stats-card full" style={{ marginTop: 22 }}>
+      <div className="stats-card full" style={{ marginTop: 16 }}>
         <h3>{t.courtReadyTitle}</h3>
         <div className="export-intro" style={{ marginTop: 4 }}>
           {t.exportIntro}
@@ -578,11 +581,11 @@ export function ExportTab({
           >
             {t.profileNameSave}
           </button>
-          <div className="export-note" style={{ fontSize: 12, opacity: 0.8, marginTop: 6, lineHeight: 1.5 }}>{t.profileNameHint}</div>
+          <div className="export-note" style={{ fontSize: 12, color: 'var(--fw-muted)', marginTop: 6, lineHeight: 1.5 }}>{t.profileNameHint}</div>
           {profileMsg && <div data-fw-profile-receipt="1" style={{ fontSize: 12, color: 'var(--fw-green)', marginTop: 6 }}>{profileMsg}</div>}
         </div>
 
-        {error && <StatusLine tone="alert" className="export-note" style={{ fontSize: 12, color: 'var(--fw-red)', marginTop: 12 }}>{error}</StatusLine>}
+        {error && <StatusLine tone="alert" className="export-note" style={{ fontSize: 12, color: 'var(--fw-red)', marginTop: 12, overflowWrap: 'anywhere' }}>{error}</StatusLine>}
         {busy && exportStage && <div data-fw-export-stage="1" role="status" aria-live="polite" style={{ fontSize: 12, color: 'var(--fw-muted)', marginTop: 12 }}>{exportStage}</div>}
         {exportMsg && <StatusLine data-fw-export-receipt="1" style={{ fontSize: 12, color: 'var(--fw-green)', marginTop: 12, lineHeight: 1.5 }}>{exportMsg}</StatusLine>}
 
@@ -636,7 +639,7 @@ export function ExportTab({
               {/* What this file holds, next to the button, so the report's
                   included-of-total line below is not read as describing this
                   one too (D2-6). */}
-              <p data-fw-everything-includes="1">{t.everythingIncludes(records.length, archivedCount)}</p>
+              <p data-fw-everything-includes="1">{t.everythingIncludes(records.length, archivedCount, inBothCount)}</p>
             </button>
           </div>
           <p className="export-partial-note">{t.exportPartialNote}</p>
@@ -697,7 +700,7 @@ export function ExportTab({
       </div>
 
       {donationRecipient && (
-        <div className="stats-card full" style={{ marginTop: 22 }} data-testid="donation-card">
+        <div className="stats-card full" style={{ marginTop: 16 }} data-testid="donation-card">
           <h3>{t.donateTitle(donationRecipient.name)}</h3>
           <div className="export-intro" style={{ marginTop: 4 }}>
             {t.donateBody(donationRecipient.name)}{' '}
@@ -720,14 +723,14 @@ export function ExportTab({
             </div>
           )}
           {donateMsg && (
-            <StatusLine tone={donateMsg.ok ? 'status' : 'alert'} className="export-note" style={{ fontSize: 12, marginTop: 12, lineHeight: 1.5, color: donateMsg.ok ? 'var(--fw-green)' : 'var(--fw-red)' }}>
+            <StatusLine tone={donateMsg.ok ? 'status' : 'alert'} className="export-note" style={{ fontSize: 12, marginTop: 12, lineHeight: 1.5, overflowWrap: 'anywhere', color: donateMsg.ok ? 'var(--fw-green)' : 'var(--fw-red)' }}>
               {donateMsg.text}
             </StatusLine>
           )}
         </div>
       )}
 
-      <div className="stats-card full" style={{ marginTop: 22 }}>
+      <div className="stats-card full" style={{ marginTop: 16 }}>
         <h3>{t.backupRestoreTitle}</h3>
         {/* Three lines above the buttons: what an uninstall takes, the two ways to keep a copy, and which one restores by
             itself. Everything else that was here, about 2,200 characters before the first button, is under the fold,
@@ -761,7 +764,8 @@ export function ExportTab({
               onChange={(e) => setBackupPass(e.currentTarget.value)}
               placeholder={t.backupPassPlaceholder}
               data-testid="backup-passphrase"
-              style={{ fontSize: 12, fontWeight: 400, padding: '7px 9px', borderRadius: 0, border: '1px solid var(--fw-border, #444)', background: 'transparent', color: 'var(--fw-text)' }}
+              className="dash-input"
+              style={{ fontWeight: 400 }}
             />
           </label>
           <div className="export-note" style={{ fontSize: 12, color: 'var(--fw-muted)', lineHeight: 1.5 }}>
@@ -775,7 +779,7 @@ export function ExportTab({
             value={restorePin}
             onChange={(e) => setRestorePin(e.currentTarget.value.replace(/\D/g, ''))}
             placeholder={t.restorePinPlaceholder}
-            style={{ fontSize: 12, padding: '7px 9px', borderRadius: 0, border: '1px solid var(--fw-border, #444)', background: 'transparent', color: 'var(--fw-text)' }}
+            className="dash-input"
           />}
         </div>
 
@@ -806,7 +810,7 @@ export function ExportTab({
           </button>
         </div>
 
-        {restoreError && <div role="alert" data-fw-restore-error="1" style={{ fontSize: 12, color: 'var(--fw-red)', marginTop: 12 }}>{restoreError}</div>}
+        {restoreError && <div role="alert" data-fw-restore-error="1" style={{ fontSize: 12, color: 'var(--fw-red)', marginTop: 12, overflowWrap: 'anywhere' }}>{restoreError}</div>}
         {/* The restore's own confirmation. It is held by the dashboard, not by
             this component, so it survives the refresh the restore starts; it
             renders inside this card because this is where the parent just
@@ -881,7 +885,7 @@ export function ExportTab({
         )}
 
         {/* Q36: silent folder-wired backup row. */}
-        <div style={{ marginTop: 16, padding: '12px 14px', border: '1px solid var(--fw-border, #333)', borderRadius: 2 }}>
+        <div style={{ marginTop: 16, padding: '12px 14px', border: '1px solid var(--fw-border, #333)', borderRadius: 'var(--fw-radius-lg)' }}>
           <div style={{ fontWeight: 600, fontSize: 13 }}>{t.folderWireTitle}</div>
           {/* W80/W81 (2026-08-18): mirrorBackupToWiredFolder seals every folder
               file with the per-install device key (backup.ts:653-654), exactly

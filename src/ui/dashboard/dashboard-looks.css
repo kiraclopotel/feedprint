@@ -87,16 +87,23 @@
 /* The header takes a tint of the accent that fades into the page, as the popup's header does. */
 .dash-header { background: linear-gradient(180deg, color-mix(in oklch, var(--fw-record) 14%, var(--fw-ground)) 0%, var(--fw-ground) 100%); }
 .dash-root a { color: var(--fw-record); }
-/* Whatever is chosen or open is filled with the accent: the filter rows, the order switch, the open breakdown, the
-   chosen lens, the day in focus and the bars. */
+/* Whatever is chosen or open is a faint tint of the accent with the accent under it: the filter rows, the order switch,
+   the open breakdown and the chosen lens. The solid accent is kept for what is done by pressing (.btn.primary), so a
+   chosen filter never looks like the button that sits beside it. */
 .frail-opt.on,
 .feed-sort-btn.active,
 .feed-breakdown-btn[aria-expanded="true"],
-.fb-lens.active { background: var(--fw-record); color: var(--fw-ground); border-color: var(--fw-record); }
+.fb-lens.active {
+  background: color-mix(in oklch, var(--fw-record) 18%, var(--fw-ground)); color: var(--fw-ink);
+  border-color: var(--fw-record); box-shadow: inset 0 -2px 0 var(--fw-record);
+}
 .frail-opt.on .frail-count { color: inherit; }
-/* A chosen chip, such as the Feed log's period and its All, Hidden and Passed, is the accent too. */
-.chip.active { background: var(--fw-record); color: var(--fw-ground); border-color: var(--fw-record); }
-.chip.active:hover { background: color-mix(in oklch, var(--fw-record) 88%, var(--fw-ink)); color: var(--fw-ground); }
+/* A chosen chip, such as the Feed log's period and its All, Hidden and Passed, is drawn the same way. */
+.chip.active {
+  background: color-mix(in oklch, var(--fw-record) 18%, var(--fw-ground)); color: var(--fw-ink);
+  border-color: var(--fw-record); box-shadow: inset 0 -2px 0 var(--fw-record);
+}
+.chip.active:hover { background: color-mix(in oklch, var(--fw-record) 28%, var(--fw-ground)); color: var(--fw-ink); }
 /* A tab under the pointer or the keyboard takes the accent, a faint tint of it and a thin underline, so the strip
    answers before the click; the open tab keeps its full underline and bold. The ring marks the keyboard's place. */
 .dash-tab:hover, .dash-tab:focus-visible { color: var(--fw-record); background: color-mix(in oklch, var(--fw-record) 8%, var(--fw-ground)); }
@@ -111,6 +118,159 @@
 /* The chip's tint stays faint: at 16% the count in the accent fell under 4.5:1 in the light looks. */
 .pg-records-chip { border-color: var(--fw-record); background: color-mix(in oklch, var(--fw-record) 8%, var(--fw-ground)); }
 .pg-records-chip .pg-trust-chip-count { color: var(--fw-record); }
+
+/* Hover and focus (his walk of 12 Oct 2026, V2 and V8): what can be pressed answers the pointer and the keyboard the
+   way the tab strip does, with a tint of the accent and a mark of it, in 120 ms. The filter rail's hover was the card's
+   own colour on the card and could not be seen; it now takes the tint, the ink, and a bar of the accent at its edge. */
+.frail-opt { transition: background-color .12s ease, color .12s ease, box-shadow .12s ease; }
+.frail-opt:not(.on):hover,
+.frail-opt:not(.on):focus-visible {
+  background: color-mix(in oklch, var(--fw-record) 14%, var(--fw-ground)); color: var(--fw-ink);
+  box-shadow: inset 3px 0 0 var(--fw-record);
+}
+.frail-opt:not(.on):hover .frail-count, .frail-opt:not(.on):focus-visible .frail-count { color: var(--fw-ink); }
+.frail-opt.on:hover { background: color-mix(in oklch, var(--fw-record) 28%, var(--fw-ground)); }
+.frail-opt:focus-visible { outline: 2px solid var(--fw-record); outline-offset: -2px; }
+.frail-grp summary { transition: background-color .12s ease, color .12s ease; }
+.frail-grp summary:hover, .frail-grp summary:focus-visible { color: var(--fw-ink); background: color-mix(in oklch, var(--fw-record) 8%, var(--fw-ground)); }
+.frail-grp summary:hover::after, .frail-grp summary:focus-visible::after { color: var(--fw-record); }
+.frail-grp summary:focus-visible { outline: 2px solid var(--fw-record); outline-offset: -2px; }
+.chip:not(.active):hover, .chip:not(.active):focus-visible {
+  color: var(--fw-ink); border-color: var(--fw-record); background: color-mix(in oklch, var(--fw-record) 10%, var(--fw-ground));
+}
+.chip:focus-visible { outline: 2px solid var(--fw-record); outline-offset: 2px; }
+.fwc-row.drill:hover, .fwc-row.drill:focus-visible { background: color-mix(in oklch, var(--fw-record) 8%, var(--fw-ground)); box-shadow: inset 3px 0 0 var(--fw-record); }
+.fwc-row.drill:focus-visible { outline: 2px solid var(--fw-record); outline-offset: -2px; }
+
+/* Every pressable thing answers (V8, 12 Oct 2026). Measured before: 66 of 203 controls sampled across the nine tabs
+   changed nothing on hover or on keyboard focus (crew/visuals/hover-before-dark.txt). Named controls take the tint and
+   the accent edge; anything else that can be pressed falls back to an accent ring (zero specificity, so a control's own
+   rule always wins), and the keyboard's place is a 2px accent outline. */
+.pg-trust-chip, .dash-integrity-pill[role="button"], .feed-sort-btn, .feed-breakdown-btn, .fb-lens, .ov-src-row,
+.dash-attention-hide, .export-card, .dash-shell .btn, .fx-withhold {
+  transition: background-color .12s ease, color .12s ease, border-color .12s ease, box-shadow .12s ease;
+}
+.pg-trust-chip:hover, .dash-integrity-pill[role="button"]:hover,
+.feed-sort-btn:not(.active):hover, .feed-breakdown-btn[aria-expanded="false"]:hover, .feed-breakdown-btn:not([aria-expanded]):hover,
+.fb-lens:not(.active):hover, .dash-attention-hide:hover, .dash-shell .btn:not(:disabled):hover, .fx-withhold:not(:disabled):hover {
+  background: color-mix(in oklch, var(--fw-record) 12%, var(--fw-ground)); color: var(--fw-ink);
+  border-color: var(--fw-record);
+}
+.feed-sort-btn.active:hover, .fb-lens.active:hover, .feed-breakdown-btn[aria-expanded="true"]:hover {
+  background: color-mix(in oklch, var(--fw-record) 28%, var(--fw-ground));
+}
+.ov-src-row:hover { background: color-mix(in oklch, var(--fw-record) 8%, var(--fw-ground)); box-shadow: inset 3px 0 0 var(--fw-record); }
+.export-card:not(:disabled):hover {
+  border-color: var(--fw-record);
+  box-shadow: inset 0 0 0 1px var(--fw-record), 0 10px 26px -18px color-mix(in oklch, var(--fw-record) 70%, transparent);
+}
+.dash-root summary { transition: background-color .12s ease, color .12s ease; }
+.dash-root summary:hover { background: color-mix(in oklch, var(--fw-record) 7%, transparent); color: var(--fw-ink); }
+/* A segment of a proportion bar is not pressed, it is read: it lifts under the pointer so its value is easy to find. */
+.fwc-seg { transition: filter .12s ease, box-shadow .12s ease; }
+.fwc-seg:hover { filter: brightness(1.18); box-shadow: inset 0 0 0 1px var(--fw-ink); }
+/* The usage chart's bars are read by their tooltip, never pressed: they no longer show the hand. */
+.usage-bar { cursor: help; }
+:where(.dash-root) :where(button, summary, [role="button"], a[href], select):not(:disabled):hover {
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--fw-record) 70%, transparent);
+}
+:where(.dash-root) :where(button, summary, [role="button"], [role="tab"], [tabindex="0"], a[href], select, input):focus-visible {
+  outline: 2px solid var(--fw-record); outline-offset: 2px;
+}
+
+/* The header's actions (the walk of 12 Oct 2026): three pills of the popup's page-button family, not one box that read as
+   a search field; the plan name is a label, not a button. */
+.dash-header .dash-record-actions { background: transparent; border: 0; padding: 0; gap: 8px; }
+.dash-header .dash-record-btn,
+.dash-header .dash-record-btn.danger {
+  min-height: 32px; padding: 0 14px; border-radius: 16px;
+  border: 1px solid var(--fw-edge); background: var(--fw-lift); color: var(--fw-ink);
+  font-size: 13px; font-weight: 600; text-decoration: none;
+  transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease, background-color .12s ease, color .12s ease;
+}
+.dash-header .dash-record-btn.danger { color: var(--fw-text-secondary); font-weight: 500; }
+.dash-header .dash-record-btn:hover:not(:disabled) {
+  transform: translateY(-1px); background: var(--fw-lift); color: var(--fw-ink); text-decoration: none;
+  border-color: color-mix(in oklch, var(--fw-record) 60%, var(--fw-edge));
+  box-shadow: 0 4px 12px -6px color-mix(in oklch, var(--fw-record) 55%, transparent);
+}
+.dash-header .dash-record-btn.danger:hover:not(:disabled) { color: var(--fw-danger); border-color: color-mix(in oklch, var(--fw-danger) 55%, var(--fw-edge)); box-shadow: 0 4px 12px -6px color-mix(in oklch, var(--fw-danger) 45%, transparent); }
+.dash-header .dash-record-btn:active:not(:disabled) { transform: none; box-shadow: none; }
+.dash-header .dash-record-btn:focus-visible { outline: 2px solid var(--fw-record); outline-offset: 2px; }
+.dash-header .dash-record-help {
+  width: 32px; height: 32px; margin-left: 0; border-radius: 50%;
+  border: 1px solid var(--fw-edge); background: var(--fw-lift); color: var(--fw-text-secondary); font-size: 13px;
+  transition: border-color .12s ease, color .12s ease, box-shadow .12s ease;
+}
+.dash-header .dash-record-help:hover { color: var(--fw-ink); border-color: color-mix(in oklch, var(--fw-record) 60%, var(--fw-edge)); box-shadow: 0 4px 12px -6px color-mix(in oklch, var(--fw-record) 55%, transparent); }
+.dash-header .dash-tier-pill {
+  background: none; border: 0; padding: 0; color: var(--fw-muted);
+  font-size: 12px; font-weight: 600; letter-spacing: var(--fw-track-label);
+}
+
+/* One control height in the header (row 14, 12 Oct 2026): the actions, the theme button and the Entries chip were 34,
+   32, 28 and 30px tall; all are 32. And a dialog has lift (row 12): its edge takes the accent, with a deep shadow and a
+   faint ring of light, where it was a flat 2px edge on a flat fill. */
+.dash-header .dash-icon-btn { box-sizing: border-box; width: 32px; height: 32px; }
+.dash-header .pg-records-chip { box-sizing: border-box; height: 32px; align-items: center; }
+/* The health line carries no edge or fill here, but it is pressed to verify, so it is as tall as the controls around it. */
+.dash-header .dash-integrity-pill { box-sizing: border-box; min-height: 32px; }
+.modal {
+  border-color: color-mix(in oklch, var(--fw-record) 38%, var(--fw-border));
+  box-shadow: 0 24px 60px -16px rgba(0, 0, 0, .7), 0 0 0 1px color-mix(in oklch, var(--fw-record) 18%, transparent);
+}
+:root[data-theme="light"] .modal { box-shadow: 0 24px 60px -16px rgba(0, 0, 0, .28), 0 0 0 1px color-mix(in oklch, var(--fw-record) 18%, transparent); }
+
+/* The frame and the light (his walk of 12 Oct 2026, V7): the popup's frame line and soft light, on the header and the
+   panels only. The page keeps its one centred width; behind the header a wide, faint glow of the accent; the header's
+   line is the accent, fading at both ends; a panel's hairline takes a tint of the accent and a faint light inside it. */
+body:has(.dash-root) {
+  background:
+    radial-gradient(1500px 560px at 50% -200px, color-mix(in oklch, var(--fw-record) 26%, transparent), transparent 70%),
+    var(--fw-ground);
+  background-attachment: fixed;
+}
+.dash-root { background: transparent; }
+.dash-header { border-bottom: 1px solid transparent; border-image: linear-gradient(90deg, transparent 0%, color-mix(in oklch, var(--fw-record) 55%, transparent) 30%, color-mix(in oklch, var(--fw-record) 55%, transparent) 70%, transparent 100%) 1; }
+.stats-card, .ov-card, .fb-card, .pat-section, .chain-banner, .fx-ledger, .entries-table-wrap {
+  border-color: color-mix(in oklch, var(--fw-record) 22%, var(--fw-line));
+  box-shadow: inset 0 1px 0 color-mix(in oklch, var(--fw-record) 14%, transparent), inset 0 0 28px -18px color-mix(in oklch, var(--fw-record) 55%, transparent);
+}
+:root[data-theme="light"] .stats-card, :root[data-theme="light"] .ov-card, :root[data-theme="light"] .fb-card,
+:root[data-theme="light"] .pat-section, :root[data-theme="light"] .chain-banner,
+:root[data-theme="light"] .fx-ledger, :root[data-theme="light"] .entries-table-wrap {
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px -16px color-mix(in oklch, var(--fw-record) 35%, transparent);
+}
+/* An export card is pressed, so it takes a control's edge and no panel light; a panel's hairline made it read as an
+   information box. The accent edge of the primary card (dashboard-design.css) is more specific and stays. */
+.export-card { border: 1px solid var(--fw-edge); box-shadow: none; }
+/* A card inside a panel sits flat on the panel's hairlines: the panel carries the light, and the same inner glow on each
+   card inside it read as a blur with no edge. The light theme's rule above is more specific, so it is named again. */
+.fb-grid .fb-card, :root[data-theme="light"] .fb-grid .fb-card {
+  box-shadow: none; border-color: var(--fw-line);
+}
+
+/* ─── A's corners: the popup's ──────────────────────────────────────────────────────────────────────────────────── */
+/* Look A is the popup's own, and the popup's controls and cards are rounded; the house sheet's flat 0 and 2px stay for
+   the other looks. A control takes 8px and a card 12px. The controls the house drew with an explicit 0 are named here,
+   because a token cannot reach them. */
+:root:not([data-look]) { --fw-r-1: 8px; --fw-r-2: 12px; --fw-r-lg: var(--fw-r-2); }
+:root:not([data-look]) :is(.chip, .fx-withhold, .feed-breakdown-btn, .fb-lens, .fb-range button, .fl-ask-field) {
+  border-radius: 8px;
+}
+/* The rail's help button is a round "?" like the header's. */
+:root:not([data-look]) .frail-hint > button { border-radius: 50%; }
+/* A segmented control's buttons sit inside the frame's 1px edge and its padding, so they take that much less. */
+:root:not([data-look]) .feed-sort-btn { border-radius: 5px; }
+:root:not([data-look]) .fwc-seg-switch button { border-radius: 4px; }
+/* The Feed log's filter groups are joined, so only the ends of a group are round; the chip that removes a filter stands
+   apart and is round on all four corners. */
+:root:not([data-look]) .fl-bar .fl-chips .chip { border-radius: 0; }
+:root:not([data-look]) .fl-bar .fl-chips .chip:first-child { border-radius: 8px 0 0 8px; }
+:root:not([data-look]) .fl-bar .fl-chips .chip:last-child,
+:root:not([data-look]) .fl-bar .fl-chips .chip:has(+ .chip.active:not([aria-pressed])) { border-radius: 0 8px 8px 0; }
+:root:not([data-look]) .fl-bar .fl-chips .chip:only-child,
+:root:not([data-look]) .fl-bar .fl-chips .chip.active:not([aria-pressed]) { border-radius: 8px; }
 
 /* ─── D and E: the gradient header and the glowing counts ────────────────────────────────────────────────────── */
 :root[data-look="d"] .dash-header,
@@ -136,3 +296,16 @@
 :root[data-look="e"] .today-head-figures dd.noise { text-shadow: 0 0 18px color-mix(in oklch, var(--fw-noise) 60%, transparent); }
 :root[data-look="d"][data-theme="light"] .today-head-figures dd,
 :root[data-look="e"][data-theme="light"] .today-head-figures dd { text-shadow: none; }
+
+/* A person who asks their system for less motion gets none: every transition and animation on the page ends at once,
+   nothing repeats, and a hover no longer lifts a control. The animation delay is left alone: the success toast's fade-out
+   waits on its own 5.3s delay, and with the delay zeroed it would end the moment the toast showed. The dialog is named
+   as well, so a dialog drawn outside the root is still still. */
+@media (prefers-reduced-motion: reduce) {
+  .dash-root *, .dash-root *::before, .dash-root *::after, .modal-backdrop, .modal {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+  .bar-row:hover, .recidivist-row:hover, .export-card:hover, .dash-header .dash-record-btn:hover:not(:disabled) { transform: none; }
+}

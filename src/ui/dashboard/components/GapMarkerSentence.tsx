@@ -32,7 +32,7 @@ export function GapMarkerSentence({ text }: { text: string }) {
   return (
     <span style={{ display: 'inline-flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 8 }}>
       <span data-testid="gap-sentence">{sentence}</span>
-      <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '1px 8px' }} onClick={copy} data-testid="gap-copy">
+      <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '2px 8px', minHeight: 24 }} onClick={copy} data-testid="gap-copy">
         {copied ? t.feedGapCopied : t.opsCopyDiagnostics}
       </button>
     </span>

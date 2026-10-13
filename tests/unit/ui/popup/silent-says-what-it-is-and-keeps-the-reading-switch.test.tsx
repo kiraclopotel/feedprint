@@ -1,7 +1,7 @@
-// In Strict the popup says, in one line, what the site and the store say: the filter runs on this
-// computer and nothing leaves it. The reading switch reads off and cannot be turned on (the stored
-// choice is kept, so leaving Strict gives it back), and the licence card says it is not checked.
-// The same screens in Moderate say none of it.
+// At Silent (the Strict level) with a key the popup is the ordinary popup (12 Oct 2026, Silent reads once a key is added and
+// agreed to): the licence card says the key is active, and the reading switch is a live switch whose stored choice is shown
+// as it is, with the off note when it is off. Silent's own words sit beside the level choice in Settings and in the header
+// chip, and nowhere on Home.
 
 import { describe, it, expect } from 'vitest';
 import { renderToString } from 'react-dom/server';
@@ -54,34 +54,32 @@ const settingsPanel = (s: FWSettings, lang: Lang) => wrap(lang, createElement(Se
 
 describe.each(UI_LANGUAGES)('%s', (lang) => {
   const t = POPUP_STRINGS[lang];
+  const sq = (s: string) => s.replace(/'/g, '&#x27;');
 
-  // His word, 8 Oct 2026: Strict says what it is beside the level choice in Settings, and nowhere on Home.
-  it('the home panel carries no Strict line, in Strict or in Moderate', () => {
-    expect(home(settingsWith('child'), lang)).not.toContain(t.strictNoCallsLine.replace(/'/g, '&#x27;'));
-    expect(home(settingsWith('teen'), lang)).not.toContain(t.strictNoCallsLine.replace(/'/g, '&#x27;'));
-  });
-
-  it('the licence card says it is not checked in Strict, not that the reading is on', () => {
-    const strict = keys(settingsWith('child'), lang);
-    expect(strict).toContain(t.keySubStrict);
-    expect(strict).not.toContain(t.keySubActive);
-    const moderate = keys(settingsWith('teen'), lang);
-    expect(moderate).toContain(t.keySubActive);
-    expect(moderate).not.toContain(t.keySubStrict);
-  });
-
-  it('the reading switch reads off and locked in Strict whatever is stored, and works in Moderate', () => {
-    for (const stored of [true, false]) {
-      const strict = settingsPanel(settingsWith('child', stored), lang);
-      expect(strict).toContain(t.featAiMasterStrictNote.replace(/'/g, '&#x27;'));
-      expect(strict).not.toContain(t.featAiMasterOffNote);
-      const master = strict.match(/<button[^>]*aria-label="[^"]*"[^>]*role="switch"[^>]*>|<button[^>]*role="switch"[^>]*aria-label="[^"]*"[^>]*>/g)
-        ?.find((b) => b.includes(t.featAiMasterName.replace(/'/g, '&#x27;')));
-      expect(master, 'the master switch renders').toBeTruthy();
-      expect(master).toContain('aria-checked="false"');
-      expect(master).toContain('aria-disabled="true"');
+  // His word, 8 Oct 2026: the level says what it is beside the level choice in Settings, and nowhere on Home.
+  it('the home panel carries no Silent line, at Silent or at Calm', () => {
+    for (const mode of ['child', 'teen'] as const) {
+      const html = home(settingsWith(mode), lang);
+      for (const line of [t.strictNoKeyLine, t.strictKeyLine, t.strictNeedsAgreement]) expect(html).not.toContain(sq(line));
     }
-    const moderate = settingsPanel(settingsWith('teen', true), lang);
-    expect(moderate).not.toContain(t.featAiMasterStrictNote.replace(/'/g, '&#x27;'));
+  });
+
+  it('the licence card says the key is active at Silent, as at Calm', () => {
+    expect(keys(settingsWith('child'), lang)).toContain(t.keySubActive);
+    expect(keys(settingsWith('teen'), lang)).toContain(t.keySubActive);
+  });
+
+  it('the reading switch shows what is stored at Silent, enabled, and the off note only when it is off', () => {
+    const master = (html: string) => html.match(/<button[^>]*aria-label="[^"]*"[^>]*role="switch"[^>]*>|<button[^>]*role="switch"[^>]*aria-label="[^"]*"[^>]*>/g)
+      ?.find((b) => b.includes(sq(t.featAiMasterName)));
+    const on = settingsPanel(settingsWith('child', true), lang);
+    expect(master(on), 'the master switch renders').toBeTruthy();
+    expect(master(on)).toContain('aria-checked="true"');
+    expect(master(on)).not.toContain('aria-disabled');
+    expect(on).not.toContain(sq(t.featAiMasterOffNote));
+    const off = settingsPanel(settingsWith('child', false), lang);
+    expect(master(off)).toContain('aria-checked="false"');
+    expect(master(off)).not.toContain('aria-disabled');
+    expect(off).toContain(sq(t.featAiMasterOffNote));
   });
 });

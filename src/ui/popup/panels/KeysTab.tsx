@@ -6,7 +6,6 @@
 import type { ProxyProbeResult } from '../../../ai/client';
 import { usePopupT } from '../../../i18n/react';
 import { LicenseInfo, clearLicense, dailyCapForTier, isUncappedTier, setLicense } from '../../../storage/license';
-import { levelMakesNoCalls } from '../../../types/mode';
 import { FWSettings, isPinGraceActive, parentPinUnknown } from '../../../storage/settings';
 import { Eye, EyeOff, ShieldAlert } from '../../shared/icons/lucide';
 import { PinOverlay } from '../controls';
@@ -83,9 +82,6 @@ export function KeysTab({
   const requestSave = () => withParentPin('save', saveLic);
   const requestRemove = () => withParentPin('remove', removeLic);
 
-  // Strict makes no outside call, so at Strict this tab offers no key field, no price and no daily limit:
-  // it says the Strict sentence, and a key already held can still be removed (B2 unit 3).
-  const strict = levelMakesNoCalls(settings);
   const tierDailyCap = dailyCapForTier(license.tier);
   const uncapped = isUncappedTier(license.tier);
   // Same formula as HomeTab and pipeline.ts: dailyCap <= 0 is the legacy
@@ -107,20 +103,19 @@ export function KeysTab({
             <div className="key-name">{t.licCardName}</div>
             <div className="key-sub">
               {license.tier === 'free'
-                ? (strict ? t.keySubStrict : t.keySubFree)
-                : levelMakesNoCalls(settings) ? t.keySubStrict
+                ? t.keySubFree
                 : revoked ? t.licenseInvalidTitle : t.keySubActive}
             </div>
             {/* A key held outside Strict says what it covers by the names the rows carry in Settings, so the two screens
                 cannot name the reading's parts differently. */}
-            {license.tier !== 'free' && !strict && !revoked && (
+            {license.tier !== 'free' && !revoked && (
               <ul className="key-rows">
                 {readingRowNames(t).map((name) => <li key={name}>{name}</li>)}
               </ul>
             )}
             {/* What a key adds, without its price: the price stays on the site, so the popup holds no money and the
                 help page can change it without an update. */}
-            {license.tier === 'free' && !strict && (
+            {license.tier === 'free' && (
               <div className="key-sub">
                 {t.keyAdds}{' '}
                 <a href={KEY_HELP_URL} target="_blank" rel="noopener noreferrer">{t.keyGetLink}</a>
@@ -140,7 +135,6 @@ export function KeysTab({
             <div className="body">{t.licenseInvalidBodyKeysTab}</div>
           </div>
         )}
-        {!strict && (<>
         <div className="in-row">
           <input
             type={showLic ? 'text' : 'password'}
@@ -174,7 +168,7 @@ export function KeysTab({
           >
             {showLic ? <EyeOff size={14} /> : <Eye size={14} />}
           </button>
-          <button className="iconbtn" onClick={requestSave} disabled={!licDraft.trim()}>
+          <button type="button" className="iconbtn key-save" onClick={requestSave} disabled={!licDraft.trim()}>
             {t.save}
           </button>
         </div>
@@ -183,7 +177,6 @@ export function KeysTab({
         <div style={{ fontSize: 11, color: 'var(--fw-muted)', marginTop: 8, lineHeight: 1.5 }}>
           {t.licenseStaysOnDevice}
         </div>
-        </>)}
 
         {savedTick && <StatusLine tone="status" style={{ fontSize: 11, color: 'var(--fw-green)' }}>{t.saved}</StatusLine>}
 
@@ -202,7 +195,7 @@ export function KeysTab({
                 {t.removeConfirmBody}
                 <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
                   <button className="iconbtn" style={{ color: 'var(--fw-red)' }} onClick={requestRemove}>{t.remove}</button>
-                  <button className="iconbtn" onClick={() => setConfirmRemove(false)}>{t.cancelLower}</button>
+                  <button className="iconbtn" onClick={() => setConfirmRemove(false)}>{t.cancel}</button>
                 </div>
               </div>
             )}
@@ -211,7 +204,7 @@ export function KeysTab({
       </div>
 
       {/* The daily limit is the AI reading's: a key that does not turn the reading on has none to show (9 Oct 2026). */}
-      {!strict && license.tier !== 'free' && (<>
+      {license.tier !== 'free' && (<>
       <div className="grp-hdr">{t.dailyLimit}</div>
       <div className="pop-card" style={{ marginTop: 0 }}>
         <div style={{ fontSize: 12, color: 'var(--fw-text)' }}>

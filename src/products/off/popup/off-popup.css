@@ -2,7 +2,8 @@
 
 /* The first screen: what Off is doing, the guide, then folds. */
 .fw-off .off-status { margin: 6px 0 0; font-size: 14px; line-height: 1.5; color: var(--fw-text); }
-.fw-off .off-hidden { margin: 6px 0 0; font-size: 12px; line-height: 1.5; color: var(--fw-teal); }
+/* A count nobody can press is not drawn in the link colour; the purple is the token for secondary counts. */
+.fw-off .off-hidden { margin: 6px 0 0; font-size: 12px; line-height: 1.5; color: var(--fw-purple); }
 .fw-off .off-help { margin: 8px 0 0; font-size: 12px; line-height: 1.5; color: var(--fw-muted); }
 .fw-off .off-help:last-child { margin-bottom: 8px; }
 .fw-off .off-help a { color: var(--fw-teal); text-decoration: underline; }
@@ -18,10 +19,175 @@
   transform: rotate(-45deg); transition: transform 0.15s ease;
 }
 .fw-off :is(.off-fold, .off-card-fold)[open] > summary::before { transform: rotate(45deg); }
-.fw-off :is(.off-fold, .off-card-fold) > summary:hover { color: var(--fw-text); }
 .fw-off :is(.off-fold, .off-card-fold) > summary:focus-visible { outline: 2px solid var(--fw-teal); outline-offset: -2px; border-radius: var(--fw-r-md); }
 .fw-off .off-fold-n { text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--fw-teal); }
 @media (prefers-reduced-motion: reduce) { .fw-off :is(.off-fold, .off-card-fold) > summary::before { transition: none; } }
 /* The guide's fold inside the first card: the same row as the folds below, at the card's own edge. */
 .fw-off .off-card-fold > summary.grp-hdr { padding: 8px 0 4px; }
 .fw-off .off-card-fold + .off-help { margin-top: 4px; }
+
+/* Off U1 (the polish read of 12 Oct 2026): the first screen reads as made by one careful hand. */
+/* Row 1: the six fold heads were 11 px grey capitals with no surface and a 5 px chevron, the main thing to press drawn
+   as the quietest. Each is a 40 px row of the page-button family (page-button.css .fw-page-btn.row), the chevron at
+   the right; the pointer lifts its edge. Row 3: an open head keeps 8 px from its card. */
+.fw-off .off-fold > summary {
+  box-sizing: border-box; min-height: 40px; margin: 6px 8px 0; padding: 0 14px; align-items: center;
+  background: var(--fw-card); border: 1px solid var(--fw-border); border-radius: calc(10px * var(--pop-r-scale, 1));
+  color: var(--fw-text); font-size: 13px; font-weight: 600; text-transform: none; letter-spacing: 0;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.fw-off .off-fold > summary::before { order: 3; margin: 0 2px 0 auto; transform: rotate(45deg); color: var(--fw-muted); }
+.fw-off .off-fold[open] > summary::before { transform: rotate(-135deg); }
+.fw-off .off-fold[open] > summary { margin-bottom: 8px; }
+.fw-off .off-fold > summary:hover {
+  border-color: color-mix(in srgb, var(--fw-teal) 55%, var(--fw-border));
+  box-shadow: 0 3px 10px -4px color-mix(in srgb, var(--fw-teal) 45%, transparent);
+}
+@media (prefers-reduced-motion: reduce) { .fw-off .off-fold > summary { transition: none; } }
+/* Row 16: the guide was grey capitals like the old heads, the one opener with the least cue; it is a teal opener
+   in the card's words, as 'Tell us' is. */
+.fw-off .off-card-fold > summary.grp-hdr { color: var(--fw-teal); font-size: 12px; font-weight: 500; text-transform: none; letter-spacing: 0; }
+.fw-off .off-card-fold > summary:hover { text-decoration: underline; text-underline-offset: 3px; }
+/* Row 2: Describe sat 1 px under the line above it, centred while every other line starts at the card's edge. It is a
+   full-width row with air above it. */
+.fw-off .describe-open.fw-page-btn { display: flex; width: 100%; justify-content: space-between; min-height: 40px; margin: 8px 0 10px; }
+/* Row 4: the window's mark was an 8 px teal dot where the toolbar shows Off's red tile; it is that tile, still. */
+.fw-off .pop-header .wordmark::before {
+  width: 20px; height: 20px; margin-right: 8px; vertical-align: -4px; border-radius: calc(5px * var(--pop-r-scale, 1));
+  background: url(../../../../assets/icons-off/icon-48.png) center / cover; animation: none; box-shadow: none;
+}
+/* Row 14: the tagline sat 8 px off centre, lined up with nothing; it ends on the cards' right edge. */
+.fw-off .pop-header .fw-off-tagline { text-align: right; }
+.fw-off .pop-header { grid-template-columns: auto 1fr; }
+.fw-off .pop-header::after { content: none; }
+/* Off U3 (12 Oct 2026). Row 19: a fold's body opens over 200 ms, the AI drawer's time, where the page jumped up to
+   412 px in one frame. Reduced motion stops it (popup-life.css). */
+.fw-off :is(.off-fold, .off-card-fold) { interpolate-size: allow-keywords; }
+.fw-off :is(.off-fold, .off-card-fold)::details-content { block-size: 0; overflow: clip; transition: block-size 200ms ease, content-visibility 200ms allow-discrete; }
+.fw-off :is(.off-fold, .off-card-fold)[open]::details-content { block-size: auto; }
+/* Row 15: the header's tint stopped 10 px short of each side, at the scrollbar strips, which Chrome fills with the
+   flat page colour. Off keeps no strip and shows no bar, as Feedprint's popup (the wheel, the touchpad and the keys
+   still scroll); the window stays 396 px with the content at 10 to 386, and the header runs to both edges: the mark
+   at 18 and the tagline ending at 378, the cards' edge, where it ended 10 px short. */
+html:has(.fw-off) { scrollbar-gutter: auto; scrollbar-width: none; }
+.fw-popup.fw-off { box-sizing: border-box; width: 396px; max-width: 100%; padding-left: 10px; padding-right: 10px; }
+.fw-off .pop-header { margin-left: -10px; margin-right: -10px; padding-left: 18px; padding-right: 18px; }
+/* Off U5. Row 10: the language select is 36 px like the page buttons, with a drawn arrow in the muted ink instead of
+   the browser's black or white one. */
+.fw-off .set-select {
+  width: 100%; min-height: 36px; padding: 6px 34px 6px 10px; appearance: none;
+  background-color: var(--fw-bg); color: var(--fw-text); border: 1px solid var(--fw-border); border-radius: var(--fw-r-md); font: inherit; font-size: 12px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--fw-muted) 50%), linear-gradient(135deg, var(--fw-muted) 50%, transparent 50%);
+  background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%; background-size: 5px 5px; background-repeat: no-repeat;
+}
+/* Row 18: the footer had 6 px under its words; about 20 px under the last card and 18 px above the window's edge. */
+.fw-popup.fw-off .foot { padding-top: 16px; padding-bottom: 12px; }
+
+/* Controls inside the folds. */
+/* The PIN buttons sit at the end of a row whose text may run to four lines, so the pill keeps its size and the row's text gives way. */
+.fw-off .feat-row > .fw-page-btn { align-self: center; flex: none; }
+/* Block this: the shared card padding adds space at the top only; the bottom matches it. */
+.fw-off .pick-card { padding-bottom: 20px; }
+/* A picked item's x is centred in a 24 px box; pulling the box out puts the glyph on the card's content edge, under Clear. */
+.pick-card .pick-row .chip-x { margin-right: -10px; }
+
+/* The quiet finish: cards and switch rows. */
+/* A card's edge is the soft one Off's own sheet asks for; the shared sheet's later rule gave it the control edge, so a card
+   weighed what a button weighs. Controls keep the full edge. */
+.fw-popup.fw-off .pop-card { border-color: color-mix(in srgb, var(--fw-border) 45%, var(--fw-card)); }
+/* What Off hides: 40 px between switch centres instead of 32. The card's own padding gives back what the first and last row
+   add, so its ends match the other folds'; the break and PIN folds keep their rows as they are. */
+.fw-popup.fw-off .off-fold:first-of-type .feat-row { padding: var(--pop-2) 0; }
+.fw-popup.fw-off .off-fold:first-of-type > .pop-card { padding-top: var(--pop-1); padding-bottom: var(--pop-1); }
+
+/* Off U6 (his word 12 Oct 2026, 21:2x: Off's frame was "too sharp, two-dimensional" beside Feedprint's soft margin, and
+   its folds should be drawers like Feedprint's Settings). One look that goes with Off's mark, the crimson of its
+   toolbar tile (#d31147, assets/icons-off/icon-48.png); the teal of the controls stays, teal is action in both
+   products. All of it is this sheet's: no script grows. */
+:root { --off-mark: #d31147; }
+/* The frame, as Feedprint's (popup-panel.css): a fine line in the mark's colour 1 px inside the window with a faint
+   inner glow, on a layer fixed to the window; the header is a plate 1 px inside it whose tint fades into the page. */
+html:has(.fw-off) { background: var(--fw-bg); }
+/* Above the sticky header (z-index 5), so the line runs across the window's top as well. */
+body:not(.fw-detached) .fw-popup.fw-off::after {
+  content: ""; position: fixed; inset: 1px; pointer-events: none; z-index: 6;
+  border: 1px solid color-mix(in oklab, var(--off-mark) 50%, transparent);
+  border-radius: calc(12px * var(--pop-r-scale, 1));
+  box-shadow: inset 0 0 18px -8px color-mix(in oklab, var(--off-mark) 55%, transparent);
+}
+/* On the light page the same strength read as a pink wash at the edges; it steps down to stay a margin. */
+:root[data-theme="light"] body:not(.fw-detached) .fw-popup.fw-off::after {
+  border-color: color-mix(in oklab, var(--off-mark) 34%, transparent);
+  box-shadow: inset 0 0 16px -9px color-mix(in oklab, var(--off-mark) 34%, transparent);
+}
+/* html .fw-popup.fw-off outweighs the motion sheet's teal header tint (popup-life.css), which loads after this one. */
+html body:not(.fw-detached) .fw-popup.fw-off .pop-header {
+  margin: 1px -9px 0; padding-left: 17px; padding-right: 17px;
+  border-radius: calc(11px * var(--pop-r-scale, 1)) calc(11px * var(--pop-r-scale, 1)) 0 0;
+  background: linear-gradient(180deg, color-mix(in oklab, var(--off-mark) 11%, var(--fw-bg)), var(--fw-bg));
+}
+html[data-theme="light"] body:not(.fw-detached) .fw-popup.fw-off .pop-header {
+  background: linear-gradient(180deg, color-mix(in oklab, var(--off-mark) 7%, var(--fw-bg)), var(--fw-bg));
+}
+/* The drawers, as Feedprint's Settings folds (panels/Fold.tsx, popup-design.css .ai-drawer): shut, a 40 px pill as
+   wide as its words with the chevron after them; the pointer steps the whole pill by a measure of ink. Open, the fold
+   is one card: the header across it with the chevron in a 32 px square at the right, the rows under it. 8 px apart. */
+.fw-off .off-fold > summary::before { width: 7px; height: 7px; border-right-width: 1.75px; border-bottom-width: 1.75px; }
+.fw-off .off-fold:not([open]) > summary {
+  width: fit-content; max-width: calc(100% - 16px); margin: 8px 8px 0; gap: 10px; border-radius: 20px;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+.fw-off .off-fold:not([open]) > summary::before { margin: 0 2px 3px 2px; }
+.fw-off .off-fold:not([open]) > summary:hover {
+  background: color-mix(in oklab, var(--fw-text) 16%, var(--fw-card)); border-color: color-mix(in oklab, var(--fw-text) 30%, var(--fw-card));
+  box-shadow: none;
+}
+.fw-off .off-fold:not([open]) > summary:active { background: color-mix(in oklab, var(--fw-text) 22%, var(--fw-card)); }
+.fw-off .off-fold[open] {
+  margin: 8px 8px 0; padding-bottom: 4px; background: var(--fw-card);
+  border: 1px solid color-mix(in srgb, var(--fw-border) 45%, var(--fw-card)); border-radius: calc(12px * var(--pop-r-scale, 1));
+}
+.fw-off .off-fold[open] > summary {
+  position: relative; width: auto; margin: -1px 0 0; padding: 0 22px 0 14px; border-color: transparent; background: transparent;
+  box-shadow: none;
+}
+.fw-off .off-fold[open] > summary::before { margin-bottom: -3px; }
+.fw-off .off-fold[open] > summary::after {
+  content: ""; position: absolute; right: 8px; top: 50%; width: 32px; height: 32px; box-sizing: border-box; transform: translateY(-50%);
+  border: 1px solid var(--fw-border); border-radius: calc(10px * var(--pop-r-scale, 1));
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+.fw-off .off-fold[open] > summary:hover::after {
+  background: color-mix(in oklab, var(--fw-text) 14%, transparent); border-color: color-mix(in srgb, var(--fw-teal) 55%, var(--fw-border));
+}
+.fw-off .off-fold[open] > summary:active::after { background: color-mix(in oklab, var(--fw-text) 20%, transparent); }
+.fw-popup.fw-off .off-fold[open] > .pop-card { margin: 0; border-color: transparent; background: transparent; box-shadow: none; }
+@media (prefers-reduced-motion: reduce) { .fw-off .off-fold > summary, .fw-off .off-fold > summary::after { transition: none; } }
+
+/* Off's two looks (13 Oct 2026, the Leader's call; the picker costs 1,366 bytes of script, 3,551 left under the cap). A is
+   the crimson frame above with the teal controls. B, Quiet: a hairline frame, a flat header, warm paper in light, and
+   the mark's crimson as the one accent in place of teal, lightened in dark to hold 4.5:1 on the card (4.57; 4.95 on the
+   page; black on it 5.01) and the mark itself in light (5.16 on the card, 4.86 on the page, white on it 5.33), measured by
+   crew/visuals/off-ink.mjs. The theme always sets data-theme (theme.ts), so the two attribute forms cover it. */
+:root[data-look="b"] { --fw-bg: #0b0c10; --fw-card: #15161b; --fw-teal: #df4b61; --fw-on-accent: #0a0a0a; }
+:root[data-look="b"][data-theme="light"] { --fw-bg: #f7f4f0; --fw-card: #fdfbf8; --fw-teal: #d31147; --fw-on-accent: #ffffff; }
+:root[data-look="b"] body:not(.fw-detached) .fw-popup.fw-off::after { border-color: var(--fw-border-light); box-shadow: none; }
+html[data-look="b"] body:not(.fw-detached) .fw-popup.fw-off .pop-header { background: var(--fw-bg); }
+/* The count line under the status was purple, a second accent beside the crimson; in this look it is the quiet ink. */
+:root[data-look="b"] .fw-off .off-hidden { color: var(--fw-text-secondary); }
+/* The picker sits in the footer between the version and the privacy link: two 24 px round buttons, each a swatch of its
+   look (the frame's colour and the accent's), the chosen one ringed in the accent. */
+.fw-off .foot .look-row { display: inline-flex; gap: 4px; margin: -4px 0; }
+.fw-off .look-btn {
+  width: 24px; height: 24px; padding: 0; display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; border: 1px solid transparent; border-radius: 999px; cursor: pointer;
+}
+.fw-off .look-btn[aria-checked="true"] { border-color: var(--fw-teal); cursor: default; }
+.fw-off .look-btn:not([aria-checked="true"]):hover { border-color: var(--fw-border); }
+.fw-off .look-btn:focus-visible { outline: 2px solid var(--fw-teal); outline-offset: 2px; }
+.fw-off .look-swatch {
+  width: 14px; height: 14px; border-radius: 999px; border: 1px solid var(--fw-border);
+  background: linear-gradient(135deg, var(--sw-1) 0 50%, var(--sw-2) 50% 100%);
+}
+.fw-off .look-swatch.a { --sw-1: #d31147; --sw-2: #00bcd4; }
+.fw-off .look-swatch.b { --sw-1: #15161b; --sw-2: #df4b61; }

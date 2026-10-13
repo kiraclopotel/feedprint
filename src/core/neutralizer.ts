@@ -832,12 +832,20 @@ export function stripBundleScaffolding(text: string): string {
   return stripped.trim();
 }
 
-function validateNeutralization(original: string, rewritten: string): boolean {
+/**
+ * Why a rewrite is refused, as one fixed word (never a quote of the post or of the rewrite), or null when every check
+ * passes. The word goes on the decision record (rewrite.why) when the post keeps its own words because of it.
+ */
+export type NeutralizationFault =
+  | 'too-short' | 'meta-talk' | 'false-self' | 'advisory' | 'length-ratio'
+  | 'register-flattened' | 'meta-commentary' | 'unsafe-language' | 'harm-laundered';
+
+function neutralizationFault(original: string, rewritten: string): NeutralizationFault | null {
   // Minimum length check
   if (rewritten.length < 5) {
     console.debug('[FeelingWise] Neutralization rejected: rewrite shorter than 5 characters');
     void recordNeutralizerEvent('rewrite-too-short');
-    return false;
+    return 'too-short';
   }
 
   // No length ratio check — manipulative posts use dense shorthand (ALL CAPS,
@@ -860,7 +868,7 @@ function validateNeutralization(original: string, rewritten: string): boolean {
   if (metaHit) {
     console.debug('[FeelingWise] Neutralization rejected: meta-talk leak detected —', metaHit);
     void recordNeutralizerEvent('meta-talk-leak');
-    return false;
+    return 'meta-talk';
   }
 
   // False-self-admission guard — catches rewrites where the subject was
@@ -878,7 +886,7 @@ function validateNeutralization(original: string, rewritten: string): boolean {
         : 'RO subject mirror';
     console.debug(`[FeelingWise] Neutralization rejected: false self-admission Path ${falseSelfPath} — ${pathLabel}`);
     void recordNeutralizerEvent('voice-inversion');
-    return false;
+    return 'false-self';
   }
 
   // INJECTED-ADVISORY GUARD. Catches rewrites where the LLM substituted
@@ -891,7 +899,7 @@ function validateNeutralization(original: string, rewritten: string): boolean {
   if (advisoryHit) {
     console.debug('[FeelingWise] Neutralization rejected: injected advisory —', advisoryHit);
     void recordNeutralizerEvent('injected-advisory');
-    return false;
+    return 'advisory';
   }
 
   // LENGTH-RATIO GUARD. Two-tier:
@@ -907,7 +915,7 @@ function validateNeutralization(original: string, rewritten: string): boolean {
     const threshold = lengthTier === 'A' ? '> 1.7 (TIER A, original > 80c)' : '> 2.0 (TIER B, over 100 chars)';
     console.debug(`[FeelingWise] Neutralization rejected: length ratio ${ratio} ${threshold}`);
     void recordNeutralizerEvent('length-ratio-exceeded');
-    return false;
+    return 'length-ratio';
   }
 
   // Register-fidelity guard — reject rewrites that flatten an emotionally-
@@ -916,7 +924,7 @@ function validateNeutralization(original: string, rewritten: string): boolean {
   if (detectRegisterFlattening(original, rewritten)) {
     console.debug('[FeelingWise] Neutralization rejected: register flattened — original had emphasis markers, rewrite did not');
     void recordNeutralizerEvent('register-flattened');
-    return false;
+    return 'register-flattened';
   }
 
   // Check for meta-commentary (AI breaking character)
@@ -924,7 +932,7 @@ function validateNeutralization(original: string, rewritten: string): boolean {
     if (pattern.test(rewritten)) {
       console.debug('[FeelingWise] Neutralization rejected: meta-commentary -', pattern.source);
       void recordNeutralizerEvent('meta-commentary');
-      return false;
+      return 'meta-commentary';
     }
   }
 
@@ -932,7 +940,7 @@ function validateNeutralization(original: string, rewritten: string): boolean {
   if (unsafeVisible) {
     console.debug('[FeelingWise] Neutralization rejected: unsafe visible language -', unsafeVisible);
     void recordNeutralizerEvent('unsafe-visible-language');
-    return false;
+    return 'unsafe-language';
   }
 
   // A rewrite that drops every word of a lethal threat reads as a calm opinion and passes every
@@ -940,10 +948,37 @@ function validateNeutralization(original: string, rewritten: string): boolean {
   if (detectHarmLaundering(original, rewritten)) {
     console.debug('[FeelingWise] Neutralization rejected: the rewrite dropped the lethal language of the original');
     void recordNeutralizerEvent('harm-laundered');
-    return false;
+    return 'harm-laundered';
   }
 
-  return true;
+  return null;
+}
+
+function validateNeutralization(original: string, rewritten: string): boolean {
+  return neutralizationFault(original, rewritten) === null;
+}
+
+/**
+ * ONE more try at the rewrite when the first did not come back usable (the owner's export of 12 Oct 2026: 321 of 800
+ * attempts failed, and each failed one on a post kept the author's words behind a red dot). Never two: the second answer
+ * stands. Counted, so the fail rate before and after is read from the counters (rewriteRetry:landed, rewriteRetry:failed),
+ * and its text has to pass the check the first one had to. Not made when rewriting is off, when the post moved on, or when
+ * the judge itself declined to rewrite (the caller does not ask then).
+ */
+async function retryRewriteOnce(
+  text: string,
+  technique: string,
+  options: CombinedDetectOptions | undefined,
+): Promise<{ rewrite: string | null; fault: string }> {
+  if (!options?.rewrite || options.rewriteEnabled === false || options.signal?.aborted) return { rewrite: null, fault: 'not-tried' };
+  const raw = stripEmojis((await options.rewrite({ text, technique, signal: options.signal }).catch(() => '')).trim());
+  const fault = raw.length < 5 ? 'no-text' : neutralizationFault(text, raw);
+  if (fault !== null) {
+    void recordNeutralizerEvent('rewriteRetry:failed');
+    return { rewrite: null, fault };
+  }
+  void recordNeutralizerEvent('rewriteRetry:landed');
+  return { rewrite: raw, fault: '' };
 }
 
 interface CombinedResponse {
@@ -1275,7 +1310,7 @@ async function judgeV1Adult(
   locale: 'en' | 'ro',
   options: CombinedDetectOptions | undefined,
   startTime: number,
-): Promise<{ analysis: AnalysisResult; neutralized: NeutralizedContent | null } | null> {
+): Promise<{ analysis: AnalysisResult; neutralized: NeutralizedContent | null; rewriteWhy?: string } | null> {
   const verdict = await askJudgeV1(text, locale, options);
   if (!verdict) return null;
   // JUDGE-V1-PAIR: the rule and its measurement live in src/ai/judge-pair.ts, which is a
@@ -1354,13 +1389,23 @@ async function judgeV1Adult(
     },
   };
   let neutralized: NeutralizedContent | null = null;
+  let rewriteWhy: string | undefined;
   if (!hide && options?.rewriteEnabled !== false && options?.rewrite) {
     const rewrite = stripEmojis((await options.rewrite({ text, technique, signal: options.signal }).catch(() => '')).trim());
-    if (rewrite.length >= 5 && validateNeutralization(text, rewrite)) {
+    let landed: string | null = null;
+    const fault = rewrite.length < 5 ? 'no-text' : neutralizationFault(text, rewrite);
+    if (fault === null) landed = rewrite;
+    else {
+      // One more try, never two; its answer stands (retryRewriteOnce).
+      const again = await retryRewriteOnce(text, technique, options);
+      if (again.rewrite !== null) landed = again.rewrite;
+      else rewriteWhy = again.fault === 'not-tried' ? fault : `${fault}+retry`;
+    }
+    if (landed !== null) {
       neutralized = {
         postId: '',
         originalHash: await sha256(text),
-        rewrittenText: rewrite,
+        rewrittenText: landed,
         analysis,
         aiSource: 'cloud',
         processingTimeMs: performance.now() - startTime,
@@ -1374,7 +1419,7 @@ async function judgeV1Adult(
     const hostile = verdict.family === 'hostile' || verdict.family === 'threat';
     analysis.action = verdict.severity >= 7 && hostile ? 'hide' : undefined;
   }
-  return { analysis, neutralized };
+  return { analysis, neutralized, ...(rewriteWhy ? { rewriteWhy } : {}) };
 }
 
 /**
@@ -1492,7 +1537,7 @@ export async function combinedDetectAndNeutralize(
    * via { twoStageCascade: true }.
    */
   options?: CombinedDetectOptions,
-): Promise<{ analysis: AnalysisResult; neutralized: NeutralizedContent | null } | null> {
+): Promise<{ analysis: AnalysisResult; neutralized: NeutralizedContent | null; rewriteWhy?: string } | null> {
   try {
     const startTime = performance.now();
     const detected = techniques.filter(t => t.present);
@@ -1651,7 +1696,10 @@ export async function combinedDetectAndNeutralize(
         }, [])
       : [];
 
-    if (rawTechniques !== undefined && rawTechniques !== null && aiTechniques.length === 0) {
+    // An empty list is the judge saying "nothing here" (judgeToCombinedShape gives [] for every benign verdict), not drift:
+    // counting it put 117 benign verdicts on the owner's Issues tab in one day (13 Oct 2026) under a name that reads as a fault.
+    const emptyList = Array.isArray(rawTechniques) && rawTechniques.length === 0;
+    if (rawTechniques !== undefined && rawTechniques !== null && !emptyList && aiTechniques.length === 0) {
       // We received a truthy `techniques` payload but nothing survived the
       // shape check. That's shape drift — record it so we can see rate in the
       // dashboard without letting the pipeline throw.
@@ -1833,6 +1881,8 @@ export async function combinedDetectAndNeutralize(
     // collapse / hide remain as dead code for chain-record back-compat;
     // runtime never reaches them via this path now.
     let neutralized: NeutralizedContent | null = null;
+    // Why the post keeps its own words when no rewrite comes back: one fixed word, written on the decision record.
+    let rewriteWhy: string | undefined;
     if (analysis.isManipulative) {
       if (typeof response.neutralizedText === 'string') {
         // Defensive strip: when the input was a TikTok bundle (caption
@@ -1843,7 +1893,8 @@ export async function combinedDetectAndNeutralize(
         // Belt-and-braces over the prompt rule.
         const trimmed = stripBundleScaffolding(response.neutralizedText.trim());
         if (trimmed.length > 0) {
-          if (validateNeutralization(text, trimmed)) {
+          const fault = neutralizationFault(text, trimmed);
+          if (fault === null) {
             // Emoji strip runs AFTER validation, not before. Validating
             // against the LLM's actual output keeps the meta-talk and
             // voice-inversion guards firing on what the LLM literally
@@ -1862,10 +1913,15 @@ export async function combinedDetectAndNeutralize(
                 aiSource: 'cloud',
                 processingTimeMs,
               };
+            } else {
+              rewriteWhy = 'emoji-only';
             }
+          } else {
+            // The check has already logged its reason at debug level and counted it.
+            rewriteWhy = fault;
           }
-          // When `validateNeutralization` rejects, the validator has already
-          // logged the reason at debug level and counted it.
+        } else {
+          rewriteWhy = 'blank';
         }
       } else if (response.neutralizedText !== null && response.neutralizedText !== undefined) {
         // Non-string, non-nullish — LLM shape drift. Log + count + pass
@@ -1874,6 +1930,30 @@ export async function combinedDetectAndNeutralize(
         console.debug('[FeelingWise] Combined response neutralizedText was not a string (got',
           typeof response.neutralizedText, ') — skipping rewrite.');
         void recordNeutralizerEvent('non-string-neutralized-text');
+        rewriteWhy = 'non-string';
+      } else {
+        // No text at all. A judge that said "too hostile to defuse" (action hide or collapse) did not ask for one.
+        rewriteWhy = aiOriginalAction !== undefined ? 'judge-declined' : 'judge-sent-none';
+      }
+    }
+
+    // ONE more try, by the rewrite-only call, when the judge asked for a rewrite and did not deliver a usable one.
+    // Never two. The judge's own wish for hide or collapse is honoured as before: no try then.
+    if (analysis.isManipulative && neutralized === null && aiOriginalAction === undefined) {
+      const technique = analysis.primaryTechnique ?? present[0]?.technique;
+      const again = technique ? await retryRewriteOnce(text, technique, options) : { rewrite: null, fault: 'not-tried' };
+      if (again.rewrite !== null) {
+        neutralized = {
+          postId: '',
+          originalHash: await sha256(text),
+          rewrittenText: again.rewrite,
+          analysis,
+          aiSource: 'cloud',
+          processingTimeMs: performance.now() - startTime,
+        };
+        rewriteWhy = undefined;
+      } else if (again.fault !== 'not-tried' && rewriteWhy) {
+        rewriteWhy = `${rewriteWhy}+retry`;
       }
     }
 
@@ -1908,7 +1988,7 @@ export async function combinedDetectAndNeutralize(
       }
     }
 
-    return { analysis, neutralized };
+    return { analysis, neutralized, ...(rewriteWhy ? { rewriteWhy } : {}) };
   } catch (err) {
     console.error('[FeelingWise] Combined detect+neutralize error:', err);
     void recordNeutralizerEvent('unknown-throw');

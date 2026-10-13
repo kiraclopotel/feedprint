@@ -97,7 +97,11 @@ const CONTENT_CAP_BYTES = 300 * 1024;
 const size = statSync(join(dist, 'content.js')).size;
 if (size > CONTENT_CAP_BYTES) fail('size', `content.js is ${size} bytes, cap ${CONTENT_CAP_BYTES}`);
 
-const POPUP_CAP_BYTES = 360 * 1024;
+// The popup carries the whole four-language string table and the controls both popups share, so a label added for
+// Feedprint or a shared page grows it too: the Settings level list and the "Describe this page" page added 2,481 bytes
+// (measured on the built bundle, 367,933 to 370,414) against a cap the bundle already sat 707 bytes under. The cap is
+// set where those deliberate growths fit; a jump of tens of kilobytes still means a shared import pulled something in.
+const POPUP_CAP_BYTES = 368 * 1024;
 let popupTotal = 0;
 for (const abs of scripts) {
   if (abs.endsWith(`${sep}content.js`)) continue;

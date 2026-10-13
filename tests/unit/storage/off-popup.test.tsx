@@ -365,7 +365,7 @@ describe('the hidden total counts times, in every language', () => {
     ['en', 'Nothing hidden yet. Open a feed and this count starts.', 'Off has hidden things once so far.', 'Off has hidden things 5 times so far.', 'Off has hidden things 1,200 times so far.'],
     ['es', 'Todavía no se ha ocultado nada. Abre un feed y empezará el recuento.', 'Off ha ocultado cosas una vez hasta ahora.', 'Off ha ocultado cosas 5 veces hasta ahora.', 'Off ha ocultado cosas 1200 veces hasta ahora.'],
     ['pt-BR', 'Nada foi ocultado ainda. Abra um feed e a contagem começa.', 'O Off ocultou coisas uma vez até agora.', 'O Off ocultou coisas 5 vezes até agora.', 'O Off ocultou coisas 1.200 vezes até agora.'],
-    ['ro', 'Nimic ascuns încă. Deschide un feed și numărătoarea începe.', 'Off a ascuns lucruri o dată până acum.', 'Off a ascuns lucruri de 5 ori până acum.', 'Off a ascuns lucruri de 1.200 de ori până acum.'],
+    ['ro', 'Nimic ascuns încă. Deschide o rețea socială și numărătoarea începe.', 'Off a ascuns lucruri o dată până acum.', 'Off a ascuns lucruri de 5 ori până acum.', 'Off a ascuns lucruri de 1.200 de ori până acum.'],
   ] as const)('%s at 0, 1, a few and many', (lang, zero, one, few, many) => {
     const f = POPUP_STRINGS[lang].offStatusHidden;
     expect([f(0), f(1), f(5), f(1200)]).toEqual([zero, one, few, many]);

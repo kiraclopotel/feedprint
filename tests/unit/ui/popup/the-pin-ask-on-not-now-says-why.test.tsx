@@ -46,10 +46,10 @@ const REASON: Record<Lang, string> = {
   'pt-BR': 'Qualquer uma das respostas muda uma configuração, então o PIN vem antes.',
 };
 const STRICT_CLAUSE: Record<Lang, RegExp> = {
-  en: /leaving Strict asks for it again/,
-  es: /salir de Estricto lo vuelve a pedir/,
-  'pt-BR': /sair do Rigoroso pede o PIN de novo/,
-  ro: /ieșirea din Strict îl cere din nou/,
+  en: /leaving Silent asks for it again/,
+  es: /salir de Silencioso lo vuelve a pedir/,
+  'pt-BR': /sair do Silencioso pede o PIN de novo/,
+  ro: /ieșirea din nivelul Silențios îl cere din nou/,
 };
 
 function stored(over: Record<string, unknown>): Record<string, unknown> {

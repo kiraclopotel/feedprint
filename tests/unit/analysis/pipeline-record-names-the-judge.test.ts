@@ -13,6 +13,8 @@
 // header the proxy sets and, where a case scripts one, the model the reply names.
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { installChromeStorageStub, type ChromeStorageStub } from '../../helpers/chrome-storage';
+import { readingConsentFor } from '../../helpers/reading-consent';
 
 const SETTINGS = vi.hoisted(() => ({
   mode: 'adult',
@@ -137,7 +139,11 @@ function makePost(): PostContent {
   } as PostContent;
 }
 
+// The licence is the mocked family key; its stored go-ahead lets the reading reach the (stubbed) network.
+let storage: ChromeStorageStub;
+
 beforeEach(() => {
+  storage = installChromeStorageStub({ initial: readingConsentFor('fw-family-s') });
   resetFlushBudget();
   modelsAsked = [];
   onAsked = undefined;
@@ -158,6 +164,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  storage.restore();
   vi.unstubAllGlobals();
 });
 
@@ -200,8 +207,10 @@ describe('the record names the judge, not the call that happened to finish last'
 
     const result = await process(makePost());
 
-    expect(modelsAsked).toEqual([JUDGE_V1_MODEL, JUDGE_V1_SECOND_MODEL, GROQ_FAST_MODEL]);
+    // The rewrite is asked for twice: one more try when the first did not come back, never a third.
+    expect(modelsAsked).toEqual([JUDGE_V1_MODEL, JUDGE_V1_SECOND_MODEL, GROQ_FAST_MODEL, GROQ_FAST_MODEL]);
     expect(result.action).toBe('mark');
+    expect(result.rewriteWhy).toBe('no-text+retry');
     // result-apply.ts writes aiSource 'rules' for a mark whose aiMeta is absent.
     expect(result.aiMeta).toEqual({ model: `${JUDGE_V1_MODEL}+${JUDGE_V1_SECOND_MODEL}`, provider: JUDGE_PROVIDER });
   });

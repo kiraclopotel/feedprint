@@ -14,17 +14,17 @@ import { UI_LANGUAGES } from '../../../src/i18n';
 type Lang = (typeof UI_LANGUAGES)[number];
 
 const STRICT_WORD: Record<Lang, RegExp> = {
-  en: /Strict/,
-  es: /Estricto/,
-  'pt-BR': /Rigoroso/,
-  ro: /Strict/,
+  en: /Silent/,
+  es: /Silencioso/,
+  'pt-BR': /Silencioso/,
+  ro: /Silențios/,
 };
 
 const PIN_CLAUSE: Record<Lang, RegExp> = {
-  en: /leaving Strict asks for it again/,
-  es: /salir de Estricto lo vuelve a pedir/,
-  'pt-BR': /sair do Rigoroso pede o PIN de novo/,
-  ro: /ieșirea din Strict îl cere din nou/,
+  en: /leaving Silent asks for it again/,
+  es: /salir de Silencioso lo vuelve a pedir/,
+  'pt-BR': /sair do Silencioso pede o PIN de novo/,
+  ro: /ieșirea din nivelul Silențios îl cere din nou/,
 };
 
 const REASON: Record<Lang, string> = {

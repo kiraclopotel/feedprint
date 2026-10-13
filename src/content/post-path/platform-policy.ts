@@ -36,7 +36,8 @@ export function shouldRecordTextlessVideoPass(platform: Platform, reason: PassRe
   // TikTok is deliberately EXCLUDED here: admitting it would start recording
   // every free-tier TikTok video, which is a volume change nobody has asked
   // for, not a fix for an orphan.
-  if (reason === 'pre-llm-free-tier-no-ai') return platform === 'youtube';
+  // A level that reads nothing (Strict) is the same: every video exits here, so the arm is scoped to YouTube alone.
+  if (reason === 'pre-llm-free-tier-no-ai' || reason === 'pre-llm-level-reads-nothing') return platform === 'youtube';
 
   // Everything else deliberately writes nothing here. 'pre-llm-cap-exhausted' and
   // 'pre-llm-ai-call-failed' mean the content was never assessed, so a benign

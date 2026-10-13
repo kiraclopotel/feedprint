@@ -199,7 +199,8 @@ describe('migrateSettings (LOOP-242)', () => {
       const result = migrateSettings(v2);
       // Core "Rewrite + Marker dot" feature ships ON.
       expect(result.settings.features['rewritten-comments-first'].enabled).toBe(true);
-      expect(result.settings.features['show-reframe-markers'].enabled).toBe(true);
+      // Silent starts with no dot to press (the owner's yes, 12 Oct 2026).
+      expect(result.settings.features['show-reframe-markers'].enabled).toBe(false);
       // Every Additional protection ON for Child preset.
       expect(result.settings.features['hide-engagement-metrics'].enabled).toBe(true);
       expect(result.settings.features['hide-action-buttons'].enabled).toBe(true);
@@ -275,7 +276,7 @@ describe('migrateSettings (LOOP-242)', () => {
       // Per CYCLE N+18 mode-driven policy: child = maximum protection,
       // every Additional protection toggle ON; comment-analysis count = 25.
       expect(result.settings.features['rewritten-comments-first'].enabled).toBe(true);
-      expect(result.settings.features['show-reframe-markers'].enabled).toBe(true);
+      expect(result.settings.features['show-reframe-markers'].enabled).toBe(false);
       expect(result.settings.features['hide-engagement-metrics'].enabled).toBe(true);
       expect(result.settings.features['block-comment-posting'].enabled).toBe(true);
       expect(result.settings.features['comments-to-analyze-per-video'].value).toBe(25);

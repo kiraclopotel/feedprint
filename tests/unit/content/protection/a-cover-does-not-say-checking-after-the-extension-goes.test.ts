@@ -38,19 +38,20 @@ const covered = (element: HTMLElement): boolean =>
 beforeEach(() => { document.body.innerHTML = ''; });
 
 describe('a cover left behind when the extension goes away', () => {
-  it('stops saying the post is being checked', () => {
+  it('says what happened where the plain veil said nothing', () => {
     const manager = new ChildProtectionManager<Item>();
     manager.setMode('child');
     const target = item();
     manager.protect(target.item);
 
     const before = coverText(target.element);
-    expect(before).not.toBe('');
+    expect(before, 'the veil while it waits has no words').toBe('');
 
     manager.strandAll();
 
     expect(coverText(target.element)).toBe(MARKER_STRINGS.en.coverStrandedNotice);
     expect(coverText(target.element)).not.toBe(before);
+    expect(coverText(target.element)).not.toBe(MARKER_STRINGS.en.checkingText);
   });
 
   it('keeps the post covered, because uncovering it is the unsafe direction', () => {

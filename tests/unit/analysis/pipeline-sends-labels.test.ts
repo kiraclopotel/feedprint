@@ -1,12 +1,14 @@
 /** @vitest-environment jsdom */
 // The Teen and Child post judge, and the triage call before it, get the author's label and copies
 // of the text and the caption context with the known handles replaced, and the names go back
-// into the reason and the rewrite before anything reads them. The Adult path is unchanged.
+// into the reason and the rewrite before anything reads them. The Adult judge gets the same since 12 Oct 2026.
 //
 // The pipeline, the frozen judge (core/neutralizer.ts) and the AI client all run for real; only
 // fetch and the storage around them are stubbed, so the bodies read here are what would leave.
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { installChromeStorageStub, type ChromeStorageStub } from '../../helpers/chrome-storage';
+import { readingConsentFor } from '../../helpers/reading-consent';
 
 const SETTINGS = vi.hoisted(() => ({
   mode: 'teen',
@@ -105,7 +107,11 @@ function proxyResponse(content: string): Response {
   return res as unknown as Response;
 }
 
+// The licence is the mocked family key; its stored go-ahead lets the reading reach the (stubbed) network.
+let storage: ChromeStorageStub;
+
 beforeEach(() => {
+  storage = installChromeStorageStub({ initial: readingConsentFor('fw-family-s') });
   resetFlushBudget();
   sent = [];
   classify = {
@@ -114,16 +120,18 @@ beforeEach(() => {
     neutralized_text: 'I think anyone who still backs this plan is mistaken, and @user_B and I are tired of the argument going nowhere.',
   };
   vi.stubGlobal('fetch', vi.fn(async (_url: string, init: RequestInit) => {
-    const body = JSON.parse(String(init.body)) as { messages: { content: string }[] };
+    const body = JSON.parse(String(init.body)) as { messages: { content: string }[]; response_format?: unknown };
     const system = body.messages[0].content;
     const user = body.messages[1].content;
     sent.push({ system, user });
     const triage = system.startsWith('You are a content safety triage classifier');
-    return proxyResponse(triage ? 'yes' : JSON.stringify(classify));
+    // The rewrite-only call (no JSON mode) is not the judge: it gets no usable text, so a refused judge rewrite stays refused.
+    return proxyResponse(triage ? 'yes' : body.response_format !== undefined ? JSON.stringify(classify) : '');
   }));
 });
 
 afterEach(() => {
+  storage.restore();
   vi.unstubAllGlobals();
   vi.mocked(processingCache.set).mockClear();
   SETTINGS.mode = 'teen';
@@ -198,6 +206,7 @@ describe('the Teen post judge reads labels and the family reads names', () => {
     expect(teen.action).toBe('mark');
     expect(teen.neutralized).toBeUndefined();
     SETTINGS.mode = 'child';
+    delete storage.state.readingConsent; // Strict reads only on a stored agreement; this child has none
     const child = await process(makePost({ id: 'p2' }));
     // Strict makes no call (PLAN-A S2): the judge that produced the label above is never asked for
     // Child, so there is no verdict to fold on and no label to leak; a plain pass, nothing to redact.
@@ -261,9 +270,9 @@ describe('the Teen post judge reads labels and the family reads names', () => {
   });
 
   it('a rewrite that keeps the attack behind an "I think" is not shown: hidden when severe and hostile, marked when milder (11 Oct 2026)', async () => {
-    const text = '@anyhandle you are a pathetic little nobody and everyone at your school knows it. Do us all a favour and disappear.';
+    const text = '@anyhandle you are an embarrassment to this whole school and everyone knows it. Do us all a favour and disappear.';
     classify.primary_concern = 'personal attack on @user_B by @user_A';
-    classify.neutralized_text = 'I think you are a pathetic little nobody and everyone at your school knows it. I suggest you disappear.';
+    classify.neutralized_text = 'I think you are an embarrassment to this whole school and everyone knows it. I suggest you disappear.';
     const severe = await process(makePost({ id: 'k1', context: undefined, text }));
     expect(severe.action).toBe('hide');
     expect(severe.neutralized).toBeUndefined();
@@ -279,17 +288,46 @@ describe('the Teen post judge reads labels and the family reads names', () => {
     expect(calm.neutralized?.rewrittenText).toBe('I strongly disagree with @anyhandle and would like to hear their reasons.');
   });
 
-  it('the Adult judge is unchanged: the text goes as written and no author line exists', async () => {
+  it('the Adult judge reads letters too (12 Oct 2026): the text and the post it answers carry no account name, and no author line exists', async () => {
     SETTINGS.mode = 'adult';
     vi.stubGlobal('fetch', vi.fn(async (_url: string, init: RequestInit) => {
       const body = JSON.parse(String(init.body)) as { messages: { content: string }[] };
       sent.push({ system: body.messages[0].content, user: body.messages[1].content });
       return proxyResponse(JSON.stringify({ charged: false, family: 'none', severity: 0, effect: 'inert', intent: 'none' }));
     }));
-    await process(makePost());
+    await process(makePost({ parentText: 'Earlier, @viewer_three wrote that the plan was fine and @the_sharer agreed.' }));
     expect(sent).toHaveLength(1);
-    expect(sent[0].user).toContain('@the_sharer');
-    expect(sent[0].user).not.toContain('user_');
-    expect(sent[0].user).not.toContain('AUTHOR:');
+    const user = sent[0].user;
+    for (const name of ['the_sharer', 'viewer_one', 'viewer_two', 'viewer_three']) expect(user, name).not.toContain(name);
+    expect(user).toContain('@user_');
+    expect(user).toContain('THE POST IT REPLIES TO');
+    expect(user).not.toContain('AUTHOR:');
+    // The same person is the same letter in the post and in the post it answers.
+    const sharer = /says (@user_[A-Z]+)\./.exec(user)?.[1];
+    expect(sharer).toBeTruthy();
+    expect(user).toContain(`and ${sharer} agreed`);
+  });
+
+  it('the Adult path puts the names back into a rewrite before anything shows it', async () => {
+    SETTINGS.mode = 'adult';
+    vi.stubGlobal('fetch', vi.fn(async (_url: string, init: RequestInit) => {
+      const body = JSON.parse(String(init.body)) as { messages: { content: string }[]; response_format?: unknown };
+      const user = body.messages[1].content;
+      sent.push({ system: body.messages[0].content, user });
+      if (body.response_format) {
+        return proxyResponse(JSON.stringify({ charged: true, family: 'hostile', severity: 5, effect: 'recruit', intent: 'react' }));
+      }
+      const friend = /(@user_[A-Z]+) and the rest of us/.exec(user)?.[1] ?? '@user_X';
+      return proxyResponse(`Some people back this plan and some do not, and ${friend} and the rest of us would like to talk it through.`);
+    }));
+    const result = await process(makePost());
+    for (const call of sent) {
+      for (const name of ['the_sharer', 'viewer_one', 'viewer_two']) expect(call.user, name).not.toContain(name);
+    }
+    expect(sent.length).toBeGreaterThanOrEqual(2);
+    if (result.neutralized) {
+      expect(result.neutralized.rewrittenText).not.toContain('@user_');
+      expect(result.neutralized.rewrittenText).toContain('@viewer_one');
+    }
   });
 });

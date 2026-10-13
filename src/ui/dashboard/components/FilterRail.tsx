@@ -105,6 +105,7 @@ export function FilterRail({ search, onSearchChange, groups }: {
           type="search"
           aria-label={t.searchPlaceholder}
           placeholder={t.searchPlaceholder}
+          title={t.searchPlaceholder}
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
         />

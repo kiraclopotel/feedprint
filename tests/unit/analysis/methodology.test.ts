@@ -158,7 +158,7 @@ describe('methodology block — court-facing criteria disclosure', () => {
   // record written by the adult reader. Found by reading the note beside
   // the threshold it describes.
   it('names the adult reader as the exception when the note describes confidence', () => {
-    expect(block.note).toMatch(/Relaxed reader/i);
+    expect(block.note).toMatch(/Open reader/i);
     expect(block.note).toMatch(/fixed/i);
     expect(block.note).not.toMatch(/how sure the model (is|was)\)? are separate values on every record/i);
     if (/how sure the model/i.test(block.note)) {

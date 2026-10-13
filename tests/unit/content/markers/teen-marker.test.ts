@@ -312,6 +312,15 @@ describe('pickYellowReason — LLM-grounded reason with template fallback', () =
     expect(a).not.toBe(b);
   });
 
+  // The measured reader of Open posts has no prose reason; the record keeps its tag for the export (12 Oct 2026, the Tester's
+  // twenty-first read: Open's yellow state showed "judge-v1: threat, recruit, wants the reader to fear" where Calm shows a reason).
+  it('never shows the internal tag of the measured reader as the reason: Open falls back to the same plain template Calm does', () => {
+    const tag = 'judge-v1: threat, recruit, wants the reader to fear';
+    expect(pickYellowReason({ explanation: tag, primaryTechnique: 'shame-attack' }))
+      .toBe(pickYellowReason({ explanation: '', primaryTechnique: 'shame-attack' }));
+    expect(markerLanguageFor(tag, 'ro')).toBe('ro');
+  });
+
   it('falls back to the static template when explanation is empty', () => {
     const result = pickYellowReason({
       explanation: '',

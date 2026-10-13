@@ -68,7 +68,7 @@ export function ChainLossBanner({ witness, onOpenBackup }: ChainLossBannerProps)
             type="button"
             onClick={onOpenBackup}
             style={{
-              fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 2,
+              fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 'var(--fw-radius-md)',
               cursor: 'pointer', whiteSpace: 'nowrap',
               border: '1px solid var(--fw-red)', background: 'var(--fw-red)', color: 'var(--fw-bg)',
             }}

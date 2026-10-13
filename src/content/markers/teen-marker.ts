@@ -49,6 +49,8 @@ import {
 } from '../../i18n/marker-strings';
 import { isInspectionTab } from '../post-path/inspection-mode';
 import { clearRewriteMarks, markAiText, rewriteChangesText, type AiWriter } from './ai-mark';
+import { removeAllSeenPills } from './seen-a-lot-pill';
+import { askOpenReason } from '../../ai/open-reason';
 
 // ─── Localized strings ──────────────────────────────────────────────────────
 //
@@ -73,6 +75,11 @@ function getReasonFor(technique: TechniqueName | undefined, lang: ResolvedUiLang
 // not included here. Severity-field echoes are caught separately.
 const TECHNIQUE_ECHO_RE = /\b(?:fear-appeal|anger-trigger|shame-attack|false-urgency|toxic-positivity|misleading-format|combined-stack|body-comparison-priming|parasocial-coercion|consumer-rapid-frame|hyperreal-trauma-bait|violence-graphic|self-harm|drug-promotion|extreme-toxicity)\b/i;
 const SEVERITY_ECHO_RE = /\bsev(?:erity)?[\s_:-]*\d+\b/i;
+// The measured reader of Open posts has no prose reason: its line on the record is the instrument's tag
+// ("judge-v1: threat, recruit, wants the reader to fear"), kept for the export's "Model's stated reason". It is no
+// explanation for a person, so the yellow state shows the same plain template Calm falls back to (the Tester's twenty-first
+// read, 12 Oct 2026).
+const INTERNAL_TAG_RE = /^\s*judge-v1:/i;
 
 // Guard chain for the LLM-grounded explanation. The BATCH classifier
 // surfaces a per-comment `reason` field at `analysis.explanation` (plumbed
@@ -101,6 +108,14 @@ const SEVERITY_ECHO_RE = /\bsev(?:erity)?[\s_:-]*\d+\b/i;
 //
 // Any failure → fall back to the static technique template. The rest of
 // the marker (title + dot color) stays grounded in the verdict.
+export function isUsableReason(reason: string, lang: ResolvedUiLanguage): boolean {
+  if (reason.length < 8 || reason.length > 300 || INTERNAL_TAG_RE.test(reason)) return false;
+  if (!validateRewriteLanguage(reason, lang)) return false;
+  if (detectInjectedAdvisory('', reason) !== null) return false;
+  if (TECHNIQUE_ECHO_RE.test(reason) || SEVERITY_ECHO_RE.test(reason)) return false;
+  return true;
+}
+
 export function pickYellowReason(
   analysis: {
     explanation?: string;
@@ -110,16 +125,7 @@ export function pickYellowReason(
   lang: ResolvedUiLanguage = 'en',
 ): string {
   const groqReason = analysis.explanation?.trim();
-  if (!groqReason || groqReason.length < 8 || groqReason.length > 300) {
-    return groundedFallbackReason(analysis, lang);
-  }
-  if (!validateRewriteLanguage(groqReason, lang)) {
-    return groundedFallbackReason(analysis, lang);
-  }
-  if (detectInjectedAdvisory('', groqReason) !== null) {
-    return groundedFallbackReason(analysis, lang);
-  }
-  if (TECHNIQUE_ECHO_RE.test(groqReason) || SEVERITY_ECHO_RE.test(groqReason)) {
+  if (!groqReason || !isUsableReason(groqReason, lang)) {
     return groundedFallbackReason(analysis, lang);
   }
   return groqReason;
@@ -163,7 +169,7 @@ function getStrings(lang: ResolvedUiLanguage): MarkerStrings {
  */
 export function markerLanguageFor(explanation: string | undefined, uiLang: ResolvedUiLanguage): ResolvedUiLanguage {
   const text = explanation?.trim();
-  if (!text || text.length < 8) return uiLang;
+  if (!text || text.length < 8 || INTERNAL_TAG_RE.test(text)) return uiLang;
   const det = detectLanguage(text);
   if (det.language === 'en' && uiLang !== 'en') return 'en';
   if (det.language === 'ro' && uiLang !== 'ro') return 'ro';
@@ -325,6 +331,25 @@ export interface RenderMarkerOptions {
    * the original.
    */
   aiRewrite?: AiWriter;
+  /**
+   * Where the walk starts. 'original' is the Open level: the page already shows the author's own words, the dot is red,
+   * and a tap goes to the reason (yellow), then the calm version (green), then back to the original. Absent, the walk is
+   * the Calm level's and starts on the rewrite the injector already put in the body (green, yellow, red).
+   */
+  entry?: 'original';
+  /**
+   * With entry 'original': makes the body one plain text holder before the first tap writes into it (the injector's own
+   * text swap, so each platform's rules for its text apply). Returns false when it could not, and the tap then changes
+   * nothing. Required for the three-state walk; without it a rewrite-bearing marker falls back to the two-state mark.
+   */
+  flatten?: () => boolean;
+  /**
+   * Asked once, when the dot is pressed to the yellow reason, for a sentence about THIS item; the yellow state shows
+   * the technique's fixed line until it answers and keeps it on any failure. Absent, the marker builds it for an
+   * item the measured reader (Open) charged, from that reader's own labels (src/ai/open-reason.ts); Calm's reason
+   * already comes inside the judge's reply, so it asks for nothing.
+   */
+  askReason?: () => Promise<string | null>;
 }
 
 /**
@@ -347,7 +372,11 @@ export function renderTeenMarker(opts: RenderMarkerOptions): HTMLButtonElement |
   // color = original visible / YELLOW = explanation) instead of the
   // 3-state semaphore. Forensic chain still has the record either way;
   // the marker is the parent's visible-DOM signal that FW intervened.
-  const isMarkOnly = kind === 'rewrite' && (opts.rewriteText ?? '').trim().length === 0;
+  const opensOnTheOriginal = opts.entry === 'original' && typeof opts.flatten === 'function';
+  // An item that opens on the original needs the means to write the rewrite in place (flatten); without it the dot can
+  // only open the reason, which is the mark-only form.
+  const isMarkOnly = kind === 'rewrite'
+    && ((opts.rewriteText ?? '').trim().length === 0 || (opts.entry === 'original' && !opensOnTheOriginal));
   const aiRewrite = opts.aiRewrite && rewriteChangesText(opts.rewriteText ?? '', originalText)
     ? opts.aiRewrite
     : undefined;
@@ -383,9 +412,14 @@ export function renderTeenMarker(opts: RenderMarkerOptions): HTMLButtonElement |
   const color = severityColor(analysis.overallScore);
   const strings = getStrings(lang);
   const title = getTitleFor(analysis.primaryTechnique, lang);
-  const explanation = (analysis.explanation && analysis.explanation.trim().length > 0)
+  const explanation = (analysis.explanation && analysis.explanation.trim().length > 0 && !INTERNAL_TAG_RE.test(analysis.explanation))
     ? analysis.explanation.trim()
     : strings.fallbackExplanation;
+
+  const judged = analysis.judge;
+  const askReason = opts.askReason ?? (judged?.charged === true && originalText.trim().length > 0
+    ? () => askOpenReason({ text: originalText, reading: judged, lang })
+    : undefined);
 
   const marker = document.createElement('button');
   marker.type = 'button';
@@ -433,6 +467,9 @@ export function renderTeenMarker(opts: RenderMarkerOptions): HTMLButtonElement |
       bodyEl: el,
       baseText: originalText,
       explanation: `${strings.reframePrefix}: ${title} · ${pickYellowReason(analysis, lang)}`,
+      explanationFor: (reason) => `${strings.reframePrefix}: ${title} · ${reason}`,
+      lang,
+      askReason,
       // Base = raw original shown → RED (the semaphore's "original" state),
       // NOT the severity ramp. The amber ramp (#E0A458) is byte-identical to
       // YELLOW_COLOR (#e0a458), so an amber-severity mark-only post toggled
@@ -459,7 +496,10 @@ export function renderTeenMarker(opts: RenderMarkerOptions): HTMLButtonElement |
       // unusable rewriteText.
       rewriteText: opts.rewriteText!,
       strings,
+      lang,
+      askReason,
       aiRewrite,
+      ...(opensOnTheOriginal ? { entry: 'original' as const, flatten: opts.flatten, markerInside: mount === 'inside' } : {}),
     });
   } else if (kind === 'collapse') {
     // Folded post: the body already holds the calm placeholder (set by the
@@ -563,6 +603,12 @@ const NEXT_STATE: Record<'green' | 'yellow' | 'red', MarkerState> = {
   yellow: 'red',
   red: 'green',
 };
+// The Open level's walk (12 Oct 2026): it starts on the original, so the reason comes first, then the calm version.
+const NEXT_STATE_OPEN: Record<'green' | 'yellow' | 'red', MarkerState> = {
+  red: 'yellow',
+  yellow: 'green',
+  green: 'red',
+};
 
 interface StateToggleContext {
   bodyEl: HTMLElement;
@@ -571,8 +617,17 @@ interface StateToggleContext {
   originalText: string;
   rewriteText: string;    // explicit rewrite text drives GREEN state
   strings: MarkerStrings;
+  lang: ResolvedUiLanguage;
+  /** See RenderMarkerOptions.askReason. */
+  askReason?: () => Promise<string | null>;
   /** Present when a model wrote `rewriteText`: GREEN carries the AI mark, RED and YELLOW do not. */
   aiRewrite?: AiWriter;
+  /** The Open level: the body holds the author's words untouched, the walk starts on RED and goes red, yellow, green. */
+  entry?: 'original';
+  /** Turns the body into one text holder before the first tap writes into it (see RenderMarkerOptions.flatten). */
+  flatten?: () => boolean;
+  /** The marker is a child of `bodyEl`, so a body rewrite that clears the children must put it back. */
+  markerInside?: boolean;
 }
 
 /**
@@ -680,6 +735,10 @@ interface TwoStateToggleContext {
   bodyEl: HTMLElement;
   baseText: string;
   explanation: string;
+  /** With `askReason`: the explanation line for a reason that arrived later. */
+  explanationFor?: (reason: string) => string;
+  lang?: ResolvedUiLanguage;
+  askReason?: () => Promise<string | null>;
   baseColor: string;
   ariaBase: string;
   ariaExplanation: string;
@@ -691,6 +750,26 @@ interface TwoStateToggleContext {
 function syncRewriteMark(bodyEl: HTMLElement, writer: AiWriter | undefined): void {
   if (writer) markAiText(bodyEl, 'rewrite', writer);
   else clearRewriteMarks(bodyEl);
+}
+
+/**
+ * The yellow state asks for a better reason once, the first time it is shown. The fixed line is on the page meanwhile;
+ * an answer that fails the marker's own checks, or no answer, leaves it. `apply` swaps the new text in when the
+ * answer lands while the reason is still what the person is looking at.
+ */
+function reasonAsker(
+  ask: (() => Promise<string | null>) | undefined,
+  lang: ResolvedUiLanguage,
+  apply: (reason: string) => void,
+): () => void {
+  let asked = false;
+  return () => {
+    if (!ask || asked) return;
+    asked = true;
+    void ask()
+      .then((reason) => { if (reason && isUsableReason(reason, lang)) apply(reason); })
+      .catch(() => { /* the fixed line stays */ });
+  };
 }
 
 function attachTwoStateToggle(marker: HTMLButtonElement, ctx: TwoStateToggleContext): void {
@@ -707,6 +786,12 @@ function attachTwoStateToggle(marker: HTMLButtonElement, ctx: TwoStateToggleCont
   // there to read it from, and reused for every swap after.
   let textColor: string | null = null;
   let colorCaptured = false;
+  const askForReason = reasonAsker(ctx.askReason, ctx.lang ?? 'en', (reason) => {
+    if (ctx.explanationFor) ctx.explanation = ctx.explanationFor(reason);
+    if (bodyEl.dataset.fwMarkerState !== 'yellow' || !bodyEl.isConnected) return;
+    const holder = findTextHolder(bodyEl, marker);
+    if (holder) writeHolderText(holder, ctx.explanation, textColor);
+  });
 
   marker.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -725,6 +810,7 @@ function attachTwoStateToggle(marker: HTMLButtonElement, ctx: TwoStateToggleCont
     marker.style.setProperty('--fw-marker-color', next === 'yellow' ? YELLOW_COLOR : ctx.baseColor);
     marker.setAttribute('aria-label', next === 'yellow' ? ctx.ariaExplanation : ctx.ariaBase);
     bodyEl.dataset.fwMarkerState = next;
+    if (next === 'yellow') askForReason();
   });
 }
 
@@ -734,8 +820,15 @@ function attachTwoStateToggle(marker: HTMLButtonElement, ctx: TwoStateToggleCont
  * setting. Rewrites and their guards stay: the marker is UI, the rewrite
  * is protection.
  */
+export function hasTeenMarker(el: HTMLElement): boolean {
+  if (el.querySelector('.fw-teen-marker') !== null) return true;
+  const prior = markerByElement.get(el);
+  return prior?.isConnected === true;
+}
+
 export function removeAllTeenMarkers(): void {
   document.querySelectorAll('.fw-teen-marker').forEach((m) => m.remove());
+  removeAllSeenPills();
 }
 
 /**
@@ -773,16 +866,43 @@ function attachStateToggle(marker: HTMLButtonElement, ctx: StateToggleContext): 
   // destroys the node carrying it.
   let textColor: string | null = null;
   let colorCaptured = false;
-  bodyEl.dataset.fwMarkerState = 'green';
-  marker.style.setProperty('--fw-marker-color', GREEN_COLOR);
-  marker.setAttribute('aria-label', strings.greenAriaLabel);
+  // The Open level starts on the original, untouched, and walks red, yellow, green; the Calm level starts on the rewrite
+  // the injector already wrote and walks green, yellow, red.
+  const open = ctx.entry === 'original';
+  const start: 'green' | 'red' = open ? 'red' : 'green';
+  const walk = open ? NEXT_STATE_OPEN : NEXT_STATE;
+  let flattened = !open;
+  const askForReason = reasonAsker(ctx.askReason, ctx.lang, (reason) => {
+    ctx.reason = reason;
+    if (bodyEl.dataset.fwMarkerState !== 'yellow' || !bodyEl.isConnected) return;
+    const holder = findTextHolder(bodyEl, marker);
+    if (holder) writeHolderText(holder, reasonBodyText(ctx), textColor);
+  });
+  bodyEl.dataset.fwMarkerState = start;
+  marker.style.setProperty('--fw-marker-color', colorForState(start));
+  marker.setAttribute('aria-label', ariaLabelForState(start, strings));
 
   marker.addEventListener('click', (e) => {
     e.stopPropagation();
     e.preventDefault();
 
-    const current = (bodyEl.dataset.fwMarkerState as MarkerState | undefined) ?? 'green';
-    const next = NEXT_STATE[current as 'green' | 'yellow' | 'red'] ?? 'green';
+    const current = (bodyEl.dataset.fwMarkerState as MarkerState | undefined) ?? start;
+    const next = walk[current as 'green' | 'yellow' | 'red'] ?? start;
+
+    if (!flattened) {
+      // The first tap on an Open item: the platform's own nodes are still there, so the colour is read from them, then
+      // the body becomes one plain text holder by the injector's own swap. If that cannot be done nothing changes.
+      const first = findTextHolder(bodyEl, marker);
+      if (first && !colorCaptured) { textColor = captureTextColor(first); colorCaptured = true; }
+      let ok = false;
+      try { ok = ctx.flatten ? ctx.flatten() : false; } catch { ok = false; }
+      if (!ok) return;
+      flattened = true;
+      // From here on the body holds text FeelingWise wrote or restored; the page scanner must not read it as a new post.
+      bodyEl.setAttribute('data-fw-neutralized', 'true');
+      if (ctx.markerInside && marker.parentElement !== bodyEl) bodyEl.appendChild(marker);
+    }
+
     const holder = findTextHolder(bodyEl, marker);
 
     if (holder) {
@@ -802,6 +922,7 @@ function attachStateToggle(marker: HTMLButtonElement, ctx: StateToggleContext): 
     marker.style.setProperty('--fw-marker-color', colorForState(next));
     marker.setAttribute('aria-label', ariaLabelForState(next, strings));
     bodyEl.dataset.fwMarkerState = next;
+    if (next === 'yellow') askForReason();
   });
 }
 

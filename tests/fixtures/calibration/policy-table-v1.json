@@ -19,7 +19,7 @@
     { "row": "J6", "reading": { "judge": { "charged": true, "family": "commercial", "severity": 6 }, "descriptor": { "target": "nobody", "topic": "shopping-deals", "protect": "none", "graphic": false, "swearing": false }, "rails": [] }, "expect": { "child": "hide", "teen": "mark", "adult": "mark" } },
     { "row": "J7", "reading": { "judge": { "charged": true, "family": "threat", "severity": 5 }, "descriptor": { "target": "public", "topic": "news", "protect": "none", "graphic": false, "swearing": false }, "rails": [] }, "expect": { "child": "mark", "teen": "mark", "adult": "mark" } },
     { "row": "J8", "reading": { "judge": { "charged": true, "family": "hostile", "severity": 2 }, "descriptor": { "target": "present", "topic": "gaming", "protect": "none", "graphic": false, "swearing": true }, "rails": [] }, "expect": { "child": "allow", "teen": "allow", "adult": "allow" } },
-    { "row": "T2", "reading": { "judge": { "charged": false, "family": "none", "severity": 0 }, "descriptor": { "target": "nobody", "topic": "gambling", "protect": "none", "graphic": false, "swearing": false }, "rails": [] }, "expect": { "child": "hide", "teen": "collapse", "adult": "allow" } },
+    { "row": "R5", "reading": { "judge": null, "descriptor": null, "rails": ["topic"] }, "expect": { "child": "hide", "teen": "hide", "adult": "hide" } },
     { "row": "D1", "reading": { "judge": { "charged": false, "family": "none", "severity": 0 }, "descriptor": { "target": "thing", "topic": "animals", "protect": "none", "graphic": false, "swearing": true }, "rails": [] }, "expect": { "child": "allow", "teen": "allow", "adult": "allow" } }
   ]
 }

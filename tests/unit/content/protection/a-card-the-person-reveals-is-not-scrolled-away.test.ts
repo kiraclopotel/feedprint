@@ -9,8 +9,13 @@
 // nothing (the filter lifts its block, the card leaves the page, the person keeps scrolling) are guards that pass before and after.
 // The earlier test files are not edited.
 
+// Since 13 Oct 2026 a TikTok card is hidden with its box kept (video-feed-hide.ts keepsItemBox), so a test of the move or the
+// hold that needs a card to lose its box makes the collapse itself (tests/helpers/collapse-a-card.ts): the timing belongs to
+// any hide that moves the feed, whichever card takes it.
+
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { injectHardHide } from '../../../../src/content/injector';
+import { collapseCard } from '../../../helpers/collapse-a-card';
 import {
   _resetAdvanceBreakerForTesting,
   _setHostForTesting,
@@ -89,7 +94,7 @@ describe('F47 site D rework: the held move stands down for a card the person rev
   it('control: no reveal, a real collapse: the next card already holds the screen, so the held move does nothing', () => {
     const { a, advanced } = feed();
     wheel();
-    injectHardHide(a.desc, 'tiktok', opts);
+    collapseCard(a.item);
     vi.advanceTimersByTime(1500);
     expect(advanced).not.toHaveBeenCalled();
   });

@@ -35,7 +35,11 @@ const messagesByLang = Object.fromEntries(
 ) as Record<(typeof UI_LANGUAGES)[number], Messages>;
 
 // receiptsShortName since the 2.5.18 release: Chrome shows Feedprint where the whole name does not fit.
-const KEYS = ['receiptsName', 'receiptsShortName', 'receiptsDescription', 'receiptsActionTitle', 'offName', 'offDescription', 'offActionTitle'];
+// actionTitleReading*: the toolbar icon's hover text while a "!" shows, set by the worker (background/toolbar-icon.ts), 12 Oct 2026.
+const KEYS = [
+  'receiptsName', 'receiptsShortName', 'receiptsDescription', 'receiptsActionTitle', 'offName', 'offDescription', 'offActionTitle',
+  'actionTitleReadingPaused', 'actionTitleReadingTrouble',
+];
 const NAME_MAX = 75;
 const DESCRIPTION_MAX = 132;
 

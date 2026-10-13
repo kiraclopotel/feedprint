@@ -179,7 +179,26 @@ const SHAME_CLAIM_EN = String.raw`(?:(?:nobody|no\s*one)(?:\s+(?:at|in|from)\s+\
 const SHAME_ORDER_EN = String.raw`(?:(?:just\s+)?delete\s+(?:your|ur)\s+(?:account|acc|profile|page|channel)|(?:just\s+)?go\s+away(?:\s+(?:forever|for\s+good))?|(?:just\s+)?disappear(?:\s+(?:forever|for\s+good))?|never\s+(?:come\s+back|post\s+again)|get\s+off\s+(?:the\s+)?(?:internet|here)|leave\s+(?:forever|for\s+good))`;
 const SHAME_CLAIM_RO = String.raw`(?:nimeni\s+nu\s+te\s+(?:place|vrea|iubeste|suporta)|toti\s+te\s+(?:urasc|dispretuiesc)|toata\s+lumea\s+te\s+uraste)`;
 const SHAME_ORDER_RO = String.raw`(?:dispari|pleaca\s+(?:de\s+aici|pentru\s+totdeauna)|nu\s+(?:mai\s+)?reveni\s+(?:niciodata|aici)|sterge[\s-]*ti\s+contul|inchide[\s-]*ti\s+contul)`;
+// A name-calling at the reader, paired with an order to vanish: the form of the bullying line on every feed ("you are a
+// pathetic little nobody ... do us all a favour and disappear"). An insult alone stays with the AI, as above; only the pair
+// is a rule, and only when the insult is said OF the reader ("you are a ...", no negation between) and the order is one of
+// the vanishing orders. The modifiers in between are listed, not wild, so "you are not a loser, go away and rest" and
+// "you are a legend, go away" never fire.
+const INSULT_NOUN_EN = String.raw`(?:loser|nobody|idiot|moron|failure|freak|clown|joke|pathetic|worthless|disgusting|ugly|stupid|dumb|trash|garbage|scum|waste\s+of\s+(?:space|oxygen|skin))`;
+const INSULT_OF_YOU_EN = String.raw`(?:you|u)(?:'re|\s*are|\s+r)\s+(?:(?:such|just|really|so|a|an|the|total|complete|absolute|utter|little|big|pathetic|worthless|fucking)\s+){0,3}${INSULT_NOUN_EN}`;
+const VANISH_ORDER_EN = String.raw`(?:do\s+(?:us|everyone|the\s+world|all\s+of\s+us)(?:\s+all)?\s+a\s+favou?r\s+and\s+(?:disappear|vanish|go\s+away|leave|delete\s+(?:your|ur)\s+(?:account|acc|profile)|stop\s+posting)|${SHAME_ORDER_EN}|nobody\s+(?:would|will)\s+miss\s+(?:you|u))`;
+const INSULT_OF_YOU_ES = String.raw`eres\s+(?:un|una)\s+(?:\w+\s+)?(?:idiota|inutil|imbecil|perdedor|perdedora|fracasado|fracasada|basura|asco|payaso|payasa)`;
+const VANISH_ORDER_ES = String.raw`(?:desaparece|desaparecete|largate|vete\s+(?:de\s+aqui|al\s+carajo)|borra\s+tu\s+cuenta|borrate\s+la\s+cuenta|nadie\s+te\s+(?:quiere|extranaria))`;
+const INSULT_OF_YOU_PT = String.raw`(?:voce\s+e|tu\s+es)\s+(?:um|uma)\s+(?:\w+\s+)?(?:idiota|inutil|imbecil|perdedor|perdedora|fracassado|fracassada|lixo|palhaco|palhaca)`;
+const VANISH_ORDER_PT = String.raw`(?:desaparece|desapareca|some\s+daqui|sai\s+daqui|apaga\s+(?:a\s+tua|a\s+sua|sua|tua)\s+conta|ninguem\s+(?:te\s+quer|vai\s+sentir\s+sua\s+falta))`;
+const INSULT_OF_YOU_RO = String.raw`esti\s+(?:un|o)\s+(?:\w+\s+)?(?:idiot|idioata|prost|proasta|ratat|ratata|gunoi|jalnic|jalnica)`;
+const INSULT_AND_VANISH = (insult: string, order: string): RegExp =>
+  new RegExp(String.raw`\b${insult}\b.{0,100}?\b${order}\b|\b${order}\b.{0,100}?\b${insult}\b`, 'i');
 const SHAMING_HARASSMENT: Rule[] = [
+  { pattern: 'insult-and-vanish-en', re: INSULT_AND_VANISH(INSULT_OF_YOU_EN, VANISH_ORDER_EN) },
+  { pattern: 'insult-and-vanish-es', re: INSULT_AND_VANISH(INSULT_OF_YOU_ES, VANISH_ORDER_ES) },
+  { pattern: 'insult-and-vanish-pt', re: INSULT_AND_VANISH(INSULT_OF_YOU_PT, VANISH_ORDER_PT) },
+  { pattern: 'insult-and-vanish-ro', re: INSULT_AND_VANISH(INSULT_OF_YOU_RO, SHAME_ORDER_RO) },
   { pattern: 'nobody-likes-you-go-away', re: new RegExp(String.raw`\b${SHAME_CLAIM_EN}\b.{0,50}?\b${SHAME_ORDER_EN}\b|\b${SHAME_ORDER_EN}\b.{0,50}?\b${SHAME_CLAIM_EN}\b`, 'i') },
   { pattern: 'laughs-at-you-behind-your-back', re: /\b(?:everyone|everybody|they\s+all|the\s+whole\s+(?:school|class))\s+(?:is\s+|are\s+)?(?:laughs?|laughing)\s+at\s+(?:you|u)\s+behind\s+(?:your|ur)\s+back\b/i },
   { pattern: 'nimeni-nu-te-place-ro', re: new RegExp(String.raw`\b${SHAME_CLAIM_RO}\b.{0,50}?\b${SHAME_ORDER_RO}\b|\b${SHAME_ORDER_RO}\b.{0,50}?\b${SHAME_CLAIM_RO}\b`, 'i') },

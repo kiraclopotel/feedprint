@@ -149,15 +149,19 @@ until you remove it or restart Firefox. The reproducible build takes the flag
 The store builds are reproducible. Every zip uploaded to the Chrome Web Store is listed in
 [`docs/spec/RELEASES.tsv`](docs/spec/RELEASES.tsv) with the commit it was built from, the Node
 version and its SHA-256. A public copy of this source is taken at an upload, and its
-`SOURCE-COMMIT` file names the commit. With the Node version in `.nvmrc` and `npm ci`:
+`SOURCE-COMMIT` file names the commit. Since the default branch moves on after an upload, a reader first checks out the tag of the
+upload they want to compare, for example `git checkout v2.5.18`. If the command is run on a later
+commit, it refuses because that commit was never uploaded. Then, with the Node version in `.nvmrc`
+and `npm ci`, they run the command below:
 
 ```bash
 node scripts/reproducible-build.mjs --expect-release
 ```
 
 rebuilds each extension this source was uploaded as and says MATCH or MISMATCH against its row,
-for the files and for the zip. The same command runs on every change to the public repository
-(`.github/workflows/ci.yml`), on Windows, the one system the match has been checked on so far.
+for the files and for the zip. The same command runs in `.github/workflows/ci.yml` on every
+version tag, on Windows; an outside rebuild on Linux (Node 24.14.0, 13 October 2026) matched as
+well.
 
 That list is our own record: the store does not hand out the zip we uploaded. The copy Chrome
 installed from the store is something you can check without it. Chrome keeps, beside that copy, a
@@ -184,7 +188,7 @@ Where things are: `src/forensics/` is the record (chain, signing, archives, expo
 `src/content/` reads the five platforms; `src/core/`, `src/ai/` and `src/analysis/` are the
 optional reading; `src/ui/` is the popup and the dashboard; `verifier/` is the public checker,
 generated from `src/forensics/verifier-core-source.ts`; the relay the paid reading goes through
-lives in `worker/`, which stays out of the public copy of this tree. The code map is
+lives in `worker/` (its source is public; its deploy config and operator scripts are not). The code map is
 [`docs/spec/README.md`](docs/spec/README.md); the open defects are in `known-issues.md` (private).
 
 ## Privacy
@@ -222,5 +226,6 @@ v3.0 or later (`LICENSE`, the licence text with the copyright line; the notes th
 on the names, the checker's licence and authorship, are `LICENSE-NOTES.md`). The checker and the record format in `verifier/` are Apache License
 2.0 (`verifier/LICENSE`), so a second implementer inherits no copyleft from the specification.
 The names FeelingWise, Feedprint, Receipts and Off and the marks are not licensed; a fork must use
-its own name. The relay at `api.feelingwise.org`, the licence counter behind the paid reading, and the
-owner's own records are not in this tree. Contact `support@feelingwise.org`.
+its own name. The relay at `api.feelingwise.org` and the licence counter behind the paid reading are
+in `worker/`; their deploy config, the operator's scripts and the owner's own records are not in this
+tree. Contact `support@feelingwise.org`; for a security problem, see `SECURITY.md`.

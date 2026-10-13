@@ -56,7 +56,8 @@ import { getLicense, type LicenseInfo } from '../storage/license';
 import { licenseFingerprint } from '../storage/cap-markers';
 import { licenseRefusalHolds, noteLicenseRefused } from '../storage/license-refusal';
 import { getSettings } from '../storage/settings';
-import { makesNoOutsideCall, levelOf } from '../types/mode';
+import { levelOf } from '../types/mode';
+import { mayCallOutNow } from '../ai/gate-with-agreement';
 
 const PROXY_TSA_URL = 'https://api.feelingwise.org/v1/tsa';
 
@@ -386,10 +387,11 @@ export async function requestVerifiedTimestamps(
   const reasons: string[] = [];
   if (!/^[0-9a-f]{64}$/i.test(hashHex)) return { anchors, reasons: ['invalid_hash'] };
   // Both routes end here, the direct authorities and the proxy, so this is the one place Strict
-  // stops them. A settings snapshot that could not be read reads as Strict: not knowing the level is
-  // no reason to send a hash out, and the next tick asks again.
+  // stops them (and, once Strict reads, the time stamp follows its reading). A settings snapshot that
+  // could not be read reads as Strict: not knowing the level is no reason to send a hash out, and the
+  // next tick asks again.
   const settings = await getSettings();
-  if (makesNoOutsideCall(settings)) {
+  if (!(await mayCallOutNow(settings))) {
     return { anchors, reasons: [levelOf(settings.mode) === 'strict' ? 'strict_makes_no_calls' : 'no_level_chosen'] };
   }
 

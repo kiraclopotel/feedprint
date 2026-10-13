@@ -160,7 +160,7 @@ export const PT_BR: DashboardStrings = {
   techDetail: (name, sev) => `técnica: ${name} (grav. ${ptNum(sev)})`,
   originalLabel: 'Original',
   softenedLabel: 'Suavizado',
-  openOriginalPost: 'Abrir a publicação original ↗',
+  openOriginalPost: 'Abrir a publicação original',
   withholdBtn: 'Reter este registro',
   withholdPrompt: 'Reter este registro de toda exportação e toda visualização. O lugar dele na cadeia, o hash e a assinatura ficam; o texto, o autor, os links e a mídia saem. Motivo (opcional, guardado no marcador assinado):',
   withholdDone: 'Retido. Um marcador assinado agora nomeia este registro.',
@@ -168,7 +168,7 @@ export const PT_BR: DashboardStrings = {
   withheldNote: 'Retido a seu pedido; um marcador assinado nomeia este registro. Os bytes ficam no armazenamento deste dispositivo e nos seus backups.',
   withheldShort: '(retido)',
   excludeBtn: 'Parar de registrar esta conta',
-  excludeDone: 'A partir de agora nada que esta conta publicar é registrado. Os registros já escritos ficam; retenha-os um a um se for preciso.',
+  excludeDone: 'A partir de agora nada que esta conta publicar é registrado. Os registros já escritos ficam; retenha-os um a um se for preciso. Para registrá-la de novo, abra "Contas não registradas", acima da lista, e clique em "Registrar de novo".',
   exclusionsTitle: 'Contas não registradas',
   exclusionsSub: 'Nada que estas contas publicam entra no registro desde o momento em que foram adicionadas. A proteção na página não muda. O registro guarda só quantos foram pulados, nunca um nome.',
   exclusionsNone: 'Nenhuma conta pulada.',
@@ -215,8 +215,8 @@ export const PT_BR: DashboardStrings = {
   restoreChainNote: (err) => `nota: ${err}`,
   restoreChainFallback: 'o registro restaurado não passou totalmente na verificação',
   restoreKeyRestored: ' Chave de assinatura restaurada. O seu registro continua como uma cadeia só.',
-  restoredMsg: (added, skipped, anchors, chain, key) =>
-    `Restauradas ${ptNum(added)} ${added === 1 ? 'entrada' : 'entradas'} (${ptNum(skipped)} já estavam), ${ptNum(anchors)} marca(s) de tempo: ${chain}.${key}`,
+  restoredMsg: (added, skipped, anchors, chain, key, alsoArchived) =>
+    `Restauradas ${ptNum(added)} ${added === 1 ? 'entrada' : 'entradas'} (${ptNum(skipped)} já estavam)${alsoArchived ? `, ${ptNum(alsoArchived)} também nos arquivos mensais (contadas uma vez)` : ''}, ${ptNum(anchors)} marca(s) de tempo: ${chain}.${key}`,
   restoreDoneNotice: (restored, replaced) => {
     const done = `Restauração concluída: ${ptNum(restored)} ${restored === 1 ? 'entrada volta' : 'entradas voltam'} para o registro.`;
     if (replaced <= 0) return done;
@@ -336,7 +336,7 @@ export const PT_BR: DashboardStrings = {
   exportIncluded: (included, total) => `${ptNum(included)} ${included === 1 ? 'registro incluído' : 'registros incluídos'} de ${ptNum(total)} no total`,
   exportNothingFlagged: 'Nada neste registro está marcado, então este arquivo não tem o que levar. Fica desligado até que tenha. O arquivo do registro inteiro ao lado não está vazio: ele leva tudo, marcado ou não.',
   exportIncludedScope: 'O relatório, o PDF, o JSON e o CSV levam os registros sinalizados da cadeia ativa:',
-  everythingIncludes: (active, archived) => `${active.toLocaleString('pt-BR')} ${active === 1 ? 'registro' : 'registros'} na cadeia ativa mais ${archived.toLocaleString('pt-BR')} nos arquivos mensais, nada retido.`,
+  everythingIncludes: (active, archived, inBoth) => `${active.toLocaleString('pt-BR')} ${active === 1 ? 'registro' : 'registros'} na cadeia ativa mais ${archived.toLocaleString('pt-BR')} nos arquivos mensais${inBoth ? `, ${inBoth.toLocaleString('pt-BR')} deles em ambos e contados uma vez` : ''}, nada retido.`,
   exportSavedNote: (file, bytes) => `Salvo ${file}, ${bytes.toLocaleString('pt-BR')} bytes.`,
   pdfOpenedNote: (records) => `Abriu uma visualização de impressão com ${ptNum(records)} ${records === 1 ? 'registro' : 'registros'} em uma nova aba. Use a caixa de impressão do navegador para salvar como PDF.`,
   pdfFallbackNote: (file, bytes) => `O navegador bloqueou a aba de impressão, então o mesmo relatório foi salvo como ${file} (${bytes.toLocaleString('pt-BR')} bytes). Abra e imprima como PDF.`,
@@ -540,7 +540,7 @@ export const PT_BR: DashboardStrings = {
   feedOriginalVerbatim: 'Texto original',
   feedProtectionsAtCapture: 'Proteções ligadas na hora da captura',
   featCommentsPerVideo: 'Comentários lidos por vídeo',
-  feedSettingsReadFailedNote: 'As configurações não puderam ser lidas quando este registro foi escrito; o aplicativo protegeu no máximo. O modo mostrado é o padrão seguro, não uma configuração atestada.',
+  feedSettingsReadFailedNote: 'As configurações não puderam ser lidas quando este registro foi escrito; o aplicativo usou o nível mais protetor, o Silencioso. O modo mostrado é o padrão seguro, não uma configuração atestada.',
   feedMarkerReset: 'REGISTRO REINICIADO',
   feedMarkerRotation: 'MÊS ARQUIVADO',
   feedMarkerPrune: 'ENTRADAS ANTIGAS PODADAS',
@@ -981,8 +981,11 @@ export const PT_BR: DashboardStrings = {
   opsAiHealthSub: 'Se a análise com IA está rodando (ela só roda com uma chave de licença) e, quando está, como as chamadas ao provedor de IA se comportam (velocidade, tokens, cortes, margem até o limite de requisições). Sem chave só roda o filtro de dano embutido.',
   opsLoadingShort: 'Carregando…',
   opsAiOff: '● A análise com IA está desligada: esta instalação não tem chave de licença. Só o filtro de dano embutido roda. Uma chave de licença colada na janela liga a análise com IA.',
-  opsAiOffStrict: '● A IA está DESLIGADA no Rigoroso. Este nível não envia nada para fora, então nenhuma classificação com IA roda (só o filtro de dano embutido). O Moderado com uma chave de licença liga a análise com IA.',
-  opsAiOffStrictKey: '● A IA está DESLIGADA no Rigoroso. Este nível não envia nada para fora, então nenhuma classificação com IA roda (só o filtro de dano embutido). O Moderado liga a análise com IA com a sua chave de licença.',
+  opsAiOffStrict: '● A IA está DESLIGADA no nível Silencioso porque não há chave. Sem chave, nada sai deste computador, então nenhuma classificação com IA roda (só o filtro de dano embutido). Uma chave de licença e a sua autorização para o Live Rephrase ligam a análise com IA.',
+  opsAiOffStrictKey: '● A IA está DESLIGADA no nível Silencioso enquanto você não der a sua autorização ao Live Rephrase. Até lá, nada sai deste computador, então nenhuma classificação com IA roda (só o filtro de dano embutido). Com a autorização dada, a sua chave de licença liga a análise com IA.',
+  strictAllowanceOut: 'O Live Rephrase está pausado: o limite de hoje foi atingido. As publicações são filtradas neste computador até o limite zerar.',
+  strictServiceDown: 'O Live Rephrase não está respondendo. As publicações são filtradas neste computador.',
+  strictNoAgreement: 'O Live Rephrase tem uma chave, mas ainda não tem a sua autorização. Nada sai deste computador.',
   opsTierMismatch1: '● A licença diz ',
   opsTierMismatch2: (n) => `, mas a cadeia rodou sem chave ${ptNum(n)} ${n === 1 ? 'vez' : 'vezes'} nas últimas 24 h. O script de conteúdo pode estar lendo a licença como ausente (uma falha de leitura conhecida). Recarregue a extensão, cole a chave de novo e confira outra vez.`,
   opsLicenseActive1: '● Licença ',
@@ -1066,11 +1069,11 @@ export const PT_BR: DashboardStrings = {
   opsStageHelp: {
     pipeline_total: 'Análise completa de uma publicação, do começo ao fim: o que quem lê espera.',
     cache_lookup: 'Conferir se esta publicação já tinha nota. Deve ser mínimo (uns poucos ms).',
-    detect: 'Classificador de primeira passada (normalmente desligado no Moderado).',
+    detect: 'Classificador de primeira passada (normalmente desligado no Calmo).',
     combined_call: 'A ida e volta ao provedor de IA. Costuma ser o passo mais lento: passar de uns 2 s significa rede lenta ou limite de requisições. Só conta como bem-sucedida quando a IA devolve uma leitura.',
     neutralize: 'Reescrever o texto marcado depois que a IA responde.',
-    first_protection: 'Tempo desde que um item novo no Rigoroso é observado até a cobertura de segurança opaca dele.',
-    protection_terminal: 'Quanto tempo um item no Rigoroso ficou coberto antes de PASS, de uma reescrita, de ocultação ou de limpeza.',
+    first_protection: 'Tempo desde que um item novo no Silencioso é observado até a cobertura de segurança opaca dele.',
+    protection_terminal: 'Quanto tempo um item no Silencioso ficou coberto antes de PASS, de uma reescrita, de ocultação ou de limpeza.',
   },
   opsPctOk: (pct) => `${pct} certas`,
   opsPctCached: (pct) => ` · ${pct} em cache`,
@@ -1163,6 +1166,9 @@ export const PT_BR: DashboardStrings = {
   opsCardReadingPausedTitle: 'A leitura com IA está pausada: ela espera o seu aval',
   opsCardReadingPausedMeaning: 'O serviço que lê o seu feed pede que cada pessoa inicie a leitura uma vez, e isso ainda não foi feito neste dispositivo. Enquanto isso, as publicações e os comentários aparecem como foram escritos; as proteções da página que não precisam de leitura continuam funcionando.',
   opsCardReadingPausedAction: 'Abra a janela do Feedprint e toque em "Começar o Live Rephrase agora". A leitura volta na hora. O ícone mostra um "!" vermelho até lá.',
+  opsCardReadingTroubleTitle: 'A leitura com IA não está chegando',
+  opsCardReadingTroubleMeaning: 'Nos últimos minutos o serviço que lê o seu feed não respondeu, então as publicações e os comentários ficaram como foram escritos; as proteções que não precisam de leitura (palavrões, ameaças, anúncios ocultados) continuaram funcionando.',
+  opsCardReadingTroubleAction: 'Não há nada a fazer: ele tenta de novo sozinho e este cartão some quando uma chamada passar. O ícone mostra um "!" âmbar até lá. Se continuar por horas, verifique a sua conexão.',
   opsTechDetails: 'Detalhes técnicos (para o suporte)',
 
   // Overview tab
@@ -1210,7 +1216,7 @@ export const PT_BR: DashboardStrings = {
   ovSourceFlagged: (n) => `${ptNum(n)} marcados`,
   ovSourcesFootnote: 'Cada linha abre os registros dela. O Feedprint conta o que apareceu; ele nunca pontua uma pessoa.',
   ovRhythmEyebrow: 'Quando o feed esteve na tela',
-  ovRhythmSub: 'Todos os registros por hora, últimos 7 dias. Um quadrado mais escuro significa mais itens servidos naquela hora.',
+  ovRhythmSub: 'Todos os registros por hora, últimos 7 dias. Um quadrado de cor mais intensa significa mais itens servidos naquela hora.',
   ovRhythmTip: (day, hour, n) => `${day} ${String(hour).padStart(2, '0')}:00, ${ptNum(n)} ${n === 1 ? 'item' : 'itens'}`,
   ovRhythmFootnote: 'O registro guarda os minutos exatos; isto é o formato da semana.',
 
@@ -1395,7 +1401,7 @@ export const PT_BR: DashboardStrings = {
   railSeverity: { high: 'Alta (8-10)', medium: 'Média (5-7)', low: 'Baixa (1-4)' },
   railKind: { posts: 'Publicações', comments: 'Comentários', videos: 'Vídeos', images: 'Imagens' },
   railGroupMode: 'Modo na captura',
-  railMode: { relaxed: 'Relaxado', moderate: 'Moderado', strict: 'Rigoroso' },
+  railMode: { relaxed: 'Aberto', moderate: 'Calmo', strict: 'Silencioso' },
   railGroupModel: 'Modelo que leu',
   railModelNone: 'Sem modelo (regras ou nenhum)',
   railGroupSurface: 'Onde apareceu',
@@ -1420,8 +1426,9 @@ export const PT_BR: DashboardStrings = {
   showingArchivedOlder: (older) =>
     `${older.toLocaleString('pt-BR')} registros mais antigos, de meses anteriores aos últimos 90 dias, contam em cada total e ficam no arquivo mensal; não aparecem nesta lista. A exportação completa os inclui.`,
   sidePanelsPending: 'Os painéis laterais são preenchidos quando o registro completo tiver carregado.',
-  recordWindowNote: (from, to, count, cap) =>
-    `O registro ativo vai de ${from} a ${to}: ${count.toLocaleString('pt-BR')} de ${cap.toLocaleString('pt-BR')}. Ao chegar a ${cap.toLocaleString('pt-BR')}, os mais antigos vão para o arquivo mensal, que esta lista e a exportação completa incluem.`,
+  recordWindowNote: (from, to, count, cap) => count > cap
+    ? `O registro ativo vai de ${from} a ${to}: ${count.toLocaleString('pt-BR')} entradas, acima das ${cap.toLocaleString('pt-BR')} a que é mantido. Cerca de uma vez por dia os mais antigos vão para o arquivo mensal, que esta lista e a exportação completa incluem, então o número pode ficar acima de ${cap.toLocaleString('pt-BR')} até a próxima mudança.`
+    : `O registro ativo vai de ${from} a ${to}: ${count.toLocaleString('pt-BR')} de ${cap.toLocaleString('pt-BR')}. Cerca de uma vez por dia, o que passa de ${cap.toLocaleString('pt-BR')} (o mais antigo) vai para o arquivo mensal, que esta lista e a exportação completa incluem.`,
   showingBefore: 'Mostrando ',
   showingBetween: ' de ',
   showingAfter: ' entradas',

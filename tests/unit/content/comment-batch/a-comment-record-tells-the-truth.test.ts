@@ -172,12 +172,23 @@ describe('a swear mask on a comment', () => {
 
 describe('a flagged comment, the controls', () => {
   const SHAME = 'you people are all worthless and stupid';
+  it('adult: the calm version is behind the red dot, so the record says marked and offered and shows nothing in its place', async () => {
+    const { decision, record, textEl } = await run('adult', SHAME, { action: undefined, technique: 'shame-attack', severity: 7 });
+    expect(decision.applied).toBe('mark');
+    expect(decision).toMatchObject({ rewrite: { attempted: true, outcome: 'offered' } });
+    expect(record.neutralizedText).toBe('');
+    expect(textEl.textContent).toContain(SHAME);
+    expect(textEl.dataset.fwRewritten).toBeUndefined();
+  });
+
   for (const mode of ['teen', 'adult'] as const) {
-    it(`${mode}: a rewrite that landed is softened`, async () => {
-      const { decision, record } = await run(mode, SHAME, { action: undefined, technique: 'shame-attack', severity: 7 });
-      expect(decision.applied).toBe('soften');
-      expect(record.neutralizedText).not.toBe('');
-    });
+    if (mode === 'teen') {
+      it('teen: a rewrite that landed is softened', async () => {
+        const { decision, record } = await run(mode, SHAME, { action: undefined, technique: 'shame-attack', severity: 7 });
+        expect(decision.applied).toBe('soften');
+        expect(record.neutralizedText).not.toBe('');
+      });
+    }
 
     it(`${mode}: the judge's reason rides on the record's technique (gem 77)`, async () => {
       const { record } = await run(mode, SHAME, { action: undefined, technique: 'shame-attack', severity: 7, reason: 'calls the whole group worthless' });

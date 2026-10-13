@@ -1,12 +1,11 @@
-// A paid key at Strict buys no reading: Strict makes no outside call. Until 8 Oct 2026 Home said so in two
-// sentences inside a blue box; that was too much explanation for Home, so it moved to
-// Settings: the Strict level line says nothing leaves, and the AI switch there says it is off in Strict. So a paying
-// user is still told, once, where the level is chosen, and Home carries no sentence about Strict at all.
+// A paid key at Silent (the Strict level) buys the reading, like at Calm and Open (12 Oct 2026). Until then Silent sent nothing
+// and Settings said the reading was off there. Now Home says nothing about Silent and shows the same as at Calm, and Settings
+// says it where the level is chosen: one sentence says posts arrive rephrased, and the reading switch is the ordinary one.
 
 import { describe, it, expect } from 'vitest';
 import { renderToString } from 'react-dom/server';
 import { createElement } from 'react';
-import { HomeTab } from '../../../../src/ui/popup/Popup';
+import { HomeTab, SettingsPanel } from '../../../../src/ui/popup/Popup';
 import { I18nProvider } from '../../../../src/i18n/react';
 import { POPUP_STRINGS } from '../../../../src/i18n/popup-strings';
 import { UI_LANGUAGES } from '../../../../src/i18n';
@@ -40,33 +39,42 @@ function settingsWith(mode: Mode): FWSettings {
 
 const PAID: LicenseInfo = { tier: 'family', secret: 'abc' } as unknown as LicenseInfo;
 
-function home(mode: Mode, license: LicenseInfo, lang: Lang): string {
+function home(mode: Mode, lang: Lang): string {
   return renderToString(createElement(I18nProvider, {
     lang,
     children: createElement(HomeTab, {
-      settings: settingsWith(mode), license, probeResult: 'unknown',
+      settings: settingsWith(mode), license: PAID, probeResult: 'unknown',
       onOpenDashboard: () => {}, onOpenDashboardSection: () => {},
     }),
   }));
 }
 
+function settings(mode: Mode, lang: Lang): string {
+  return renderToString(createElement(I18nProvider, {
+    lang,
+    children: createElement(SettingsPanel, { settings: settingsWith(mode), license: PAID, onBack: () => {}, onChange: async () => {} }),
+  }));
+}
+
 const esc = (s: string) => s.replace(/'/g, '&#x27;');
 
-describe('a paid key at Strict', () => {
+describe('a paid key at Silent', () => {
   for (const lang of UI_LANGUAGES) {
     const t = POPUP_STRINGS[lang];
-    it(`${lang}: Home says nothing about Strict and shows no AI count`, () => {
-      const html = home('child', PAID, lang);
+    it(`${lang}: Home says nothing about Silent and is the page Calm shows`, () => {
+      const html = home('child', lang);
       expect(html).not.toContain('data-testid="strict-no-calls"');
-      expect(html).not.toContain(esc(t.strictNoCallsLine));
-      expect(html).not.toContain('class="pop-tier"');
+      for (const line of [t.strictNoKeyLine, t.strictKeyLine, t.strictNeedsAgreement]) expect(html).not.toContain(esc(line));
+      // Home's markup differs between the levels only by the name the dots carry; the key's count lives on the License tab.
+      expect(html.includes('class="pop-tier"')).toBe(home('teen', lang).includes('class="pop-tier"'));
     });
 
-    it(`${lang}: Settings says it where the level and the AI switch are: nothing leaves, the AI is off in Strict`, () => {
-      expect(t.modeExplainChildBody).toMatch(/nothing leaves|nimic nu pleacă|nada sale|nada sai/);
-      expect(t.featAiMasterStrictNote).toContain(t.modeChild);
+    it(`${lang}: Settings says it where the level is chosen: posts arrive rephrased, and the reading switch is live`, () => {
+      expect(t.levelSentenceChild).toMatch(/rephrased|reformulat|reescrit/);
+      const html = settings('child', lang);
+      expect(html).toContain(esc(t.levelSentenceChild));
+      expect(html).toContain(esc(t.featAiMasterName));
+      expect(html).not.toContain('aria-disabled="true"');
     });
   }
-
-
 });

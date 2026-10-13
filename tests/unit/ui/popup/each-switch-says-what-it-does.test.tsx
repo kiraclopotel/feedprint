@@ -56,13 +56,13 @@ describe.each(UI_LANGUAGES)('each switch a parent cannot read from its name says
     await act(async () => {
       root.render(createElement(I18nProvider, {
         lang,
-        children: createElement(SettingsPanel, { settings: SETTINGS, license: FREE, onBack: () => {}, onChange: async () => {} }),
+        children: createElement(SettingsPanel, { settings: SETTINGS, license: FREE, onBack: () => {}, onChange: async () => {}, openOn: 'general' }),
       }));
     });
     const card = container.querySelector('.set-essentials')!;
     const lines = Array.from(card.querySelectorAll('.fr-line')).map(e => e.textContent);
     // Strict language's line left with its row on 11 Oct 2026 (one-switch-for-swearing.test.tsx).
-    expect(lines).toEqual([t.featMarkersDesc, t.rulesLine]);
+    expect(lines).toEqual([t.featMarkersDescFree, t.rulesLine]);
     const folds = Array.from(card.querySelectorAll('.fr-info')).map(b => b.getAttribute('aria-label'));
     for (const name of [t.featMarkersName, t.rulesName]) {
       expect(folds).not.toContain(`${t.rowInfoAria}: ${name}`);
@@ -72,7 +72,7 @@ describe.each(UI_LANGUAGES)('each switch a parent cannot read from its name says
   });
 
   it('each line is one short sentence', () => {
-    for (const line of [t.featMarkersDesc, t.rulesLine]) {
+    for (const line of [t.featMarkersDescFree, t.rulesLine]) {
       expect([...line].length, line).toBeLessThanOrEqual(130); // the row wraps to two lines at most (pictures, 9 Oct 2026)
       expect(line.trim().endsWith('.'), line).toBe(true);
       expect(line.slice(0, -1), line).not.toContain('. ');
@@ -87,7 +87,8 @@ describe('the words say what the code does', () => {
   // and that is not this switch's doing.
   // The strict line's claim test left with the line and its row on 11 Oct 2026 (one switch for swearing).
   it('the markers line holds on a free install: a changed post, no rewrite, no original, no comment', () => {
-    const line = POPUP_STRINGS.en.featMarkersDesc;
+    // A free install shows the dot's own free line since 13 Oct 2026 (packet 36: with a key the row is the reading fold's).
+    const line = POPUP_STRINGS.en.featMarkersDescFree;
     expect(line).toMatch(/changed/);
     expect(line).not.toMatch(/rewrit|original|comment|\bAI\b/i);
   });

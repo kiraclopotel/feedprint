@@ -24,6 +24,7 @@ const NAMES: Record<FeatureId, (p: PopupStrings, d: DashboardStrings) => string>
   'media-timeout': (p) => p.groupBreak,
   'block-ads': (p) => p.featBlockAdsName,
   'parent-blocklist': (p) => p.rulesName,
+  'topic-gambling': (p) => p.topicGamblingName,
   'soften-swearing': (p) => p.softenSwearingName,
   'reframe-rewrites': (p) => p.reframeRewritesName,
   'comments-to-analyze-per-video': (_p, d) => d.featCommentsPerVideo,

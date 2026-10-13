@@ -74,10 +74,10 @@ describe.each(UI_LANGUAGES)('%s: a free install, at Strict or Moderate', (lang) 
 });
 
 describe('the Strict line in English', () => {
-  it('names Strict and asks for no license', () => {
+  it('names Silent and does not send the person to the popup for a license', () => {
     const s = DASHBOARD_STRINGS.en.opsAiOffStrict;
-    expect(s).toMatch(/Strict/);
-    expect(s).not.toMatch(/Add a|license in the popup/i);
+    expect(s).toMatch(/Silent/);
+    expect(s).not.toMatch(/license in the popup|pasted in the popup/i);
   });
 });
 
@@ -103,14 +103,14 @@ describe.each(UI_LANGUAGES)('%s: the AI health section with a key', (lang) => {
 });
 
 describe('the Strict lines in English', () => {
-  it('the free line ends by naming Moderate with a license key', () => {
-    expect(DASHBOARD_STRINGS.en.opsAiOffStrict.endsWith('Moderate with a license key turns the AI reading on.')).toBe(true);
+  it('the free line ends by saying a license key and the agreement turn the AI reading on', () => {
+    expect(DASHBOARD_STRINGS.en.opsAiOffStrict.endsWith('Once you add a license key and agree, the AI reading turns on.')).toBe(true);
     expect(DASHBOARD_STRINGS.en.opsAiOffStrict).not.toMatch(/changes nothing/);
   });
 
-  it('the key-holder line says AI is off at Strict and that Moderate turns it on with the key', () => {
+  it('the key-holder line says AI is off at Silent for now and that agreeing turns it on', () => {
     expect(DASHBOARD_STRINGS.en.opsAiOffStrictKey).toBe(
-      '● AI is OFF at Strict. This level sends nothing out, so no AI classification runs (only the built-in harm filter). Moderate turns the AI reading on with your license key.',
+      '● AI is OFF at Silent for now. Live Rephrase has your key but no agreement yet, so nothing is sent out and only the built-in harm filter runs. Agreeing turns the AI reading on.',
     );
   });
 });

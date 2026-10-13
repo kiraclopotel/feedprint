@@ -131,7 +131,13 @@ export function buildSearchIndex(records: ForensicRecord[]): Map<string, string>
       readableText(r),
       ...STAND_IN_LANGS.map((lang) => (isTextPlaceholder(r) ? shownText(r, lang) : '')),
       r.platform,
+      // An account is found by what the row shows and by what it was called: the handle (with or without its @, the
+      // fold takes the @ off both sides), the display name beside it, and the account a comment sits under. The handle
+      // is also kept as words ("alice_w" as "alice w") so a quoted phrase finds it as a person would say it.
       r.author ?? '',
+      (r.author ?? '').replace(/[._\-]+/g, ' '),
+      r.authorName ?? '',
+      r.roomAuthor ?? '',
       r.verdict ?? '',
       r.detectionMode ?? '',
       ...r.techniques.flatMap(t => [PRETTY_TECHNIQUE[t.name] ?? t.name, t.name]),
@@ -141,12 +147,28 @@ export function buildSearchIndex(records: ForensicRecord[]): Map<string, string>
   return index;
 }
 
+// Letters that carry their mark inside the letter and so do not come apart under NFD: a person typing "lukasz" means
+// "Łukasz", "o" means "ø", "ss" means "ß". Applied after lower case, to both sides.
+const UNMARKED_LETTERS: Record<string, string> = {
+  'ł': 'l', 'ø': 'o', 'đ': 'd', 'ð': 'd', 'ħ': 'h', 'ı': 'i', 'ŧ': 't', 'ß': 'ss', 'æ': 'ae', 'œ': 'oe', 'þ': 'th',
+};
+const UNMARKED_LETTER = new RegExp(`[${Object.keys(UNMARKED_LETTERS).join('')}]`, 'gu');
+
 /**
- * The one fold both sides of the search use, so they cannot drift: accents removed (NFD, then the combining marks
- * go, so "criză" and "criza" are one word, and Romanian ș and ş too), lower case, runs of white space one space.
+ * The one fold both sides of the search use, so they cannot drift: accents removed (NFKD, then the combining marks
+ * go, so "criză" and "criza" are one word, Romanian ș and ş too, and a display name set in a fancy alphabet reads as
+ * the plain letters), lower case, the letters that hold their mark inside them made plain, the @ that starts a handle
+ * dropped (so "@alice" and "alice" are one word, in the query, in the author and in a mention in the text), runs of
+ * white space one space.
  */
 export function foldSearchText(text: string): string {
-  return text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/\s+/g, ' ');
+  return text
+    .normalize('NFKD')
+    .replace(/\p{M}/gu, '')
+    .toLowerCase()
+    .replace(UNMARKED_LETTER, (c) => UNMARKED_LETTERS[c] ?? c)
+    .replace(/(^|[\s("'\[{])@+(?=[\p{L}\p{N}_])/gu, '$1')
+    .replace(/\s+/g, ' ');
 }
 
 // What a person typed, as the things every one of which must be in the record: a quoted phrase is one (it must

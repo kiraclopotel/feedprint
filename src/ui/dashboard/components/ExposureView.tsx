@@ -28,7 +28,7 @@ import {
 } from '../../../forensics/data-layer';
 import { canonicalizeTechniqueForStats } from '../../../forensics/store';
 import { isActedOn, isBlockedItem, isFlaggedItem, isHiddenAsHarmful } from '../record-sets';
-import { PLATFORM_LABELS } from './color-maps';
+import { PLATFORM_LABELS, techniqueFill } from './color-maps';
 import { TONE } from '../house-tones';
 import { FileText } from '../../shared/icons/lucide';
 import { useDashboardT, useUiLanguage } from '../../../i18n/react';
@@ -82,10 +82,11 @@ function deltaPhrase(d: PeriodDelta, t: DashboardStrings): string {
 // FeelingWise TOOK. Nothing was done to a passed post, and nothing was even
 // looked at on a skipped one; giving either a bar would read as an action.
 const ACTION_ROWS: { key: Exclude<ActionFamily, 'pass' | 'not-judged'>; color: string }[] = [
-  // Two meanings on this page: what was taken out is noise; the rest are tones of ink, told apart by their labels.
+  // What was taken out is noise; flagged is the warn colour it has on every page (12 Oct 2026); the rest are tones of
+  // ink, told apart by their labels.
   { key: 'ads',        color: TONE.noise },
   { key: 'house-rule', color: TONE.mid },
-  { key: 'detection',  color: TONE.ink },
+  { key: 'detection',  color: TONE.flagged },
   { key: 'ai-block',   color: TONE.noiseSoft },
 ];
 
@@ -225,7 +226,9 @@ export function windowsFor(choice: PeriodChoice, mondayFirst = false): { current
 function rangeLabel(w: PeriodWindow, lang: ResolvedUiLanguage): string {
   // endISO is exclusive; show the last included day.
   const end = new Date(new Date(w.endISO).getTime() - 1);
-  return `${formatDayMonthLocal(w.startISO, lang)}–${formatDayMonthLocal(end, lang)}`;
+  // A day and its month stay on one line: "12 oct." must not break after the 12.
+  const keepTogether = (s: string): string => s.replace(/ /g, String.fromCharCode(0xa0));
+  return `${keepTogether(formatDayMonthLocal(w.startISO, lang))}–${keepTogether(formatDayMonthLocal(end, lang))}`;
 }
 
 interface WeekData {
@@ -445,7 +448,7 @@ export function ExposureView({
   // Served again and again: repeated threads. When some thread repeated, this is the first card of the
   // tab, above the period's headline: what the feed served over and over is what this tab is opened for.
   const repeatedCard = (
-    <div className={repeated.length > 0 ? 'stats-card full' : 'stats-card'}>
+    <div className={repeated.length > 0 ? 'stats-card full' : 'stats-card pat-section-empty'}>
       <h3>{t.expoRepeatedTitle}</h3>
       <div className="stats-sub">{t.expoRepeatedSub}</div>
       {repeated.length === 0 ? (
@@ -535,13 +538,13 @@ export function ExposureView({
             {/* Inline verdict breakdown — each count opens the filtered feed
                 where a drill target exists; verdict-filtered drill is not yet
                 in the onDrill contract, so these stay non-drilling text. */}
+            {/* What was done, by family, in the rows' order and colours (12 Oct 2026): it read "Harmful content hidden or
+                marked" for every acted-on item, house-rule items included. With nothing done, the shown-unchanged count. */}
             <KitLegend
               style={{ marginTop: 12 }}
-              items={[
-                { color: TONE.ink, strong: flaggedCount, label: t.expoActionLabels['detection'] },
-                { color: TONE.noise, strong: hiddenCount, label: t.feedHiddenLabel },
-                { color: TONE.noiseSoft, strong: families['ai-block'], label: t.expoActionLabels['ai-block'] },
-              ]}
+              items={ACTION_ROWS.some((row) => families[row.key] > 0)
+                ? ACTION_ROWS.filter((row) => families[row.key] > 0).map((row) => ({ color: row.color, strong: families[row.key], label: t.expoActionLabels[row.key] }))
+                : [{ color: TONE.record, strong: formatCount(passCount, lang), label: t.expoShownUnchanged }]}
             />
           </div>
           <span style={{ flex: 1 }} />
@@ -554,7 +557,7 @@ export function ExposureView({
               height={52}
               cols={byDay.map((b) => ({
                 tip: t.statsDailyFlaggedOf(b.flagged, b.total),
-                parts: stackedColumn(b.total, b.flagged, dayMax, 48, TONE.ink),
+                parts: stackedColumn(b.total, b.flagged, dayMax, 48, TONE.flagged),
               }))}
             />
             {byDay.length <= 7 && (
@@ -582,14 +585,14 @@ export function ExposureView({
       <div className="stats-card">
         <h3>{t.expoWhatFwDid}</h3>
         <div className="stats-sub">{t.expoWhatFwDidSub}</div>
+        {/* The bar, the rows and the legend read one partition (row 9, 12 Oct 2026): the bar split flagged against
+            hidden while the rows split by family, so 21 softened words sat in the bar and the legend as 21 harmful
+            items beside a harmful row of 0. Shown unchanged, then each family in the rows' order and colour. */}
         <KitStack
           height={12}
           segs={[
             { n: passCount, color: TONE.record, title: `${t.expoShownUnchanged} ${passCount}` },
-            { n: families.ads, color: TONE.noise, title: `${t.expoActionLabels['ads']} ${families.ads}` },
-            { n: Math.max(0, flaggedCount - hiddenCount), color: TONE.ink, title: `${t.expoActionLabels['detection']} ${Math.max(0, flaggedCount - hiddenCount)}` },
-            { n: families['ai-block'], color: TONE.noiseSoft, title: `${t.expoActionLabels['ai-block']} ${families['ai-block']}` },
-            { n: hiddenCount, color: TONE.noise, title: `${t.feedHiddenLabel} ${hiddenCount}` },
+            ...ACTION_ROWS.map((row) => ({ n: families[row.key], color: row.color, title: `${t.expoActionLabels[row.key]} ${families[row.key]}` })),
           ]}
         />
         {ACTION_ROWS.map((row) => (
@@ -603,11 +606,12 @@ export function ExposureView({
         ))}
         {/* Split flagged-visible vs flagged-hidden + a pass row */}
         <div style={{ marginTop: 10, borderTop: '1px solid var(--fw-border)', paddingTop: 9 }}>
+          {/* The legend in the bar's order, every segment that has items named (row 9): it read in the mirror order
+              and left out the ads, so the noise swatch said "0 Hidden" beside seven ads hidden. */}
           <KitLegend
             items={[
-              { color: TONE.ink, strong: flaggedCount, label: t.expoActionLabels['detection'] },
-              { color: TONE.noise, strong: hiddenCount, label: t.feedHiddenLabel },
               { color: TONE.record, strong: formatCount(passCount, lang), label: t.expoShownUnchanged },
+              ...ACTION_ROWS.filter((row) => families[row.key] > 0).map((row) => ({ color: row.color, strong: families[row.key], label: t.expoActionLabels[row.key] })),
             ]}
           />
         </div>
@@ -624,7 +628,7 @@ export function ExposureView({
             <KitRow
               key={name}
               label={t.techniqueLabel(name)}
-              color={TONE.ink}
+              color={techniqueFill(name) ?? TONE.ink}
               width={(n / techMax) * 100}
               count={n}
               onClick={onDrill ? () => onDrill(techniqueDrill(name, win)) : undefined}
@@ -741,7 +745,7 @@ export function ExposureView({
           signed chain over the selected window. */}
       <div className="stats-card full" style={{ background: 'transparent', border: 'none', padding: '0 2px' }}>
         <div className="expo-footnote" style={{ fontSize: 12, color: 'var(--fw-muted)' }}>
-          {periodSub(choice, lang, t)} {rangeLabel(window_.current, lang)} · {t.expoOfTotal(total)}
+          {periodSub(choice, lang, t)} <span style={{ whiteSpace: 'nowrap' }}>{rangeLabel(window_.current, lang)}</span> · {t.expoOfTotal(total)}
         </div>
       </div>
     </div>
@@ -761,7 +765,7 @@ function PeriodSwitcher({
 }) {
   const label = (c: PeriodChoice): string => periodChoiceLabel(c, lang, t);
   return (
-    <div className="stats-card full" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px' }}>
+    <div className="stats-card full" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 10, padding: '10px 14px' }}>
       <div className="fwc-seg-switch">
         {PERIOD_CHOICES.map((c) => {
           const active = c === choice;

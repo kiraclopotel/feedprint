@@ -257,18 +257,9 @@ export function DashHeader({
                 }
               : {})}
           >
-            {state === 'ok' ? (
-              // Healthy → a live ECG/vital-signs trace (a sweeping heartbeat),
-              // not a static dot: it reads as "the record is alive + being
-              // watched". Warn/err keep the dot. Animation respects
-              // prefers-reduced-motion (see dashboard-design.css).
-              <svg className="dash-ecg" viewBox="0 0 40 16" width="40" height="14" aria-hidden="true">
-                <polyline className="ecg-base" pathLength={100} points="0,8 8,8 11,8 13,6.5 15,8 18,8 20,3 22,13 24,8 27,8 40,8" />
-                <polyline className="ecg-beam" pathLength={100} points="0,8 8,8 11,8 13,6.5 15,8 18,8 20,3 22,13 24,8 27,8 40,8" />
-              </svg>
-            ) : (
-              <span className="dot" />
-            )}
+            {/* The square in every state (row 12, 12 Oct 2026): healthy drew a heartbeat the header hides, so the line
+                had no light at all; the square takes the verdict colour, and healthy glows. */}
+            <span className="dot" />
             {label}
           </span>
             );
@@ -324,7 +315,7 @@ export function DashHeader({
                   ("did it record while I was on X an hour ago?"), so it is on
                   their clock. The record's sealed instant is on the hover, and
                   the Record tab's ledger states its own clock in words. */}
-              <Clock size={11} /> {t.hdrLastRecord}{' '}
+              <Clock size={11} /> <span className="dash-last-label">{t.hdrLastRecord}</span>{' '}
               <span title={last ? t.utcStamp(formatUtcStamp(last.timestamp)) : undefined}>
                 {countsPending ? '…' : last ? formatTimeLocal(last.timestamp, lang, true) : t.noneYet}
               </span>

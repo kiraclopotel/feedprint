@@ -52,10 +52,10 @@ async function closedDrawer(settings: FWSettings): Promise<Element> {
   const panel = createElement(SettingsPanel, { settings, license: PAID, onBack: () => {}, onChange: async () => {} });
   await act(async () => { root.render(createElement(I18nProvider, { lang: 'en', children: panel })); });
   for (let i = 0; i < 5; i++) await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
-  const head = container.querySelector<HTMLButtonElement>('button.ai-drawer-head');
+  const head = container.querySelector<HTMLButtonElement>('.fold-reading button.ai-drawer-head');
   expect(head, 'the drawer renders with a key').toBeTruthy();
   if (head!.getAttribute('aria-expanded') === 'true') await act(async () => { head!.click(); });
-  const drawer = container.querySelector('.ai-drawer')!;
+  const drawer = container.querySelector('.fold-reading')!;
   expect(drawer.classList.contains('closed'), 'the drawer is closed to its pill').toBe(true);
   return drawer;
 }
@@ -73,6 +73,6 @@ describe('the closed AI pill is green only while the reading is at work', () => 
     '%s: the quiet pill, with the same words', async (_l, settings) => {
       const drawer = await closedDrawer(settings);
       expect(drawer.classList.contains('idle')).toBe(true);
-      expect(drawer.querySelector('button.ai-drawer-head')!.textContent).toBe(t.keySubActive === t.groupAi ? t.groupAi : `${t.groupAi}·${t.keySubActive}`);
+      expect(drawer.querySelector('.fold-reading button.ai-drawer-head')!.textContent).toBe(t.keySubActive === t.groupAi ? t.groupAi : `${t.groupAi}·${t.keySubActive}`);
     });
 });

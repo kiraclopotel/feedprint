@@ -20,7 +20,7 @@ import {
 import { isInPrivateChatSubtree, PlatformAdapter } from './adapter';
 import { parseCountText } from './count-text';
 import { bumpCounter } from '../../diagnostics/diagnostics';
-import { readCardContext } from '../record/card-context';
+import { cardForRecord } from '../record/card-context';
 import { queryWithFallback, queryAllWithFallback } from './selector-chain';
 import { probeMetricsScope } from '../probes/metrics-probe';
 import { noteTwitterPhotoSurface } from '../probes/m98-photo-probe';
@@ -413,10 +413,12 @@ function extractArticleTweetId(article: HTMLElement): string | undefined {
  */
 function extractArticleAuthorHandle(article: HTMLElement): string | undefined {
   const links = Array.from(article.querySelectorAll('a[href^="/"][role="link"], a[href^="/"]')) as HTMLAnchorElement[];
-  for (const link of links) {
-    if (link.closest('[data-testid="tweetText"]')) continue; // body @-mention, not author header
-    const closestArticle = link.closest('article');
-    if (closestArticle && closestArticle !== article) continue; // quote-tweet author
+  const own = links.filter((link) => !link.closest('[data-testid="tweetText"]') // body @-mention, not author header
+    && !link.closest(SOCIAL_CONTEXT_SELECTOR) // the reposter / liker, not the author
+    && (!link.closest('article') || link.closest('article') === article)); // quote-tweet author
+  // The header's own links first: a profile link elsewhere in the article is a fallback, never the first choice.
+  const ordered = [...own.filter((l) => l.closest('[data-testid="User-Name"]')), ...own];
+  for (const link of ordered) {
     const href = link.getAttribute('href') ?? '';
     const m = href.match(/^\/([A-Za-z0-9_]+)$/);
     if (m) return m[1];
@@ -710,11 +712,16 @@ function parseTwitterStatusIdentityHref(href: string): TwitterStatusIdentity | n
   return { author: match[1], id: match[2] };
 }
 
-function resolveTwitterStatusIdentity(
-  article: Element,
-  visibleHandle: string | null | undefined,
-  statusLinks = collectTwitterStatusLinks(article),
-): TwitterStatusIdentity | 'mismatch' | null {
+/**
+ * The line above a post that says who put it in front of the reader ("Name reposted", "Name liked", "Pinned"). Its link
+ * goes to THAT account's profile, which is not the author's: read as the author's handle it made every repost on the
+ * for-you feed look like a header and a status link of two different accounts (13 Oct 2026, the export: one in five X
+ * records with no author).
+ */
+const SOCIAL_CONTEXT_SELECTOR = '[data-testid="socialContext"]';
+
+/** The status identities this article's own links carry: body links and a nested quoted article's are not its own. */
+function collectOwnStatusIdentities(article: Element, statusLinks: Iterable<Element>): Map<string, TwitterStatusIdentity> {
   const identities = new Map<string, TwitterStatusIdentity>();
 
   for (const statusLink of statusLinks) {
@@ -729,6 +736,15 @@ function resolveTwitterStatusIdentity(
     if (!identity) continue;
     identities.set(`${identity.author.toLowerCase()}:${identity.id}`, identity);
   }
+  return identities;
+}
+
+function resolveTwitterStatusIdentity(
+  article: Element,
+  visibleHandle: string | null | undefined,
+  statusLinks = collectTwitterStatusLinks(article),
+): TwitterStatusIdentity | 'mismatch' | null {
+  const identities = collectOwnStatusIdentities(article, statusLinks);
 
   const expectedAuthor = visibleHandle?.replace(/^@/, '').toLowerCase();
   const candidates = Array.from(identities.values()).filter(identity => (
@@ -1091,7 +1107,7 @@ export class TwitterAdapter implements PlatformAdapter {
             ? (extractArticleText(treePosition.parentEl) || undefined)
             : undefined,
           // The card beyond the body: quoted post, link card, "From" line.
-          card: article ? (Object.keys(readCardContext(article, 'twitter')).length ? readCardContext(article, 'twitter') : undefined) : undefined,
+          card: article ? cardForRecord(article, 'twitter') : undefined,
           parentVideoId,
           platform_specific,
           authorCapture,
@@ -1277,12 +1293,17 @@ export class TwitterAdapter implements PlatformAdapter {
     // among the legitimate author-header candidates; downstream selector-
     // health metrics on `twitter.post-profile-link` are unaffected.
     const links = queryAllWithFallback(article, PROFILE_LINK_SELECTORS, 'twitter.post-profile-link');
-    for (const link of links) {
-      // Skip body @-mentions — author handle is never inside post body text.
-      if (link.closest('[data-testid="tweetText"]')) continue;
-      // Skip quote-tweet author links (nested <article> ancestor).
-      const closestArticle = link.closest('article');
-      if (closestArticle && closestArticle !== article) continue;
+    // A third filter (13 Oct 2026): skip the "Name reposted" / "Name liked" line, whose link is the reposter's profile.
+    // Read as the author, it gave every repost a header handle that no status link of the article matched, and the
+    // identity gate refused the name and the address of one in five X records in the owner's export.
+    const own = Array.from(links).filter((link) => (
+      !link.closest('[data-testid="tweetText"]') // body @-mentions — author handle is never inside post body text
+      && !link.closest(SOCIAL_CONTEXT_SELECTOR)
+      && (!link.closest('article') || link.closest('article') === article) // quote-tweet author links (nested <article>)
+    ));
+    // The header's own links first, then any other that is not excluded.
+    const ordered = [...own.filter((l) => l.closest('[data-testid="User-Name"]')), ...own];
+    for (const link of ordered) {
       const href = (link as HTMLAnchorElement).getAttribute('href') ?? '';
       if (/^\/[A-Za-z0-9_]+$/.test(href)) {
         return href.slice(1); // strip leading /
@@ -1323,7 +1344,11 @@ export class TwitterAdapter implements PlatformAdapter {
     if (previous) {
       const identityChanged = previous.id !== current.id
         || previous.author.toLowerCase() !== current.author.toLowerCase();
-      const bodyChanged = previous.tweetEl !== tweetEl || previous.text !== text;
+      // The same text element that now holds more of the same words (a "Show more" opened, a translation settled) is
+      // the same post growing, not a new occupant of the slot: a recycled slot's body is another post's words.
+      const grew = previous.tweetEl === tweetEl && previous.text !== text
+        && (text.startsWith(previous.text) || previous.text.startsWith(text));
+      const bodyChanged = !grew && (previous.tweetEl !== tweetEl || previous.text !== text);
       if (identityChanged !== bodyChanged) return null;
     }
 

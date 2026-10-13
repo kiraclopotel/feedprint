@@ -1,9 +1,11 @@
 {
-  "receiptsName": { "message": "Feedprint - Păstrează ce ți-a arătat feedul" },
+  "receiptsName": { "message": "Feedprint - Păstrează ce vezi pe rețele sociale" },
   "receiptsShortName": { "message": "Feedprint" },
-  "receiptsDescription": { "message": "O arhivă semnată cu tot ce ți-a arătat feedul pe X, Facebook, Instagram, TikTok și YouTube, pe calculatorul tău. Oricine o verifică." },
+  "receiptsDescription": { "message": "O arhivă semnată cu tot ce ți-au arătat X, Facebook, Instagram, TikTok și YouTube, pe calculatorul tău. Oricine o verifică." },
   "receiptsActionTitle": { "message": "Feedprint de la FeelingWise" },
   "offName": { "message": "Off - Ascunde înjurături, aprecieri, Reels, Shorts și reclame" },
   "offDescription": { "message": "Oprește înjurăturile, aprecierile, Reels, Shorts și reclamele pe Facebook, Instagram, X, TikTok și YouTube. Gratuit, fără cont." },
-  "offActionTitle": { "message": "Off" }
+  "offActionTitle": { "message": "Off" },
+  "actionTitleReadingPaused": { "message": "Feedprint de la FeelingWise: citirea așteaptă acordul tău. Deschide aici ca să o pornești." },
+  "actionTitleReadingTrouble": { "message": "Feedprint de la FeelingWise: serviciul de citire nu răspunde, așa că postările apar așa cum au fost scrise. Reîncearcă singur." }
 }

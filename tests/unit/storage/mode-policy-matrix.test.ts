@@ -47,9 +47,12 @@ describe('axis 1 — selecting a mode reapplies ONLY the feature grid', () => {
     const teen = enabledIds(applyPreset('teen').features);
     const adult = enabledIds(applyPreset('adult').features);
 
-    // Monotone strictness: adult ⊆ teen ⊆ child.
+    // Monotone strictness: adult ⊆ teen ⊆ child. The marker is a view, not a protection: Silent shows the calm version
+    // with no dot to press, so it starts off there while Calm and Open start with it on.
     for (const id of adult) expect(teen).toContain(id);
-    for (const id of teen) expect(child).toContain(id);
+    for (const id of teen.filter((x) => x !== 'show-reframe-markers')) expect(child).toContain(id);
+    expect(child).not.toContain('show-reframe-markers');
+    expect(teen).toContain('show-reframe-markers');
     // The known deltas (presets.ts): teen drops these from child's grid...
     for (const id of ['hide-action-buttons', 'block-comment-posting', 'block-reels']) {
       expect(child).toContain(id);

@@ -83,6 +83,11 @@ export type FeatureId =
   // (a post cached before the parent added a word would otherwise keep its
   // old verdict). Matcher: `src/core/parent-blocklist.ts`.
   | 'parent-blocklist'
+  // `topic-gambling`: a subject the person chose not to see (Topics U1, 13 Oct 2026). A post that mentions it, by a
+  // written list of words, phrases and brand names in four languages, is hidden behind a line that says why, at every
+  // level; no model reads it and nothing leaves the computer. Off in every preset and kept across a level change,
+  // because the choice is the person's. Matcher: `src/core/policy/topic-lexicon.ts`; the row is R5 in the policy table.
+  | 'topic-gambling'
   // `soften-swearing` (wiring Q4, mode-rails C1; since 2026-09-07 the swear
   // MASK): stars ordinary swear words in place on posts and passing comments,
   // no model, every tier (core/profanity-filter.ts maskProfanity). Seeded ON in the child preset, OFF in teen

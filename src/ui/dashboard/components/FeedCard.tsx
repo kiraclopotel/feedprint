@@ -500,7 +500,7 @@ export function FeedCard({
               anything else says it was hidden with no caption to keep, naming a rule only when the person wrote it. */}
           {isTextPlaceholder(record)
             ? (isHiddenAd(record) ? null : <span className="fc-text-capture">{shownText(record, lang)}</span>)
-            : record.originalText
+            : readableText(record)
             || (record.kind === 'video'
               ? <span className="fc-video-no-audio">{t.feedVideoNoCaption}</span>
               : record.originalText)}
@@ -654,7 +654,7 @@ export function FeedCard({
         && showVerbatim && record.originalText && (
         <div className="fc-reveal-panel">
           <span className="fc-reveal-panel-label">{t.feedOriginalVerbatim}</span>
-          {record.originalText}
+          {readableText(record)}
         </div>
       )}
 
@@ -930,7 +930,7 @@ export function DecisionNote({ record }: { record: ForensicRecord }) {
   const lang = useUiLanguage();
   const d = record.decision;
   if (!d && !record.reader) return null;
-  const why = d ? whyWords(lang, d.row, d.reading?.family) : undefined;
+  const why = d ? whyWords(lang, d.row, d.reading?.family, d.household.topicRule) : undefined;
   const match = d?.rails.find((r) => r.match)?.match;
   // A mask stacks on allow by design, so its one outcome is said once, as the export card says it:
   // "shown, shown as shown with swearing starred" repeats the word and invites a search for an override.

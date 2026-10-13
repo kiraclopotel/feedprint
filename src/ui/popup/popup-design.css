@@ -171,8 +171,12 @@ body.fw-detached .fw-popup {
 
 /* Setup wizard */
 .setup-step {
-  padding: 24px 20px; display:flex; flex-direction:column; gap:14px;
+  padding: 16px 20px; display:flex; flex-direction:column; gap:12px; /* on the scale; 14 ran the level step past the popup in es and pt-BR at Open, and 24 px of padding with it after the level got a heading (13 Oct 2026) */
 }
+/* Every paragraph of a step, a nested one too, takes the step's gap and no margin of its own; a sentence under its
+   heading sits one step below it. */
+.setup-step p.tag { margin: 0; }
+.setup-step h3 + p.tag { margin-top: 4px; }
 .setup-step .num {
   display:inline-flex; align-items:center; justify-content:center;
   width:24px; height:24px; border-radius:50%;
@@ -270,7 +274,7 @@ body.fw-detached .fw-popup {
 }
 .key-help li { margin: 0 0 2px; }
 .key-help li:last-child { margin: 0; }
-.key-help .mono { font-family: var(--fw-font-mono); color: var(--fw-text); font-size: 10.5px; }
+.key-help .mono { font-family: var(--fw-font-mono); color: var(--fw-text); font-size: 11px; }
 
 /* Settings rows */
 .feat-row {
@@ -279,9 +283,13 @@ body.fw-detached .fw-popup {
 }
 .feat-row + .feat-row { border-top: 1px solid var(--fw-border); padding-top:10px; margin-top:2px; }
 .feat-row .fr-body { flex:1; min-width:0; }
-.feat-row .fr-name { font-size:13px; font-weight:600; }
+.feat-row .fr-name, .rules .fr-name { font-size:13px; font-weight:600; }
+.fr-tail { white-space: nowrap; }
 .pop-count-line { font-size: var(--fw-text-12); color: var(--fw-text-secondary); line-height: 1.5; margin-top: var(--fw-s-3); }
 .fr-desc { font-size: var(--fw-text-11); color: var(--fw-muted); margin-top: 2px; line-height: 1.4; }
+/* The line under a name that has no fold is a sentence of two lines at most. `pretty` left its last line at two words
+   (14% of the width, in Chromium 149), so the two lines are balanced. */
+.fr-desc.fr-line { text-wrap: balance; }
 
 /* Toggle switch */
 /* Measured 36x20, under the 24x24 CSS-pixel minimum; this is the master
@@ -305,6 +313,18 @@ body.fw-detached .fw-popup {
 }
 .toggle.off::after { left:4px; }
 .toggle:focus-visible { outline: 2px solid var(--fw-teal); outline-offset: 2px; }
+/* The same ring on every popup control that kept the browser's own 1 px ring (the pickers, the main button, the level
+   buttons, the header's icons, the tabs, the day figure, the footer's theme and contact buttons and its privacy link), so
+   the keyboard's place does not change look from one control to the next. The contact menu's links draw their own, inside. */
+.fw-popup .set-select:focus-visible,
+.fw-popup .pop-cta:focus-visible,
+.fw-popup .mode-seg-btn:focus-visible,
+.fw-popup .hdr-iconbtn:focus-visible,
+.fw-popup .pop-tab:focus-visible,
+.fw-popup .pop-hero:focus-visible,
+.fw-popup .theme-icon-btn:focus-visible,
+.fw-popup .foot > a:focus-visible { outline: 2px solid var(--fw-teal); outline-offset: 2px; }
+.fw-popup .foot > a:focus-visible { border-radius: var(--pop-control-radius); }
 
 /* Locked ON (child mode forces these on and takes the control away). The knob
    becomes a padlock body and ::before draws its shackle, so the state reads as
@@ -359,6 +379,9 @@ body.fw-detached .fw-popup {
   min-width: 24px; min-height: 24px;
 }
 .lnk.inl { padding: 0; }
+/* A text link answers the pointer: a heavier underline, a step toward the text colour, and a press (Off row 32). */
+.lnk:hover, .fw-off .off-help a:hover { text-decoration-thickness: 2px; text-underline-offset: 2px; color: color-mix(in srgb, var(--fw-teal) 85%, var(--fw-text)); }
+.lnk:active, .fw-off .off-help a:active { opacity: .7; }
 
 /* PIN overlay */
 .pin-overlay {
@@ -410,6 +433,19 @@ body.fw-detached .fw-popup {
 }
 /* outline:none above left no focus signal at all; same ring as .pin-box/.key-input. */
 .in-row input:focus { border-color: var(--fw-teal); box-shadow: 0 0 0 2px var(--fw-teal); }
+/* The stored-key hint was cut mid-word in monospace (the walk of 12 Oct 2026): the field may shrink, its hint is in
+   the body face and ends in an ellipsis; a typed key keeps the monospace. Save is a pill of the family, filled with
+   the accent when there is something to save. */
+.in-row input[type=text], .in-row input[type=password] { min-width: 0; text-overflow: ellipsis; }
+.in-row input::placeholder { font-family: var(--fw-font-sans, inherit); font-size: 12.5px; text-overflow: ellipsis; }
+.in-row .iconbtn.key-save {
+  min-height: 34px; padding: 0 14px; border-radius: calc(17px * var(--pop-r-scale, 1));
+  font-size: 13px; font-weight: 600; background: var(--fw-teal); color: var(--pop-on-accent, var(--fw-bg)); border-color: var(--fw-teal);
+  transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+}
+.in-row .iconbtn.key-save:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 3px 10px -4px color-mix(in srgb, var(--pop-tint, #00bcd4) 55%, transparent); }
+.in-row .iconbtn.key-save:disabled { background: var(--fw-card); color: var(--fw-text-secondary); border-color: var(--fw-border); opacity: 1; }
+.in-row .iconbtn.key-save:focus-visible { outline: 2px solid var(--fw-teal); outline-offset: 2px; }
 /* The small text buttons outside a row (Reset to standard, the mode switch's confirm and cancel, the licence's
    remove and cancel) had no rule of their own and drew as the browser's white default on the dark popup. */
 .iconbtn {
@@ -451,7 +487,7 @@ body.fw-detached .fw-popup {
   padding: 12px 16px; display:flex; align-items:center; gap: 10px;
   border-bottom: 1px solid var(--fw-border);
 }
-.settings-bar .title { font-size: 14px; font-weight: 600; color: var(--fw-text); }
+.settings-bar .title { font-size: var(--fw-text-16); font-weight: 600; color: var(--fw-text); }
 
 /* ─── Header status chips (License + Groq dual indicator) ────────────────── */
 /* Replace the legacy single .ind dot with a row of two clickable chips, one
@@ -494,6 +530,9 @@ body.fw-detached .fw-popup {
   transition: border-color 0.12s ease, background 0.12s ease;
 }
 .status-chip.clickable { cursor: pointer; }
+/* The house ring on the chip and on the tab panel's own stop, which drew the browser's 1 px ring (12 Oct 2026). */
+.fw-popup .status-chip:focus-visible { outline: 2px solid var(--fw-teal); outline-offset: 2px; }
+.fw-popup [role="tabpanel"]:focus-visible { outline: 2px solid var(--fw-teal); outline-offset: -2px; border-radius: var(--fw-r-md); }
 .status-chip.clickable:hover { border-color: var(--fw-text); background: var(--fw-bg); }
 .status-chip:disabled { opacity: 1; }
 .status-chip .status-label { color: var(--fw-text-secondary); }
@@ -552,11 +591,11 @@ body.fw-detached .fw-popup {
   color: var(--fw-text); font-variant-numeric: proportional-nums;
 }
 .pop-hero-label { font-size: 13px; font-weight: 600; color: var(--fw-text-secondary); }
-.pop-hero-total { font-size: 10.5px; color: var(--fw-muted); margin-left: auto; }
+.pop-hero-total { font-size: var(--fw-text-11); color: var(--fw-muted); margin-left: auto; }
 .pop-hero-secondary {
   display: block; width: 100%; margin-top: 2px; padding: 5px 6px;
   background: transparent; border: 1px solid transparent; border-radius: calc(8px * var(--pop-r-scale, 1));
-  font-family: inherit; font-size: 11.5px; color: var(--fw-muted);
+  font-family: inherit; font-size: var(--fw-text-12); color: var(--fw-muted);
   text-align: left; cursor: pointer;
   transition: background 0.12s ease, border-color 0.12s ease;
 }
@@ -634,7 +673,7 @@ body.fw-detached .fw-popup {
   transition: background 0.15s ease, color 0.15s ease;
 }
 .theme-icon-btn:hover:not(.active) {
-  background: color-mix(in oklch, var(--fw-text-secondary) 12%, transparent);
+  background: color-mix(in oklab, var(--fw-text-secondary) 12%, transparent);
   color: var(--fw-text);
 }
 .theme-icon-btn.active {
@@ -665,13 +704,13 @@ body.fw-detached .fw-popup {
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: color-mix(in oklch, var(--fw-muted) 32%, transparent);
+  background: color-mix(in oklab, var(--fw-muted) 32%, transparent);
   border-radius: 999px; border: 2px solid transparent; background-clip: padding-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: color-mix(in oklch, var(--fw-muted) 52%, transparent); background-clip: padding-box;
+  background: color-mix(in oklab, var(--fw-muted) 52%, transparent); background-clip: padding-box;
 }
-html { scrollbar-width: thin; scrollbar-color: color-mix(in oklch, var(--fw-muted) 34%, transparent) transparent; }
+html { scrollbar-width: thin; scrollbar-color: color-mix(in oklab, var(--fw-muted) 34%, transparent) transparent; }
 
 /* Card elevation — softens the flat borders into floating cards. */
 .pop-card, .key-card {
@@ -698,7 +737,7 @@ html { scrollbar-width: thin; scrollbar-color: color-mix(in oklch, var(--fw-mute
   display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
   margin-top: 6px; padding: 6px 8px; border-radius: calc(10px * var(--pop-r-scale, 1)); cursor: text;
   background: color-mix(in srgb, var(--fw-bg) 80%, var(--fw-card));
-  border: 1px solid color-mix(in srgb, var(--fw-border) 70%, var(--fw-card));
+  border: 1px solid var(--fw-border);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .chips:focus-within {
@@ -708,11 +747,14 @@ html { scrollbar-width: thin; scrollbar-color: color-mix(in oklch, var(--fw-mute
 .chip {
   display: inline-flex; align-items: center; gap: 3px;
   padding: 3px 5px 3px 9px; border-radius: 999px;
-  font-size: 11.5px; line-height: 1.3; color: var(--fw-text);
+  font-size: var(--fw-text-12); line-height: 1.3; color: var(--fw-text);
   background: color-mix(in srgb, var(--fw-teal) 16%, var(--fw-card));
   border: 1px solid color-mix(in srgb, var(--fw-teal) 35%, transparent);
   animation: chip-in 0.18s ease-out;
+  /* A pasted address has no space to break at: the chip stays inside its field and the word wraps inside the chip. */
+  max-width: 100%; min-width: 0;
 }
+.chip > span:first-child { min-width: 0; overflow-wrap: anywhere; }
 .chip-account {
   background: color-mix(in srgb, var(--fw-purple) 16%, var(--fw-card));
   border-color: color-mix(in srgb, var(--fw-purple) 35%, transparent);
@@ -721,14 +763,16 @@ html { scrollbar-width: thin; scrollbar-color: color-mix(in oklch, var(--fw-mute
    blocklist chip (accessibility audit, 2026-09-18). min-width/min-height
    floor the hit area to 24 without changing the visible glyph size. */
 .chip-x {
-  border: none; background: transparent; cursor: pointer;
+  /* A faint disc at rest shows the press area; hover and focus replace it with the red one. */
+  border: none; cursor: pointer;
+  background: radial-gradient(circle, color-mix(in srgb, var(--fw-text) 10%, transparent) 0 9px, transparent 9.5px);
   width: 16px; height: 16px; min-width: 24px; min-height: 24px; border-radius: 999px; padding: 0;
-  font-size: 13px; line-height: 16px; color: var(--fw-muted);
+  font-size: 15px; line-height: 16px; color: var(--fw-muted);
   transition: color 0.12s ease, background 0.12s ease;
 }
 .chip-x:hover, .chip-x:focus-visible { color: #fff; background: color-mix(in srgb, var(--fw-red) 60%, transparent); outline: none; }
 .chip-input {
-  flex: 1 1 96px; min-width: 96px; border: none; background: transparent; outline: none;
+  flex: 1 1 200px; min-width: 200px; border: none; background: transparent; outline: none;
   color: var(--fw-text); font: inherit; font-size: 12px; padding: 3px 2px;
 }
 /* 80% mix computed to 3.87:1 (dark) and 3.43:1 (light) against the chip
@@ -738,12 +782,14 @@ html { scrollbar-width: thin; scrollbar-color: color-mix(in oklch, var(--fw-mute
 .chip-input::placeholder { color: var(--fw-muted); }
 .rules-saved { margin-left: 8px; font-size: 11px; font-weight: 400; color: var(--fw-green); animation: chip-in 0.18s ease-out; }
 @keyframes chip-in { from { transform: scale(0.86); opacity: 0; } to { transform: none; opacity: 1; } }
+/* The Set, Change and Remove PIN panels arrive (Off row 34). */
+.pin-panel { animation: chip-in 180ms ease-out; transform-origin: top left; }
 /* The search over the own rules and over Off's picks. */
 .list-search {
   width: 100%; box-sizing: border-box; margin-top: 8px; padding: 6px 10px; border-radius: calc(10px * var(--pop-r-scale, 1));
   font: inherit; font-size: 12px; color: var(--fw-text);
   background: color-mix(in srgb, var(--fw-bg) 80%, var(--fw-card));
-  border: 1px solid color-mix(in srgb, var(--fw-border) 70%, var(--fw-card));
+  border: 1px solid var(--fw-border);
 }
 .list-search::placeholder { color: var(--fw-muted); }
 .list-search:focus-visible { outline: 2px solid var(--fw-teal); outline-offset: -1px; }
@@ -755,11 +801,16 @@ html { scrollbar-width: thin; scrollbar-color: color-mix(in oklch, var(--fw-mute
   min-height: 32px; margin-top: 4px; padding: 6px 0; border: none; background: transparent; cursor: pointer;
   font: inherit; font-size: 13px; font-weight: 600; color: var(--fw-text); text-align: left;
 }
-.set-rules-jump .set-rules-n { font-weight: 400; color: var(--fw-teal); }
-/* The rules row's one line sits under the button, as a switch's line sits under its name. */
-.set-rules-line { margin-top: -4px; padding-bottom: 6px; }
-/* The AI drawer: its header names the group and what the key turns on, and opens or closes its rows. Closed, the
-   card shrinks to a pill that reads as a button. The pill's green is its own, not a look's, and it means the reading
+.set-rules-jump .set-rules-n { display: inline-flex; align-items: center; gap: 4px; font-weight: 400; color: var(--fw-teal); }
+/* The rules row's one line sits under the button, as a switch's line sits under its name; it is the fold's last line,
+   so the card's own 8 px is the space under it (13 Oct 2026). */
+.set-rules-line { margin-top: -4px; padding-bottom: 0; }
+/* Inside a fold the rows have no card of their own: the language picker is parted from the PIN row by a hairline, the
+   rules editor from the line above it by the space of a row. */
+.fw-popup .set-lang-card { margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--fw-border-light); }
+.fw-popup .set-rules-editor { margin-top: 8px; }
+/* The folds of Settings (General, the AI drawer, PIN and language; the class keeps the drawer's name): a header that
+   names the fold and opens or closes its rows. Closed, the card shrinks to a pill that reads as a button. The pill's green is its own, not a look's, and it means the reading
    is at work: with AI checks off or at a level that sends nothing the pill is "idle" and keeps the card's own colours.
    Both pills, green on the page and card in every look and their text, are held by popup-looks-contrast. Width eases between the card's
    full width and the pill's fit; the open width is a length, since a browser cannot ease from one size keyword
@@ -767,17 +818,23 @@ html { scrollbar-width: thin; scrollbar-color: color-mix(in oklch, var(--fw-mute
    through the fold drew a green oval. The rows slide in on a grid row; the hidden attribute stays for readers. */
 :root {
   --ai-pill-bg: #22c55e; --ai-pill-ink: #052e16;
+  /* One step down the same green under the pointer, one more under the press (his word 12 Oct 2026: the grey hover
+     on the green pill was near invisible). On the dark page the pill's ink is dark, so the press stays at the hover
+     green, the darkest that keeps the title at 4.5:1 (4.52); on the light page the ink is white and the press goes one
+     step further. */
+  --ai-pill-hover: #16a34a; --ai-pill-press: #16a34a;
   --ai-drawer-move: width 200ms ease, border-radius 200ms ease, background-color 200ms ease, padding 200ms ease;
 }
 :root[data-theme="light"] {
   --ai-pill-bg: #15803d; --ai-pill-ink: #ffffff;
+  --ai-pill-hover: #166534; --ai-pill-press: #14532d;
 }
 .fw-popup .ai-drawer {
   interpolate-size: allow-keywords; width: calc(100% - 2 * var(--pop-edge)); box-sizing: border-box;
   transition: var(--ai-drawer-move);
 }
 .fw-popup .ai-drawer.closed {
-  width: fit-content; max-width: calc(100% - 2 * var(--pop-edge)); border-radius: 18px; padding: 2px 14px;
+  width: fit-content; max-width: calc(100% - 2 * var(--pop-edge)); border-radius: 20px; padding: 0 14px;
   background: var(--ai-pill-bg); border-color: var(--ai-pill-bg);
 }
 .ai-drawer.closed .ai-drawer-title,
@@ -797,8 +854,10 @@ html { scrollbar-width: thin; scrollbar-color: color-mix(in oklch, var(--fw-mute
 .ai-drawer-body[hidden] { display: none; grid-template-rows: 0fr; }
 @starting-style { .ai-drawer.pressed .ai-drawer-body { grid-template-rows: 0fr; } }
 .ai-drawer-rows { min-height: 0; overflow: hidden; }
+/* The header keeps its 40 px target (the-folds-have-a-hand-sized-target) and reaches 1 px into the card's edge above
+   (and, shut, below), so a shut fold is a 40 px pill on the scale, not 46 (12 Oct 2026). */
 .ai-drawer-head {
-  display: flex; align-items: center; gap: 8px; width: 100%; min-height: 32px; padding: 4px 0;
+  display: flex; align-items: center; gap: 8px; width: 100%; min-height: 40px; padding: 4px 0; margin-top: -1px;
   border: none; background: transparent; cursor: pointer; font: inherit; text-align: left; color: var(--fw-text);
 }
 .ai-drawer-title { font-size: 13px; font-weight: 600; }
@@ -806,10 +865,35 @@ html { scrollbar-width: thin; scrollbar-color: color-mix(in oklch, var(--fw-mute
 .ai-drawer-plan { flex: 1; font-size: 11px; color: var(--fw-muted); }
 /* With one name for the feature (11 Oct 2026) the plan label is not drawn, so the open header gives the title the room
    that pushed the chevron to the right edge; the closed pill keeps its compact row. */
-.ai-drawer:not(.closed) .ai-drawer-title:has(+ .ai-drawer-chev) { flex: 1; }
+.ai-drawer:not(.closed) .ai-drawer-title:has(+ .ai-drawer-chip) { flex: 1; }
 .ai-drawer.closed .ai-drawer-sep { color: var(--ai-pill-ink); }
-.ai-drawer-chev { color: var(--fw-muted); transform: rotate(-90deg); transition: transform 200ms ease; }
-.ai-drawer-chev.open { transform: none; }
+/* The chevron sits in a 32 px square at the right edge, the thing to press to close the fold: it points down while the fold
+   is shut (open it) and up while it is open (close it), and the chip answers the pointer with a lit edge. The whole header
+   is the button, so the chip is the picture of the target and not the only target. Closed, the pill carries the chevron
+   alone, without the chip's edge. */
+.ai-drawer-chip {
+  flex: none; display: grid; place-items: center; width: 32px; height: 32px;
+  border: 1px solid var(--fw-border); border-radius: calc(10px * var(--pop-r-scale, 1));
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+.ai-drawer-head:hover .ai-drawer-chip {
+  background: color-mix(in oklab, var(--fw-text) 14%, transparent);
+  border-color: color-mix(in srgb, var(--fw-teal) 55%, var(--fw-border));
+}
+.ai-drawer-head:active .ai-drawer-chip { background: color-mix(in oklab, var(--fw-text) 20%, transparent); }
+.ai-drawer.closed .ai-drawer-chip { border-color: transparent; }
+/* Closed, the whole pill answers the pointer, not only the chevron's square: the green pill steps down its own green,
+   a card-coloured pill takes a step of ink. Measured rest to hover in crew/visuals/set-after (his word 12 Oct 2026). */
+.ai-drawer.closed .ai-drawer-head:hover .ai-drawer-chip,
+.ai-drawer.closed .ai-drawer-head:active .ai-drawer-chip { background: transparent; }
+.fw-popup .ai-drawer.closed:not(.idle):has(> .ai-drawer-head:hover) { background: var(--ai-pill-hover); border-color: var(--ai-pill-hover); }
+.fw-popup .ai-drawer.closed:not(.idle):has(> .ai-drawer-head:active) { background: var(--ai-pill-press); border-color: var(--ai-pill-press); }
+.fw-popup .ai-drawer.closed.idle:has(> .ai-drawer-head:hover) {
+  background: color-mix(in oklab, var(--fw-text) 16%, var(--fw-card)); border-color: color-mix(in oklab, var(--fw-text) 30%, var(--fw-card));
+}
+.fw-popup .ai-drawer.closed.idle:has(> .ai-drawer-head:active) { background: color-mix(in oklab, var(--fw-text) 22%, var(--fw-card)); }
+.ai-drawer-chev { color: var(--fw-muted); transform: none; transition: transform 200ms ease; }
+.ai-drawer-chev.open { transform: rotate(180deg); }
 /* Drawn before its stored choice is read, the drawer settles once without moving. For a person who asked for less
    motion it never moves; both rules come after every drawer rule above and outweigh them. */
 html body .fw-popup .pop-card.ai-drawer.unread,
@@ -818,6 +902,7 @@ html .fw-popup .ai-drawer.unread .ai-drawer-chev { transition: none; }
 @media (prefers-reduced-motion: reduce) {
   html .fw-popup .ai-drawer,
   html .fw-popup .ai-drawer-body,
+  html .fw-popup .ai-drawer-chip,
   html .fw-popup .ai-drawer-chev { transition: none !important; }
 }
 .ai-drawer-head:focus-visible { outline: 2px solid var(--fw-teal); outline-offset: 2px; border-radius: calc(6px * var(--pop-r-scale, 1)); }
@@ -847,10 +932,8 @@ html .fw-popup .ai-drawer.unread .ai-drawer-chev { transition: none; }
   /* One flat page colour: a lit top made the header that scrolls over it a band of another shade. */
   background: var(--fw-bg);
 }
-/* Motion where a hand touches: switches slide, the
-   button gives under the press. Short and eased, never bouncy. */
-.fw-off .toggle { transition: background 0.18s ease; }
-.fw-off .toggle::after { transition: left 0.18s cubic-bezier(0.2, 0.8, 0.2, 1); }
+/* Motion where a hand touches: the button gives under the press. Short and eased, never bouncy. The switches' slide
+   is in popup-life.css, where the motion look cannot cancel it. */
 .fw-off .pop-card { transition: border-color 0.18s ease, box-shadow 0.18s ease; }
 .fw-off .pop-cta { transition: transform 0.12s ease, filter 0.12s ease; }
 .fw-off .pop-cta:hover { filter: brightness(1.08); }
@@ -859,31 +942,24 @@ html .fw-popup .ai-drawer.unread .ai-drawer-chev { transition: none; }
 .fw-off .rules { padding: 10px 0 12px; }
 
 /* ─── Off, the design pass (the owner asked for it to feel alive). One
-   system: a living mark in the header, section titles that trail off in a
-   hairline, cards that arrive rather than appear, one primary and one quiet
+   system: Off's mark in the header, section titles that trail off in a
+   hairline, one primary and one quiet
    button, and lists that fold instead of growing. Motion stops for anyone
    who asked their system for less of it. */
 .fw-off .pop-header .wordmark::before {
   content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 9px;
   border-radius: 50%; background: var(--fw-teal); vertical-align: 2px;
-  animation: fw-breathe 3.4s ease-in-out infinite;
-}
-@keyframes fw-breathe {
-  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--fw-teal) 55%, transparent); }
-  55% { box-shadow: 0 0 0 7px transparent; }
 }
 .fw-off .grp-hdr { display: flex; align-items: center; gap: 10px; }
-.fw-off .pop-card { animation: fw-card-in 0.28s ease-out both; }
-@keyframes fw-card-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .fw-off .pop-cta.secondary, .pick-card .pop-cta.secondary {
   background: transparent; color: var(--fw-teal);
-  border: 1px solid color-mix(in srgb, var(--fw-teal) 45%, transparent);
+  border: 1px solid var(--fw-teal);
   box-shadow: none;
 }
 .fw-off .pop-cta.secondary:hover, .pick-card .pop-cta.secondary:hover { background: color-mix(in srgb, var(--fw-teal) 10%, transparent); filter: none; }
 /* PF S-5: the row's own rule went with the orphan sweep, so the two buttons stacked flush; they share the card's width with a gap. */
 .pick-card .pick-actions { display: flex; flex-wrap: wrap; gap: var(--fw-s-3); }
-.pick-card .pick-actions .pop-cta { flex: 1 1 140px; margin: 0; }
+.pick-card .pick-actions .pop-cta { flex: 1 1 100%; margin: 0; }
 /* The picks list. These went out with an orphan sweep on 16 Sep, which read them as unused, and the list
    rendered as run-together text ("Facebook3Clear") until the store pictures showed it. */
 .pick-card .pick-tally { margin: 10px 0 2px; }
@@ -907,7 +983,9 @@ html .fw-popup .ai-drawer.unread .ai-drawer-chev { transition: none; }
 .chip .pill-n { margin-left: 4px; font-size: 10px; opacity: .75; }
 .fw-off .pill-n, .pick-card .pill-n {
   font-size: 10.5px; padding: 1px 7px; border-radius: 999px; color: var(--fw-text);
-  background: color-mix(in srgb, var(--fw-teal) 16%, var(--fw-card));
+  /* Neutral, not the chip's own teal, so the count reads as a capsule inside a chip. */
+  background: color-mix(in srgb, var(--fw-text) 12%, transparent);
+  font-weight: 600; font-variant-numeric: tabular-nums;
 }
 @media (prefers-reduced-motion: reduce) {
   .fw-off .pop-header .wordmark::before, .fw-off .pop-card, .pick-card .pick-row, .chip, .rules-saved { animation: none; }
@@ -938,7 +1016,7 @@ html .fw-popup .ai-drawer.unread .ai-drawer-chev { transition: none; }
   border-top-color: color-mix(in srgb, var(--fw-border) 55%, transparent);
   padding-top: 11px; margin-top: 0;
 }
-.fw-off .feat-row .fr-name { font-size: 13px; letter-spacing: -0.005em; }
+.fw-off .feat-row .fr-name, .fw-off .rules .fr-name { font-size: 13px; letter-spacing: -0.005em; }
 .fw-off .feat-row .fr-desc { margin-top: 3px; line-height: 1.45; }
 
 /* Switches: a resting track for off, the brand colour for on. */
@@ -993,10 +1071,11 @@ html .fw-popup .ai-drawer.unread .ai-drawer-chev { transition: none; }
   border-top: none; margin-top: 10px;
   padding: 10px 20px 16px;
   font-size: 10.5px;
-  color: color-mix(in srgb, var(--fw-muted) 80%, var(--fw-bg));
+  /* The muted token as it is: mixed toward the page it came out under the 4.5:1 a text needs. */
+  color: var(--fw-muted);
 }
-.fw-off .foot a { color: color-mix(in srgb, var(--fw-teal) 80%, var(--fw-muted)); text-decoration: none; }
-.fw-off .foot a:hover { text-decoration: underline; }
+/* The same teal and underline as every other link in the popup. */
+.fw-off .foot a { color: var(--fw-teal); text-decoration: underline; }
 
 /* Off: the header stays in view when the list scrolls, in the page's own colour so it reads as part of the page,
    the tagline centred, and no squashed first frame (Chrome paints the popup before the layout has height). */
@@ -1030,7 +1109,7 @@ html .fw-popup .ai-drawer.unread .ai-drawer-chev { transition: none; }
 .quiet-hours .qh-day.on { background: var(--fw-teal); border-color: var(--fw-teal); color: var(--fw-on-accent); }
 
 /* Home's quiet "Something still showing? Tell us" line, above the foot. */
-.home-report { margin: 10px 0 0; font-size: 11.5px; line-height: 1.5; color: var(--fw-muted); text-align: center; }
+.home-report { margin: 10px 0 0; font-size: var(--fw-text-12); line-height: 1.5; color: var(--fw-muted); text-align: center; }
 .home-report a { color: var(--fw-teal); text-decoration: underline; }
 
 /* ─── The shell: one look for both popups ────────────────────────────────────────────────────────────────────
@@ -1069,7 +1148,9 @@ html { scrollbar-gutter: stable both-edges; }
    Inside these columns margins no longer merge, so every block keeps its space above it and none below. */
 .fw-popup :has(.foot) { flex: 1 0 auto; display: flex; flex-direction: column; }
 body:not(.fw-detached) .fw-popup { border: none; }
-.fw-popup .foot { margin-top: auto; padding: var(--pop-1) var(--pop-edge); border-top: none; }
+/* The same height on every page: Home's footer holds the 26 px style and theme buttons, the others only text, and
+   without a floor the version line stood 9 px higher on Home than on Settings. */
+.fw-popup .foot { margin-top: auto; padding: var(--pop-1) var(--pop-edge); border-top: none; min-height: 42px; box-sizing: border-box; align-items: center; }
 
 /* Header, tabs and section bars: flush with the page, no rule under them. */
 .fw-popup .pop-header { padding: var(--pop-2) var(--pop-edge); border-bottom: none; background: var(--fw-bg); }
@@ -1086,6 +1167,10 @@ body:not(.fw-detached) .fw-popup { border: none; }
 .fw-popup .key-card,
 .fw-popup .pop-bn.info { border-color: var(--fw-border); }
 .fw-popup .pop-card { background: var(--fw-card); padding: var(--pop-2) var(--pop-3); margin: var(--pop-2) var(--pop-edge) 0; }
+/* An open fold starts its header where the closed pill does, so opening moves nothing above the rows (the title dropped
+   7 px); shut, the pill is 40 px with its edge, on the scale (12 Oct 2026). */
+.fw-popup .pop-card.ai-drawer:not(.closed) { padding-top: 0; }
+.ai-drawer.closed .ai-drawer-head { margin-bottom: -1px; }
 .fw-popup .pop-bn,
 .fw-popup .pop-update { margin: var(--pop-2) var(--pop-edge) 0; }
 
@@ -1108,6 +1193,11 @@ body:not(.fw-detached) .fw-popup { border: none; }
 .fw-popup input:not([type="checkbox"]):not([type="radio"]),
 .fw-popup .set-rules-jump,
 .fw-popup .lnk:focus-visible { border-radius: var(--pop-control-radius); }
+/* One teal ring on links, the main button, icon buttons and selects, which drew the browser's own (Off row 25). */
+.fw-popup :is(a, .lnk, .pop-cta, .iconbtn, select):focus-visible { outline: 2px solid var(--fw-teal); outline-offset: 2px; }
+/* Checkboxes are left out of the control styling above, so the one in the recovery card takes the accent here instead of
+   the browser's blue, at a size a finger can hit; it gates the Continue button. */
+.fw-popup input[type="checkbox"] { accent-color: var(--fw-teal); width: 18px; height: 18px; margin: 0; cursor: pointer; }
 .fw-popup .theme-icon-btn { border-radius: calc(var(--pop-control-radius) - 2px); }
 .fw-popup .pop-cta {
   width: calc(100% - 2 * var(--pop-edge)); margin: var(--pop-2) var(--pop-edge) 0; padding: var(--pop-2) var(--pop-4); min-height: 40px;
@@ -1130,7 +1220,9 @@ body:not(.fw-detached) .fw-popup { border: none; }
 .fw-popup .mode-segmented { gap: var(--pop-2); margin-bottom: var(--pop-2); }
 .fw-popup .mode-card .mode-head { margin-bottom: var(--pop-2); }
 .fw-popup .mode-seg-btn { padding: var(--pop-2); border: 1px solid var(--fw-border); box-shadow: none; background: var(--fw-bg); }
-.fw-popup .mode-seg-btn:hover:not(.active) { border-color: var(--fw-border); background: var(--fw-card); }
+/* An unchosen level answers the pointer the way the page buttons do: the edge takes the accent, the press sinks it. */
+.fw-popup .mode-seg-btn:hover:not(.active) { border-color: color-mix(in srgb, var(--fw-teal) 55%, var(--fw-border)); background: var(--fw-card); }
+.fw-popup .mode-seg-btn:active:not(.active) { transform: translateY(1px); }
 .fw-popup .mode-seg-btn.active { background: var(--fw-teal); border-color: transparent; color: var(--fw-on-accent); box-shadow: none; }
 .fw-popup .mode-seg-name { font-size: var(--fw-text-13); }
 /* The level's sentence is part of its card, not a box inside it. */
@@ -1153,6 +1245,12 @@ body:not(.fw-detached) .fw-popup { border: none; }
   flex: 1; min-width: 0; padding: var(--pop-2) var(--pop-3); font: inherit; font-size: var(--fw-text-12);
   background: var(--fw-bg); color: var(--fw-text); border: 1px solid var(--fw-border);
 }
+/* A select inside the wrap draws its own arrow, the thin chevron every other control uses, in place of the browser's
+   heavy one; the wrap holds the chevron over the field's right end and lets the pointer pass through it. */
+.set-select-wrap { position: relative; display: block; flex: 1; min-width: 0; }
+.set-select-wrap .set-select { appearance: none; width: 100%; padding-right: 36px; cursor: pointer; }
+.set-select-chev { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--fw-muted); }
+.fw-popup .set-select-wrap .set-select:hover { border-color: color-mix(in srgb, var(--fw-teal) 55%, var(--fw-border)); }
 .set-more-row + .fr-desc { margin-top: var(--pop-1); }
 /* The update line with the note about the moved switches: link and note run as one text beside the ×. */
 .pop-update-text { flex: 1; min-width: 0; }

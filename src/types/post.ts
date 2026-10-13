@@ -308,7 +308,14 @@ export interface PostContent {
    * the household blocklist so a blocked name is caught when someone else
    * quotes the person. Undefined where the adapter does not read cards.
    */
-  card?: { text?: string; accounts?: string[] };
+  card?: {
+    text?: string;
+    accounts?: string[];
+    /** X: the quoted post's body alone, for the judge (no name of the quoted account, which `text` carries for the household list). */
+    quotedBody?: string;
+    /** X: a link card's title and domain alone, for the judge. */
+    link?: { title?: string; domain?: string };
+  };
   /**
    * What state the node was in when FW saw it (per RenderState).
    * Drives priority/timing decisions + the chain's "what the child

@@ -78,7 +78,6 @@ describe('public snapshot: the split', () => {
       'corpus/derived/2026-09-07-context/items.jsonl',
       'past-forensics/export.json',
       '.fw-chain.json',
-      'worker/src/proxy.ts',
       'worker/wrangler.toml',
       'landing/index.html',
       'landing/wrangler.site.toml',
@@ -146,9 +145,11 @@ describe('public snapshot: the split', () => {
     expect(paths.length).toBeGreaterThan(900);
     expect(paths.length + excluded.length).toBe(all.length);
     expect(excluded.length).toBeGreaterThan(900);
-    for (const bad of ['corpus/', 'past-forensics/', 'worker/', 'landing/', 'OUTBOX/', 'docs/audits/', 'docs/research/', 'STATE.md']) {
+    for (const bad of ['corpus/', 'past-forensics/', 'worker/scripts/', 'worker/wrangler.toml', 'landing/', 'OUTBOX/', 'docs/audits/', 'docs/research/', 'STATE.md']) {
       expect(paths.some((p) => p.startsWith(bad)), bad).toBe(false);
     }
+    // The relay's source is public since 13 Oct 2026 (cold audit, finding 1); its deploy config and scripts are not.
+    expect(paths).toContain('worker/src/proxy.ts');
     expect(paths).toContain('scripts/reproducible-build.mjs');
     expect(paths).toContain('package-lock.json');
   });

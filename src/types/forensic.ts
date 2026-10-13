@@ -113,7 +113,7 @@ export interface ConfigSnapshot {
 export type DecisionAction = 'allow' | 'context' | 'mark' | 'soften' | 'mask' | 'collapse' | 'hide' | 'record';
 
 /** A deterministic rail that fired before any model call. */
-export type DecisionRail = 'blocklist' | 'identity-slur' | 'coded-harm' | 'sponsored';
+export type DecisionRail = 'blocklist' | 'identity-slur' | 'coded-harm' | 'sponsored' | 'topic';
 
 /**
  * Why the product acted: the record's own account of instrument, reading,
@@ -175,9 +175,11 @@ export interface DecisionBlock {
    * model whose rewrite the page showed, the name the page's machine-readable
    * AI mark carried; present only when the outcome is 'applied', a model wrote
    * the text and its reply named the model. Absent on records written before it
-   * existed, so they hash as they did.
+   * existed, so they hash as they did. `why` is one fixed word (never a quote of the post or the rewrite) for the check
+   * that kept a flagged post's own words on the page when the outcome is 'failed'; absent when none was named, and on
+   * every record written before it existed. A second try that failed too ends in "+retry".
    */
-  rewrite: { attempted: boolean; outcome: string; model?: string } | null;
+  rewrite: { attempted: boolean; outcome: string; model?: string; why?: string } | null;
   /** One fixed sentence when `applied` differs from `action`; null otherwise. */
   note: string | null;
 }
@@ -504,6 +506,8 @@ export interface ForensicRecord {
    *   'duplicate'             — content hash already scanned
    *   'cache-hit'             — recent identical scan returned same verdict
    *   'cap-exhausted'         — daily LLM call cap reached
+   *   'level-reads-nothing'   — Strict, or a level nobody has chosen: the rules ran, no model reads anything
+   *   'free-tier-no-ai'       — no paid key: the rules ran, no model reads anything
    *   'language-unsupported'  — language outside EN/RO scope
    */
   skipReason?: string;

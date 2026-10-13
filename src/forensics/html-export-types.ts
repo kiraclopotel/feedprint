@@ -47,6 +47,13 @@ export interface ExportMetadata {
    * repair is a maintenance record the file discloses (register item 18).
    */
   healLog?: HealEvent[];
+  /**
+   * The accounts the person set aside on this computer when the file was made (author-exclusions.ts), printed as a list
+   * with no rows under them. They are named from that setting and not from the chain, which carries only a count of
+   * the records withheld, per heartbeat note. `named: false` prints the number and no names. Unsigned and not checked
+   * by the checker; the section says so. Absent or empty: no section.
+   */
+  excludedAccounts?: { accounts: Array<{ platform: string; author: string; addedAt: string }>; named: boolean };
   /** Locale of the verifier UI. Single-language per VISION §7.2 V1 scope. */
   locale: ExportLocale;
   /**

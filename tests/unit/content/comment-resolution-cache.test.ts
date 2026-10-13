@@ -148,6 +148,48 @@ describe('CORE-2 / rewrite — a resolved-rewritten comment re-extracted on a fr
   });
 });
 
+describe('Open — a comment whose calm version sits behind the red dot gets the dot back on a fresh node, and is never rewritten on the page', () => {
+  it('keeps the author\'s words, mounts the red dot, and the dot\'s taps walk reason, calm version, original', () => {
+    setMode('adult');
+    const REWRITE = 'i disagree with this';
+    const { post: original } = makeComment(HARMFUL);
+    rememberResolvedComment(original, {
+      kind: 'rewrite',
+      rewrite: REWRITE,
+      offer: {
+        analysis: {
+          postId: 'yt-comment-1', techniques: [], overallScore: 7, overallConfidence: 0.9, isManipulative: true,
+          processingTimeMs: 1, primaryTechnique: 'shame-attack', explanation: 'it shames the reader',
+        } as never,
+        lang: 'en',
+        mount: 'inside',
+      },
+    });
+
+    const { textEl: fresh } = makeCommentNode(HARMFUL);
+    const freshPost = { ...original, domRef: new WeakRef(fresh) } as PostContent;
+    const enqueue = vi.fn(() => true);
+    const routed = routeBatchedComment(freshPost, enqueue, performance.now());
+
+    expect(routed).toBe(false);
+    expect(enqueue).not.toHaveBeenCalled();
+    expect(fresh.dataset.fwRewritten, 'nothing is swapped on an Open row').toBeUndefined();
+    expect(fresh.textContent).toContain(HARMFUL);
+    const dot = fresh.querySelector<HTMLButtonElement>('.fw-teen-marker');
+    expect(dot, 'the red dot is back').not.toBeNull();
+    expect(fresh.dataset.fwMarkerState).toBe('red');
+
+    dot!.click();
+    expect(fresh.dataset.fwMarkerState).toBe('yellow');
+    dot!.click();
+    expect(fresh.dataset.fwMarkerState).toBe('green');
+    expect(fresh.textContent).toContain(REWRITE);
+    dot!.click();
+    expect(fresh.dataset.fwMarkerState).toBe('red');
+    expect(fresh.textContent).toContain(HARMFUL);
+  });
+});
+
 describe('inverse — a never-scored comment still flows to scoring normally', () => {
   it('enqueues a new comment (bucket → scoreBatch) and mounts a Child cover', () => {
     setMode('child');

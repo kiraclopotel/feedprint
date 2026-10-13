@@ -15,6 +15,8 @@ export interface Why {
   row: PolicyRowId;
   /** The household's own rule that matched (R1 only). */
   match?: string;
+  /** The topic the person chose, by id (R5 only); its words come from src/i18n/why-words.ts and are never quoted. */
+  topic?: string;
   /**
    * The family the judge answered, when the caller has it; whyFor never sets it. The words in
    * src/i18n/why-words.ts need it on a band row, which names no family by itself.
@@ -60,6 +62,11 @@ export function whyFor(
     const sep = rest.indexOf(':');
     const rule = sep === -1 ? '' : rest.slice(sep + 1);
     return rule ? { row: 'R1', match: rule } : { row: 'R1' };
+  }
+  // `topic:<id>`: a topic the person switched on. The listed term that matched is not carried.
+  if (dm.startsWith('topic:')) {
+    const id = dm.slice('topic:'.length);
+    return id ? { row: 'R5', topic: id } : { row: 'R5' };
   }
   if (dm.startsWith('slur:') || dm === 'pre-rewrite-hide:identity-slur') return { row: 'R2' };
   if (dm.startsWith('coded-harm:')) return { row: 'R3' };

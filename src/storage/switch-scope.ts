@@ -9,6 +9,7 @@
 
 import type { FeatureId } from '../types/feature-id';
 import type { FeatureToggles } from '../types/feature-toggles';
+import { TOPIC_FEATURE_IDS } from '../types/topic-id';
 import type { FWSettings } from './settings-shape';
 
 export const OFF_ONLY_FEATURE_IDS: readonly FeatureId[] = [
@@ -48,6 +49,30 @@ export function presetKeepingOffOnly(preset: FeatureToggles, stored: FeatureTogg
     else delete grid[id];
   }
   return grid as FeatureToggles;
+}
+
+/**
+ * A preset grid with the person's own list put back: the words, phrases and accounts they typed in, or blocked with "Block this",
+ * which all live in the value of `parent-blocklist`. The list is the person's, not the level's (the Leader's decision, 12 Oct
+ * 2026): a level sets the level's switches and never empties what the person wrote. The switch itself stays as the preset has it.
+ * The topic switches are the person's too (Topics U1, 13 Oct 2026): a subject they chose not to see stays unseen across a
+ * level change and a reset, so a stored topic switch is kept exactly as stored.
+ */
+export function presetKeepingOwnList(preset: FeatureToggles, stored: FeatureToggles | undefined): FeatureToggles {
+  const own = stored?.['parent-blocklist']?.value;
+  let grid: FeatureToggles = own === undefined
+    ? preset
+    : { ...preset, 'parent-blocklist': { ...preset['parent-blocklist'], enabled: preset['parent-blocklist']?.enabled ?? true, value: own } };
+  for (const id of TOPIC_FEATURE_IDS) {
+    const chosen = stored?.[id];
+    if (chosen) grid = { ...grid, [id]: chosen };
+  }
+  return grid;
+}
+
+/** What a level writes for Receipts: its own switches from the preset, Off's switches and the person's own list as stored. */
+export function levelGridKeepingTheirs(preset: FeatureToggles, stored: FeatureToggles | undefined): FeatureToggles {
+  return presetKeepingOwnList(presetKeepingOffOnly(preset, stored), stored);
 }
 
 /** The grid with every Off-only switch read as off with no value; a copy. */

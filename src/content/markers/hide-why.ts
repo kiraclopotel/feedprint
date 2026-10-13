@@ -8,7 +8,7 @@ import { whyWords } from '../../i18n/why-words';
 import type { Why } from '../../core/policy/why';
 
 export function whyFragment(lang: ResolvedUiLanguage, why: Why): string {
-  const base = whyWords(lang, why.row, why.family) ?? why.row;
+  const base = whyWords(lang, why.row, why.family, why.topic) ?? why.row;
   return why.match ? `${base} ("${why.match}")` : base;
 }
 

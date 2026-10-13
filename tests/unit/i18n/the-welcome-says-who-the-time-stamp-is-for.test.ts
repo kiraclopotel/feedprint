@@ -12,13 +12,17 @@ import { UI_LANGUAGES } from '../../../src/i18n';
 describe.each(UI_LANGUAGES)('the welcome screen, %s', (lang) => {
   const t = POPUP_STRINGS[lang];
 
-  it('makes no unconditional time-stamp claim: it names the levels where the code leaves, and Strict as the one that sends nothing', () => {
+  it('makes no unconditional time-stamp claim: the same sentence says Silent without a key sends nothing at all, and the next says the rephrasing needs a key', () => {
     const body = t.setupWelcomeBody1;
-    expect(body).toContain(t.modeTeen);
-    expect(body).toContain(t.modeAdult);
     expect(body).toContain(t.modeChild);
-    // The level names come before the sentence about what is sent, so no reading of it is unconditional.
-    expect(body.indexOf(t.modeTeen)).toBeLessThan(body.search(/time-stamp|sellado de tiempo|carimbo de tempo|marcare a timpului/));
+    const stamp = body.search(/time-stamp|sellado de tiempo|carimbo de tempo|marcare a timpului/);
+    const silent = body.indexOf(t.modeChild);
+    expect(stamp).toBeGreaterThan(-1);
+    // The qualifier is in the claim's own sentence, after the semicolon, with no full stop between them.
+    expect(silent).toBeGreaterThan(stamp);
+    expect(body.slice(stamp, silent)).not.toMatch(/\.\s/);
+    expect(body.slice(stamp, silent)).toContain(';');
+    expect(body).toContain('Live Rephrase');
   });
 
   it('has no em dash', () => {
@@ -52,7 +56,7 @@ describe('the Spanish welcome', () => {
 describe('English keeps what is true and says who it is true for', () => {
   it('reads exactly', () => {
     expect(POPUP_STRINGS.en.setupWelcomeBody1).toBe(
-      'Feedprint writes down posts, flagged items, hidden ads, and comments caught by rules and keeps that record on this computer. At Moderate and Relaxed, only a fingerprint of it, with no post text, goes to independent time-stamp services so the record can be dated. Strict sends nothing. You can export it as a file anyone can check.',
+      'Feedprint writes down posts, flagged items, hidden ads, and comments caught by rules and keeps that record on this computer. Only a fingerprint of it, with no post text, goes to independent time-stamp services so the record can be dated; Silent without a key sends nothing at all. The rephrasing the levels describe needs a key for Live Rephrase; without one, every level filters on this computer. You can export it as a file anyone can check.',
     );
   });
 });

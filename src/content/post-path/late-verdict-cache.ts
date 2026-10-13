@@ -11,6 +11,7 @@ import type { AnalysisResult } from '../../types/analysis';
 import type { NeutralizedContent } from '../../types/neutralization';
 import type { CommentHideNotice } from '../protection/comment-overlay';
 import type { AiWriter } from '../markers/ai-mark';
+import type { ResolvedUiLanguage } from '../../i18n';
 import { bumpCounter } from '../../diagnostics/diagnostics';
 
 /**
@@ -104,6 +105,8 @@ export type LateVerdict = (
   /** What answered and how, carried so the record written when the item comes back says the same as a live one. */
   detectionMode?: string;
   aiMeta?: { model: string; provider: string };
+  /** For a mark: why the rewrite did not come back, so the record written on the re-encounter names it too. */
+  rewriteWhy?: string;
 };
 export const sessionLateVerdictByPostId = new Map<string, LateVerdict>();
 
@@ -143,6 +146,9 @@ export interface ResolvedCommentVerdict {
   /** Present for kind 'hide' in Teen and Adult: the notice that stood where the
    *  text was, replayed on re-encounter so the fresh row says the same why. */
   notice?: CommentHideNotice;
+  /** Present for kind 'rewrite' on the Open level: the comment keeps the author's words behind a red dot and `rewrite` is
+   *  the calm version a tap away, not on the page. What a fresh row needs to get its dot back. */
+  offer?: { analysis: AnalysisResult; lang: ResolvedUiLanguage; mount: 'inside' | 'after' };
 }
 export const sessionCommentResolutionByKey = new Map<string, ResolvedCommentVerdict>();
 /**

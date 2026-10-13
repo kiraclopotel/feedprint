@@ -93,8 +93,8 @@ describe('§CT-26g.3.4 — encounter-builder routes Facebook to assembleFacebook
     expect(enc.children[1].metrics.likes).toBe(200);
     expect(enc.children[1].author.verified).toBe(true);
     expect(enc.children[2].metrics.likes).toBe(50);
-    // FB "Author" label maps to is_pinned_by_creator
-    expect(enc.children[2].author.is_pinned_by_creator).toBe(true);
+    // FB "Author" label means the post's author wrote it, not that it was pinned: the judge reads is_pinned_by_creator as "[PINNED]"
+    expect(enc.children[2].author.is_pinned_by_creator).toBe(false);
 
     // Default sort
     expect(enc.sort_order).toBe('most_relevant');

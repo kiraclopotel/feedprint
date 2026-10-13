@@ -212,16 +212,18 @@ describe('every language has its own count lines', () => {
 });
 
 // Stage 3 HOLD (10 Oct 2026): the branch for two or more sites, and the one-site sentence in every language.
-describe('two or more sites: the sentence, a bar in rank tints, and a legend in the same order', () => {
-  it('two sites: one bar segment and one legend key per site, largest first, ranks 0 and 1', () => {
+describe('two or more sites: the sentence, a bar with one fixed colour per site, and a legend in the same order', () => {
+  it('two sites: one bar segment and one legend key per site, largest first, each in its own site colour', () => {
     const today = utcDayKey();
     const html = home(settingsWith('teen', { date: today, instagram: { posts: 5, comments: 1 }, facebook: { posts: 24, comments: 9 } } as unknown as ReadToday));
     // 24 + 5 = 29 posts, 9 + 1 = 10 comments, summed over the two sites.
     expect(text(html)).toContain('Feedprint looked at 29 posts and 10 comments today.');
     expect(text(html)).not.toContain('today on ');
-    expect(count(html, 'site-seg rank-0')).toBe(1);
-    expect(count(html, 'site-seg rank-1')).toBe(1);
-    expect(count(html, 'site-seg rank-2')).toBe(0);
+    expect(count(html, 'site-seg site-facebook')).toBe(1);
+    expect(count(html, 'site-seg site-instagram')).toBe(1);
+    expect(count(html, 'site-dot site-facebook')).toBe(1);
+    expect(count(html, 'site-dot site-instagram')).toBe(1);
+    expect(html).not.toContain('rank-');
     // Facebook 33 is larger than Instagram 6, so it comes first, in the bar and in the legend.
     expect(html.indexOf('Facebook 33')).toBeGreaterThan(-1);
     expect(html.indexOf('Facebook 33')).toBeLessThan(html.indexOf('Instagram 6'));
@@ -229,16 +231,14 @@ describe('two or more sites: the sentence, a bar in rank tints, and a legend in 
     expect(html).toContain('title="Instagram 6"');
   });
 
-  it('six sites: the fifth and sixth share the last tint', () => {
+  it('six sites: every site the popup has a name for is drawn in its own colour, largest first', () => {
     const today = utcDayKey();
     const sites = { twitter: 60, facebook: 50, instagram: 40, tiktok: 30, youtube: 20, reddit: 10 } as const;
     const readToday = { date: today, ...Object.fromEntries(Object.entries(sites).map(([k, n]) => [k, { posts: n, comments: 0 }])) };
     const html = home(settingsWith('teen', readToday as unknown as ReadToday));
-    const segs = (html.match(/site-seg rank-\d/g) ?? []);
-    // Only the sites the popup has a name for are drawn; each rank appears in the order of size.
-    expect(segs.length).toBeGreaterThanOrEqual(5);
-    expect(segs.slice(0, 5)).toEqual(['site-seg rank-0', 'site-seg rank-1', 'site-seg rank-2', 'site-seg rank-3', 'site-seg rank-4']);
-    for (const extra of segs.slice(5)) expect(extra).toBe('site-seg rank-4');
+    const segs = (html.match(/site-seg site-[a-z]+/g) ?? []);
+    // Only the sites the popup has a name for are drawn, in the order of size, each with its own colour class.
+    expect(segs).toEqual(['site-seg site-twitter', 'site-seg site-facebook', 'site-seg site-instagram', 'site-seg site-tiktok', 'site-seg site-youtube']);
   });
 });
 

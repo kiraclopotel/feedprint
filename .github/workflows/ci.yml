@@ -13,8 +13,8 @@ name: CI
 #            so neither is asked to match. The comparison needs SOURCE-COMMIT too: the same file is
 #            tracked in the private repository, which has no such file, so there it only says so.
 #
-# Windows with Git's Windows line-ending default, because that is where the match has been proven.
-# Linux and macOS have not been. The Node version is the exact one uploads are built with (.nvmrc).
+# Windows with Git's Windows line-ending default, because that is where the match was first proven; an outside
+# rebuild on Linux matched too (13 Oct 2026), and checks-linux runs the gates there. macOS has not been tried. The Node version is the exact one uploads are built with (.nvmrc).
 # Actions are pinned by commit, so a moved tag cannot change what runs here.
 
 on:
@@ -50,6 +50,46 @@ jobs:
       # has no browser installed.
       - name: The browser the layout test runs in
         run: npx playwright install chromium
+
+      - name: Type-check
+        run: npx tsc --noEmit
+
+      - name: Type-check the tests and scripts
+        run: npx tsc -p tsconfig.tests.json --noEmit
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Tests
+        run: npx vitest run --project unit
+
+      - name: Tests that start processes or build temporary repositories
+        run: npx vitest run --project tooling
+
+  # The same gates on Linux (added 13 Oct 2026, after an outside rebuild on Linux x86_64 with Node 24.14.0 matched
+  # both store packages and found three tests bound to Windows). Two of the three are fixed in the tree (a Chrome mock
+  # without removeListener, two hooks committed without the executable bit); the third, a tooling test that hands
+  # Windows-style paths to Node's path functions, is still to be found, which is what this job is for. Until it is
+  # green it reports without failing the run.
+  checks-linux:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install dependencies from the lockfile
+        run: npm ci
+
+      - name: The browser the layout test runs in
+        run: npx playwright install --with-deps chromium
 
       - name: Type-check
         run: npx tsc --noEmit

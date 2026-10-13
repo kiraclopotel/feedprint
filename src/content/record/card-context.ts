@@ -19,6 +19,43 @@ export interface CardContext {
   text?: string;
   /** Handles the card names besides the author, lower-cased, no leading @. */
   accounts?: string[];
+  /**
+   * For the judge, X only: the quoted post's body and nothing else. No author name, no display name, no handle of the quoted
+   * account; `text` above carries those for the household list, which has to read them, and the judge must not (the consent
+   * screen promises a letter in place of every account name, and no letter replaces a display name).
+   */
+  quotedBody?: string;
+  /** For the judge, X only: a link card's title and the domain it names, and not the description or anything else on the card. */
+  link?: { title?: string; domain?: string };
+}
+
+const QUOTED_BODY_MOST_CHARS = 600;
+const LINK_TITLE_MOST_CHARS = 200;
+const DOMAIN_RE = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,24}$/i;
+const FROM_RE = /^(?:from|de la|via)\s+/i;
+
+/**
+ * A link card's title and domain. The card is read by its leaves (the elements that hold text and no other element), not by its
+ * joined text: the domain is the leaf that looks like one, the title is the first leaf that is not the domain, and the description
+ * under it is left. A card whose structure gives no leaf is read as one line, which is the title.
+ */
+function readLinkCard(card: Element): { title?: string; domain?: string } | undefined {
+  const leaves = Array.from(card.querySelectorAll('span, div, a, h2, h3'))
+    .filter((el) => el.children.length === 0)
+    .map((el) => el.textContent?.replace(/\s+/g, ' ').trim() ?? '')
+    .filter(Boolean);
+  if (leaves.length === 0) {
+    const whole = card.textContent?.replace(/\s+/g, ' ').trim();
+    if (whole) leaves.push(whole);
+  }
+  const bare = (t: string): string => t.replace(FROM_RE, '').toLowerCase();
+  const domain = leaves.map(bare).find((t) => t.length <= 80 && DOMAIN_RE.test(t));
+  const title = leaves.find((t) => !DOMAIN_RE.test(bare(t)) && !FROM_RE.test(t) && t.length >= 3);
+  if (!title && !domain) return undefined;
+  return {
+    ...(title ? { title: title.slice(0, LINK_TITLE_MOST_CHARS) } : {}),
+    ...(domain ? { domain } : {}),
+  };
 }
 
 const ATTRIBUTION_RE = /^(from|de la|via)\s+/i;
@@ -32,13 +69,18 @@ function handleFromHref(href: string | null): string | undefined {
 function readTwitter(container: Element): CardContext {
   const texts: string[] = [];
   const accounts = new Set<string>();
+  let quotedBody: string | undefined;
+  let link: { title?: string; domain?: string } | undefined;
 
   // The quoted post: a nested article rendered as a link, with its own body
   // and its own author header.
   const quoted = container.querySelector('article[role="link"]');
   if (quoted) {
     const body = quoted.querySelector('[data-testid="tweetText"]')?.textContent?.trim();
-    if (body) texts.push(body);
+    if (body) {
+      texts.push(body);
+      quotedBody = body.slice(0, QUOTED_BODY_MOST_CHARS);
+    }
     const authorLink = quoted.querySelector<HTMLAnchorElement>('[data-testid="User-Name"] a[href^="/"], a[href^="/"][role="link"]');
     const h = handleFromHref(authorLink?.getAttribute('href') ?? null);
     if (h) accounts.add(h);
@@ -53,6 +95,7 @@ function readTwitter(container: Element): CardContext {
     if (quoted && quoted.contains(card)) continue;
     const t = card.textContent?.trim();
     if (t) texts.push(t);
+    link ??= readLinkCard(card);
   }
 
   // A media attribution line ("From <Name>" on a video from another account,
@@ -69,6 +112,8 @@ function readTwitter(container: Element): CardContext {
   const out: CardContext = {};
   if (texts.length) out.text = texts.join('\n');
   if (accounts.size) out.accounts = Array.from(accounts);
+  if (quotedBody) out.quotedBody = quotedBody;
+  if (link) out.link = link;
   return out;
 }
 

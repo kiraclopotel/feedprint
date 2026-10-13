@@ -60,20 +60,20 @@ async function draw(strict = false): Promise<void> {
   await act(async () => { root.render(strict ? createElement(StrictMode, null, tree) : tree); });
 }
 const settle = async () => { for (let i = 0; i < 5; i++) await act(async () => { await new Promise((r) => setTimeout(r, 0)); }); };
-const drawer = () => container.querySelector('.ai-drawer')!;
-const head = () => container.querySelector<HTMLButtonElement>('button.ai-drawer-head')!;
+const drawer = () => container.querySelector('.fold-reading')!;
+const head = () => container.querySelector<HTMLButtonElement>('.fold-reading button.ai-drawer-head')!;
 
 describe('the AI drawer reads its stored choice once', () => {
-  it('drawn before the read lands, it waits as the pill without moving, then settles open', async () => {
+  it('drawn before the read lands, it waits as the pill without moving, then settles as stored (shut when nothing is)', async () => {
     await draw();
     expect(drawer().classList.contains('closed')).toBe(true);
     expect(drawer().classList.contains('unread')).toBe(true);
     expect(head().getAttribute('aria-expanded')).toBe('false');
     await act(async () => { release({}); });
     await settle();
-    expect(drawer().classList.contains('closed')).toBe(false);
+    expect(drawer().classList.contains('closed')).toBe(true);
     expect(drawer().classList.contains('unread')).toBe(false);
-    expect(head().getAttribute('aria-expanded')).toBe('true');
+    expect(head().getAttribute('aria-expanded')).toBe('false');
   });
 
   it('a press before the read lands wins over the read', async () => {
@@ -108,6 +108,6 @@ describe('the AI drawer reads its stored choice once', () => {
     set.mockClear();
     await act(async () => { head().click(); });
     expect(set.mock.calls.filter(([patch]) => KEY in (patch as object))).toHaveLength(1);
-    expect(fake.state[KEY]).toBe(false);
+    expect(fake.state[KEY]).toBe(true);
   });
 });

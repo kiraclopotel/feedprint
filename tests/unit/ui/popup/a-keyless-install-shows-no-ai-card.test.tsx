@@ -39,10 +39,10 @@ function settingsWith(mode: Mode): FWSettings {
   } as unknown as FWSettings;
 }
 
-function render(mode: Mode, license: LicenseInfo, lang: Lang): Document {
+function render(mode: Mode, license: LicenseInfo, lang: Lang, openOn: 'main' | 'general' = 'main'): Document {
   const html = renderToString(createElement(I18nProvider, {
     lang,
-    children: createElement(SettingsPanel, { settings: settingsWith(mode), license, onBack: () => {}, onChange: async () => {} }),
+    children: createElement(SettingsPanel, { settings: settingsWith(mode), license, onBack: () => {}, onChange: async () => {}, openOn }),
   }));
   return new DOMParser().parseFromString(html, 'text/html');
 }
@@ -63,20 +63,19 @@ describe.each(UI_LANGUAGES)('%s', (lang) => {
   it.each(MODES)('without a key at %s: no AI header, no AI switch, no way to a key', (mode) => {
     const doc = render(mode, FREE, lang);
     // The AI group's name sits on the drawer's own button, not on a section header, so the drawer itself is checked.
-    expect(doc.querySelector('.ai-drawer')).toBeNull();
+    expect(doc.querySelector('.fold-reading')).toBeNull();
     expect(doc.body.textContent).not.toContain(t.groupAi);
     const labels = switchLabels(doc);
     expect(labels).not.toContain(t.featAiMasterName);
-    expect(labels).not.toContain(t.featAiMasterAriaStrict);
     expect(doc.body.textContent).not.toContain(t.featAiMasterDesc);
     expect(doc.body.textContent).not.toContain(t.featAiMasterOffNote);
   });
 
-  it.each(MODES)('the swear mask sits on the first card at %s, key or no key', (mode) => {
+  it.each(MODES)('the swear mask sits on the General page\'s card at %s, key or no key', (mode) => {
     for (const license of [FREE, PAID]) {
-      const doc = render(mode, license, lang);
-      expect(headers(doc)).toContain(t.setEssentialsTitle);
-      const card = cardUnder(doc, t.setEssentialsTitle)!;
+      const doc = render(mode, license, lang, 'general');
+      const card = doc.querySelector('.set-essentials')!;
+      expect(card, 'the switches card').not.toBeNull();
       const inCard = Array.from(card.querySelectorAll('[role="switch"]')).map(s => s.getAttribute('aria-label'));
       expect(inCard.some(l => swearLabels(t).includes(l ?? '')), `${mode}: the swear mask switch`).toBe(true);
     }
@@ -85,8 +84,8 @@ describe.each(UI_LANGUAGES)('%s', (lang) => {
   it('with a key the AI card and its breaker are there', () => {
     const doc = render('teen', PAID, lang);
     // The card is a drawer whose own header button names the group.
-    const card = doc.querySelector('.ai-drawer')!;
-    expect(card.querySelector('button.ai-drawer-head')?.textContent).toContain(t.groupAi);
+    const card = doc.querySelector('.fold-reading')!;
+    expect(card.querySelector('.fold-reading button.ai-drawer-head')?.textContent).toContain(t.groupAi);
     const inCard = Array.from(card.querySelectorAll('[role="switch"]')).map(s => s.getAttribute('aria-label'));
     expect(inCard).toContain(t.featAiMasterName);
     expect(inCard.some(l => swearLabels(t).includes(l ?? '')), 'the swear mask is not an AI row').toBe(false);

@@ -114,7 +114,7 @@ describe('a settings read that failed keeps the parent side locked', () => {
     });
 
     await click(host, buttonByText(host, 'Remove license'), 'Remove license');
-    await click(host, buttonByText(host, 'remove'), 'remove');
+    await click(host, buttonByText(host, 'Remove'), 'Remove');
     await settle(20);
 
     expect(host.querySelector('.pin-overlay'), 'the PIN is asked for').not.toBeNull();

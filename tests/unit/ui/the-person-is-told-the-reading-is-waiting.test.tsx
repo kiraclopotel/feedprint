@@ -51,11 +51,18 @@ describe('the popup', () => {
     expect(needsReadingConsent({ ...base, relayAsked: true })).toBe(true);
   });
 
-  it('but never for a free install, a reading switched off, a refused key or Strict, which sends nothing', () => {
+  it('but never for a free install, a reading switched off, a refused key or a level nobody has chosen, which sends nothing', () => {
     expect(needsReadingConsent({ ...base, relayAsked: true, license: { tier: 'free', secret: '' } })).toBe(false);
     expect(needsReadingConsent({ ...base, relayAsked: true, settings: { aiAnalysisEnabled: false, mode: 'teen' } })).toBe(false);
     expect(needsReadingConsent({ ...base, relayAsked: true, keyRefused: true })).toBe(false);
-    expect(needsReadingConsent({ ...base, relayAsked: true, settings: { aiAnalysisEnabled: true, mode: 'child' } })).toBe(false);
+    expect(needsReadingConsent({ ...base, relayAsked: true, settings: { aiAnalysisEnabled: true, mode: 'teen', levelChosen: false } })).toBe(false);
+  });
+
+  it('at Silent it asks like the other levels, since a key lets Silent read: once with no go-ahead, again when the relay asks', () => {
+    const silent = { aiAnalysisEnabled: true, mode: 'child' as const };
+    expect(needsReadingConsent({ ...base, settings: silent, consent: null })).toBe(true);
+    expect(needsReadingConsent({ ...base, settings: silent })).toBe(false);
+    expect(needsReadingConsent({ ...base, settings: silent, relayAsked: true })).toBe(true);
   });
 });
 

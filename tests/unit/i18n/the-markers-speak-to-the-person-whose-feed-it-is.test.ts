@@ -46,7 +46,7 @@ describe('the markers speak to the person whose feed it is', () => {
     it(`the skip line in ${lang} names the level and is the same on a cover and on a skipped post`, () => {
       const t = (MARKER_STRINGS as unknown as Record<string, Record<string, string>>)[lang];
       expect(t.skipLineChild).toBe(t.hideNoticeChild);
-      expect(t.skipLineChild).toMatch(/Strict|Estricto|Rigoroso/);
+      expect(t.skipLineChild).toMatch(/Silent|Silențios|Silencioso/);
     });
   }
 });

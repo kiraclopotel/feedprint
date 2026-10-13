@@ -160,7 +160,7 @@ export const ES: DashboardStrings = {
   techDetail: (name, sev) => `técnica: ${name} (grav. ${esNum(sev)})`,
   originalLabel: 'Original',
   softenedLabel: 'Suavizado',
-  openOriginalPost: 'Abrir la publicación original ↗',
+  openOriginalPost: 'Abrir la publicación original',
   withholdBtn: 'Retener este registro',
   withholdPrompt: 'Retener este registro de toda exportación y toda vista. Su lugar en la cadena, su hash y su firma se quedan; su texto, autor, enlaces y medios salen. Motivo (opcional, guardado en el marcador firmado):',
   withholdDone: 'Retenido. Un marcador firmado nombra ahora este registro.',
@@ -168,7 +168,7 @@ export const ES: DashboardStrings = {
   withheldNote: 'Retenido a petición tuya; un marcador firmado nombra este registro. Los bytes se quedan en el almacén de este dispositivo y en tus copias de seguridad.',
   withheldShort: '(retenido)',
   excludeBtn: 'Dejar de registrar esta cuenta',
-  excludeDone: 'Desde ahora nada de lo que publique esta cuenta se registra. Los registros ya escritos se quedan; retenlos uno por uno si hace falta.',
+  excludeDone: 'Desde ahora nada de lo que publique esta cuenta se registra. Los registros ya escritos se quedan; retenlos uno por uno si hace falta. Para registrarla de nuevo, abre "Cuentas no registradas", encima de la lista, y pulsa "Registrar de nuevo".',
   exclusionsTitle: 'Cuentas no registradas',
   exclusionsSub: 'Nada de lo que publican estas cuentas entra en el registro desde el momento en que se añadieron. La protección en la página no cambia. El registro guarda solo cuántos se omitieron, nunca un nombre.',
   exclusionsNone: 'Ninguna cuenta omitida.',
@@ -215,8 +215,8 @@ export const ES: DashboardStrings = {
   restoreChainNote: (err) => `nota: ${err}`,
   restoreChainFallback: 'el registro restaurado no se verificó del todo',
   restoreKeyRestored: ' Clave de firma restaurada. Tu registro continúa como una sola cadena.',
-  restoredMsg: (added, skipped, anchors, chain, key) =>
-    `Restauradas ${esNum(added)} ${added === 1 ? 'entrada' : 'entradas'} (${esNum(skipped)} ya estaban), ${esNum(anchors)} marca(s) de tiempo: ${chain}.${key}`,
+  restoredMsg: (added, skipped, anchors, chain, key, alsoArchived) =>
+    `Restauradas ${esNum(added)} ${added === 1 ? 'entrada' : 'entradas'} (${esNum(skipped)} ya estaban)${alsoArchived ? `, ${esNum(alsoArchived)} también en los archivos mensuales (se cuentan una vez)` : ''}, ${esNum(anchors)} marca(s) de tiempo: ${chain}.${key}`,
   restoreDoneNotice: (restored, replaced) => {
     const done = `Restauración terminada: ${esNum(restored)} ${restored === 1 ? 'entrada vuelve' : 'entradas vuelven'} al registro.`;
     if (replaced <= 0) return done;
@@ -336,7 +336,7 @@ export const ES: DashboardStrings = {
   exportIncluded: (included, total) => `${esNum(included)} ${included === 1 ? 'registro incluido' : 'registros incluidos'} de ${esNum(total)} en total`,
   exportNothingFlagged: 'No hay nada marcado en este registro, así que este archivo no tiene nada que llevar. Queda desactivado hasta que lo haya. El archivo del registro completo que está al lado no está vacío: lo lleva todo, marcado o no.',
   exportIncludedScope: 'El informe, el PDF, el JSON y el CSV llevan los registros marcados de la cadena activa:',
-  everythingIncludes: (active, archived) => `${active.toLocaleString('es-ES')} ${active === 1 ? 'registro' : 'registros'} en la cadena activa más ${archived.toLocaleString('es-ES')} en los archivos mensuales, sin nada retenido.`,
+  everythingIncludes: (active, archived, inBoth) => `${active.toLocaleString('es-ES')} ${active === 1 ? 'registro' : 'registros'} en la cadena activa más ${archived.toLocaleString('es-ES')} en los archivos mensuales${inBoth ? `, ${inBoth.toLocaleString('es-ES')} de ellos en ambos y contados una vez` : ''}, sin nada retenido.`,
   exportSavedNote: (file, bytes) => `Guardado ${file}, ${bytes.toLocaleString('es-ES')} bytes.`,
   pdfOpenedNote: (records) => `Se abrió una vista de impresión con ${esNum(records)} ${records === 1 ? 'registro' : 'registros'} en una pestaña nueva. Usa el diálogo de impresión del navegador para guardarla como PDF.`,
   pdfFallbackNote: (file, bytes) => `El navegador bloqueó la pestaña de impresión, así que el mismo informe se guardó como ${file} (${bytes.toLocaleString('es-ES')} bytes). Ábrelo e imprímelo como PDF.`,
@@ -540,7 +540,7 @@ export const ES: DashboardStrings = {
   feedOriginalVerbatim: 'Texto original',
   feedProtectionsAtCapture: 'Protecciones activas al capturar',
   featCommentsPerVideo: 'Comentarios leídos por vídeo',
-  feedSettingsReadFailedNote: 'Los ajustes no se pudieron leer cuando se escribió este registro; la aplicación protegió al máximo. El modo que se muestra es el valor seguro por defecto, no un ajuste atestiguado.',
+  feedSettingsReadFailedNote: 'Los ajustes no se pudieron leer cuando se escribió este registro; la aplicación usó su nivel más protector, Silencioso. El modo que se muestra es el valor seguro por defecto, no un ajuste atestiguado.',
   feedMarkerReset: 'REGISTRO REINICIADO',
   feedMarkerRotation: 'MES ARCHIVADO',
   feedMarkerPrune: 'ENTRADAS ANTIGUAS PODADAS',
@@ -982,8 +982,11 @@ export const ES: DashboardStrings = {
   opsAiHealthSub: 'Si el análisis con IA está funcionando (solo funciona con una clave de licencia) y, cuando lo hace, cómo se comportan las llamadas al proveedor de IA (velocidad, tokens, cortes, margen frente al límite de solicitudes). Sin clave solo funciona el filtro de daño integrado.',
   opsLoadingShort: 'Cargando…',
   opsAiOff: '● El análisis con IA está apagado: esta instalación no tiene clave de licencia. Solo funciona el filtro de daño integrado. Una clave de licencia pegada en la ventana activa el análisis con IA.',
-  opsAiOffStrict: '● La IA está APAGADA en Estricto. Este nivel no envía nada al exterior, así que no se ejecuta ninguna clasificación con IA (solo el filtro de daño integrado). Moderado con una clave de licencia activa el análisis con IA.',
-  opsAiOffStrictKey: '● La IA está APAGADA en Estricto. Este nivel no envía nada al exterior, así que no se ejecuta ninguna clasificación con IA (solo el filtro de daño integrado). Moderado activa el análisis con IA con tu clave de licencia.',
+  opsAiOffStrict: '● La IA está APAGADA en Silencioso porque esta instalación no tiene clave de licencia. No sale nada al exterior y no se ejecuta ninguna clasificación con IA (solo el filtro de daño integrado). Una clave de licencia activa el análisis con IA.',
+  opsAiOffStrictKey: '● La IA está APAGADA en Silencioso hasta que se dé el consentimiento para Live Rephrase. Hasta entonces no sale nada al exterior y solo funciona el filtro de daño integrado.',
+  strictAllowanceOut: 'Live Rephrase en pausa: se alcanzó el límite de hoy. Las publicaciones se filtran en este ordenador hasta que el límite se reinicie.',
+  strictServiceDown: 'Live Rephrase no responde. Las publicaciones se filtran en este ordenador.',
+  strictNoAgreement: 'Hay una clave para Live Rephrase, pero todavía no hay consentimiento. No sale nada de este ordenador.',
   opsTierMismatch1: '● La licencia dice ',
   opsTierMismatch2: (n) => `, pero la cadena funcionó sin clave ${esNum(n)} ${n === 1 ? 'vez' : 'veces'} en las últimas 24 h. El script de contenido puede estar leyendo la licencia como ausente (un fallo de lectura conocido). Recarga la extensión, vuelve a pegar la clave y comprueba otra vez.`,
   opsLicenseActive1: '● Licencia ',
@@ -1067,11 +1070,11 @@ export const ES: DashboardStrings = {
   opsStageHelp: {
     pipeline_total: 'Análisis completo de una publicación, de principio a fin: lo que espera quien lee.',
     cache_lookup: 'Comprobar si esta publicación ya estaba puntuada. Debería ser mínimo (unos pocos ms).',
-    detect: 'Clasificador de primera pasada (normalmente apagado en Moderado).',
+    detect: 'Clasificador de primera pasada (normalmente apagado en Tranquilo).',
     combined_call: 'La ida y vuelta con el proveedor de IA. Suele ser el paso más lento: pasar de unos 2 s significa red lenta o límite de solicitudes. Cuenta como correcta solo cuando la IA devolvió una lectura.',
     neutralize: 'Reescribir el texto marcado después de que responde la IA.',
-    first_protection: 'Tiempo desde que se observa un elemento nuevo en Estricto hasta su cubierta de seguridad opaca.',
-    protection_terminal: 'Cuánto tiempo estuvo cubierto un elemento en Estricto antes de PASS, reescritura, ocultación o limpieza.',
+    first_protection: 'Tiempo desde que se observa un elemento nuevo en Silencioso hasta su cubierta de seguridad opaca.',
+    protection_terminal: 'Cuánto tiempo estuvo cubierto un elemento en Silencioso antes de PASS, reescritura, ocultación o limpieza.',
   },
   opsPctOk: (pct) => `${pct} correctas`,
   opsPctCached: (pct) => ` · ${pct} en caché`,
@@ -1164,6 +1167,9 @@ export const ES: DashboardStrings = {
   opsCardReadingPausedTitle: 'La lectura con IA está en pausa: espera tu visto bueno',
   opsCardReadingPausedMeaning: 'El servicio que lee tu feed pide que cada persona inicie la lectura una vez, y eso todavía no se hizo en este dispositivo. Mientras tanto, las publicaciones y los comentarios se ven tal como fueron escritos; las protecciones de la página que no necesitan lectura siguen funcionando.',
   opsCardReadingPausedAction: 'Abre la ventana de Feedprint y pulsa "Empezar Live Rephrase ahora". La lectura se reanuda enseguida. El icono muestra un "!" rojo hasta entonces.',
+  opsCardReadingTroubleTitle: 'La lectura con IA no está llegando',
+  opsCardReadingTroubleMeaning: 'En los últimos minutos el servicio que lee tu feed no ha respondido, así que las publicaciones y los comentarios se vieron tal como fueron escritos; las protecciones que no necesitan lectura (palabrotas, amenazas, anuncios ocultos) siguieron funcionando.',
+  opsCardReadingTroubleAction: 'No hay nada que hacer: lo intenta de nuevo solo y esta tarjeta desaparece cuando una llamada llega. El icono muestra un "!" ámbar hasta entonces. Si sigue así durante horas, revisa tu conexión.',
   opsTechDetails: 'Detalles técnicos (para soporte)',
 
   // Overview tab
@@ -1211,7 +1217,7 @@ export const ES: DashboardStrings = {
   ovSourceFlagged: (n) => `${esNum(n)} marcados`,
   ovSourcesFootnote: 'Cada fila abre sus registros. Feedprint cuenta lo que apareció; nunca puntúa a una persona.',
   ovRhythmEyebrow: 'Cuándo estuvo el feed en pantalla',
-  ovRhythmSub: 'Todos los registros por hora, últimos 7 días. Un cuadro más oscuro significa más elementos servidos en esa hora.',
+  ovRhythmSub: 'Todos los registros por hora, últimos 7 días. Un cuadro de color más intenso significa más elementos servidos en esa hora.',
   ovRhythmTip: (day, hour, n) => `${day} ${String(hour).padStart(2, '0')}:00, ${esNum(n)} ${n === 1 ? 'elemento' : 'elementos'}`,
   ovRhythmFootnote: 'El registro guarda los minutos exactos; esto es la forma de la semana.',
 
@@ -1396,7 +1402,7 @@ export const ES: DashboardStrings = {
   railSeverity: { high: 'Alta (8-10)', medium: 'Media (5-7)', low: 'Baja (1-4)' },
   railKind: { posts: 'Publicaciones', comments: 'Comentarios', videos: 'Videos', images: 'Imágenes' },
   railGroupMode: 'Modo al capturar',
-  railMode: { relaxed: 'Relajado', moderate: 'Moderado', strict: 'Estricto' },
+  railMode: { relaxed: 'Abierto', moderate: 'Tranquilo', strict: 'Silencioso' },
   railGroupModel: 'Modelo que lo leyó',
   railModelNone: 'Sin modelo (reglas o ninguno)',
   railGroupSurface: 'Dónde apareció',
@@ -1421,8 +1427,9 @@ export const ES: DashboardStrings = {
   showingArchivedOlder: (older) =>
     `${older.toLocaleString('es-ES')} registros más antiguos, de meses anteriores a los últimos 90 días, se cuentan en cada total y se guardan en el archivo mensual; no aparecen en esta lista. La exportación completa los incluye.`,
   sidePanelsPending: 'Los paneles laterales se completan cuando el registro completo haya cargado.',
-  recordWindowNote: (from, to, count, cap) =>
-    `El registro activo va de ${from} a ${to}: ${count.toLocaleString('es-ES')} de ${cap.toLocaleString('es-ES')}. Al llegar a ${cap.toLocaleString('es-ES')}, los más antiguos pasan al archivo mensual, que esta lista y la exportación completa incluyen.`,
+  recordWindowNote: (from, to, count, cap) => count > cap
+    ? `El registro activo va de ${from} a ${to}: ${count.toLocaleString('es-ES')} entradas, por encima de las ${cap.toLocaleString('es-ES')} a las que se mantiene. Una vez al día, más o menos, los más antiguos pasan al archivo mensual, que esta lista y la exportación completa incluyen, así que la cifra puede quedar por encima de ${cap.toLocaleString('es-ES')} hasta el siguiente traslado.`
+    : `El registro activo va de ${from} a ${to}: ${count.toLocaleString('es-ES')} de ${cap.toLocaleString('es-ES')}. Una vez al día, más o menos, lo que pasa de ${cap.toLocaleString('es-ES')} (lo más antiguo) pasa al archivo mensual, que esta lista y la exportación completa incluyen.`,
   showingBefore: 'Mostrando ',
   showingBetween: ' de ',
   showingAfter: ' entradas',

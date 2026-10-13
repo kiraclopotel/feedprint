@@ -3,13 +3,13 @@
 // Every few hours the background worker asks our relay for the current repair file and keeps it if it verifies and is
 // newer (src/core/repairs/store.ts). The request carries nothing: a plain GET with no cookies, no referrer, no key and no
 // identifier, and the answer is the same for everyone. It follows the same rule as every other outside call: a Strict
-// install, or one whose level nobody has chosen yet, asks no one (makesNoOutsideCall). A failed request, a file that
+// install, or one whose level nobody has chosen yet, asks no one (types/reading-gate.ts). A failed request, a file that
 // does not verify and a file that is not newer change nothing; the last good file stays in force.
 //
 // Off never runs this. Off has no worker and no network, by a build gate, and gets its repairs in its store updates.
 
 import { getSettings } from '../storage/settings';
-import { makesNoOutsideCall } from '../types/mode';
+import { mayCallOutNow } from '../ai/gate-with-agreement';
 import { acceptFetchedRepairs, REPAIRS_STATUS_KEY } from '../core/repairs/store';
 
 export const REPAIRS_URL = 'https://api.feelingwise.org/v1/repairs';
@@ -34,7 +34,7 @@ export async function syncRepairs(fetchImpl: typeof fetch = fetch): Promise<Repa
   let result: RepairsSyncResult;
   try {
     const settings = await getSettings();
-    if (makesNoOutsideCall(settings)) {
+    if (!(await mayCallOutNow(settings))) {
       result = 'not-allowed';
     } else {
       const controller = new AbortController();

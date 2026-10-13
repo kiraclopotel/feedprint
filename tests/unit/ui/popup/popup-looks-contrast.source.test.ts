@@ -115,7 +115,9 @@ describe('every look ships with its contrast table', () => {
         const t = { ...(mode === 'dark' ? baseDark : baseLight), ...block(LOOKS_CSS, start) };
         const header = new RegExp(
           (mode === 'dark' ? String.raw`html\[data-look="d"\] \.fw-popup \.pop-header,` : String.raw`html\[data-look="d"\]\[data-theme="light"\] \.fw-popup \.pop-header,`)
-          + String.raw`[^{]*\{\s*background: linear-gradient\(120deg,\s*color-mix\(in oklch, var\(--fw-teal\) (\d+)%, var\(--fw-bg\)\) 0%,\s*color-mix\(in oklch, var\(--fw-purple\) (\d+)%`);
+          // Since 12 Oct 2026 a fade to the page lies over the run's foot (row 3); it only blends toward --fw-bg, so the
+          // run's own stops stay the ones read here.
+          + String.raw`[^{]*\{\s*(?:\/\*[^*]*\*\/\s*)?background: (?:linear-gradient\(180deg, transparent 50%, var\(--fw-bg\) 100%\), )?linear-gradient\(120deg,\s*color-mix\(in oklch, var\(--fw-teal\) (\d+)%, var\(--fw-bg\)\) 0%,\s*color-mix\(in oklch, var\(--fw-purple\) (\d+)%`);
         const stops = [mixOklch(t['--fw-teal'], share(LOOKS_CSS, header, 1), t['--fw-bg']), mixOklch(t['--fw-purple'], share(LOOKS_CSS, header, 2), t['--fw-bg']), t['--fw-bg']];
         const today = mixOklch(t['--fw-teal'], share(LOOKS_CSS, /\.today-card \{\s*background: linear-gradient\(160deg, color-mix\(in oklch, var\(--fw-teal\) (\d+)%, var\(--fw-card\)\)/), t['--fw-card']);
         const fails: string[] = [];

@@ -58,7 +58,8 @@ describe('presets (LOOP-029 / DEC-011 / DESIGN §10.3 / DEC-015 family-only)', (
     const cases: Array<[FeatureId, boolean]> = [
       // Default protection (core) — ON.
       ['rewritten-comments-first', true],
-      ['show-reframe-markers', true],
+      // Silent: the calm version is the first view and there is no dot to press (the owner's yes, 12 Oct 2026).
+      ['show-reframe-markers', false],
       // Additional protections — ALL ON (Child = maximum protection).
       ['hide-engagement-metrics', true],
       ['hide-action-buttons', true],
@@ -176,10 +177,10 @@ describe('presets (LOOP-029 / DEC-011 / DESIGN §10.3 / DEC-015 family-only)', (
       }
     });
 
-    it('Both presets keep core ON (rewrite + marker) and media-timeout OFF (parent trigger)', () => {
+    it('Both presets keep the rewrite ON and media-timeout OFF (parent trigger); the marker is on for Calm and off for Silent', () => {
       for (const [label, preset] of [['child', childPreset()], ['teen', teenPreset()]] as const) {
         expect(preset['rewritten-comments-first'].enabled, `${label}/rewrite`).toBe(true);
-        expect(preset['show-reframe-markers'].enabled, `${label}/marker`).toBe(true);
+        expect(preset['show-reframe-markers'].enabled, `${label}/marker`).toBe(label === 'teen');
         expect(preset['media-timeout'].enabled, `${label}/media-timeout`).toBe(false);
       }
     });

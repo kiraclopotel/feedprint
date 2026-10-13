@@ -17,6 +17,7 @@ import { judgeKindFor, type PipelineResult } from '../../analysis/pipeline';
 import type { AnalysisResult } from '../../types/analysis';
 import type { PostContent } from '../../types/post';
 import { askDescriptorV1, DESCRIPTOR_V1_HASH, DESCRIPTOR_V1_MODEL } from '../../ai/descriptor-v1';
+import { labelledPair } from '../../core/name-labels';
 
 type Process = (post: PostContent, signal?: AbortSignal) => Promise<PipelineResult>;
 type Ask = typeof askDescriptorV1;
@@ -40,11 +41,13 @@ export function withDescriptorV1(process: Process, ask: Ask = askDescriptorV1): 
     const result = await process(post, signal);
     const analysis = firedJudgeAnalysis(result);
     if (!analysis || analysis.descriptorV1 || pending.has(analysis) || signal?.aborted) return result;
+    // The reading gets a letter in place of each name, as the judge does; it answers in fixed words only.
+    const sent = labelledPair({ author: post.author, context: post.context, text: post.text, parentText: post.parentText });
     pending.set(analysis, ask({
-      text: post.text,
+      text: sent.text,
       platform: post.platform,
       kind: judgeKindFor(post.kind),
-      parentText: post.parentText,
+      parentText: sent.parentText,
     }).then(
       (reading) => {
         if (reading) analysis.descriptorV1 = { id: 'descriptor-v1', hash: DESCRIPTOR_V1_HASH, model: DESCRIPTOR_V1_MODEL, ...reading };

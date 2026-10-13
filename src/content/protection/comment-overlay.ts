@@ -13,6 +13,7 @@
 import { isInspectionTab } from '../post-path/inspection-mode';
 import { clearRewriteMarks } from '../markers/ai-mark';
 import { fwDebug } from '../fw-log';
+import { doorStarStanding } from '../../core/door-star';
 
 // --- Platform text size detection ---
 
@@ -195,7 +196,18 @@ export function buildCommentEntryForRoot(
   rootEl: HTMLElement,
   platform: string,
 ): CommentEntry | null {
-  if (rootEl.dataset.fwRewritten === 'true') return null;
+  const entry = buildCommentEntryForRootAsShown(rootEl, platform);
+  // A row the door starred before its reading came back is the comment as it was scored: its text reads as the words the
+  // stars replaced (core/door-star.ts), so the rewrite, the hide and the mark land on it as on any other row.
+  const star = entry ? doorStarStanding(rootEl) : null;
+  return entry && star ? { ...entry, text: star.entryOriginal } : entry;
+}
+
+function buildCommentEntryForRootAsShown(
+  rootEl: HTMLElement,
+  platform: string,
+): CommentEntry | null {
+  if (rootEl.dataset.fwRewritten === 'true' && !doorStarStanding(rootEl)) return null;
 
   // per-platform production-shape map of `domRef`.
   // Per a reading of each adapter's PostContent.push() site:
@@ -242,7 +254,7 @@ export function buildCommentEntryForRoot(
 }
 
 function buildEntryFromTikTokNode(node: HTMLElement): CommentEntry | null {
-  if (node.dataset.fwRewritten === 'true') return null;
+  if (node.dataset.fwRewritten === 'true' && !doorStarStanding(node)) return null;
 
   // Modern TikTok DOM (live MCP-confirmed): the row is a
   // `[class*="DivCommentItemWrapper"]` DIV; the username link sits as a
@@ -561,6 +573,16 @@ export function swapCommentTextInPlace(entry: CommentEntry, rewrittenText: strin
     entry.textEl.style.fontVariant = preservedStyle.fontVariant;
     entry.textEl.style.textTransform = preservedStyle.textTransform;
   }
+}
+
+/**
+ * The Open level's first tap on a comment: the row's text becomes one plain text holder of the author's own words, by the
+ * same in-place swap every rewrite uses, so each platform's rules for its comment text apply. Until that tap the row is as
+ * the platform drew it. True when the words are on the page after it.
+ */
+export function flattenCommentEntryToOriginal(entry: CommentEntry, originalText: string): boolean {
+  swapCommentTextInPlace(entry, originalText);
+  return entry.rootEl.dataset.fwRewritten === 'true';
 }
 
 /**

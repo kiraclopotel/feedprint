@@ -17,6 +17,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { installChromeStorageStub } from '../../helpers/chrome-storage';
+import { readingConsentFor } from '../../helpers/reading-consent';
 
 import {
   utcDayKey,
@@ -36,6 +37,7 @@ function baselineSettings(extra: Record<string, unknown> = {}): Record<string, u
     lastResetDate: utcDayKey(),
     lastResetMonth: utcMonthKey(),
     fw_license_key: 'fw-starter-abc12345',
+    ...readingConsentFor('fw-starter-abc12345'),
     dailyCap: 2500,
     totalChecksToday: 0,
     totalTokensThisMonth: 0,
@@ -144,6 +146,9 @@ describe('callAI — retry layer (Result-typed cascade)', () => {
     const { callAI } = await import('../../../src/ai/client');
 
     const pending = callAI('sys', 'usr');
+    // The stored go-ahead is read through a real digest, which takes real time: wait for the first
+    // request before the clock moves, or the retry's sleep is set after the clock has moved on.
+    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
     // Advance just past the 60s cap; if the retry layer waited the full 120s
     // the second fetch would not have fired and the call would still be
     // pending after this advance.
@@ -324,8 +329,12 @@ describe('callAI — retry layer (Result-typed cascade)', () => {
     const { PROXY_TEXT_DEADLINE_MS } = await import('../../../src/ai/fetch-with-deadline');
 
     const pending = callAI('sys', 'usr');
+    // The stored go-ahead is read through a real digest: wait for each request before the clock moves.
+    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
     await vi.advanceTimersByTimeAsync(PROXY_TEXT_DEADLINE_MS + 5);
     // The network retry sleeps 750 ms, then runs a second attempt that also stalls.
+    await vi.advanceTimersByTimeAsync(1_000);
+    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(2));
     await vi.advanceTimersByTimeAsync(PROXY_TEXT_DEADLINE_MS + 1_000);
     const result = await pending;
 

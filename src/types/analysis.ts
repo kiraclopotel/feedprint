@@ -64,6 +64,11 @@ export interface AnalysisResult {
    */
   explanation?: string;
   /**
+   * Set only on the "seen a lot" count (pipeline exposureMarkResult): what was counted, so the pill on the page can
+   * say it in the reader's language. The record keeps the same facts in the technique's evidence.
+   */
+  exposure?: { reason: 'days' | 'creative'; count: number; surface: string };
+  /**
    * Model-chosen single dominant technique for this post. The teen panel
    * uses this in the headline. Optional: downstream code falls back to
    * highest-severity confirmed technique.

@@ -1,0 +1,19 @@
+# Local development secrets for the FeelingWise proxy Worker.
+#
+# Copy this file to `worker/.dev.vars` and fill in real values. The
+# `.dev.vars` file is gitignored and used ONLY by `wrangler dev` for local
+# development. Production secrets are set via `wrangler secret put <NAME>`
+# and are encrypted at rest on Cloudflare's side.
+
+# FW master Groq API key. Get from https://console.groq.com/keys.
+# Format: gsk_... (~52 chars). Single key used for ALL customer LLM calls;
+# Groq bills this account directly for total usage.
+GROQ_API_KEY=replace_me_with_real_key
+
+# Phase 4 — Lemon Squeezy webhook HMAC signing secret.
+# Get from Lemon Squeezy dashboard → Settings → Webhooks → endpoint config.
+# LEMONSQUEEZY_WEBHOOK_SECRET=
+
+# Phase 4 — Resend.com API key for transactional email (license delivery).
+# Get from https://resend.com → API Keys.
+# RESEND_API_KEY=re_replace_me

@@ -4,6 +4,7 @@
 // endpoint: the relay is a stub.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { installChromeStorageStub } from '../../helpers/chrome-storage';
+import { readingConsentFor } from '../../helpers/reading-consent';
 import { CURRENT_SETTINGS_SCHEMA_VERSION, utcDayKey, utcMonthKey } from '../../../src/storage/settings';
 import { actFires } from '../../../src/ai/judge-pair';
 
@@ -105,6 +106,7 @@ describe('the client for the Claude reading', () => {
 
   it('a pause near the cap leaves the ordinary reading alone: the next ordinary call is still made', async () => {
     await withConsent();
+    await chrome.storage.local.set(readingConsentFor('fw-starter-abc12345')); // the ordinary reading's own go-ahead
     relay(429, { error: { code: 'claude_paused_near_cap', message: 'x' } });
     const { askClaudeReader } = await import('../../../src/ai/claude-reader');
     await askClaudeReader(ITEM);

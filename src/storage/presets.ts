@@ -26,9 +26,11 @@ import type { FeatureToggles } from '../types/feature-toggles';
 
 export function childPreset(): FeatureToggles {
   return {
-    // Default protection (core) — both ON.
+    // Silent (this preset): the calm version is the first view and there is no dot to press, so the marker starts OFF
+    // (the owner's yes, 12 Oct 2026). The switch stays the person's: turning it on gives the Calm walk. A rewrite is
+    // still named a model's text on the page by the AI mark, which does not depend on this switch.
     'rewritten-comments-first':       { enabled: true },
-    'show-reframe-markers':           { enabled: true },
+    'show-reframe-markers':           { enabled: false },
     // Additional protections — ALL ON for Child mode. Younger kids
     // (8-12) benefit from maximum visible intervention; the parent dials
     // back individually if a specific feature creates friction.
@@ -56,6 +58,8 @@ export function childPreset(): FeatureToggles {
     // empty list is a no-op, so a parent who adds a word does not also have
     // to hunt for a switch. See core/parent-blocklist.ts.
     'parent-blocklist':               { enabled: true, value: { words: [], phrases: [], accounts: [] } },
+    // A topic the person chose not to see: off until they choose it (src/core/policy/topic-lexicon.ts).
+    'topic-gambling':                 { enabled: false },
     // Paid soften of ordinary swearing: ON for child (background protection),
     // spend now parent-controllable (wiring Q4; floors stay rails).
     'soften-swearing':                { enabled: true },
@@ -100,6 +104,7 @@ export function teenPreset(): FeatureToggles {
     // empty list is a no-op, so a parent who adds a word does not also have
     // to hunt for a switch. See core/parent-blocklist.ts.
     'parent-blocklist':               { enabled: true, value: { words: [], phrases: [], accounts: [] } },
+    'topic-gambling':                 { enabled: false },
     // OFF for teen: matches the evidence-retired always-on teen rule
     // (.brain/DECISIONS.md 2026-06-10); strictLanguage still implies it.
     'soften-swearing':                { enabled: false },
@@ -172,6 +177,7 @@ export function adultPreset(): FeatureToggles {
     // empty list is a no-op, so a parent who adds a word does not also have
     // to hunt for a switch. See core/parent-blocklist.ts.
     'parent-blocklist':               { enabled: true, value: { words: [], phrases: [], accounts: [] } },
+    'topic-gambling':                 { enabled: false },
     'soften-swearing':                { enabled: false },
     // Calmer-rewrite spend tier (wiring Q2/W44): ON in every preset. The
     // adult preset already ships the visible-value pair (rewrites + markers).

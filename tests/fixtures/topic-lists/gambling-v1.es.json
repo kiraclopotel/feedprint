@@ -1,0 +1,638 @@
+{
+ "topic": "gambling",
+ "version": 1,
+ "language": "es",
+ "madeOn": "2026-10-13",
+ "entries": [
+  {
+   "term": "apuestas",
+   "kind": "word",
+   "exact": false,
+   "risk": "medium",
+   "note": "Plural; mostly betting, sometimes 'las apuestas del gobierno' in news."
+  },
+  {
+   "term": "apostador",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "A bettor. Almost always gambling."
+  },
+  {
+   "term": "apostadores",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Plural of the above, listed separately because Spanish endings are not reached."
+  },
+  {
+   "term": "casino",
+   "kind": "word",
+   "exact": false,
+   "risk": "medium",
+   "note": "Casino; also the name of social clubs ('Casino de Madrid') and the Italian 'casino' for a mess in some posts."
+  },
+  {
+   "term": "casinos",
+   "kind": "word",
+   "exact": false,
+   "risk": "medium",
+   "note": "Plural, same collisions as casino."
+  },
+  {
+   "term": "tragaperras",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Spain's word for slot machines; invariable in number."
+  },
+  {
+   "term": "tragamonedas",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Latin American slot machines; invariable in number."
+  },
+  {
+   "term": "ruleta",
+   "kind": "word",
+   "exact": false,
+   "risk": "medium",
+   "note": "Roulette; collides with 'ruleta rusa' used figuratively and 'ruleta de la vida'."
+  },
+  {
+   "term": "poker",
+   "kind": "word",
+   "exact": false,
+   "risk": "medium",
+   "note": "Folded from poker/poquer; 'cara de poker' (poker face) and 'poker de ases' in ordinary talk."
+  },
+  {
+   "term": "blackjack",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Card game played for money, used as in English."
+  },
+  {
+   "term": "jackpot",
+   "kind": "word",
+   "exact": false,
+   "risk": "medium",
+   "note": "Slot and casino prize; used figuratively ('toque el jackpot') in ordinary posts."
+  },
+  {
+   "term": "tipster",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Seller of betting tips, common in Spain and the Southern Cone."
+  },
+  {
+   "term": "parlay",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Combined bet, common in Mexico, Caribbean and the US Latino market."
+  },
+  {
+   "term": "quiniela",
+   "kind": "word",
+   "exact": false,
+   "risk": "medium",
+   "note": "Football pools in Spain, horse and lottery pools in Latin America; also an office or school-league pool among friends."
+  },
+  {
+   "term": "ludopatia",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Gambling addiction; included because the switch means any mention of gambling."
+  },
+  {
+   "term": "freebet",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Free bet credit offered by bookmakers, often written as one word."
+  },
+  {
+   "term": "supercuota",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Odds boost promotion used by Spanish bookmakers."
+  },
+  {
+   "term": "aviator",
+   "kind": "word",
+   "exact": true,
+   "risk": "medium",
+   "note": "The crash game Aviator, huge in Latin America; also aviator sunglasses in English fashion posts."
+  },
+  {
+   "term": "raspadita",
+   "kind": "word",
+   "exact": false,
+   "risk": "medium",
+   "note": "Scratch card in Mexico and the Southern Cone; also a small scrape in ordinary talk."
+  },
+  {
+   "term": "euromillones",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Spain's Euromillions lottery."
+  },
+  {
+   "term": "baloto",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Colombia's national lottery."
+  },
+  {
+   "term": "crupier",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Casino dealer."
+  },
+  {
+   "term": "casa de apuestas",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Bookmaker or betting shop."
+  },
+  {
+   "term": "casas de apuestas",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Plural, listed separately."
+  },
+  {
+   "term": "apuestas deportivas",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Sports betting, the commonest market label."
+  },
+  {
+   "term": "apuestas online",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Online betting."
+  },
+  {
+   "term": "apuestas en vivo",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "In-play betting."
+  },
+  {
+   "term": "apuesta combinada",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Accumulator bet in Spain; the bare word 'combinada' is left out."
+  },
+  {
+   "term": "sala de apuestas",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Betting shop on the high street in Spain."
+  },
+  {
+   "term": "free bet",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Two-word spelling used in Spanish promotions."
+  },
+  {
+   "term": "casino online",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Online casino."
+  },
+  {
+   "term": "casino en vivo",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Live dealer casino."
+  },
+  {
+   "term": "maquina tragaperras",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Slot machine, fuller form."
+  },
+  {
+   "term": "juego de azar",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Game of chance, also the legal term."
+  },
+  {
+   "term": "juegos de azar",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Plural; legal and news language."
+  },
+  {
+   "term": "bono sin deposito",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "No-deposit bonus."
+  },
+  {
+   "term": "giros gratis",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Free spins."
+  },
+  {
+   "term": "tiradas gratis",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Free spins, Spain."
+  },
+  {
+   "term": "free spins",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "English form often left untranslated in promotions."
+  },
+  {
+   "term": "rasca y gana",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Scratch-and-win ticket in Spain."
+  },
+  {
+   "term": "loteria nacional",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "National lottery in Spain and Latin America."
+  },
+  {
+   "term": "la primitiva",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "medium",
+   "note": "Spain's lottery draw; phrase only because 'primitiva' alone is an ordinary adjective."
+  },
+  {
+   "term": "poker online",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Online poker for money."
+  },
+  {
+   "term": "fortune tiger",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "The tiger slot game, popular in Latin America as well as Brazil."
+  },
+  {
+   "term": "juego del tigre",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Spanish nickname for Fortune Tiger."
+  },
+  {
+   "term": "bet365",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Strong across Spain and Latin America."
+  },
+  {
+   "term": "codere",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Spanish bookmaker big in Spain, Mexico, Argentina, Colombia."
+  },
+  {
+   "term": "sportium",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Spanish bookmaker and betting shops."
+  },
+  {
+   "term": "bwin",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Bookmaker with Spanish licence."
+  },
+  {
+   "term": "1xbet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Heavy social media promotion in Latin America."
+  },
+  {
+   "term": "betway",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Active in Mexico and Spain."
+  },
+  {
+   "term": "betfair",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Betting exchange known in Spain."
+  },
+  {
+   "term": "pokerstars",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Largest online poker room in both markets."
+  },
+  {
+   "term": "888casino",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Casino brand licensed in Spain."
+  },
+  {
+   "term": "luckia",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Spanish bookmaker and casino, heavy advertising."
+  },
+  {
+   "term": "retabet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Spanish bookmaker, also in Mexico."
+  },
+  {
+   "term": "betsson",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Bookmaker active in Spain and Latin America."
+  },
+  {
+   "term": "rushbet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Colombian betting app."
+  },
+  {
+   "term": "wplay",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Colombian betting app."
+  },
+  {
+   "term": "betwarrior",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Argentina and Mexico betting app."
+  },
+  {
+   "term": "mostbet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Promoted widely by spammy accounts in Latin America."
+  },
+  {
+   "term": "william hill",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "UK bookmaker present in Spain."
+  },
+  {
+   "term": "apuesta deportiva",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Singular of the commonest market label; 'apuestas deportivas' alone does not match it."
+  },
+  {
+   "term": "apuestas de futbol",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Football betting, the usual wording in Spain, Mexico and Colombia."
+  },
+  {
+   "term": "apostar dinero",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Keeps the 'dejé de apostar dinero' type of post that rejecting apostar would otherwise lose; figurative 'apostar por' does not contain 'dinero'."
+  },
+  {
+   "term": "ludopata",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "A person addicted to gambling; ludopatia alone does not reach it."
+  },
+  {
+   "term": "croupier",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "The French spelling many people use in Spanish posts for the casino dealer; crupier alone does not reach it."
+  },
+  {
+   "term": "bingo online",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Online bingo for money; replaces bare 'bingo', which is also a common exclamation."
+  },
+  {
+   "term": "sala de bingo",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Bingo hall, common in Spain."
+  },
+  {
+   "term": "loteria de navidad",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Spain's Christmas draw, one of the most posted-about lottery events each December."
+  },
+  {
+   "term": "decimo de loteria",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "A tenth of a lottery ticket, the unit Spaniards buy and post about."
+  },
+  {
+   "term": "bonoloto",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Spain's lottery draw, written as one word and not found elsewhere."
+  },
+  {
+   "term": "gordo de navidad",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "The Christmas lottery top prize; the bare word 'gordo' stays out."
+  },
+  {
+   "term": "slots online",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "How casino slot games are advertised, in place of bare 'slot' and 'slots'."
+  },
+  {
+   "term": "freespins",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "One-word spelling of free spins used in promotions."
+  },
+  {
+   "term": "betano",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Bookmaker advertised heavily in Spain and across Latin America."
+  },
+  {
+   "term": "1win",
+   "kind": "brand",
+   "exact": true,
+   "risk": "low",
+   "note": "Promoted by spammy accounts in Latin America; whole word only because it is short."
+  },
+  {
+   "term": "melbet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Widely promoted betting app in Spanish-language groups."
+  },
+  {
+   "term": "parimatch",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Bookmaker with Spanish-language promotion."
+  },
+  {
+   "term": "bodog",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Casino and betting site known across Latin America."
+  },
+  {
+   "term": "doradobet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Betting app popular in Peru and Colombia."
+  },
+  {
+   "term": "yajuego",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Colombian betting and casino site."
+  },
+  {
+   "term": "bplay",
+   "kind": "brand",
+   "exact": true,
+   "risk": "low",
+   "note": "Argentine betting site; whole word only because it is short."
+  },
+  {
+   "term": "winamax",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Poker and betting brand licensed in Spain."
+  },
+  {
+   "term": "leovegas",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Online casino advertised in Spain."
+  },
+  {
+   "term": "marathonbet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Bookmaker advertised in Spain and Latin America."
+  },
+  {
+   "term": "marcaapuestas",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Spanish bookmaker linked to a sports newspaper; the spelling is the brand's own."
+  },
+  {
+   "term": "kirolbet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Bookmaker with betting shops in northern Spain."
+  },
+  {
+   "term": "jugabet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Betting site advertised in Chile."
+  },
+  {
+   "term": "inkabet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Peruvian betting site."
+  }
+ ]
+}

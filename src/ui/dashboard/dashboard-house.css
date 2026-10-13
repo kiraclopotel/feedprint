@@ -4,14 +4,15 @@
  * because the dashboard is its own document and the shared src/ui/shared/tokens.css has not taken the house file yet.
  * When the shared file is the house file, delete this file; the frame is dashboard-frame.css.
  * Two changes from the source: every bare :root is written ":root, :root[data-theme]" so it outranks the old shared
- * file's themed blocks (same specificity, later in the cascade), and the face is loaded from local() only until
- * fonts/BricolageGrotesque-Variable.ttf ships in the package.
+ * file's themed blocks (same specificity, later in the cascade). The face ships in the package: fonts/BricolageGrotesque-Variable.woff2
+ * beside this file (the same file the site serves), so a dashboard draws in it on any computer, not only on one that has it installed.
  */
 
 /* ───────────────────────── INPUTS, light (the base) ───────────────────────── */
-/* THE FACE. One variable file, OFL 1.1 (the file BricolageGrotesque[opsz,wdth,wght].ttf from the Google Fonts repository, placed as
-   fonts/BricolageGrotesque-Variable.ttf beside this file so no path carries brackets). A Google Fonts link never ships. */
-@font-face { font-family: "Bricolage Grotesque"; src: local("Bricolage Grotesque"), local("BricolageGrotesque"); font-weight: 200 800; font-stretch: 75% 100%; font-display: swap; }
+/* THE FACE. One variable file, OFL 1.1 (fonts/OFL.txt; the file BricolageGrotesque[opsz,wdth,wght] from the Google Fonts repository, as a
+   woff2 with no brackets in its path). The bundler copies it into the package and writes its address here; a Google Fonts link never ships.
+   An extension page reads its own package files, so the file needs no web-accessible entry. local() stays after it as the fallback. */
+@font-face { font-family: "Bricolage Grotesque"; src: url('./fonts/BricolageGrotesque-Variable.woff2') format('woff2'), local("Bricolage Grotesque"), local("BricolageGrotesque"); font-weight: 200 800; font-stretch: 75% 100%; font-display: swap; }
 
 :root, :root[data-theme] {
   --fw-ground: #eeeff1;   /* the page and the popup */
@@ -110,6 +111,10 @@
   --fw-lh-body:  1.5;
   --fw-measure: 64ch;
 }
+/* A control draws in the page's face, not the browser's own control font (Arial on Windows). The size stays the 13 px a
+   control had, and the line height stays `normal`: `font: inherit` alone would hand each control the surrounding text's
+   size and line height, and every button and field would grow. A rule that sets its own size still wins. */
+button, input, select, textarea { font: inherit; font-size: 13px; line-height: normal; }
 
 /* ───────────────────────── SPACE ───────────────────────── */
 :root, :root[data-theme] {
@@ -138,7 +143,7 @@
 :root, :root[data-theme] {
   --fw-ease: cubic-bezier(0.2, 0.7, 0.2, 1);        /* a thing settles */
   --fw-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
-  --fw-d-hover: 0.15s;      /* a hover, a focus ring */
+  --fw-d-hover: 0.12s;      /* a hover, a focus ring: the clock the dashboard's hovers already run on */
   --fw-d-switch: 0.3s;      /* a switch flips, a fold opens */
   --fw-d-thin: 0.7s;        /* a noun thins out of the line */
   --fw-d-stagger: 0.4s;     /* between the nouns */
@@ -147,6 +152,15 @@
 @media (prefers-reduced-motion: reduce) {
   :root { --fw-d-hover: 0s; --fw-d-switch: 0s; --fw-d-thin: 0s; --fw-d-stagger: 0s; --fw-d-mark: 0s; }
 }
+
+/* The tone of the comment sections (V5, 12 Oct 2026): a diverging scale, blue to burnt orange through grey,
+ * the same in every look. It never uses red, amber or green, which mean blocked, flagged and fine. */
+:root, :root[data-theme] { --fw-tone-pos: #2a78d6; --fw-tone-neu: #8a8b91; --fw-tone-neg: #c4511d; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --fw-tone-pos: #4f95ea; --fw-tone-neu: #6c6d73; --fw-tone-neg: #dd6a2e; }
+}
+:root[data-theme="dark"]  { --fw-tone-pos: #4f95ea; --fw-tone-neu: #6c6d73; --fw-tone-neg: #dd6a2e; }
+:root[data-theme="light"] { --fw-tone-pos: #2a78d6; --fw-tone-neu: #8a8b91; --fw-tone-neg: #c4511d; }
 
 /* ───────────────────────── THE MARK (as CSS, for inline use) ───────────────────────── */
 /* The switch square: a filled square with a hairline ring of ground inset at 18 percent, so it never
@@ -158,7 +172,7 @@
 :root, :root[data-theme] {
   --fw-marker-low:  #449a91;  --fw-marker-mid: #b38346;  --fw-marker-high: #e53935;
   --fw-tech-fear-appeal: #7c83ff; --fw-tech-repeat-exposure: #8a8f98; --fw-tech-anger-trigger: #ef5350;
-  --fw-tech-shame-attack: #ab47bc; --fw-tech-false-urgency: #ffab40; --fw-tech-bandwagon: #42a5f5;
+  --fw-tech-shame-attack: #ab47bc; --fw-tech-false-urgency: #ffee58; --fw-tech-bandwagon: #42a5f5;
   --fw-tech-scapegoating: #ec407a; --fw-tech-fomo: #ff7043; --fw-tech-toxic-positivity: #66bb6a;
   --fw-tech-misleading-format: #90a4ae; --fw-tech-combined: #5c6bc0; --fw-tech-ai-content-block: #7b1fa2;
   --fw-tech-profanity: #bdbdbd; --fw-tech-body-comparison: #f06292; --fw-tech-parasocial: #26c6da;
@@ -168,6 +182,19 @@
   --fw-platform-twitter: #1da1f2; --fw-platform-facebook: #4267b2; --fw-platform-instagram: #e1306c;
   --fw-platform-tiktok: #69c9d0; --fw-platform-youtube: #ff0000;
 }
+/* The five techniques the dashboard names (anger, fear, rushing you, shame, shift blame) kept their dark values on the
+   light page, where fear stood at 2.49:1 and rushing you at 1.46:1 on the card. Light takes the same hue darkened in
+   OKLCH to 3:1 on the light card (crew/visuals/tech-hues.mjs); shame already holds 3.74:1. They fill bars and swatches
+   only, and every word beside them wears the ink (12 Oct 2026). Rushing you leans to olive in light (#678811, 3.20:1),
+   0.144 OKLab or more from every other technique and the flag; the darkened yellow sat 0.118 from the trauma brown
+   (13 Oct 2026, crew/visuals/tech-light2.mjs). */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) { --fw-tech-anger-trigger: #e64a48; --fw-tech-fear-appeal: #6f74ef; --fw-tech-false-urgency: #678811; --fw-tech-scapegoating: #e93d78; }
+}
+:root[data-theme="light"] { --fw-tech-anger-trigger: #e64a48; --fw-tech-fear-appeal: #6f74ef; --fw-tech-false-urgency: #678811; --fw-tech-scapegoating: #e93d78; }
+/* In light the low marker darkens to about 4.4:1 on the page, so a low-severity dot in the log is seen (row 46, 12 Oct
+   2026). The dashboard's own sheet; the content script does not load it. */
+:root[data-theme="light"] { --fw-marker-low: #2f7f77; }
 
 /* ───────────────────────── COMPATIBILITY (every existing --fw-* name, mapped; remove as code migrates) ───── */
 :root, :root[data-theme] {
@@ -208,6 +235,8 @@
   --fw-quote-rail: var(--fw-edge); --fw-ai-bg: var(--fw-faint); --fw-ai-border: var(--fw-edge);
   --fw-ai-text: var(--fw-muted); --fw-trust-bar-bg: var(--fw-card); --fw-kind-tag-bg: var(--fw-card);
   --fw-kind-tag-text: var(--fw-muted); --fw-gap-pill-bg: var(--fw-card); --fw-session-rule: var(--fw-line);
-  --fwc-neutral: var(--fw-line); --fwc-grid: color-mix(in oklab, var(--fw-ink) 6%, transparent);
+  /* A neutral bar carries a count, so it is drawn at 3:1 and above against the card, not in the hairline colour
+     (1.3:1 dark, 1.65:1 light; row 6, 12 Oct 2026). */
+  --fwc-neutral: color-mix(in oklab, var(--fw-ink) 46%, var(--fw-ground)); --fwc-grid: color-mix(in oklab, var(--fw-ink) 6%, transparent);
   --fwc-tip-bg: var(--fw-ink); --fwc-tip-text: var(--fw-ground);
 }

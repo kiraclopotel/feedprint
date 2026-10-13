@@ -80,7 +80,7 @@ async function openSettings(): Promise<void> {
     root!.render(createElement(I18nProvider, {
       lang: 'en',
       children: createElement(SettingsPanel, {
-        settings: childSettings(), license: { tier: 'free', secret: '' }, onBack: () => {}, onChange, platform: null,
+        settings: childSettings(), license: { tier: 'free', secret: '' }, onBack: () => {}, onChange, platform: null, openOn: 'device',
       }),
     }));
   });

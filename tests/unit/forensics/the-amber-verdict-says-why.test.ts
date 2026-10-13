@@ -61,8 +61,9 @@ function summarize(perRecord: Rec[]): string[] {
   const FIXED: Record<string, string> = {};
   for (const k of FIXED_VERDICT_KEYS) FIXED[k] = I18N.en[k as keyof typeof I18N.en] as string;
 
-  const run = new Function('perRecord', 'el', 'summary', 'FIXED', 'state', `${body}\n}`);
-  run(perRecord, el, summary, FIXED, 'partial');
+  // The page's own count formatter is in scope there; the slice is given a plain one (every count here is under a thousand).
+  const run = new Function('perRecord', 'el', 'summary', 'FIXED', 'state', 'fmtCount', `${body}\n}`);
+  run(perRecord, el, summary, FIXED, 'partial', String);
   return out;
 }
 
@@ -81,7 +82,7 @@ function summarizeVerified(perRecord: Rec[]): string[] {
   const summary = { appendChild: (t: string): void => { out.push(t); } };
   const FIXED: Record<string, string> = {};
   for (const k of FIXED_VERDICT_KEYS) FIXED[k] = I18N.en[k as keyof typeof I18N.en] as string;
-  new Function('perRecord', 'el', 'summary', 'FIXED', body)(perRecord, el, summary, FIXED);
+  new Function('perRecord', 'el', 'summary', 'FIXED', 'fmtCount', body)(perRecord, el, summary, FIXED, String);
   return out;
 }
 

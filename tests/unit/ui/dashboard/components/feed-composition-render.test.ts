@@ -97,7 +97,7 @@ describe('PatternsTab feed composition', () => {
 
   it('localizes the composition copy in Romanian', () => {
     const html = renderPatterns([envRecord('a', ['news'])], 'ro');
-    expect(html).toContain('Din ce a fost compus feedul');
+    expect(html).toContain('Din ce au fost alcătuite postările văzute');
     expect(html).toContain('Despre ce a fost');
   });
 });

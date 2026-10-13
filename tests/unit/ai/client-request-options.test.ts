@@ -7,6 +7,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { installChromeStorageStub } from '../../helpers/chrome-storage';
+import { readingConsentFor } from '../../helpers/reading-consent';
 import { utcDayKey, utcMonthKey, CURRENT_SETTINGS_SCHEMA_VERSION } from '../../../src/storage/settings';
 
 // Read after vi.resetModules(), so the counts come from the module instance the client uses.
@@ -18,6 +19,7 @@ function baselineSettings(): Record<string, unknown> {
     lastResetDate: utcDayKey(),
     lastResetMonth: utcMonthKey(),
     fw_license_key: 'fw-starter-abc12345',
+    ...readingConsentFor('fw-starter-abc12345'),
     dailyCap: 2500,
     totalChecksToday: 0,
     totalTokensThisMonth: 100,

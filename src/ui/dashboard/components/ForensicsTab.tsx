@@ -3,13 +3,15 @@
 // feed-log.ts); this tab keeps the chain banner, the anchor data, the usage panel and the exclusions.
 
 import { dashboardWords } from '../dashboard-words';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { ForensicRecord } from '../../../types/forensic';
 import type { MonthSummary } from '../../../forensics/archive-summary';
 import type { IntegrityResult, CrossMonthIntegrityResult } from '../../../forensics/chain-integrity';
 import { useDashboardT, useUiLanguage } from '../../../i18n/react';
 import { formatDateLocal, formatUtcStamp } from '../../shared/format-time';
 import { ChainBanner } from './ChainBanner';
+import { PLATFORM_LABELS } from './color-maps';
+import { scrollBehavior } from '../../shared/motion';
 import { UsageTimePanel } from './UsageTimePanel';
 import { ArchivesPendingNote } from './ArchivesPendingNote';
 import { readExclusions, removeExclusion, type AuthorExclusion } from '../../../forensics/author-exclusions';
@@ -17,6 +19,7 @@ import { readExclusions, removeExclusion, type AuthorExclusion } from '../../../
 export function ForensicsTab({
   records, allRecords, wholeCount, unloadedSummaries, archivesPending, integrity, crossMonth, anchorCreatedAt, fingerprint, unsignedCount,
   archivedMonthCount, recordReadFailed, unreadableCount, onVerify, onExport, onOpenFeedLog, readingOffered = true,
+  onOpenAccount, focusExclusions = 0,
 }: {
   /** The active chain: what the ledger lists and the per-chain exports carry. */
   records: ForensicRecord[];
@@ -42,6 +45,10 @@ export function ForensicsTab({
   onExport?: () => void;
   /** Opens the Feed log, where the items of the feed now are. */
   onOpenFeedLog?: () => void;
+  /** Opens the Feed log on one account of the not-recorded list. */
+  onOpenAccount?: (e: AuthorExclusion) => void;
+  /** Changes when the Feed log asks for the not-recorded list: the tab scrolls to it. */
+  focusExclusions?: number;
   /** Passed to the usage panel, whose wording follows whether the AI reading is on offer. */
   readingOffered?: boolean;
 }) {
@@ -55,6 +62,8 @@ export function ForensicsTab({
   // Register item 20 part 2: the accounts the recorder skips.
   const [exclusions, setExclusions] = useState<AuthorExclusion[]>([]);
   useEffect(() => { void readExclusions().then(setExclusions).catch(() => {}); }, []);
+  const exclusionsRef = useRef<HTMLDivElement>(null);
+  useEffect(() => { if (focusExclusions) exclusionsRef.current?.scrollIntoView({ block: 'start', behavior: scrollBehavior() }); }, [focusExclusions]);
 
   const dataValues: { node: ReactNode; mono?: boolean }[] = [
     { node: fingerprint ?? t.noneYet, mono: true },
@@ -89,7 +98,7 @@ export function ForensicsTab({
       {/* Judge-lens limits box (READER_LENSES: limits stated before
           conclusions; what the tool did NOT see). Mirrors the Statistics
           tab's box; chart-kit callout. Turn 13, Record-tab lens look. */}
-      <div className="stats-card full" style={{ marginTop: 22 }}>
+      <div className="stats-card full" style={{ marginTop: 16 }}>
         <h3>{t.recordLimitsTitle}</h3>
         <div className="fwc-callout" style={{ marginTop: 6 }}>
           <div>{t.recordLimit1}</div>
@@ -106,7 +115,7 @@ export function ForensicsTab({
           `linkToNextOk` until 2026-09-19 and this comment existed to correct
           for it; the name says what it holds now. */}
       {crossMonth && crossMonth.perMonth.length > 1 && (
-        <div className="stats-card full" style={{ marginTop: 22 }}>
+        <div className="stats-card full" style={{ marginTop: 16 }}>
           <h3>{t.archiveMonthsTitle}</h3>
           <div className="stats-sub">{t.archiveMonthsSub}</div>
           <div className="anchor-grid">
@@ -136,7 +145,7 @@ export function ForensicsTab({
         </div>
       )}
 
-      <div className="stats-card full" style={{ marginTop: 22 }}>
+      <div className="stats-card full" style={{ marginTop: 16 }}>
         <h3>{t.yourRecord}</h3>
         <div className="stats-sub">
           {t.yourRecordSub}
@@ -182,9 +191,9 @@ export function ForensicsTab({
           integrity hash, click-to-expand, the three sort modes, and the
           anchor-data panel above. Gap + Kind columns and the dividers are
           additive (derived, no schema change). */}
-      <div className="entries-table-wrap fx-exclusions" style={{ marginTop: 18 }}>
+      <div ref={exclusionsRef} id="accounts-not-recorded" className="entries-table-wrap fx-exclusions" style={{ marginTop: 16, scrollMarginTop: 16 }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, padding: '0 0 6px', flexWrap: 'wrap' }}>
-          <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600 }}>{t.exclusionsTitle}</h3>
+          <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, letterSpacing: '-0.015em', lineHeight: 1.2 }}>{t.exclusionsTitle}</h3>
           <span style={{ fontSize: 12, color: 'var(--fw-muted)' }}>{t.exclusionsSub}</span>
         </div>
         {exclusions.length === 0
@@ -192,13 +201,14 @@ export function ForensicsTab({
           : exclusions.map(e => (
             <div key={e.key} style={{ display: 'flex', gap: 10, alignItems: 'baseline', fontSize: 12, padding: '3px 0' }}>
               <span style={{ fontFamily: 'var(--fw-font-mono)' }}>{e.author}</span>
-              <span style={{ color: 'var(--fw-muted)' }}>{e.platform} · {formatDateLocal(e.addedAt, lang)}{e.reason ? ` · ${e.reason}` : ''}</span>
+              <span style={{ color: 'var(--fw-muted)' }}>{PLATFORM_LABELS[e.platform] ?? e.platform} · {formatDateLocal(e.addedAt, lang)}{e.reason ? ` · ${e.reason}` : ''}</span>
               <button type="button" className="fx-withhold" onClick={() => { void removeExclusion(e.key).then(setExclusions); }}>{t.exclusionRemove}</button>
+              {onOpenAccount && <button type="button" className="fx-withhold" onClick={() => onOpenAccount(e)}>{t.tabFeedLog}</button>}
             </div>
           ))}
       </div>
       {/* The items of the feed, with what Feedprint did to each, moved to the Feed log tab (10 Oct 2026). */}
-      <div className="entries-table-wrap fl-pointer" style={{ marginTop: 18 }}>
+      <div className="entries-table-wrap fl-pointer" style={{ marginTop: 16 }}>
         <p style={{ fontSize: 13, margin: 0, lineHeight: 1.5 }}>{t.feedLogPointer}</p>
         {onOpenFeedLog && (
           <button type="button" className="chip" style={{ marginTop: 8 }} onClick={onOpenFeedLog}>{t.tabFeedLog}</button>

@@ -16,13 +16,15 @@
 // bundle gate forbids (scripts/check-off-bundle.mjs).
 
 import type { Platform } from '../../types/post';
-import { makesNoOutsideCall } from '../../types/mode';
+import { levelMayCallOut } from '../../types/reading-gate';
+import { readingActiveNow } from '../../ai/gate-with-agreement';
 import type { TextCapture } from '../../types/forensic';
 import type { AnalysisResult } from '../../types/analysis';
 import type { JudgeV1Verdict } from '../../ai/prompts';
 import { callProvenanceFor } from '../../ai/call-provenance';
 import { markAiText } from './ai-mark';
 import { JUDGE_V1_FAMILY_TECHNIQUE, readWithJudgeV1 } from '../../core/neutralizer';
+import { labelledPair } from '../../core/name-labels';
 import { ADULT_READER_FIXED_CONFIDENCE, getEffectiveThreshold } from '../../core/calibration';
 import { getSettings, type FWSettings } from '../../storage/settings';
 import { getLicense } from '../../storage/license';
@@ -361,15 +363,19 @@ async function read(b: Boundary | null, platform: Platform, t: MarkerStrings): P
   const item = b ? itemFor(b, platform) : null;
   if (!b || b.kind !== 'post' || !item) { toast(t.readRefused); return; }
   const [settings, license] = await Promise.all([getSettings(), getLicense()]);
-  if (settings.aiAnalysisEnabled === false || makesNoOutsideCall(settings)) { toast(t.readAiOff); return; }
+  if (settings.aiAnalysisEnabled === false || !levelMayCallOut(settings)) { toast(t.readAiOff); return; }
   if (license.tier === 'free') { toast(t.readNeedsKey); return; }
+  // Strict reads only for an adult who agreed; without it the button says the reading is off, as it always did.
+  if (!(await readingActiveNow(settings, license))) { toast(t.readAiOff); return; }
   const card = mountCard(b.container, platform, t);
   card.show([t.readWaiting], '#4FB3A9');
   const started = performance.now();
   // A signal of the reading's own, so the record names what answered this call and no other.
   const readingCall = new AbortController();
+  // A letter in place of each name, as in every other reading; the answer is fixed words, so nothing is restored.
+  const sent = labelledPair({ author: item.author, text: item.text, parentText: item.parentText });
   const [verdict, week] = await Promise.all([
-    readWithJudgeV1(item.text, { platform, kind: item.kind, parentText: item.parentText, signal: readingCall.signal }),
+    readWithJudgeV1(sent.text, { platform, kind: item.kind, parentText: sent.parentText, signal: readingCall.signal }),
     authorWeek(item.author, platform),
   ]);
   if (!verdict) {

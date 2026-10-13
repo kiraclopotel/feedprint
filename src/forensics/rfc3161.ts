@@ -33,7 +33,9 @@
 //      timeStamping, which RFC 3161 section 2.3 requires of a TSA.
 //   6. The genTime falls inside that certificate's validity window.
 //   7. The certificate was issued by an issuer whose own certificate is
-//      embedded in the token, and that issuer's signature over it verifies.
+//      embedded in the token, and that issuer's signature over it verifies;
+//      every issuer up the chain is marked as a certificate authority, allowed
+//      to sign certificates, and valid at the genTime.
 //   8. Whether that issuer is one of the roots pinned in KNOWN_TSA_ROOTS, by
 //      SHA-256 of the root certificate's DER bytes.
 //
@@ -360,6 +362,8 @@ const OID_ATTR_MESSAGE_DIGEST = '1.2.840.113549.1.9.4';
 const OID_ATTR_CONTENT_TYPE = '1.2.840.113549.1.9.3';
 const OID_EKU = '2.5.29.37';
 const OID_SUBJECT_KEY_ID = '2.5.29.14';
+const OID_BASIC_CONSTRAINTS = '2.5.29.19';
+const OID_KEY_USAGE = '2.5.29.15';
 const OID_KP_TIMESTAMPING = '1.3.6.1.5.5.7.3.8';
 
 const OID_RSA_ENCRYPTION = '1.2.840.113549.1.1.1';
@@ -431,6 +435,10 @@ interface ParsedCertificate {
   ekuCritical: boolean;
   /** Lowercase hex of the SubjectKeyIdentifier extension, when present. */
   subjectKeyIdentifierHex: string | null;
+  /** BasicConstraints cA flag; false when the extension is absent (RFC 5280 4.2.1.9). */
+  isCa: boolean;
+  /** KeyUsage keyCertSign bit, or null when the certificate carries no KeyUsage extension. */
+  keyCertSign: boolean | null;
 }
 
 function rdnToString(b: Uint8Array, nameTlv: Tlv): string {
@@ -479,6 +487,8 @@ export function parseCertificate(b: Uint8Array, certTlv: Tlv): ParsedCertificate
   const extendedKeyUsage: string[] = [];
   let ekuCritical = false;
   let subjectKeyIdentifierHex: string | null = null;
+  let isCa = false;
+  let keyCertSign: boolean | null = null;
   for (let k = i; k < tbsKids.length; k++) {
     if (tbsKids[k].tag !== 0xa3) continue;
     const extSeq = children(b, tbsKids[k])[0];
@@ -493,6 +503,24 @@ export function parseCertificate(b: Uint8Array, certTlv: Tlv): ParsedCertificate
           const innerSki = readTlv(b, octetSki.contentStart);
           subjectKeyIdentifierHex = toHex(content(b, innerSki));
         } catch { /* a malformed extension is simply not a usable identifier */ }
+        continue;
+      }
+      if (oid === OID_BASIC_CONSTRAINTS) {
+        // SEQUENCE { cA BOOLEAN DEFAULT FALSE, pathLenConstraint INTEGER OPTIONAL }
+        try {
+          const bc = readTlv(b, kids[kids.length - 1].contentStart);
+          const first = children(b, bc)[0];
+          isCa = first?.tag === 0x01 && content(b, first)[0] !== 0x00;
+        } catch { isCa = false; }
+        continue;
+      }
+      if (oid === OID_KEY_USAGE) {
+        // BIT STRING; keyCertSign is bit 5, the 0x04 bit of the first content octet after the
+        // unused-bits count.
+        try {
+          const ku = content(b, readTlv(b, kids[kids.length - 1].contentStart));
+          keyCertSign = ku.length > 1 && (ku[1] & 0x04) !== 0;
+        } catch { keyCertSign = false; }
         continue;
       }
       if (oid !== OID_EKU) continue;
@@ -523,12 +551,21 @@ export function parseCertificate(b: Uint8Array, certTlv: Tlv): ParsedCertificate
     extendedKeyUsage,
     ekuCritical,
     subjectKeyIdentifierHex,
+    isCa,
+    keyCertSign,
   };
 }
 
 // ---------------------------------------------------------------------------
 // Signature verification
 // ---------------------------------------------------------------------------
+
+/** True when `time` falls inside the certificate's validity window. */
+function validAt(cert: ParsedCertificate, time: string | null): boolean {
+  if (!time || !cert.notBefore || !cert.notAfter) return false;
+  const t = Date.parse(time);
+  return Number.isFinite(t) && t >= Date.parse(cert.notBefore) && t <= Date.parse(cert.notAfter);
+}
 
 function sameBytes(a: Uint8Array, c: Uint8Array): boolean {
   if (a.length !== c.length) return false;
@@ -929,10 +966,25 @@ export async function verifyTimeStampToken(
       const v = await verifyWithCert(
         issuer, cursor.signatureAlgOid, cursor.signatureValue, cursor.tbsDer,
       );
-      links.push({ child: cursor, issuer, ok: v.ok, detail: v.detail });
+      // A signature alone does not make a certificate an authority: the issuer must be marked
+      // as a certificate authority, allowed to sign certificates when it lists its uses, and
+      // valid at the time the token states (RFC 5280 4.2.1.3, 4.2.1.9).
+      let ok = v.ok;
+      let detail = v.detail;
+      if (ok && !issuer.isCa) {
+        ok = false;
+        detail = `${issuer.subjectString} is not marked as a certificate authority`;
+      } else if (ok && issuer.keyCertSign === false) {
+        ok = false;
+        detail = `${issuer.subjectString} is not allowed to sign certificates`;
+      } else if (ok && !validAt(issuer, result.genTime)) {
+        ok = false;
+        detail = `${issuer.subjectString} was not valid at ${result.genTime ?? 'the stamp time'}`;
+      }
+      links.push({ child: cursor, issuer, ok, detail });
       chain.push(issuer);
       cursor = issuer;
-      if (!v.ok) break;
+      if (!ok) break;
     }
 
     const terminal = chain[chain.length - 1];

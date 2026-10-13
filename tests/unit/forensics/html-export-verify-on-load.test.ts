@@ -143,6 +143,19 @@ describe('the feed before and after the on-load verification', () => {
   });
 });
 
+describe('the verification list on paper (source lock)', () => {
+  const src = exportSource();
+  const script = src.slice(src.indexOf('const VERIFIER_SCRIPT_TEMPLATE = `'), src.indexOf('export const FEED_SCRIPT'));
+  // The rows of passed records are left out of print, so a line that said how many rows are not drawn yet would say nothing about
+  // what a reader on paper is missing. It names the records that did not pass and are not drawn, and is empty when there are none.
+  it('names only the undrawn rows that did not pass, and is empty when there are none', () => {
+    expect(script).toContain("var resultsNote=el('p',{'class':'fw-print-note'},['']);");
+    expect(script).toContain("if(views[jb].cls!=='pass')undrawnBad++;");
+    expect(script).toContain('resultsNote.textContent=undrawnBad?');
+    expect(script).toContain("if(left<=0){resultsMore.remove();resultsNote.remove();return;}");
+  });
+});
+
 describe('the verifier runs on load and publishes (source lock)', () => {
   const src = exportSource();
   const script = src.slice(src.indexOf('const VERIFIER_SCRIPT_TEMPLATE = `'), src.indexOf('export const FEED_SCRIPT'));

@@ -112,6 +112,15 @@ import { escapeHtml } from './html-escape';
 
 
 /**
+ * A count written for a person, with the thousands separator of the file's language, as the first screen writes it. Only for
+ * text that is not under the provenance digest: a row marked data-fw-prov is signed as written, and the checkers read the
+ * count that leads it, so those rows keep their plain digits.
+ */
+function countText(n: number, locale: string | undefined): string {
+  try { return new Intl.NumberFormat(locale || 'en').format(n); } catch { return String(n); }
+}
+
+/**
  * Checks every embedded time-stamp token in the recipient's own browser.
  *
  * The work happens in RFC3161_VERIFIER_SOURCE, which is compiled from
@@ -134,7 +143,7 @@ function renderFileSection(
   if (made) rows.push(`<dt>${escapeHtml(i18n.fileMadeAt)}:</dt><dd><code>${escapeHtml(made)}</code></dd>`);
   const build = metadata.methodology?.extensionVersion ?? metadata.fwVersion;
   if (build) rows.push(`<dt>${escapeHtml(i18n.fileBuild)}:</dt><dd>${escapeHtml(build)}</dd>`);
-  rows.push(`<dt>${escapeHtml(i18n.fileRecords)}:</dt><dd>${recordCount}</dd>`);
+  rows.push(`<dt>${escapeHtml(i18n.fileRecords)}:</dt><dd>${escapeHtml(countText(recordCount, metadata.locale))}</dd>`);
   if (metadata.publicKeyFingerprint) {
     rows.push(`<dt>${escapeHtml(i18n.fileKey)}:</dt><dd><code>${escapeHtml(metadata.publicKeyFingerprint)}</code></dd>`);
   }
@@ -262,7 +271,7 @@ function renderKeyGenesisSection(
       <div class="section-label">${escapeHtml(i18n.anchorCheckHeader)}</div>
       <p class="fw-anchor-check-line">${escapeHtml(i18n.anchorCheckNoJs)}</p>
     </div>
-    <div class="section-label" style="font-size:.85rem;color:#555;margin-top:.4rem">${escapeHtml(i18n.anchorTstBytes)}:</div>
+    <div class="section-label" style="font-size:var(--t3);color:var(--mut);margin-top:.4rem">${escapeHtml(i18n.anchorTstBytes)}:</div>
     <div class="fw-anchor-tst">${escapeHtml(a.tstB64 || a.responseB64)}</div>
     </div>`).join('');
   return `<div class="fw-anchors">
@@ -323,7 +332,7 @@ function renderAnchorsSection(
       <div class="section-label">${escapeHtml(i18n.anchorCheckHeader)}</div>
       <p class="fw-anchor-check-line">${escapeHtml(i18n.anchorCheckNoJs)}</p>
     </div>
-    <div class="section-label" style="font-size:.85rem;color:#555;margin-top:.4rem">${escapeHtml(i18n.anchorTstBytes)}:</div>
+    <div class="section-label" style="font-size:var(--t3);color:var(--mut);margin-top:.4rem">${escapeHtml(i18n.anchorTstBytes)}:</div>
     <div class="fw-anchor-tst">${escapeHtml(a.tstB64)}</div>
     </div>`;
   }).join('');
@@ -361,8 +370,8 @@ function postFloorTable(m: MethodologyBlock): string {
     .join('\n');
   if (!rows) return '';
   return `<table class="fw-mth-floors">
-<caption>Post-path severity floor per technique, for Strict and Moderate only. A technique below its floor is dropped, not flagged. Relaxed posts do not pass through this table: see the Relaxed reader lines above.</caption>
-<thead><tr><th>Technique</th><th>Strict</th><th>Moderate</th></tr></thead>
+<caption>Post-path severity floor per technique, for Silent and Calm only. A technique below its floor is dropped, not flagged. Open posts do not pass through this table: see the Open reader lines above.</caption>
+<thead><tr><th>Technique</th><th>Silent</th><th>Calm</th></tr></thead>
 <tbody>
 ${rows}
 </tbody>
@@ -384,12 +393,44 @@ function adultFamilyTable(m: MethodologyBlock): string {
     .join('\n');
   if (!rows) return '';
   return `<table class="fw-mth-floors">
-<caption>Relaxed reader: the family it answered, and the technique name that family writes on the record.</caption>
+<caption>Open reader: the family it answered, and the technique name that family writes on the record.</caption>
 <thead><tr><th>Family answered</th><th>Technique on the record</th></tr></thead>
 <tbody>
 ${rows}
 </tbody>
 </table>`;
+}
+
+const EXCLUDED_PLATFORM_NAMES: Record<string, string> = {
+  twitter: 'X', facebook: 'Facebook', youtube: 'YouTube', tiktok: 'TikTok', instagram: 'Instagram',
+};
+
+/**
+ * The accounts the person chose not to record, listed with no rows under them (12 Oct 2026, his word on his own export:
+ * "the name will still appear in the export, except that there will be no posts"). The list is the setting on the
+ * computer that made the file; the signed record carries only the count of records withheld, per heartbeat note, and the
+ * section says both things, and that the checker does not verify it. Not marked for the provenance digest: it is not
+ * evidence the file can prove, and a mark on it would claim so. The names take the page's blur toggle like every other.
+ */
+function renderExcludedAccountsSection(
+  ex: ExportMetadata['excludedAccounts'],
+  i18n: ExportI18nStrings,
+): string {
+  if (!ex || ex.accounts.length === 0) return '';
+  const head = `<h2>${escapeHtml(i18n.exclHeader)}</h2>`;
+  if (!ex.named) {
+    return `<section id="fw-excluded" class="fw-excluded">${head}<p class="fw-meta">${escapeHtml(i18n.exclCountOnly.replace('{n}', String(ex.accounts.length)))}</p></section>`;
+  }
+  const rows = ex.accounts.map((a) => {
+    const handle = a.author.trim().startsWith('@') ? a.author.trim() : '@' + a.author.trim();
+    const since = typeof a.addedAt === 'string' ? a.addedAt.slice(0, 10) : '';
+    return `<tr><td class="fw-person-name">${escapeHtml(handle)}</td><td>${escapeHtml(EXCLUDED_PLATFORM_NAMES[a.platform] ?? a.platform)}</td><td>${escapeHtml(since)}</td><td>0</td></tr>`;
+  }).join('\n');
+  return `<section id="fw-excluded" class="fw-excluded">${head}<p class="fw-meta">${escapeHtml(i18n.exclIntro)}</p>
+<table class="fw-numbers"><thead><tr><th>${escapeHtml(i18n.exclColAccount)}</th><th>${escapeHtml(i18n.exclColPlatform)}</th><th>${escapeHtml(i18n.exclColSince)}</th><th>${escapeHtml(i18n.exclColRecords)}</th></tr></thead>
+<tbody>
+${rows}
+</tbody></table></section>`;
 }
 
 function renderMethodologySection(
@@ -398,11 +439,13 @@ function renderMethodologySection(
 ): string {
   if (!m) return '';
   const promptEntries: Array<[string, string]> = [
-    ['Comment judge: Strict', m.prompts.commentJudgeChildMode],
-    ['Comment judge: Moderate (Relaxed uses this framing)', m.prompts.commentJudgeTeenMode],
+    // Silent reads once a key is added and agreed to, so the comment text it sends is printed with the others. The post
+    // judge is one text for Silent and Calm (prompts.ts buildJudgeDetectNeutralizeSystem ignores the level), so it is
+    // printed once, under both names; the child post text in the block's data is the same string.
+    ['Comment judge: Silent (with a key and the agreement)', m.prompts.commentJudgeChildMode],
+    ['Comment judge: Calm (Open uses this framing)', m.prompts.commentJudgeTeenMode],
     ['Comment-section room sensor', m.prompts.roomSensor],
-    ['Post judge: Strict', m.prompts.postJudgeChildMode],
-    ['Post judge: Moderate (not used for Relaxed posts)', m.prompts.postJudgeTeenMode],
+    ['Post judge: Silent and Calm (not used for Open posts)', m.prompts.postJudgeTeenMode],
     // The adult reader. It has its own model, its own text and its own two
     // severity cuts, and until 2026-09-18 this list printed none of them, so an
     // adult export answered "under what criteria was this identified" with the
@@ -410,7 +453,7 @@ function renderMethodologySection(
     // that reads an adult post, and the same reader answers the read-this
     // button; the label said "armed by hand" until the cuts went in and showed
     // that the automatic adult path runs it too.
-    ['Relaxed reader: every Relaxed post, and the read-this button', m.prompts.adultReader],
+    ['Open reader: every Open post, and the read-this button', m.prompts.adultReader],
     ['Rewriter', m.prompts.rewriter],
   ];
   const prompts = promptEntries
@@ -427,17 +470,18 @@ function renderMethodologySection(
 <strong>${escapeHtml(i18n.methodologyModelsLabel)}</strong>
 <dl>
 <dt>Text judge:</dt><dd>${escapeHtml(m.models.textJudge)}</dd>
-<dt>Relaxed reader:</dt><dd>${escapeHtml(m.models.adultReader)}</dd>
+<dt>Open reader:</dt><dd>${escapeHtml(m.models.adultReader)}</dd>
+<dt>Claude reader (Open, paid reading):</dt><dd>${escapeHtml(m.models.paidReader)}</dd>
 <dt>Room sensor:</dt><dd>${escapeHtml(m.models.roomSensor)}</dd>
 </dl>
 <p class="fw-meta">${escapeHtml(m.models.modelProvenanceNote)}</p>
 <strong>${escapeHtml(i18n.methodologyThresholdsLabel)}</strong>
 <dl>
 <dt>Comment flag gate (severity):</dt><dd>&ge; ${m.thresholds.severityFlagGate}</dd>
-<dt>Post flag gate, Strict and Moderate (severity):</dt><dd>per technique &times; level, ${postFloorRange(m)} (table below)</dd>
-<dt>Relaxed reader, acts at (severity):</dt><dd>&ge; ${m.thresholds.adultReaderFireSeverity}, and only when it called the item charged</dd>
-<dt>Relaxed reader, hides instead of rewriting at (severity):</dt><dd>&ge; ${m.thresholds.adultReaderHideSeverity}</dd>
-<dt>Relaxed reader, confidence written:</dt><dd>${m.thresholds.adultReaderFixedConfidence} on every record it acts on, a fixed value and not a measure of certainty</dd>
+<dt>Post flag gate, Silent and Calm (severity):</dt><dd>per technique &times; level, ${postFloorRange(m)} (table below)</dd>
+<dt>Open reader, acts at (severity):</dt><dd>&ge; ${m.thresholds.adultReaderFireSeverity}, and only when it called the item charged</dd>
+<dt>Open reader, hides instead of rewriting at (severity):</dt><dd>&ge; ${m.thresholds.adultReaderHideSeverity}</dd>
+<dt>Open reader, confidence written:</dt><dd>${m.thresholds.adultReaderFixedConfidence} on every record it acts on, a fixed value and not a measure of certainty</dd>
 <dt>Profanity-filter path (fixed severity):</dt><dd>${m.thresholds.profanityFilterSeverity}</dd>
 <dt>Deterministic harm floor (score 0-100):</dt><dd>&ge; ${m.thresholds.harmFloorTrigger}</dd>
 </dl>
@@ -447,9 +491,11 @@ ${postFloorTable(m)}
 <p class="fw-meta">${escapeHtml(m.thresholds.thresholdsNote)}</p>
 <p class="fw-meta">${escapeHtml(m.thresholds.flagAccountingNote)}</p>
 <p class="fw-meta" data-fw-mth="ads">${escapeHtml(i18n.methodologyAdsNote)}</p>
+<p class="fw-meta" data-fw-mth="exclusions">${escapeHtml(i18n.methodologyExclusionsNote)}</p>
 <strong>${escapeHtml(i18n.methodologyTopicsLabel)}</strong>
 <p>${escapeHtml(m.topicLabelVocabulary.join(', '))}</p>
 <strong>${escapeHtml(i18n.methodologyPromptsLabel)}</strong>
+<p class="fw-meta">${escapeHtml(i18n.methodologyStrictNote)}</p>
 ${prompts}
 <p class="fw-meta">${escapeHtml(m.prompts.promptsNote)}</p>
 </details>`;
@@ -1761,6 +1807,7 @@ ${profileRows(metadata.profile, i18n)}
 <p data-fw-prov="notMeasure">${escapeHtml(i18n.notMeasureBullets)}</p>
 </div>
 ${disclosureBlock(records, i18n, metadata.profile?.name ?? null)}
+${renderExcludedAccountsSection(metadata.excludedAccounts, i18n)}
 ${renderMethodologySection(metadata.methodology, i18n)}
 
 ${renderFileSection(metadata, records.length, i18n)}

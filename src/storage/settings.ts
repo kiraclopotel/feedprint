@@ -1157,9 +1157,13 @@ export async function hasRecoveryPhrase(): Promise<boolean> {
 // is read after. The service worker has no localStorage and never reads it.
 const PIN_NOTE_KEY = 'fw_pin_was_set';
 
-/** Records on this profile that a PIN exists. Nothing clears it today because no path removes a PIN; any future path that removes the PIN must remove this key too. */
+/** Records on this profile that a PIN exists. The one path that removes a PIN (removePin) removes this key too; any other must. */
 export function notePinWasSet(): void {
   try { localStorage.setItem(PIN_NOTE_KEY, '1'); } catch { /* no localStorage here */ }
+}
+
+function forgetPinNote(): void {
+  try { localStorage.removeItem(PIN_NOTE_KEY); } catch { /* no localStorage here */ }
 }
 
 function pinWasSetHere(): boolean {
@@ -1222,6 +1226,21 @@ export async function changePin(currentPin: string, newPin: string): Promise<boo
   if (!/^\d{4}$/.test(newPin)) return false;
   if (!(await verifyPin(currentPin))) return false;
   await setPin(newPin);
+  return true;
+}
+
+/**
+ * Take the PIN off (Off's "Remove PIN", decided by the Leader 12 Oct 2026: behind the current PIN only). The current PIN goes
+ * through verifyPin, so the throttle applies and a wrong PIN removes nothing. The recovery phrase goes with it, since it only
+ * ever resets a PIN, and so does the note that a PIN once existed: left behind, every later start would read "no PIN stored"
+ * as a failed read and keep asking for a PIN that is gone (see readPinEvidence).
+ */
+export async function removePin(currentPin: string): Promise<boolean> {
+  if (!(await verifyPin(currentPin))) return false;
+  await chrome.storage.local.set({ parentPin: '' });
+  await chrome.storage.local.remove(PIN_RECOVERY_KEY);
+  forgetPinNote();
+  invalidateSettingsCache();
   return true;
 }
 

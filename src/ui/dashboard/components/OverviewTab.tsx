@@ -27,6 +27,7 @@ import { formatCount } from '../../shared/format-number';
 import { wilson } from '../../../forensics/wilson';
 import { isHiddenAsHarmful } from '../record-sets';
 import { dashboardWords } from '../dashboard-words';
+import { breakableHandle } from '../shown-text';
 
 const capFirst = (s: string): string => s.charAt(0).toLocaleUpperCase() + s.slice(1);
 
@@ -125,7 +126,7 @@ export function OverviewTab({ records, onDrill, onOpenStatistics, archivesPendin
         </section>
 
         {/* ── Feed balance (Statistics arithmetic on a named 7-day window) ── */}
-        <section className="ov-card span-7">
+        <section className="ov-card span-6">
           <p className="ov-eyebrow">{t.ovBalanceEyebrow}</p>
           {balance.decided === 0 ? (
             /* Same explicit no-decisions branch Statistics has (SOL finding 4). */
@@ -135,12 +136,12 @@ export function OverviewTab({ records, onDrill, onOpenStatistics, archivesPendin
           {/* P0 item 2 (capability audit 2026-09-06): the share carries its n and its interval. */}
           {(() => {
             const sh = wilson(balance.passed, balance.decided);
-            return sh ? <div className="ov-balance-interval" style={{ fontSize: 12, color: 'var(--fw-muted)' }}>{sh.k}/{sh.n} · {t.shareInterval(sh.lowerPct, sh.upperPct)}</div> : null;
+            return sh ? <div className="ov-balance-interval" style={{ fontSize: 13, color: 'var(--fw-muted)' }}>{sh.k}/{sh.n} · {t.shareInterval(sh.lowerPct, sh.upperPct)}</div> : null;
           })()}
           <div className="ov-balance-bar" role="img" aria-label={t.ovBalanceEyebrow}>
             {([
               [t.statsBalancePassed, balance.passed, TONE.record],
-              [t.statsBalanceFlagged, balance.flagged, 'var(--fw-ink, var(--fw-amber))'],
+              [t.statsBalanceFlagged, balance.flagged, TONE.flagged],
               [t.statsBalanceBlocked, balance.blocked, 'var(--fw-noise, var(--fw-purple))'],
             ] as const).filter(([, n]) => n > 0).map(([label, n, color]) => (
               <div key={label} className="seg" title={`${label} ${nf.format(n)}`}
@@ -150,7 +151,7 @@ export function OverviewTab({ records, onDrill, onOpenStatistics, archivesPendin
           <div className="ov-balance-legend">
             {([
               [t.statsBalancePassed, balance.passed, TONE.record],
-              [t.statsBalanceFlagged, balance.flagged, 'var(--fw-ink, var(--fw-amber))'],
+              [t.statsBalanceFlagged, balance.flagged, TONE.flagged],
               [t.statsBalanceBlocked, balance.blocked, 'var(--fw-noise, var(--fw-purple))'],
             ] as const).filter(([, n]) => n > 0).map(([label, n, color]) => (
               <span key={label} className="ov-legend-item">
@@ -180,7 +181,7 @@ export function OverviewTab({ records, onDrill, onOpenStatistics, archivesPendin
         </section>
 
         {/* ── Worth a look ── */}
-        <section className="ov-card span-5">
+        <section className="ov-card span-6">
           <p className="ov-eyebrow">{t.ovAttentionEyebrow}</p>
           <div className="ov-card-sub">{t.ovAttentionSub}</div>
           {attention.length === 0 && <div className="ov-card-sub">{t.ovAttentionEmpty}</div>}
@@ -256,7 +257,8 @@ export function OverviewTab({ records, onDrill, onOpenStatistics, archivesPendin
                 <span className="ov-srv-track"><span className="ov-srv-fill" style={{ width: `${(s.count / max) * 100}%` }} /></span>
                 <span className="ov-srv-right">{nf.format(s.count)} · <span className="fr">{t.ovSurfaceFlagRate(Math.round((s.flagged / Math.max(1, s.count)) * 1000) / 10)}</span>{(() => {
                   const sh = wilson(s.flagged, s.count);
-                  return sh ? <span className="fr" style={{ opacity: 0.7 }}> · {t.shareInterval(sh.lowerPct, sh.upperPct)}</span> : null;
+                  // Its own line: run on after the flag rate it wraps wherever the column ends, which leaves a separator dot at the end of one row's line and the start of another's.
+                  return sh ? <span className="fr" style={{ display: 'block', opacity: 0.7 }}>{t.shareInterval(sh.lowerPct, sh.upperPct)}</span> : null;
                 })()}</span>
               </button>
             ));
@@ -270,15 +272,16 @@ export function OverviewTab({ records, onDrill, onOpenStatistics, archivesPendin
           <div className="ov-card-sub">{t.ovSourcesSub(model.sourceTotal)}</div>
           {sources.map((s) => (
             <button key={`${s.platform}:${s.author}`} type="button" className="ov-src-row" onClick={() => drillIds(s.recordIds)}>
-              <span className="ov-src-avatar" aria-hidden="true">{s.author.slice(0, 2).toUpperCase()}</span>
-              <span className="ov-src-name">{s.author}</span>
+              <span className="ov-src-avatar" aria-hidden="true">{Array.from(s.author.replace(/^@+/, '')).slice(0, 2).join('').toUpperCase() || '?'}</span>
+              <span className="ov-src-name">{breakableHandle(s.author)}</span>
               {/* No advertiser badge: an ad never ranks here (overview-data.ts). */}
               {s.accountType === 'group' && (
                 <span className={`ov-src-type ${s.accountType}`}>{t.ovSourceType(s.accountType)}</span>
               )}
-              <span className="ov-pf-dot" style={{ background: pfColor(s.platform) }} aria-hidden="true" />
+              <span className="ov-pf-dot" style={{ background: pfColor(s.platform) }} title={pfLabel(s.platform)} aria-hidden="true" />
               <span className="ov-src-nums">
-                {t.ovSourceSeen(s.count)}
+                {/* The platform in words, not by its square alone (row 66, 12 Oct 2026). */}
+                {pfLabel(s.platform)} · {t.ovSourceSeen(s.count)}
                 {s.flagged > 0 && <> · <span className="fl">{t.ovSourceFlagged(s.flagged)}</span></>}
               </span>
             </button>

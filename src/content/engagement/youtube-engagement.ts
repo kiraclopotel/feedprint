@@ -41,12 +41,14 @@ const COUNT_SELECTORS = [
   'like-button-view-model .ytSpecButtonShapeNextButtonTextContent',
   'dislike-button-view-model .yt-spec-button-shape-next__button-text-content',
   'dislike-button-view-model .ytSpecButtonShapeNextButtonTextContent',
-  // Watch page: view count + comment-count header
+  // Watch page: view count + the comment count in the comments header. The count only, never the header: the header also holds
+  // the sort menu and, on some layouts, the box a person types a comment in, and hiding it whole took them with the count (the
+  // Tester's recheck, 12 Oct 2026: the box went with "Hide counts" on 2 of 3 loads, and stayed hidden after "Block comment
+  // posting" went off, because the count's own `visibility: hidden` on the header reaches every child).
   'ytd-watch-info-text',
   'ytd-video-view-count-renderer',
   '#info-container > span',
   '#info-container .ytd-watch-info-text',
-  'ytd-comments-header-renderer',
   'ytd-comments-header-renderer #count',
   'ytd-comments-header-renderer h2 yt-formatted-string',
   // Per-comment likes
@@ -95,12 +97,9 @@ const ACTION_SELECTORS = [
   'like-button-view-model',
   'dislike-button-view-model',
   'share-button-view-model',
-  'ytd-menu-renderer.ytd-watch-metadata',
-  // Subscribe, and Join (the paid channel membership, read signed out
-  // 2026-10-09 beside Subscribe on a watch page; the tester's finding 6)
-  'ytd-subscribe-button-renderer',
-  '#subscribe-button',
-  '#sponsor-button',
+  // Left on purpose (the Leader's decision of 12 Oct 2026): Subscribe and Join (the paid channel membership), and Save, which
+  // sits in the row's menu beside Clip and the overflow. They are deliberate acts, not the like / share / repost reflex row
+  // the switch's words name, so the row's menu (ytd-menu-renderer.ytd-watch-metadata) is not hidden whole either.
   // Shorts action rail
   'ytd-reel-video-renderer #like-button',
   'ytd-reel-video-renderer #dislike-button',
@@ -109,29 +108,22 @@ const ACTION_SELECTORS = [
   'ytd-reel-player-overlay-renderer #actions',
 ];
 
+// The box a person types a comment in, and nothing else. "Block comment posting" ("Disables writing comments.") took the whole
+// comments pane, header and threads with it, so a person who only wanted to stop writing could not read either (the tester,
+// 11 Oct 2026; the Leader decided 12 Oct: the box goes, the comments stay readable). The threads, the pane, the Shorts panel and
+// the narrow-window entry row ('ytd-comments-entry-point-header-renderer', which opens the comments) are left alone. The header
+// ('ytd-comments-header-renderer') stays too, as the count and the sort menu; "Hide like, comment and share counts" hides the
+// count and only the count (COUNT_SELECTORS). The composer inside it is named below. These names come from the code's earlier lists, not from a fresh read of a
+// live watch page, so a Tester's look on the next build is the check.
 const COMMENT_BLOCK_SELECTORS = [
-  // /watch header + composer entry row (rendered EAGERLY before ytd-comments
-  // appears below the player). Pre-2026-05-24 these were missing → /watch
-  // showed "239 Comments" header + composer even with block-posting ON.
-  // /shorts worked because the engagement-panel selector below caught it.
-  'ytd-comments-header-renderer',
-  'ytd-comments-entry-point-header-renderer',
-  'ytd-comment-dialog-renderer',
-  // /watch threads pane (lazy-loaded after scroll).
-  'ytd-comments#comments',
-  // Scoped under the comments pane (Q31/A14): the bare id-anchored form hid
-  // whatever renderer happened to carry id="sections" on the current
-  // surface, a whole-section hide with no comment relationship.
-  'ytd-comments#comments ytd-item-section-renderer#sections',
-  'ytd-comment-thread-renderer',
-  // Legacy composer shells. Modern YT replaced with the dialog/header
-  // pattern above; these stay as dead no-ops for older Polymer-2 builds
-  // still in the wild on outdated Chrome installs.
+  // The composer, at the top of the pane or in the header, and the editor inside it.
   'ytd-comment-simplebox-renderer',
   '#simple-box',
   '#placeholder-area',
-  // /shorts side-panel — confirmed working pre-#34, kept.
-  'ytd-engagement-panel-section-list-renderer[target-id*="comments"]',
+  'ytd-commentbox',
+  // The reply box that opens under a comment, and the dialog a comment is edited in.
+  'ytd-comment-reply-dialog-renderer',
+  'ytd-comment-dialog-renderer',
 ];
 
 // ─── Control functions ───
@@ -145,7 +137,7 @@ function controlMetrics(settings: FWSettings): void {
   // gone via parent display:none — no need to also stamp them." That
   // assumption was WRONG. Many YT metrics live outside action buttons:
   //   • View count (ytd-watch-info-text / ytd-video-view-count-renderer)
-  //   • Comments header ("123 Comments" via ytd-comments-header-renderer)
+  //   • Comment count ("123 Comments", the count inside ytd-comments-header-renderer)
   //   • Subscriber count (ytd-subscribe-button-renderer #subscriber-count)
   // Skipping controlMetrics whenever hideActions was on left ALL of those
   // visible. A live report, 2026-05-24: "hide action buttons → comment

@@ -245,6 +245,12 @@ export interface ExportI18nStrings extends DecisionFlatKeys {
   exposureTechHeader: string;
   exposurePlatformHeader: string;
   exposureShareWord: string;
+  /** What each list of bars is a share of, said once under the list; `{n}` is that whole. */
+  barWholeFlagged: string;
+  barWholeLevelled: string;
+  barWholeFlaggedPeriod: string;
+  barWholeLevelledPeriod: string;
+  barWholeRecordedPeriod: string;
   verifyBtn: string;
   verifyingLabel: string;
   manifestFailed: string;
@@ -574,6 +580,8 @@ export interface ExportI18nStrings extends DecisionFlatKeys {
   methodologyThresholdsLabel: string;
   methodologyTopicsLabel: string;
   methodologyPromptsLabel: string;
+  /** Strict sends no prompt: the line that stands where its two child prompts used to be printed. */
+  methodologyStrictNote: string;
   // ── Feed behavior (five levels + reader lenses; docs/design/READER_LENSES.md).
   //    Strings use %1..%4 placeholders resolved by the in-page fmt() helper.
   //    Caption keys carry one variant per reader lens; the numbers a caption
@@ -784,4 +792,13 @@ export interface ExportI18nStrings extends DecisionFlatKeys {
   summaryPaidPlacement: string;
   summaryPaidPlacementValue: string;
   methodologyAdsNote: string;
+  /** exclHeader: the accounts not recorded (author-exclusions.ts), listed beside the record and in the methodology. */
+  exclHeader: string;
+  exclIntro: string;
+  exclCountOnly: string;
+  exclColAccount: string;
+  exclColPlatform: string;
+  exclColSince: string;
+  exclColRecords: string;
+  methodologyExclusionsNote: string;
 }

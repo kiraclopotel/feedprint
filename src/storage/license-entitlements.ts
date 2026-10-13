@@ -13,7 +13,7 @@
 
 import { getLicense, type LicenseInfo } from './license';
 import { getSettings } from './settings';
-import { makesNoOutsideCall } from '../types/mode';
+import { levelMayCallOut } from '../types/reading-gate';
 
 /** The public half of the proxy's signing key, as a JWK. Null until the owner makes the pair. */
 export const ENTITLEMENTS_PUBLIC_KEY_JWK: JsonWebKey | null = null;
@@ -192,7 +192,8 @@ type RefreshResult = 'stored' | 'cleared' | 'kept' | 'skipped';
  * Ask the proxy what the stored key turns on, and keep a verified answer. Call it when a key is
  * entered and once a day. A 401 (the key is refused) clears what was kept at once; a network
  * failure, a 503 or an answer that does not verify keeps what was kept, which lapses by itself at
- * its valid_until. Strict makes no outside call, so it asks nothing there.
+ * its valid_until. Strict makes no outside call while it reads nothing, so it asks nothing there; a key that is held
+ * at Strict once Strict reads is checked like any other (types/reading-gate.ts).
  */
 export async function refreshEntitlements(
   publicKey: JsonWebKey | null = ENTITLEMENTS_PUBLIC_KEY_JWK,
@@ -204,7 +205,7 @@ export async function refreshEntitlements(
     return 'cleared';
   }
   if (!publicKey || license.tier === 'dev') return 'skipped';
-  if (makesNoOutsideCall(await getSettings())) return 'skipped';
+  if (!levelMayCallOut(await getSettings())) return 'skipped';
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);

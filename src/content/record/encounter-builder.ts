@@ -16,6 +16,43 @@ import type {
 import { encounterFromLegacyBatchInput } from '../../analysis/comment-batch-scorer';
 import { buildPermalinkEncounterContext } from '../platforms/twitter';
 
+/** The characters of a caption the judge's prompt carries (buildBatchPromptV3 cuts the post text there). */
+const CAPTION_CHARS_THE_JUDGE_READS = 400;
+const MOST_HASHTAGS_SENT = 8;
+const HASHTAG = /(?:^|\s)(#[\p{L}\p{N}_]{2,40})/gu;
+
+/**
+ * The hashtags the judge cannot read in the caption it is given: those that sit past the cut. A tag inside the first
+ * 400 characters is already in the caption text, so repeating it would only cost tokens on a paid call; TikTok and
+ * Instagram captions often end in a long run of tags, and the prompt builder has a line for them that nothing filled.
+ * Only letters, digits and underscore pass, so nothing a poster typed can shape the prompt.
+ */
+function hashtagsPastTheCut(caption: string): string[] | undefined {
+  if (caption.length <= CAPTION_CHARS_THE_JUDGE_READS) return undefined;
+  const seen = new Set<string>();
+  const tags: string[] = [];
+  for (const m of caption.matchAll(HASHTAG)) {
+    if ((m.index ?? 0) + m[0].length - m[1].length < CAPTION_CHARS_THE_JUDGE_READS) continue;
+    const key = m[1].toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    tags.push(m[1]);
+    if (tags.length === MOST_HASHTAGS_SENT) break;
+  }
+  return tags.length > 0 ? tags : undefined;
+}
+
+/**
+ * Whether the page showed the verified badge beside the post's own author.
+ * The adapters read it from the post's header (Facebook, Instagram) and stamp it on the
+ * caption record; the encounter used to write `false` for every post author, so the judge
+ * was told a verified page was "(unverified)". A platform that extracts no badge for the
+ * post stays false (never guessed).
+ */
+function captionAuthorVerified(caption: PostContent | undefined): boolean {
+  return (caption?.platform_specific as { isVerified?: boolean } | undefined)?.isVerified === true;
+}
+
 /**
  * Build the Encounter for `flushBatch` to send to `scoreBatch`.
  *
@@ -289,6 +326,7 @@ function assembleTikTokEncounter(
     text: caption,
     author: { handle: captionPostTk?.author ?? captionCtx?.author ?? '', verified: false, is_creator: true },
     metrics: {},
+    hashtags: hashtagsPastTheCut(caption),
     is_sponsored: captionPostTk?.is_sponsored,
   };
 
@@ -392,11 +430,12 @@ function assembleInstagramEncounter(
     id: postId,
     kind: surfaceKind === 'instagram-reel' ? 'reel' : 'post',
     text: caption,
-    author: { handle: captionPostIg?.author ?? captionCtx?.author ?? '', verified: false, is_creator: true },
+    author: { handle: captionPostIg?.author ?? captionCtx?.author ?? '', verified: captionAuthorVerified(captionPostIg), is_creator: true },
     metrics: {
       likes_obscured: true, // IG product policy obscures post likes
     },
     has_carousel: ig?.hasCarousel,
+    hashtags: hashtagsPastTheCut(caption),
     is_sponsored: captionPostIg?.is_sponsored,
   };
 
@@ -500,7 +539,7 @@ function assembleYouTubeEncounter(
           ? 'post'
           : 'video',
     text: caption,
-    author: { handle: captionPostYt?.author ?? captionCtx?.author ?? '', verified: false, is_creator: true },
+    author: { handle: captionPostYt?.author ?? captionCtx?.author ?? '', verified: captionAuthorVerified(captionPostYt), is_creator: true },
     metrics: {},
     is_sponsored: captionPostYt?.is_sponsored,
   };
@@ -599,7 +638,7 @@ function assembleFacebookEncounter(
     id: postId,
     kind: surfaceKind === 'facebook-reel' ? 'reel' : captionPost?.kind === 'video' ? 'video' : 'post',
     text: caption,
-    author: { handle: captionPost?.author ?? captionCtx?.author ?? '', verified: false, is_creator: true },
+    author: { handle: captionPost?.author ?? captionCtx?.author ?? '', verified: captionAuthorVerified(captionPost), is_creator: true },
     metrics: {
       primary_likes: captionFb?.postReactions,
       comments_count: captionFb?.postCommentsCount,
@@ -630,7 +669,9 @@ function assembleFacebookEncounter(
       author: {
         handle: p.author,
         verified: !!childFb?.isVerified,
-        is_pinned_by_creator: !!childFb?.isAuthor, // FB's "Author" label = creator-pinned-equivalent
+        // FB's "Author" label says the post's own author wrote the comment; it does not say the comment was pinned, and the
+        // judge reads this flag as "[PINNED]" (a creator raised it). Facebook's pin is not extracted, so it stays false.
+        is_pinned_by_creator: false,
         is_creator_hearted: false, // FB doesn't have creator-heart natively
       },
       metrics: {

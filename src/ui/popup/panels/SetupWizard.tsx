@@ -8,7 +8,7 @@
 
 import { usePopupT } from '../../../i18n/react';
 import { applyPreset, generateRecoveryPhrase, getSettings, saveSettings, setPin, setRecoveryPhrase } from '../../../storage/settings';
-import { presetKeepingOffOnly } from '../../../storage/switch-scope';
+import { levelGridKeepingTheirs } from '../../../storage/switch-scope';
 import { clearSetupDraft, readSetupDraft, saveSetupDraft } from '../../../storage/setup-draft';
 import type { Mode } from '../../../types/mode';
 import { PhraseKeeper, PinDigits, focusRowIfEmpty, useRecoveryBody } from '../controls';
@@ -76,7 +76,7 @@ export function SetupWizard({ onComplete }: { onComplete: () => void }) {
   }, [draftRead, step, mode]);
 
   // Defined ahead of the step renders: step 1 (Adult) finishes from here.
-  const finishSetup = async () => {
+  const finishSetup = async (withoutPin = false) => {
     // No mode, nothing to write. Every button that reaches here is disabled
     // until one is chosen; this is the type-level floor under that.
     if (mode === null) return;
@@ -96,11 +96,11 @@ export function SetupWizard({ onComplete }: { onComplete: () => void }) {
       await saveSettings({
         mode,
         levelChosen: true,
-        features: presetKeepingOffOnly(patch.features, stored),
+        features: levelGridKeepingTheirs(patch.features, stored),
         presets: patch.presets,
       });
       const pinDigits = pin.join('');
-      if (mode !== 'adult' && pinDigits.length === 4) {
+      if (!withoutPin && mode !== 'adult' && pinDigits.length === 4) {
         await setPin(pinDigits);
         await setRecoveryPhrase(recoveryPhrase);
         // Setting a PIN is not typing it (M11): no grace starts, so the next open asks for it. The fifteen
@@ -216,10 +216,12 @@ export function SetupWizard({ onComplete }: { onComplete: () => void }) {
           {/* What the chosen level does, in the words Settings uses for it: the levels differ in swearing, the PIN and
               what leaves the computer, not in what the page shows otherwise. */}
           {mode !== null && (
-            <p className="tag" data-testid="setup-level-line">
-              <strong>{t.modeExplainPrefix(modeLabel(mode))}</strong>{' '}
-              {mode === 'child' ? t.modeExplainChildBody : mode === 'teen' ? t.modeExplainTeenBody : t.modeExplainAdultBody}
-            </p>
+            <div data-testid="setup-level-line">
+              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600 }}>{modeLabel(mode)}</h3>
+              <p className="tag">
+                {mode === 'child' ? t.levelSentenceChild : mode === 'teen' ? t.levelSentenceTeen : t.levelSentenceAdult}
+              </p>
+            </div>
           )}
           {mode === 'adult' && <p className="tag">{t.setupAdultNoPin}</p>}
           {/* Q3 (29 Sep 2026): a dimmed Continue said nothing, and Strict and Moderate never said a PIN comes next. */}
@@ -267,14 +269,19 @@ export function SetupWizard({ onComplete }: { onComplete: () => void }) {
             </fieldset>
           </div>
           {bothTyped && !pinFull && <StatusLine tone="alert" style={{ fontSize: 11, color: 'var(--fw-red)' }}>{t.offPinMismatch}</StatusLine>}
+          {error && <StatusLine tone="alert" style={{ fontSize: 11, color: 'var(--fw-red)' }}>{error}</StatusLine>}
           <button
             className="pop-cta"
-            disabled={!pinFull}
+            disabled={!pinFull || activating}
             onClick={() => { if (!recoveryPhrase) setRecoveryPhraseState(generateRecoveryPhrase()); setStep(3); }}
           >
             {t.continueBtn}
           </button>
-          <button className="lnk" onClick={() => setStep(1)} style={{ alignSelf: 'center' }}>{t.back}</button>
+          {/* A forced PIN is where a first run stops (13 Oct 2026): every level can finish without one. Finishing here
+              writes no PIN and no phrase, and the line under the link says what that leaves open. */}
+          <button className="lnk" data-testid="setup-skip-pin" disabled={activating} onClick={() => { void finishSetup(true); }} style={{ alignSelf: 'center' }}>{t.setupPinSkip}</button>
+          <p className="tag" data-testid="setup-skip-pin-note">{t.setupPinSkipNote}</p>
+          <button className="lnk" onClick={() => setStep(1)} disabled={activating} style={{ alignSelf: 'center' }}>{t.back}</button>
         </div>
       </>
     );

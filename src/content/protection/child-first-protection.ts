@@ -62,14 +62,21 @@ export class ChildProtectionManager<T extends ProtectableItem> {
   // retroactively re-labels an already-mounted cover. Acceptable: language
   // preference changes are rare and covers are short-lived.
   private lang: ResolvedUiLanguage = 'en';
-  // Deadline for a provisional cover whose verdict never arrives. A verdict
-  // normally lands in seconds (queue + two LLM calls); the only way a cover
-  // lives past a minute is a dropped verdict (extension reload, queue
-  // cancel, thrown handler), and without a deadline that cover is permanent
-  // opaque black, indistinguishable from FW deleting the post. Fail open at
-  // the deadline: the deterministic extraction-time layer has already run,
-  // and a forever-hidden post erodes trust more than one late reveal.
-  private static readonly RELEASE_DEADLINE_MS = 60_000;
+  // Deadline for a provisional cover whose verdict has not arrived. A reading
+  // normally lands in a few seconds (queue + two LLM calls); a cover that is
+  // still up at fifteen is a dropped verdict (extension reload, queue cancel,
+  // thrown handler) or a post still waiting behind the others, and without a
+  // deadline that cover is a permanent opaque block, indistinguishable from FW
+  // deleting the post. At the deadline the post is lifted as what the local rules
+  // make of it (onDeadline: own list, slurs, swearing starred, a cached verdict),
+  // never as the raw post; a post those rules leave alone is lifted as it is and
+  // the reading, if it arrives later, lands late. It was 60 s before the Silent
+  // level read (12 Oct 2026): at Strict nothing was being read, so a cover that
+  // lived past a second was already a fault.
+  static readonly RELEASE_DEADLINE_MS = 15_000;
+  // After the local result was applied at the deadline, the cover that result
+  // left up (a terminal that could not land) is reaped here at the old limit.
+  private static readonly BACKSTOP_MS = 45_000;
   private readonly byItem = new WeakMap<T, ChildShieldHandle>();
   private readonly active = new Set<ChildShieldHandle>();
   private readonly staleRearmed = new WeakSet<ChildShieldHandle>();
@@ -82,6 +89,12 @@ export class ChildProtectionManager<T extends ProtectableItem> {
     private readonly onStaleRelease?: (item: T, anchor: HTMLElement) => void,
     private readonly onProtectionEnded?: (item: T, elapsedMs: number) => void,
     private readonly ownerScope: 'post' = 'post',
+    /**
+     * Asked once when a cover reaches its deadline with no verdict. Resolves true when it applied the local result to
+     * the item (its terminal then settles the cover), false when the rules leave the item alone. `stillCovered` is false
+     * once a verdict, a hold or a release got there first, and then the callback must apply nothing.
+     */
+    private readonly onDeadline?: (item: T, stillCovered: () => boolean) => Promise<boolean>,
   ) {}
 
   get enabled(): boolean {
@@ -219,6 +232,25 @@ export class ChildProtectionManager<T extends ProtectableItem> {
    * release()/commit() for the item finds nothing and returns null harmlessly.
    */
   private expireDeadline(handle: ChildShieldHandle): void {
+    if (!this.active.has(handle) || handle.settled || handle.held) return;
+    const item = this.itemByHandle.get(handle);
+    if (item && this.onDeadline) {
+      const stillCovered = (): boolean => this.active.has(handle) && !handle.settled && !handle.held;
+      void this.onDeadline(item, stillCovered).then(
+        applied => {
+          if (!applied) { this.reapDeadline(handle); return; }
+          // Applied: the terminal settles the cover. One that could not land holds it, and a hold is left alone;
+          // anything else still up at the backstop is the same dropped verdict as before.
+          setTimeout(() => this.reapDeadline(handle), ChildProtectionManager.BACKSTOP_MS);
+        },
+        () => this.reapDeadline(handle),
+      );
+      return;
+    }
+    this.reapDeadline(handle);
+  }
+
+  private reapDeadline(handle: ChildShieldHandle): void {
     if (!this.active.has(handle) || handle.settled || handle.held) return;
     const item = this.itemByHandle.get(handle);
     const protectionEnded = releaseChildShield(handle);

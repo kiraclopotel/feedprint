@@ -236,7 +236,7 @@ export function buildMethodologyBlock(extensionVersion: string): MethodologyBloc
       'signals that can be challenged on their merits, never established facts. ' +
       'Severity (how strong a pattern reads) and confidence are separate values ' +
       'on every record. Confidence is how sure the model was, except on records ' +
-      'written by the Relaxed reader, where it is one fixed value and measures ' +
+      'written by the Open reader, where it is one fixed value and measures ' +
       'nothing; the thresholds below say which value.',
     generatedAt: new Date().toISOString(),
     extensionVersion,
@@ -272,8 +272,8 @@ export function buildMethodologyBlock(extensionVersion: string): MethodologyBloc
       adultReaderFixedConfidence: ADULT_READER_FIXED_CONFIDENCE,
       adultReaderFamilyToTechnique: ADULT_READER_FAMILY_TECHNIQUE,
       adultReaderNote:
-        'A Relaxed post record was gated by neither of the two rules above. ' +
-        'Since 2026-09-03 every post at Relaxed (recorded under an earlier name ' +
+        'An Open post record was gated by neither of the two rules above. ' +
+        'Since 2026-09-03 every post at Open (recorded under an earlier name ' +
         'before the levels were named) goes to the measured ' +
         'reader named under Models, which is asked one question about the ' +
         'item and answers five fields: charged, family, severity, effect and ' +
@@ -288,29 +288,29 @@ export function buildMethodologyBlock(extensionVersion: string): MethodologyBloc
         'Nothing else gates it: no triage before, and none of the ' +
         'per-technique floors in the table above after, because the rule that ' +
         'was measured is the rule that ships. Two consequences a reader ' +
-        'should know. A Relaxed record carries a technique name the model was ' +
+        'should know. An Open record carries a technique name the model was ' +
         'never asked for, mapped from the one family it did answer (map ' +
         'above), so a record reading "anger-trigger" means the reader called ' +
         `the item hostile. And its confidence is always ${ADULT_READER_FIXED_CONFIDENCE}, ` +
         'a fixed value rather than a measure of how sure the model was: on ' +
-        'a Relaxed record, severity carries the judgement and confidence ' +
+        'an Open record, severity carries the judgement and confidence ' +
         'carries nothing. Items the reader read and passed are kept as ' +
         'records too, with no technique and no action.',
       profanityFilterSeverity: 4,
       harmFloorTrigger: 70,
       thresholdsNote:
         'One severity number does not separate flagged from clean, because the ' +
-        'two text paths gate differently, and Relaxed posts gate differently ' +
+        'two text paths gate differently, and Open posts gate differently ' +
         'again. COMMENTS use the flat gate above, at every level: a ' +
         'manipulation verdict at severity >= 6 flags, below it passes, and a ' +
-        'verdict carrying action "hide" flags at any severity. STRICT AND ' +
-        'MODERATE POSTS use the per-technique x per-level floor table instead; a ' +
+        'verdict carrying action "hide" flags at any severity. SILENT AND ' +
+        'CALM POSTS use the per-technique x per-level floor table instead; a ' +
         'flagged post record at severity 4 or 5 is that table working, not a ' +
         'leak. The range is the one printed with the table and read off its ' +
         'own cells, not restated here: this sentence said "4 to 8" until ' +
         '2026-09-18, after profanity was set to 1, and disagreed with the ' +
-        'computed range one line above it. RELAXED POSTS use neither, and are ' +
-        'gated by the two cuts above the table instead; the Relaxed reader note says ' +
+        'computed range one line above it. OPEN POSTS use neither, and are ' +
+        'gated by the two cuts above the table instead; the Open reader note says ' +
         'how. Two further rules move severity after a floor is ' +
         'cleared: a detection whose confidence lands within 0.10 of the ' +
         'confidence threshold has every technique severity reduced by 1 ' +
@@ -355,13 +355,14 @@ export function buildMethodologyBlock(extensionVersion: string): MethodologyBloc
       adultReader: JUDGE_V1_ADULT_SYSTEM,
       rewriter: NEUTRALIZATION_SYSTEM,
       promptsNote:
-        'Rendered from the live prompt builders at export time. The comment judge above runs in ' +
-        'its Strict and Moderate framing, and Relaxed uses the Moderate framing. The post judge is different: ' +
-        'its Strict and Moderate texts are printed above, but a Relaxed post is not asked either of them. ' +
-        'Relaxed has a reader of its own, with its own model, its own text and its own two ' +
-        'severity cuts, all printed here, and it is the only thing that reads a Relaxed post; the ' +
+        'Rendered from the live prompt builders at export time. Silent without a key sends no prompt at all; ' +
+        'with a key and the agreement it sends the Silent comment judge printed above and the post judge. ' +
+        'The comment judge printed for Calm is the Calm framing, and Open uses it too. The post judge is one ' +
+        'text for Silent and Calm, and an Open post is not asked it. ' +
+        'Open has a reader of its own, with its own model, its own text and its own two ' +
+        'severity cuts, all printed here, and it is the only thing that reads an Open post; the ' +
         'same reader also answers the read-this-item button. Until 2026-09-18 this block named none ' +
-        'of it, so a Relaxed export answered this question with a model that had not judged its ' +
+        'of it, so an Open export answered this question with a model that had not judged its ' +
         'records, a framing that had not been used and thresholds that had not been applied. ' +
         'Placeholders like "(post text)" mark where each analyzed ' +
         'item\'s own content is inserted; the record\'s originalText field carries ' +

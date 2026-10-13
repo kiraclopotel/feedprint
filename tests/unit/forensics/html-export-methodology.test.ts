@@ -57,6 +57,32 @@ describe('HTML export — methodology section', () => {
     expect(html).toContain('celebrity-gossip');
   });
 
+  // 12 Oct 2026, the owner's reading of his own export: "it did not say Claude". Since 2.5.19 Claude Haiku is asked beside
+  // the second model at Open behind its own consent, and each record's decision.claude says what came of it; the block
+  // that answers "who identified these items" printed the three open models and left it out, and the methodology text that
+  // names it existed and was never printed.
+  it('names the Claude reader in the models, from the methodology text, with its conditions', () => {
+    const m = buildMethodologyBlock('2.5.19');
+    const html = buildForensicHtmlExport([makeRecord()], { ...BASE_META, methodology: m });
+    const models = html.slice(html.indexOf('<dt>Text judge:</dt>'), html.indexOf('<dt>Room sensor:</dt>'));
+    expect(models).toContain('Claude reader (Open, paid reading):');
+    expect(models).toContain('claude-haiku-5-5');
+    expect(models).toContain('Anthropic');
+    expect(models).toContain('decision.claude');
+    // Its conditions travel with the name: a reader of an export without a paid key is not told Claude read their items.
+    expect(models).toContain('only for a key that holds the paid reading');
+    // Beside the three it was left out of, in the order the items travel.
+    expect(models.indexOf('Open reader:')).toBeLessThan(models.indexOf('Claude reader'));
+  });
+
+  it('the Claude entry is escaped like the others', () => {
+    const m = buildMethodologyBlock('2.5.19');
+    m.models.paidReader = 'claude <b>x</b> & more';
+    const html = buildForensicHtmlExport([makeRecord()], { ...BASE_META, methodology: m });
+    expect(html).toContain('claude &lt;b&gt;x&lt;/b&gt; &amp; more');
+    expect(html).not.toContain('claude <b>x</b>');
+  });
+
   // gem 81 (recount 8): the placeholder Encounter used to render these prompts named a
   // real language, 'English', where the live code fills in the item's own detected
   // language (or "the same language as the original input"). Every rendered export
@@ -83,7 +109,7 @@ describe('HTML export — methodology section', () => {
     it('prints the adult reader pin beside the feed judge pin', () => {
       expect(html).toContain('openai/gpt-oss-120b');
       // The reader is named by its level.
-      expect(html).toContain('Relaxed reader');
+      expect(html).toContain('Open reader');
     });
 
     it('prints the adult system text verbatim and escaped', () => {
@@ -98,7 +124,7 @@ describe('HTML export — methodology section', () => {
       const m = buildMethodologyBlock('1.2.3');
       // Anchored to the label. A bare toContain('4') passes on any document.
       expect(html).toContain(
-        `Relaxed reader, acts at (severity):</dt><dd>&ge; ${m.thresholds.adultReaderFireSeverity},`,
+        `Open reader, acts at (severity):</dt><dd>&ge; ${m.thresholds.adultReaderFireSeverity},`,
       );
       expect(html).toContain(
         `rewriting at (severity):</dt><dd>&ge; ${m.thresholds.adultReaderHideSeverity}<`,
@@ -123,13 +149,13 @@ describe('HTML export — methodology section', () => {
       // the measured reader first, and that reader applies no floor.
       expect(html).not.toMatch(/Adult mode reads the teen column/i);
       expect(html).not.toContain('Teen / adult');
-      expect(html).toMatch(/Relaxed posts do not pass through this table/i);
-      // And the post judge's Moderate text is no longer offered as the Relaxed one
+      expect(html).toMatch(/Open posts do not pass through this table/i);
+      // And the post judge's Calm text is no longer offered as the Open one
       // (S3, PLAN-A section 3: the heading speaks of levels, not ages).
-      expect(html).not.toContain('Post judge: Moderate (Relaxed uses this framing)');
-      // The comment judge's Moderate framing IS used for Relaxed comments
+      expect(html).not.toContain('Post judge: Calm (Open uses this framing)');
+      // The comment judge's Calm framing IS used for Open comments
       // (prompts-v2.ts maps adult onto it), so that label must survive.
-      expect(html).toContain('Comment judge: Moderate (Relaxed uses this framing)');
+      expect(html).toContain('Comment judge: Calm (Open uses this framing)');
     });
   });
 

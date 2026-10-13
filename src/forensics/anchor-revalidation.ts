@@ -25,6 +25,7 @@
 
 import { PostContent } from '../types/post';
 import { emojiPictureText, TEXT_FROM_PICTURES_ATTRIBUTE } from '../core/emoji-picture';
+import { textBeforeDoorStar } from '../core/door-star';
 
 /** Three-way outcome of the anchor revalidation gate per ARCH §3. */
 export type AnchorVerification = 'match' | 'dom-recycled' | 'dom-gone';
@@ -57,7 +58,7 @@ const OWN_COVER = '.fw-provisional-shield';
  * its whole text never equals the caption record's text and every verdict was turned away. On a
  * card the caption is read the way the TikTok extractor reads it (tiktok-bundle.ts extractPost).
  */
-function liveTextOf(el: HTMLElement): string {
+export function liveTextOf(el: HTMLElement): string {
   if (el.matches(TIKTOK_VIDEO_CARD)) {
     const caption = el.querySelector<HTMLElement>(TIKTOK_CAPTION);
     if (caption) return (caption.textContent ?? '').trim();
@@ -70,13 +71,14 @@ function liveTextOf(el: HTMLElement): string {
   if (el.querySelector(OWN_COVER)) {
     const clone = el.cloneNode(true) as HTMLElement;
     clone.querySelectorAll(OWN_COVER).forEach((cover) => cover.remove());
-    return (clone.textContent ?? '').trim();
+    return textBeforeDoorStar(el, (clone.textContent ?? '').trim());
   }
   const text = (el.textContent ?? '').trim();
   // A comment made only of emoji pictures was read as their alt text, and its reader stamped the body (it has no words
   // for textContent to give). Read it the same way, or every verdict for it would be turned away as a recycled element.
   if (text === '' && el.dataset?.[TEXT_FROM_PICTURES_ATTRIBUTE] === 'true') return emojiPictureText(el);
-  return text;
+  // A comment the door starred before its reading came back reads as the words it was scored on (core/door-star.ts).
+  return textBeforeDoorStar(el, text);
 }
 
 export function recomputeAnchorFromDom(

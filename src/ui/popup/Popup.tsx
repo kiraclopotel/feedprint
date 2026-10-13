@@ -26,9 +26,12 @@ import { POPUP_STRINGS } from '../../i18n/popup-strings';
 import { I18nProvider } from '../../i18n/react';
 import { FREE_LICENSE, LicenseInfo, getLicense } from '../../storage/license';
 import { levelMakesNoCalls } from '../../types/mode';
+import { levelMayCallOut } from '../../types/reading-gate';
 import { type DashboardTheme, FWSettings, getSettings, isPinGraceActive, parentPinUnknown, saveSettings } from '../../storage/settings';
 import { bearerOf, getReadingConsent, recordReadingConsent, type ReadingConsent } from '../../storage/reading-consent';
 import { READING_PAUSED_STORAGE_KEY } from '../../storage/reading-pause';
+import { READING_TROUBLE_STORAGE_KEY, readingTroubleStands } from '../../storage/reading-trouble';
+import { readingGotThroughNow } from '../../ai/reading-got-through';
 import { ReadingConsentScreen, needsReadingConsent } from './panels/ReadingConsentScreen';
 import { applyTheme, eagerApplyStoredTheme, subscribeToSystemThemeChanges } from '../shared/theme';
 import { UpdateNoticeLine, useUpdateNotice } from './UpdateNotice';
@@ -37,7 +40,7 @@ import { PinOverlay } from './controls';
 import { HomeTab } from './panels/HomeTab';
 import { KeysTab } from './panels/KeysTab';
 import { SettingsPanel } from './panels/SettingsPanel';
-import { readAiDrawerOpen } from './panels/ai/AiCard';
+import { readAllFoldsOpen } from './panels/Fold';
 import { SetupWizard } from './panels/SetupWizard';
 import { PopHeader, PopTabBar } from './panels/header';
 import { computeStatusStates } from './panels/status';
@@ -92,6 +95,10 @@ function Popup() {
   const [claudeConsent, setClaudeConsent] = useState<ReadingConsent | null | undefined>(undefined);
   // The relay refused the reading for want of the go-ahead and nothing has answered since (storage/reading-pause.ts).
   const [relayAsked, setRelayAsked] = useState(false);
+  // The reading service has not answered several calls in a row (storage/reading-trouble.ts).
+  const [readingTrouble, setReadingTrouble] = useState(false);
+  // A reading call with this key got through lately (ai/reading-got-through.ts).
+  const [readingGotThrough, setReadingGotThrough] = useState(false);
   // Read on every open, whatever screen this lands on (see UpdateNotice.tsx on why).
   const [updateNotice, updateNoticeDone] = useUpdateNotice();
 
@@ -108,16 +115,18 @@ function Popup() {
   }, [isDetached]);
 
   const reload = useCallback(async () => {
-    // The AI drawer's stored choice is read with the settings, so Settings draws it in place on its first frame.
-    const [s, l] = await Promise.all([getSettings(), getLicense(), readAiDrawerOpen()]);
+    // The folds' stored choices are read with the settings, so Settings draws each in place on its first frame.
+    const [s, l] = await Promise.all([getSettings(), getLicense(), readAllFoldsOpen()]);
     setSettings(s);
     setLicenseState(l);
     setConsent(l.tier === 'free' ? null : await getReadingConsent(bearerOf(l)));
     setClaudeConsent(l.tier === 'free' ? null : await getReadingConsent(bearerOf(l), 'claude'));
     try {
-      const stored = await chrome.storage.local.get(READING_PAUSED_STORAGE_KEY);
+      const stored = await chrome.storage.local.get([READING_PAUSED_STORAGE_KEY, READING_TROUBLE_STORAGE_KEY]);
       setRelayAsked(!!stored?.[READING_PAUSED_STORAGE_KEY]);
-    } catch { setRelayAsked(false); }
+      setReadingTrouble(readingTroubleStands(stored?.[READING_TROUBLE_STORAGE_KEY]));
+    } catch { setRelayAsked(false); setReadingTrouble(false); }
+    setReadingGotThrough(await readingGotThroughNow(l));
     setLoadError(null);
     return s;
   }, []);
@@ -215,7 +224,7 @@ function Popup() {
       setServedClaudeProvider(servedClaudeProviderName(bearer));
     }).catch((e) => console.error(e));
     return () => { cancelled = true; };
-  }, [license.tier, license.secret, settings ? levelMakesNoCalls(settings) : null]);
+  }, [license.tier, license.secret, settings ? levelMayCallOut(settings) : null]);
 
   // Resolved interface language. Before settings load, 'auto' resolves
   // from the browser language so even the loading state is localized.
@@ -240,9 +249,10 @@ function Popup() {
       </div>
     );
   } else {
-    const { licenseState } = computeStatusStates(license, proxyProbe);
-    // Strict with a key saved: the key is held, never checked (M4).
-    const keyHeld = levelMakesNoCalls(settings) && license.tier !== 'free';
+    const { licenseState } = computeStatusStates(license, proxyProbe, readingGotThrough);
+    // Silent with a key the relay has not refused, the reading on, and no agreement given yet: nothing leaves until it is
+    // (the chip says so). Not known until the stored agreement is read.
+    const agreementWaits = levelMakesNoCalls(settings) && license.tier !== 'free' && settings.aiAnalysisEnabled !== false && consent === null;
     const openDashboard = (section: 'all' | 'blocked' = 'all') => {
       const hash = section === 'all' ? '' : `#${section}`;
       void chrome.tabs.create({ url: chrome.runtime.getURL(`dashboard.html${hash}`) });
@@ -265,20 +275,21 @@ function Popup() {
     if (screen === 'setup') {
       body = (
         <div className="fw-popup">
-          <PopHeader licenseState={licenseState} keyHeld={keyHeld} strict={levelMakesNoCalls(settings)} />
+          <PopHeader licenseState={licenseState} strict={levelMakesNoCalls(settings)} agreementWaits={agreementWaits} levelPending={settings.levelChosen === false} />
           <SetupWizard onComplete={() => { reload().then(() => { setScreen('main'); setTab('home'); }).catch((e) => console.error(e)); }} />
         </div>
       );
     } else if (screen === 'settings') {
       body = (
         <div className="fw-popup">
-          <PopHeader licenseState={licenseState} keyHeld={keyHeld} strict={levelMakesNoCalls(settings)} onClickStatus={() => setScreen('main')} />
+          <PopHeader licenseState={licenseState} strict={levelMakesNoCalls(settings)} agreementWaits={agreementWaits} levelPending={settings.levelChosen === false} onClickStatus={() => setScreen('main')} />
           <SettingsPanel
             settings={settings}
             license={license}
             onBack={() => setScreen('main')}
             onChange={async () => { await reload(); }}
             isDetached={isDetached}
+            consent={consent}
           />
         </div>
       );
@@ -318,8 +329,7 @@ function Popup() {
         <div className="fw-popup">
           <PopHeader
             licenseState={licenseState}
-            keyHeld={keyHeld}
-            strict={levelMakesNoCalls(settings)}
+            strict={levelMakesNoCalls(settings)} agreementWaits={agreementWaits} levelPending={settings.levelChosen === false}
             onClickStatus={() => setTab('keys')}
             onOpenDashboard={() => openDashboard('all')}
             onOpenSettings={requestSettings}
@@ -351,7 +361,7 @@ function Popup() {
           {tab === 'home' && (
             <div id="pop-tabpanel-home" role="tabpanel" aria-labelledby="pop-tab-home" tabIndex={0}>
               <HomeTab
-                settings={settings} license={license} probeResult={proxyProbe}
+                settings={settings} license={license} probeResult={proxyProbe} readingTrouble={readingTrouble} consent={consent}
                 onOpenDashboard={() => openDashboard('all')}
                 onOpenDashboardSection={openDashboard}
                 isDetached={isDetached}
@@ -369,6 +379,7 @@ function Popup() {
             <ReadingConsentScreen
               provider={servedProvider}
               claudeProvider={servedClaudeProvider}
+              atSilent={settings.mode === 'child'}
               onClose={() => setConsentClosed(true)}
               // One press, both companies: the ordinary consent, then the Claude reading's, each under the name the
               // proxy served and over the same words the person saw (one line: the PIN-gate pin counts writer lines).

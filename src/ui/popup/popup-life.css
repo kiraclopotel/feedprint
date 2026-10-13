@@ -32,7 +32,7 @@ html.fw-life-depth .fw-popup .pop-cta:not(.sec):not(.secondary):not(:disabled) {
 html.fw-life-depth:not([data-look]) .fw-popup .today-card {
   background: linear-gradient(165deg, color-mix(in srgb, var(--fw-purple) 12%, var(--fw-card)) 0%, var(--fw-card) 60%);
 }
-html.fw-life-depth:not([data-look]) .fw-popup .today-card .pop-hero-value { color: var(--fw-purple); }
+html.fw-life-depth:not([data-look]) .fw-popup .today-card .pop-hero-value { color: var(--fw-teal); }
 /* The plan chip filled when a key is active, so it reads as a state, not as a label. */
 html.fw-life-depth .fw-popup .pop-tier:not(.free) .pill {
   background: var(--fw-teal); color: var(--fw-on-accent); border-color: transparent;
@@ -55,6 +55,10 @@ html:not(.fw-life-motion) .fw-popup .toggle,
 html:not(.fw-life-motion) .fw-popup .toggle::after,
 html:not(.fw-life-motion) .fw-popup .pop-card,
 html:not(.fw-life-motion) .fw-popup .pop-cta { transition: none; }
+/* Off's switches slide even without the motion look (the polish read of 12 Oct 2026, Off row 5): the knob jumped 16 px
+   in 0 ms after the storage write and landed as a late flash. Reduced motion still stops them, below. */
+html:not(.fw-life-motion) .fw-popup.fw-off .toggle { transition: background-color 180ms ease; }
+html:not(.fw-life-motion) .fw-popup.fw-off .toggle::after { transition: left 180ms cubic-bezier(0.2, 0.8, 0.2, 1), background-color 180ms ease; }
 /* The AI drawer is the one card that moves in every look: the card folding into its pill shows where the rows went.
    Reduced motion still stops it, below and in the drawer's own rule. */
 html:not(.fw-life-motion) .fw-popup .pop-card.ai-drawer { transition: var(--ai-drawer-move); }
@@ -63,4 +67,7 @@ html:not(.fw-life-motion) .fw-popup .pop-card.ai-drawer { transition: var(--ai-d
   html .fw-popup *,
   html .fw-popup *::before,
   html .fw-popup *::after { animation: none !important; transition: none !important; }
+  /* A fold's body (Off U3) eases in ::details-content; its own rule, so a browser without that pseudo-element
+     keeps the rule above (the Tester's nineteenth read, 12 Oct 2026). */
+  html .fw-popup *::details-content { transition: none !important; }
 }

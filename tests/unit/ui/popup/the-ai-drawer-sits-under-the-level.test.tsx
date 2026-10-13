@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
-// With a key, the AI rows open in a drawer right under the level picker and above the essentials, so rows that appear
-// only once a key is stored are seen. The drawer is open the first time, then as the person last left it; closed, it
-// is a green pill. Without a key nothing renders; at Strict the drawer keeps the main switch locked off with its note,
+// With a key, the AI rows open in a drawer in the list of folds under the level picker (since 12 Oct 2026 the list is
+// General, the drawer, PIN and language, each of one shape), so rows that appear only once a key is stored are seen. The
+// drawer is open the first time, then as the person last left it; closed, it is a green pill. Without a key nothing renders; at Strict the drawer keeps the main switch locked off with its note,
 // as before. How it moves is read in a real browser (the-ai-drawer-moves-in-a-real-browser).
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -61,7 +61,7 @@ async function settled(lang: Lang, settings: FWSettings, license: LicenseInfo): 
 
 /** Whether `a` comes before `b` in the page. */
 const before = (a: Element, b: Element) => !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
-const drawerHead = () => container.querySelector<HTMLButtonElement>('button.ai-drawer-head');
+const drawerHead = () => container.querySelector<HTMLButtonElement>('.fold-reading button.ai-drawer-head');
 const drawerBody = () => container.querySelector<HTMLElement>('#fw-ai-drawer-rows');
 // What the drawer header reads: the group, and the plan after a dot only when the plan has a name of its own.
 const headerText = (s: { groupAi: string; keySubActive: string }) => s.keySubActive === s.groupAi ? s.groupAi : `${s.groupAi}·${s.keySubActive}`;
@@ -69,17 +69,27 @@ const headerText = (s: { groupAi: string; keySubActive: string }) => s.keySubAct
 describe.each(UI_LANGUAGES)('%s', (lang) => {
   const t = POPUP_STRINGS[lang];
 
-  it.each([['Moderate', moderate], ['Relaxed', base]] as const)(
-    'with a key at %s, the drawer sits under the level picker and above the essentials, named and open', async (_l, settings) => {
+  it.each([['Calm', moderate], ['Open', base], ['Silent', strict]] as const)(
+    'with a key at %s, the drawer sits under the level picker and General under it, named and open', async (_l, settings) => {
+      // The person left it open (since 13 Oct 2026 it starts shut until they open it).
+      fake.state[AI_DRAWER_OPEN_KEY] = true;
       await settled(lang, settings, PAID);
-      const drawer = container.querySelector('.ai-drawer');
+      const drawer = container.querySelector('.fold-reading');
       const level = container.querySelector('.mode-card');
-      const essentials = container.querySelector('.set-essentials');
-      expect(drawer && level && essentials, 'the three cards render').toBeTruthy();
-      expect(before(level!, drawer!), 'under the level picker').toBe(true);
-      expect(before(drawer!, essentials!), 'above the essentials').toBe(true);
-      // Nothing sits between the level card and the drawer.
+      const general = container.querySelector('.fold-general');
+      const topics = container.querySelector('.fold-topics');
+      const device = container.querySelector('.fold-device');
+      expect(drawer && level && general && topics && device, 'the level, the four folds render').toBeTruthy();
+      // The owner's word of 12 Oct 2026, evening: one list, with a key the drawer first, General under it, PIN and
+      // language last.
+      expect(before(level!, drawer!), 'the drawer under the level picker').toBe(true);
+      expect(before(drawer!, general!), 'General under the drawer').toBe(true);
+      expect(before(general!, topics!), 'Topics under General').toBe(true);
+      expect(before(topics!, device!), 'PIN and language under Topics').toBe(true);
       expect(level!.nextElementSibling).toBe(drawer);
+      expect(drawer!.nextElementSibling).toBe(general);
+      expect(general!.nextElementSibling).toBe(topics);
+      expect(topics!.nextElementSibling).toBe(device);
       const head = drawerHead()!;
       // The header names the group, and the plan after a dot only when the plan has a name of its own.
       expect(head.textContent).toBe(headerText(t));
@@ -88,23 +98,22 @@ describe.each(UI_LANGUAGES)('%s', (lang) => {
       expect(head.getAttribute('aria-expanded')).toBe('true');
       expect(head.getAttribute('aria-controls')).toBe('fw-ai-drawer-rows');
       expect(drawerBody()!.hidden).toBe(false);
-      const names = [...drawerBody()!.querySelectorAll('.fr-name')].map((n) => n.firstChild?.textContent?.trim());
-      expect(names).toEqual(readingRowNames(t));
+      // The name as shown, the BETA pill and the (i) button set aside (the last word has its own span since Off U5).
+      const names = [...drawerBody()!.querySelectorAll('.fr-name')].map((n) => {
+        const c = n.cloneNode(true) as Element;
+        c.querySelectorAll('.beta-pill, button').forEach((e) => e.remove());
+        return c.textContent?.trim();
+      });
+      // Packet 36 (13 Oct 2026): the main switch, then the level's two switches by their plain names, then the comments
+      // and the language.
+      expect(names).toEqual([t.featAiMasterName, t.reframeRewritesName, t.featMarkersName, t.featRewriteName, t.outputLangName]);
     });
 
   it('without a key, no drawer and no AI group renders', async () => {
     await settled(lang, base, FREE);
-    expect(container.querySelector('.set-essentials'), 'Settings has drawn').not.toBeNull();
-    expect(container.querySelector('.ai-drawer')).toBeNull();
+    expect(container.querySelector('.fold-general'), 'Settings has drawn').not.toBeNull();
+    expect(container.querySelector('.fold-reading')).toBeNull();
     expect(container.textContent).not.toContain(t.groupAi);
-  });
-
-  it('at Strict with a key, the drawer shows the main switch locked off with its note, and no other row', async () => {
-    await settled(lang, strict, PAID);
-    expect(drawerHead()).not.toBeNull();
-    expect(container.textContent).toContain(t.featAiMasterStrictNote);
-    expect(drawerBody()!.textContent).not.toContain(t.featRewriteName);
-    expect(drawerBody()!.textContent).not.toContain(t.outputLangName);
   });
 });
 
@@ -112,11 +121,16 @@ describe('the drawer remembers how the person left it', () => {
   it('closes and opens on its button, and keeps the choice for the next opening of Settings', async () => {
     await settled('en', base, PAID);
     expect(fake.state[AI_DRAWER_OPEN_KEY]).toBeUndefined();
-    expect(container.querySelector('.ai-drawer')!.classList.contains('closed'), 'open, it is the card').toBe(false);
+    // A new install: shut, the pill (13 Oct 2026); the first press opens it and is kept.
+    expect(container.querySelector('.fold-reading')!.classList.contains('closed'), 'shut, it is the pill').toBe(true);
+    await act(async () => { drawerHead()!.click(); });
+    expect(drawerHead()!.getAttribute('aria-expanded')).toBe('true');
+    expect(fake.state[AI_DRAWER_OPEN_KEY]).toBe(true);
+    expect(container.querySelector('.fold-reading')!.classList.contains('closed'), 'open, it is the card').toBe(false);
     await act(async () => { drawerHead()!.click(); });
     expect(drawerHead()!.getAttribute('aria-expanded')).toBe('false');
     expect(drawerBody()!.hidden).toBe(true);
-    expect(container.querySelector('.ai-drawer')!.classList.contains('closed'), 'closed, it is the pill').toBe(true);
+    expect(container.querySelector('.fold-reading')!.classList.contains('closed'), 'closed, it is the pill').toBe(true);
     expect(drawerHead()!.textContent).toBe(headerText(POPUP_STRINGS.en));
     expect(fake.state[AI_DRAWER_OPEN_KEY]).toBe(false);
 

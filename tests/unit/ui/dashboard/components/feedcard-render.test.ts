@@ -163,12 +163,12 @@ describe('FeedCard metric caption + button labels', () => {
     expect(html).not.toContain('before FW hid');
   });
 
-  it('renames the buttons to "Original Post" and "Refresh counts"', () => {
+  it('renames the buttons to "Original post" and "Refresh counts"', () => {
     const html = renderCardWith({
       record: makeRecord({ platform: 'twitter', kind: 'post', postUrl: 'https://x.com/u/status/1' }),
       onRecheck: async () => true,
     });
-    expect(html).toContain('Original Post');
+    expect(html).toContain('Original post');
     expect(html).toContain('Refresh counts');
     expect(html).not.toContain('View original');
     expect(html).not.toContain('>Recheck<');
@@ -205,8 +205,8 @@ describe('FeedCard comments button', () => {
     });
     expect(html).toContain('fc-action-btn comments');
     expect(html).toContain('3 comments');
-    // the comments button comes before "Original Post" in the row
-    expect(html.indexOf('3 comments')).toBeLessThan(html.indexOf('Original Post'));
+    // the comments button comes before "Original post" in the row
+    expect(html.indexOf('3 comments')).toBeLessThan(html.indexOf('Original post'));
   });
 
   it('shows a disabled comments status when there are no recorded comments', () => {

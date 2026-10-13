@@ -9,6 +9,8 @@
    all sides). Painting html/body with --fw-bg also kills any light flash before
    the React app mounts. */
 html, body { margin: 0; padding: 0; background: var(--fw-bg); }
+/* The scrollbar's room is always kept, so a short tab and a long one put every edge in the same place (row 11). */
+html { scrollbar-gutter: stable; }
 
 .dash-root {
   min-height: 100vh;
@@ -74,7 +76,7 @@ html, body { margin: 0; padding: 0; background: var(--fw-bg); }
 /* ============================================================ dash-header */
 .dash-header {
   position: sticky; top: 0; z-index: 30;
-  background: color-mix(in oklch, var(--fw-bg) 88%, transparent);
+  background: color-mix(in oklab, var(--fw-bg) 88%, transparent);
   backdrop-filter: saturate(140%) blur(10px);
   border-bottom: 1px solid var(--fw-border);
 }
@@ -90,7 +92,7 @@ html, body { margin: 0; padding: 0; background: var(--fw-bg); }
 .dash-wordmark { display: flex; align-items: center; gap: 11px; font-weight: 600; letter-spacing: -0.01em; }
 .dash-wordmark-mark { flex-shrink: 0; display: block; }
 .dash-wordmark-text { font-size: 15px; line-height: 1.1; }
-.dash-wordmark-text small { display: block; font-size: 12px; font-weight: 600; color: var(--fw-muted); letter-spacing: 0.08em; text-transform: none; margin-top: 1px; }
+.dash-wordmark-text small { display: block; font-size: 12px; font-weight: 600; color: var(--fw-muted); letter-spacing: var(--fw-track-label); text-transform: none; margin-top: 1px; }
 
 .dash-header-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
@@ -167,7 +169,7 @@ html, body { margin: 0; padding: 0; background: var(--fw-bg); }
   min-height: 24px; min-width: 24px;
 }
 .dash-record-btn:hover:not(:disabled) {
-  background: color-mix(in oklch, var(--fw-text-secondary) 12%, transparent);
+  background: color-mix(in oklab, var(--fw-text-secondary) 12%, transparent);
   color: var(--fw-text);
 }
 .dash-record-btn:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -193,7 +195,7 @@ html, body { margin: 0; padding: 0; background: var(--fw-bg); }
 .dash-record-help:hover { color: var(--fw-text); border-color: var(--fw-text-secondary); }
 
 .dash-tier-pill {
-  text-transform: none; letter-spacing: 0.06em;
+  text-transform: none; letter-spacing: var(--fw-track-label);
   font-size: 12px; font-weight: 700;
   padding: 3px 8px; border-radius: 0;
   background: var(--fw-accent); color: var(--fw-on-accent);
@@ -287,7 +289,7 @@ html, body { margin: 0; padding: 0; background: var(--fw-bg); }
   cursor: pointer;
 }
 .dash-verify-toast-close:hover {
-  background: color-mix(in oklch, var(--fw-text-secondary) 12%, transparent);
+  background: color-mix(in oklab, var(--fw-text-secondary) 12%, transparent);
   color: var(--fw-text);
 }
 @keyframes dash-verify-toast-in {
@@ -369,7 +371,7 @@ html, body { margin: 0; padding: 0; background: var(--fw-bg); }
 .chain-banner.err  .chain-banner-shield { background: var(--fw-red-soft);   color: var(--fw-red); }
 
 .chain-banner-title { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
-.chain-banner-desc { font-size: 12.5px; color: var(--fw-text-secondary); margin-top: 2px; max-width: 60ch; }
+.chain-banner-desc { font-size: 13px; color: var(--fw-text-secondary); margin-top: 2px; max-width: 60ch; }
 
 .chain-banner-stats { display: flex; gap: 22px; }
 .chain-banner-stat { text-align: right; }
@@ -443,7 +445,7 @@ html, body { margin: 0; padding: 0; background: var(--fw-bg); }
 
 .chip {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 7px 13px;
+  padding: 7px 13px; min-height: 32px;
   font-size: 12px; font-weight: 500;
   border-radius: 0;
   border: 1px solid var(--fw-border);
@@ -462,9 +464,10 @@ html, body { margin: 0; padding: 0; background: var(--fw-bg); }
 .chip .chip-x { opacity: .55; margin-left: 2px; }
 .chip .chip-x:hover { opacity: 1; }
 
+/* Buttons, chips and the groups they sit in are 32px tall, so a row of them has one top edge and one bottom edge. */
 .btn {
   display: inline-flex; align-items: center; gap: 8px;
-  padding: 8px 14px;
+  padding: 6px 14px; min-height: 32px;
   font-size: 13px; font-weight: 500;
   border-radius: var(--fw-r-1);
   border: 1px solid var(--fw-border);
@@ -480,9 +483,12 @@ html, body { margin: 0; padding: 0; background: var(--fw-bg); }
 .btn.danger { background: var(--fw-red); color: white; border-color: transparent; }
 .btn.ghost { background: transparent; border-color: transparent; color: var(--fw-text-secondary); }
 .btn.ghost:hover { background: var(--fw-surface); color: var(--fw-text); }
-.btn.sm { padding: 5px 10px; font-size: 12px; }
+.btn.sm { padding: 5px 10px; font-size: 12px; min-height: 0; }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn:disabled:hover { background: var(--fw-card); border-color: var(--fw-border); }
+/* The accent fill means "this can be done now". A primary button that is not allowed yet takes the quiet fill of a blocked
+   control: half-faded teal would still be the most colourful thing in a dialog that asks for a typed word. */
+.btn.primary:disabled { opacity: 1; background: var(--fw-surface-2); color: var(--fw-muted); border-color: var(--fw-border); }
 .dash-input {
   box-sizing: border-box;
   background: var(--fw-surface);
@@ -490,7 +496,7 @@ html, body { margin: 0; padding: 0; background: var(--fw-bg); }
   border-radius: var(--fw-radius-md);
   color: var(--fw-text);
   font-family: var(--fw-font-sans); font-size: var(--fw-text-13);
-  padding: var(--fw-s-2) var(--fw-s-3);
+  padding: var(--fw-s-2) var(--fw-s-3); min-height: 32px;
 }
 .dash-input:focus { border-color: var(--fw-accent); outline: 0; box-shadow: 0 0 0 2px var(--fw-accent); }
 .dash-input::placeholder { color: var(--fw-muted); }
@@ -508,7 +514,8 @@ html, body { margin: 0; padding: 0; background: var(--fw-bg); }
   border: 0; background: transparent;
   color: var(--fw-text-secondary);
   font-family: var(--fw-font-sans); font-size: 12px; font-weight: 500;
-  padding: 5px 12px; border-radius: 0;
+  /* 26px inside the group's 1px edge and 2px padding makes the whole control the 32px every button is. */
+  padding: 5px 12px; min-height: 26px; border-radius: 0;
   cursor: pointer;
   transition: background .15s ease, color .15s ease, box-shadow .15s ease;
 }
@@ -586,7 +593,8 @@ html, body { margin: 0; padding: 0; background: var(--fw-bg); }
   border-radius: var(--fw-radius-md);
   color: var(--fw-text);
   font-family: var(--fw-font-sans); font-size: 13px;
-  padding: 6px 10px;
+  padding: 6px 10px; min-height: 32px;
+  text-overflow: ellipsis;
 }
 .frail-search input:focus { border-color: var(--fw-accent); outline: 0; background: var(--fw-card); }
 .frail-search input::placeholder { color: var(--fw-muted); }
@@ -605,10 +613,12 @@ html, body { margin: 0; padding: 0; background: var(--fw-bg); }
 }
 .frail-grp:not([open]) summary::after { transform: rotate(-90deg); }
 .frail-grp summary:hover { color: var(--fw-text); }
+/* A filter option is pressed, so it has the 32px every control has. The room comes from the padding, not from the floor
+   alone, because a wrapped label is held to the top of the row (below) and a floor would leave a one-line label high. */
 .frail-opt {
   display: flex; justify-content: space-between; align-items: center; gap: 8px;
   width: 100%; box-sizing: border-box;
-  padding: 6px 8px; margin: 0 0 2px;
+  padding: 8px; min-height: 32px; margin: 0 0 2px;
   border: 0; border-radius: var(--fw-radius-sm);
   background: transparent;
   cursor: pointer;
@@ -627,26 +637,23 @@ html, body { margin: 0; padding: 0; background: var(--fw-bg); }
 .frail-opt .frail-count { padding-top: 1px; }
 .frail-opt .frail-count { font-size: 12px; font-family: var(--fw-font-mono); color: var(--fw-muted); flex: none; }
 
-/* "?" guidance — amber circled hint with a slow ping; opt-in popover, never
-   modal, never open by default. Ping stops on hover/open. */
+/* "?" guidance — a circled hint; opt-in popover, never modal, never open by
+   default. It is drawn as a control (edge, muted glyph), not in the amber that
+   means "flagged" on the rest of the page. */
 .frail-hint { position: relative; }
 .frail-hint > button {
   width: 20px; height: 20px;
   /* 20px is under the 24x24 CSS px minimum a pointer target needs. */
   min-height: 24px; min-width: 24px;
   border-radius: 0;
-  border: 1px solid color-mix(in oklch, var(--fw-amber) 55%, transparent);
+  border: 1px solid var(--fw-edge);
   background: transparent;
-  color: var(--fw-amber);
+  color: var(--fw-muted);
   font-size: 12px; line-height: 1; cursor: pointer;
   transition: color .15s ease, border-color .15s ease, box-shadow .15s ease;
 }
-@keyframes fw-hint-ping {
-  0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklch, var(--fw-amber) 0%, transparent); }
-  50%      { box-shadow: 0 0 0 4px color-mix(in oklch, var(--fw-amber) 18%, transparent); }
-}
 .frail-hint > button:hover, .frail-hint.open > button {
-  border-color: var(--fw-amber);
+  border-color: var(--fw-record);
   animation: none;
 }
 @media (prefers-reduced-motion: reduce) {
@@ -751,7 +758,7 @@ html, body { margin: 0; padding: 0; background: var(--fw-bg); }
   letter-spacing: 0.02em;
 }
 .aggregate-pill.flagged { background: var(--fw-amber-soft); color: var(--fw-amber); }
-.aggregate-pill.blocked { background: var(--fw-purple-soft); color: var(--fw-purple); }
+.aggregate-pill.blocked { background: var(--fw-noise-soft); color: var(--fw-noise); }
 
 /* Single centered "N comments" control — the comment button that expands the
    thread inline (replaces the old trust-bar chips + the separate toggle). */
@@ -783,7 +790,7 @@ html, body { margin: 0; padding: 0; background: var(--fw-bg); }
 
 .post-group-children {
   display: flex; flex-direction: column;
-  background: color-mix(in oklch, var(--fw-bg) 60%, var(--fw-card));
+  background: color-mix(in oklab, var(--fw-bg) 60%, var(--fw-card));
   padding: 4px 0 4px 0;
   border-top: 1px solid var(--fw-border);
 }
@@ -835,11 +842,11 @@ html, body { margin: 0; padding: 0; background: var(--fw-bg); }
 .fc-platform-name { color: var(--platform-color, var(--fw-muted)); font-size: 12px; font-weight: 500; }
 .fc-action-label {
   font-size: 12px; font-weight: 600;
-  text-transform: none; letter-spacing: 0.08em;
+  text-transform: none; letter-spacing: var(--fw-track-label);
   padding: 2px 7px; border-radius: 0;
 }
 .fc-action-label.flagged   { background: var(--fw-amber-soft); color: var(--fw-amber); }
-.fc-action-label.blocked   { background: var(--fw-purple-soft); color: var(--fw-purple); }
+.fc-action-label.blocked   { background: var(--fw-noise-soft); color: var(--fw-noise); }
 .fc-action-label.hidden    { background: var(--fw-red-soft);   color: var(--fw-red); }
 .fc-action-label.manual    { background: var(--fw-teal-soft);  color: var(--fw-teal); }
 .fc-action-label.rewritten { background: var(--fw-amber-soft); color: var(--fw-amber); }
@@ -879,7 +886,7 @@ html, body { margin: 0; padding: 0; background: var(--fw-bg); }
 /* Action buttons */
 .fc-action-btn {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 7px 12px;
+  padding: 7px 12px; min-height: 32px;
   font-size: 12px; font-weight: 500;
   background: transparent; border: 1px solid transparent;
   color: var(--fw-text-secondary);
@@ -907,12 +914,17 @@ html, body { margin: 0; padding: 0; background: var(--fw-bg); }
    the "forensic detail" action. Mirrors the approved calm-feed mockup. */
 /* Drawer wrapper: always mounted, height-collapsed when closed. Avoids
    mount/unmount scroll jumps — the card's height stays stable until the user
-   explicitly opens the drawer, then it transitions smoothly. */
-.fc-drawer-wrap { overflow: hidden; max-height: 0; opacity: 0; transition: max-height 0.2s ease-out, opacity 0.15s ease-out; }
-.fc-drawer-wrap.open { max-height: 2000px; opacity: 1; transition: max-height 0.3s ease-in, opacity 0.15s ease-in; }
-.fc-drawer { margin-top: 9px; }
+   explicitly opens the drawer, then it eases to the height its content has and
+   follows the content if that changes (a max-height needs a ceiling, and the
+   ease then runs against the ceiling, not the content). The gap above the body
+   sits inside the clipped child: on the child itself the closed track would
+   keep it open. */
+.fc-drawer-wrap { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows .2s var(--fw-ease), opacity .15s ease; }
+.fc-drawer-wrap.open { grid-template-rows: 1fr; opacity: 1; }
+.fc-drawer-wrap > * { min-height: 0; overflow: hidden; }
 .feed-card.in-group .fc-drawer { margin-left: 44px; }
 .fc-drawer-body {
+  margin-top: 9px;
   border: 1px solid var(--fw-border); border-radius: var(--fw-radius-md);
   background: var(--fw-bg); padding: 11px 13px;
 }
@@ -1067,15 +1079,15 @@ html, body { margin: 0; padding: 0; background: var(--fw-bg); }
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
-  gap: 18px;
-  margin-top: 22px;
+  gap: 16px;
+  margin-top: 0;
 }
 .stats-card {
   grid-column: span 6;
   background: var(--fw-card);
   border: 1px solid var(--fw-border);
   border-radius: var(--fw-radius-lg);
-  padding: 20px;
+  padding: 24px;
 }
 .stats-card.full { grid-column: span 12; }
 
@@ -1090,22 +1102,22 @@ html, body { margin: 0; padding: 0; background: var(--fw-bg); }
   .stats-grid > .stats-card { grid-column: span 12; }
 }
 .stats-card.third { grid-column: span 4; }
+/* Four number tiles share one row (row 19, 12 Oct 2026); two a row under 980px. */
+.stats-card.quarter { grid-column: span 3; }
+@media (max-width: 980px) { .stats-grid > .stats-card.quarter { grid-column: span 6; } }
 .stats-card h3 { margin: 0 0 4px; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
-.stats-card .stats-sub { font-size: 12px; color: var(--fw-muted); margin-bottom: 18px; }
-.stat-label  { font-size: 12px; text-transform: none; letter-spacing: 0.08em; color: var(--fw-muted); margin-top: 6px; }
+.stats-card .stats-sub { color: var(--fw-muted); margin-bottom: 18px; }
 
 /* ============================================================ usage-time-panel */
 .usage-frames { display: flex; gap: 6px; margin: 14px 0 18px; }
 
 .usage-summary {
-  display: flex; gap: 24px; flex-wrap: wrap;
-  margin-bottom: 18px; padding: 12px 14px;
-  background: var(--fw-surface);
-  border-radius: var(--fw-radius-md);
+  display: flex; gap: 32px; flex-wrap: wrap;
+  margin-bottom: 18px; padding: 12px 0;
 }
 .usage-summary-item { display: flex; flex-direction: column; }
 .usage-summary-item .v { font-family: var(--fw-font-mono); font-size: 18px; font-weight: 500; }
-.usage-summary-item .l { font-size: 12px; text-transform: none; letter-spacing: 0.08em; color: var(--fw-muted); margin-top: 2px; }
+.usage-summary-item .l { font-size: 12px; text-transform: none; letter-spacing: var(--fw-track-label); color: var(--fw-muted); margin-top: 2px; }
 
 .usage-chart {
   display: flex; align-items: flex-end; gap: 3px;
@@ -1114,19 +1126,22 @@ html, body { margin: 0; padding: 0; background: var(--fw-bg); }
   border-top: 1px solid var(--fw-border);
   border-bottom: 1px solid var(--fw-border);
 }
+/* With no bars to give it a height, the full chart box reads as a broken chart. */
+.usage-chart.usage-chart-empty { height: 64px; }
 .usage-bar { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; min-height: 4px; cursor: pointer; position: relative; }
 .usage-bar .seg { width: 100%; min-height: 2px; }
 .usage-bar .seg.pass { background: var(--fw-teal); }
 .usage-bar .seg.flagged { background: var(--fw-amber); }
-.usage-bar .seg.blocked { background: var(--fw-purple); }
-.usage-bar.idle { background: var(--fw-surface-2); }
+/* Blocked is the noise colour on every tab (row 20, 12 Oct 2026); it was the record colour here. */
+.usage-bar .seg.blocked { background: var(--fw-noise); }
+.usage-bar.idle { background: var(--fw-border-strong); }
 /* An empty slot that carries a signed gap marker: the chain's own statement
    that the recorder stopped in that window. It must read differently from
    an hour nobody browsed, and it must do so WITHOUT a tooltip, because a
    title attribute reaches a mouse on a desktop and nothing else (M247,
    closed 2026-09-18). A raised amber tick on the baseline: visible on a
    phone, present in a screenshot, and it survives printing. */
-.usage-bar.idle.gap { background: var(--fw-surface-2); }
+.usage-bar.idle.gap { background: var(--fw-border-strong); }
 .usage-bar-gap-mark { position: absolute; left: 0; right: 0; bottom: 0; height: 3px;
   background: var(--fw-amber); border-radius: 0; }
 .usage-legend .sw.usage-legend-gap { background: var(--fw-amber); height: 3px; border-radius: 0; }
@@ -1136,19 +1151,21 @@ html, body { margin: 0; padding: 0; background: var(--fw-bg); }
 /* ============================================================ forensic-entries-table */
 .entries-table-wrap { background: var(--fw-card); border: 1px solid var(--fw-border); border-radius: var(--fw-radius-lg); overflow: hidden; }
 /* The same inner room as the cards above it on the Record tab, so the headings do not sit on the border. */
-.entries-table-wrap { padding: var(--fw-s-7); }
+.entries-table-wrap { padding: 24px; }
 
 /* ============================================================ chain-anchor-grid */
 .anchor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 22px; }
 .anchor-row { display: grid; grid-template-columns: 36px 1fr 1fr; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--fw-border); }
 .anchor-row:last-child { border-bottom: 0; }
 .anchor-row .anchor-num { font-family: var(--fw-font-mono); font-size: 14px; color: var(--fw-muted); }
-.anchor-row .anchor-data .anchor-label { font-size: 12px; text-transform: none; letter-spacing: 0.08em; color: var(--fw-muted); margin-bottom: 4px; }
+.anchor-row .anchor-data .anchor-label { font-size: 12px; text-transform: none; letter-spacing: var(--fw-track-label); color: var(--fw-muted); margin-bottom: 4px; }
 .anchor-row .anchor-data .anchor-value { font-family: var(--fw-font-mono); font-size: 13px; }
 .anchor-row .anchor-explainer { font-size: 12px; color: var(--fw-text-secondary); line-height: 1.6; }
 
 /* ============================================================ export tab */
-.export-intro { margin-top: 22px; max-width: 70ch; color: var(--fw-text-secondary); font-size: 13.5px; line-height: 1.6; }
+.export-intro { margin-top: 22px; max-width: 70ch; color: var(--fw-text-secondary); font-size: 14px; line-height: 1.6; }
+/* Three sentences, three paragraphs: each is its own thought, so a line of space parts them. */
+.backup-lead > div + div { margin-top: 10px; }
 .export-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 20px; }
 .export-grid.two { grid-template-columns: repeat(2, 1fr); margin-top: 10px; }
 .export-choose { margin-top: 16px; }
@@ -1156,10 +1173,10 @@ html, body { margin: 0; padding: 0; background: var(--fw-bg); }
 .export-partial-note { margin: 12px 0 0; font-size: 12px; line-height: 1.55; color: var(--fw-muted); }
 details.export-other { margin-top: 14px; }
 /* Under the 24x24 CSS px minimum a pointer target needs (a bare summary
-   line's box is only as tall as its 12.5px text). min-height/min-width
+   line's box is only as tall as its 13px text). min-height/min-width
    alone, not a display change: <summary> renders its own disclosure
    triangle only in its default list-item box. */
-details.export-other > summary { cursor: pointer; font-size: 12.5px; color: var(--fw-text-secondary); min-height: 24px; min-width: 24px; }
+details.export-other > summary { cursor: pointer; font-size: 13px; color: var(--fw-text-secondary); min-height: 24px; min-width: 24px; }
 details.export-other > summary:hover { color: var(--fw-text); }
 details.export-other .export-grid { margin-top: 12px; }
 .export-card { background: var(--fw-card); border: 1px solid var(--fw-border); border-radius: var(--fw-radius-lg); padding: 18px; display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: border-color .15s, transform .15s; color: var(--fw-text); font-family: inherit; text-align: left; }
@@ -1171,7 +1188,7 @@ details.export-other .export-grid { margin-top: 12px; }
 .export-card-icon { width: 36px; height: 36px; border-radius: var(--fw-r-1); background: var(--fw-surface); display: grid; place-items: center; color: var(--fw-text); }
 .export-card.primary .export-card-icon { background: var(--fw-teal); color: var(--fw-on-accent); }
 .export-card h4 { margin: 0; font-size: 14px; font-weight: 600; }
-.export-card p { margin: 0; font-size: 12.5px; color: var(--fw-text-secondary); line-height: 1.5; }
+.export-card p { margin: 0; font-size: 13px; color: var(--fw-text-secondary); line-height: 1.5; }
 .export-card-pill {
   font-size: 12px; font-weight: 700; letter-spacing: 0.08em;
   padding: 2px 7px; border-radius: 0;
@@ -1190,7 +1207,13 @@ details.export-other .export-grid { margin-top: 12px; }
   padding: 22px;
   box-shadow: var(--fw-shadow-3);
 }
-.modal h2 { margin: 0 0 8px; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+/* A dialog arrives over a beat: the page behind dims and the box settles 8px into place, where a cut would drop the page
+   to 45 percent in one frame. */
+@keyframes fw-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fw-modal-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.modal-backdrop { animation: fw-fade-in .16s var(--fw-ease); }
+.modal { animation: fw-modal-in .2s var(--fw-ease); }
+.modal h2 { margin: 0 0 8px; font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
 .modal p { margin: 0 0 12px; font-size: 13px; color: var(--fw-text-secondary); line-height: 1.55; }
 .modal .pin-row { display: flex; gap: 8px; justify-content: center; margin: 18px 0; }
 .modal .pin-input {
@@ -1264,7 +1287,7 @@ details.export-other .export-grid { margin-top: 12px; }
    class names for some time (the Overview used `.ov-kpi*`, now itself gone in
    favour of the hero). Found while grep-verifying the shipped bundle, removed
    in the same pass rather than left to look load-bearing. */
-.activity-grid { gap: 28px; margin-top: 26px; }
+.activity-grid { gap: 28px; margin-top: 0; }
 .feed-controls { padding: 16px 22px; gap: 12px; }
 .feed-body { padding: 18px 22px 22px; gap: 14px; }
 .side-panel { padding: 16px 18px; }
@@ -1276,7 +1299,7 @@ details.export-other .export-grid { margin-top: 12px; }
 .dash-tabs { margin-top: 22px; padding: 5px; gap: 4px; }
 .dash-tab { padding: 9px 16px; font-size: 13px; }
 
-.btn.sm { padding: 5px 10px; font-size: 12px; }
+.btn.sm { padding: 5px 10px; font-size: 12px; min-height: 0; }
 
 /* ============================================================================
    SOCIAL-FEED REDESIGN — new classes for the recorded-feed dashboard.
@@ -1312,7 +1335,7 @@ details.export-other .export-grid { margin-top: 12px; }
   font-size: 12px; font-weight: 700; letter-spacing: 0.09em;
   text-transform: none; color: var(--fw-muted);
 }
-.pg-records-chip .pg-trust-chip-count { font-size: 14px; font-weight: 800; }
+.pg-records-chip .pg-trust-chip-count { font-size: 14px; font-weight: 700; }
 
 /* ---------------------------------------------------------------- AI-summary dashed block
    The "machine" surface. No avatar, ever — square dashed glyph, mono type,
@@ -1349,19 +1372,24 @@ details.export-other .export-grid { margin-top: 12px; }
 
 /* ---------------------------------------------------------------- reveal-toggle buttons
    "see what the child saw" / "show verbatim record" / AI-reading toggle.
-   Quiet ghost buttons under a record. */
+   Buttons without a box under a record. They have no edge, so they are drawn as links: the accent and an underline,
+   because in the colour of the sentence before them they read as part of it. */
 .fc-reveal-row { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
 .fc-reveal-btn {
   display: inline-flex; align-items: center; gap: 5px;
   background: transparent; border: 0; padding: 0;
-  font-family: inherit; font-size: 12px; color: var(--fw-text-secondary);
+  font-family: inherit; font-size: 12px; color: var(--fw-record);
+  text-decoration: underline; text-underline-offset: 3px;
   cursor: pointer;
   /* Under the 24x24 CSS px minimum a pointer target needs. */
   min-height: 24px; min-width: 24px;
 }
 .fc-reveal-btn:hover { color: var(--fw-accent); }
 .fc-reveal-btn.on { color: var(--fw-accent); font-weight: 600; }
-.fc-reveal-caret { opacity: .6; font-size: 12px; }
+/* The caret turns over when its panel opens, on the page's 120 ms clock; the looks sheet's stillness rule ends the turn at
+   once for a person who asks for less motion. */
+.fc-reveal-caret { opacity: 1; font-size: 12px; transition: transform .12s ease; }
+.fc-reveal-caret.open { transform: rotate(180deg); }
 .fc-reveal-panel {
   margin-top: 8px;
   background: var(--fw-surface);
@@ -1376,8 +1404,8 @@ details.export-other .export-grid { margin-top: 12px; }
 
 /* ---------------------------------------------------------------- "shown to the child as" rewrite block */
 .fc-shown-block {
-  background: var(--fw-surface);
-  border: 1px solid var(--fw-border);
+  background: none;
+  border: 1px solid var(--fw-line);
   border-radius: var(--fw-radius-md);
   padding: 9px 12px;
   display: flex; flex-direction: column; gap: 5px;
@@ -1419,7 +1447,7 @@ details.export-other .export-grid { margin-top: 12px; }
 .fc-platform-x         { --platform-color: var(--fw-platform-twitter); }
 .fc-platform-instagram { --platform-color: var(--fw-platform-instagram); }
 /* X / text-thread mode is compact; TikTok / IG narrow + vertical-video first. */
-.fc-platform-x .fc-original { font-size: 13.5px; }
+.fc-platform-x .fc-original { font-size: 14px; }
 .fc-platform-tiktok, .fc-platform-instagram { max-width: 520px; margin-left: auto; margin-right: auto; }
 
 /* (Removed 2026-06-28) The on-card video/media placeholder tile (.fc-video-tile +
@@ -1471,11 +1499,11 @@ details.export-other .export-grid { margin-top: 12px; }
 }
 .fx-ledger-row:last-child { border-bottom: 0; }
 .fx-ledger-row:hover { background: var(--fw-surface); }
-.fx-ledger-row.ai-row { background: color-mix(in oklch, var(--fw-surface) 50%, var(--fw-card)); }
+.fx-ledger-row.ai-row { background: color-mix(in oklab, var(--fw-surface) 50%, var(--fw-card)); }
 .fx-ledger-serial { font-family: var(--fw-font-mono); font-size: 12px; color: var(--fw-text-secondary); }
-.fx-ledger-time { font-family: var(--fw-font-mono); font-size: 12px; color: var(--fw-muted); }
+.fx-ledger-time { font-family: var(--fw-font-mono); font-size: 13px; color: var(--fw-muted); }
 .fx-ledger-gap { font-family: var(--fw-font-mono); font-size: 12px; color: var(--fw-muted); text-align: right; }
-.fx-ledger-platform { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--fw-text-secondary); }
+.fx-ledger-platform { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--fw-text-secondary); }
 .fx-ledger-platform .dot { width: 6px; height: 6px; border-radius: 0; background: var(--platform-color, var(--fw-muted)); }
 .fx-ledger-kind {
   font-family: var(--fw-font-mono); font-size: 12px; font-weight: 700;
@@ -1492,17 +1520,17 @@ details.export-other .export-grid { margin-top: 12px; }
 }
 .fx-ledger-record strong { color: var(--fw-text); }
 .fx-ledger-record.muted, .fx-ledger-record.muted strong { color: var(--fw-muted); }
-.fx-ledger-sev { display: flex; align-items: center; gap: 5px; font-family: var(--fw-font-mono); font-size: 12px; color: var(--fw-text-secondary); }
+.fx-ledger-sev { display: flex; align-items: center; gap: 5px; font-family: var(--fw-font-mono); font-size: 13px; color: var(--fw-text-secondary); }
 .fx-ledger-sev .dot { width: 7px; height: 7px; border-radius: 0; }
 .fx-ledger-verdict {
-  font-size: 12px; font-weight: 700; letter-spacing: 0.08em;
+  font-size: 12px; font-weight: 700; letter-spacing: var(--fw-track-label);
   padding: 2px 7px; border-radius: var(--fw-radius-xs); width: fit-content;
 }
 .fx-ledger-verdict.flagged   { background: var(--fw-amber-soft); color: var(--fw-amber); }
 .fx-ledger-verdict.passed    { background: var(--fw-green-soft); color: var(--fw-green); }
 .fx-ledger-verdict.rewritten { background: var(--fw-amber-soft); color: var(--fw-amber); }
 .fx-ledger-verdict.hidden    { background: var(--fw-red-soft); color: var(--fw-red); }
-.fx-ledger-verdict.blocked   { background: var(--fw-purple-soft); color: var(--fw-purple); }
+.fx-ledger-verdict.blocked   { background: var(--fw-noise-soft); color: var(--fw-noise); }
 .fx-ledger-verdict.skipped,
 .fx-ledger-verdict.cancelled { background: var(--fw-surface-2); color: var(--fw-muted); }
 /* Under the 24x24 CSS px minimum a pointer target needs; inline-flex so
@@ -1543,18 +1571,32 @@ details.export-other .export-grid { margin-top: 12px; }
 
 /* ---------------------------------------------------------------- Feed log (the first tab, 10 Oct 2026)
    Five columns a person reads at a glance: when, platform, what Feedprint did, severity, why. */
-.fl-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 4px 0 10px; }
-.fl-title { margin: 0; font-size: 18px; font-weight: 650; }
+.fl-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 4px 0 8px; }
+.fl-title { margin: 0; font-size: 18px; font-weight: 700; }
 .fl-sub { font-size: 13px; color: var(--fw-text-secondary); }
 .fl-chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 8px; }
-.fl-chips .chip b { font-weight: 650; margin-left: 4px; font-variant-numeric: tabular-nums; }
+.fl-chips .chip b { font-weight: 700; margin-left: 4px; font-variant-numeric: tabular-nums; }
 .fl-note { font-size: 12px; color: var(--fw-muted); margin: 0 0 8px; }
+/* V1, 12 Oct 2026: the filters are one bar. Each group is a joined control (shared edges, the chosen one lifted),
+   the height of every other button (.chip sets it), and the clock note takes the rest of the line, right-aligned, until the line is full. */
+.fl-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 0 0 10px; }
+.fl-bar .fl-chips { margin: 0; gap: 0; flex-wrap: wrap; }
+.fl-bar .fl-chips .chip { padding: 5px 11px; }
+.fl-bar .fl-chips .chip + .chip { margin-left: -1px; }
+/* A chip that removes a filter is not one of the joined choices, so it stands apart from the chosen period beside it. */
+.fl-bar .fl-chips .chip.active:not([aria-pressed]) { margin-left: 8px; }
+.fl-bar .fl-chips .chip.active, .fl-bar .fl-chips .chip:hover, .fl-bar .fl-chips .chip:focus-visible { position: relative; z-index: 1; }
+.fl-bar .fl-clock { margin: 0 0 0 auto; max-width: 52ch; text-align: right; }
+.fl-bar .fl-excluded { padding: 5px 11px; }
+.fl-bar .fl-excluded b { font-weight: 700; margin-left: 4px; font-variant-numeric: tabular-nums; }
+@media (max-width: 900px) { .fl-bar .fl-clock { margin-left: 0; text-align: left; } }
 .fl-row {
   display: grid;
   grid-template-columns: 64px 112px 120px 64px minmax(0, 1fr);
   gap: 12px; align-items: center;
   padding: 9px 16px; border-bottom: 1px solid var(--fw-border);
   font-size: 13px; cursor: pointer;
+  transition: background-color .12s ease, box-shadow .12s ease;
 }
 .fl-row:hover { background: var(--fw-surface); }
 .fl-row-head {
@@ -1563,30 +1605,46 @@ details.export-other .export-grid { margin-top: 12px; }
 }
 .fl-row-head:hover { background: var(--fw-surface); }
 .fl-why { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fw-text-secondary); }
+/* A log row opens, and its role and aria-expanded are all that said so. The chevron at the end of the Why cell points down
+   while it is closed and up while it is open, in the accent once open; the cell's right padding keeps the text clear of it.
+   It is drawn with two borders, not a glyph: the page's face sets the angle quotation mark at about 8 by 3px, which no one
+   sees. The translations put the stroke's middle, not its box's, on the row's middle. */
+.fl-row:not(.fl-row-head) .fl-why { position: relative; padding-right: 28px; }
+.fl-row:not(.fl-row-head) .fl-why::after {
+  content: ''; position: absolute; right: 9px; top: 50%; width: 7px; height: 7px;
+  border: solid var(--fw-muted); border-width: 0 2px 2px 0; transform: translateY(-6px) rotate(45deg);
+}
+.fl-row[aria-expanded="true"] .fl-why::after { border-color: var(--fw-record); transform: translateY(-1px) rotate(-135deg); }
 .fl-day {
-  padding: 10px 16px 6px; font-size: 12px; font-weight: 650; color: var(--fw-text-secondary);
+  padding: 10px 16px 6px; font-size: 12px; font-weight: 600; color: var(--fw-text-secondary);
   background: var(--fw-card); border-bottom: 1px solid var(--fw-border);
 }
 .fl-open { padding: 12px 16px; background: var(--fw-card); border-bottom: 1px solid var(--fw-border); font-size: 13px; line-height: 1.6; }
+/* An opened row, and the question asked inside it, settle into place over a beat, and the chevron turns with them. The
+   rows under an opened one still move in the frame it mounts: easing its height would clip the field that the
+   question focuses as it opens. */
+.fl-open, .fl-ask { animation: dash-verify-toast-in .16s var(--fw-ease); }
+.fl-row:not(.fl-row-head) .fl-why::after { transition: transform .16s var(--fw-ease), border-color .12s ease; }
 .fl-open-meta { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; color: var(--fw-muted); font-size: 12px; }
 .fl-open-block { margin-bottom: 8px; }
 .fl-open-label { color: var(--fw-muted); font-size: 12px; margin-bottom: 2px; }
-.fl-text { white-space: pre-wrap; }
+.fl-text { white-space: pre-wrap; overflow-wrap: anywhere; }
 .fl-muted { font-style: italic; color: var(--fw-muted); font-size: 12px; }
-.fl-link { color: var(--fw-teal); font-size: 12px; }
 .fl-open-actions { margin-top: 10px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 /* The Feed log is a table read across the window. Held to the shell's width it filled a third of a wide screen, so it
    reaches out from the shell's centre to the window, less 32px each side, up to 1600px; the header and the tabs stay
    where every other tab has them. Its list fills the window's height instead of a 560px box, and its rows grow with
    the room. */
+/* Held to the page's width since 12 Oct 2026 (V7): reaching out to 1600px made the Feed log the one tab that
+   stretched across a wide screen, and he read the dashboard as unframed. */
 .fl-wrap {
-  width: min(1600px, calc(100vw - 64px));
-  margin-left: calc(50% - min(800px, 50vw - 32px));
+  width: auto;
+  margin-left: 0;
   box-sizing: border-box;
 }
 .fl-body { max-height: max(560px, calc(100vh - 320px)); }
 @media (min-width: 1200px) {
-  .fl-row { grid-template-columns: 76px 140px 150px 80px minmax(0, 1fr); gap: 16px; padding: 12px 20px; font-size: 14px; }
+  .fl-row { grid-template-columns: 76px 140px 150px 80px minmax(0, 1fr); gap: 16px; padding: 12px 20px; font-size: 13px; }
   .fl-row-head { font-size: 13px; }
   .fl-day { padding-left: 20px; padding-right: 20px; font-size: 13px; }
 }
@@ -1600,10 +1658,14 @@ details.export-other .export-grid { margin-top: 12px; }
 .fx-withhold {
   font: inherit; font-size: 12px; padding: 4px 10px; border-radius: 0;
   border: 1px solid var(--fw-border); background: transparent; color: var(--fw-muted); cursor: pointer;
-  /* Under the 24x24 CSS px minimum a pointer target needs. */
-  min-height: 24px; min-width: 24px;
+  /* The height every button has; the width floor is the 24x24 CSS px minimum a pointer target needs. */
+  min-height: 32px; min-width: 24px;
 }
 .fx-withhold:hover { color: var(--fw-text); border-color: var(--fw-text); }
+/* The same control as a link, for "open the original post": its icon beside its words, in a control's colour rather
+   than the link colour, so it reads as the sibling of the buttons under it. */
+a.fx-withhold { display: inline-flex; align-items: center; box-sizing: border-box; gap: 6px; }
+.dash-root a.fx-withhold { color: var(--fw-muted); text-decoration: none; }
 /* The reason for a withhold, asked in the row (11 Oct 2026). */
 .fl-ask { margin-top: 12px; padding: 12px 0 0; border-top: 1px solid var(--fw-border); max-width: 72ch; }
 .fl-ask-label { display: block; font-size: 12px; color: var(--fw-text-secondary); line-height: 1.5; margin-bottom: 6px; }
@@ -1623,7 +1685,7 @@ details.export-other .export-grid { margin-top: 12px; }
   color: var(--fw-text-secondary);
 }
 .feed-welcome h3 { margin: 8px 0 12px; font-size: 22px; font-weight: 600; color: var(--fw-text); letter-spacing: -0.02em; }
-.feed-welcome p { font-size: 13.5px; line-height: 1.6; margin: 0 auto 10px; max-width: 50ch; }
+.feed-welcome p { font-size: 14px; line-height: 1.6; margin: 0 auto 10px; max-width: 50ch; }
 
 /* The activity layout editor's styles stood here until 2026-09-20. The editor
    itself left the product earlier and nothing in src/ sets `.editing` or draws
@@ -1766,13 +1828,12 @@ details.export-other .export-grid { margin-top: 12px; }
 .fc-tl-session { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 22px 0 20px; }
 .fc-tl-session::before, .fc-tl-session::after { content: ''; height: 1px; width: 64px; background: linear-gradient(to right, transparent, var(--fw-border-strong)); }
 .fc-tl-session::after { background: linear-gradient(to left, transparent, var(--fw-border-strong)); }
-.fc-tl-session .lbl { display: inline-flex; align-items: center; gap: 9px; font-size: 12px; font-weight: 600; letter-spacing: 0.2em; text-transform: none; color: var(--fw-text-secondary); }
-.fc-tl-session .lbl::before { content: ''; width: 6px; height: 6px; border-radius: 0; background: var(--fw-teal); }
-.fc-tl-session .lbl { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; color: var(--fw-text); }
+.fc-tl-session .lbl { display: inline-flex; align-items: center; gap: 9px; font-size: 12px; font-weight: 500; letter-spacing: var(--fw-track-label); text-transform: none; color: var(--fw-muted); }
+.fc-tl-session .lbl::before { content: ''; width: 6px; height: 6px; border-radius: 0; background: var(--fw-muted); }
 .fc-tl-session .sub { font-family: var(--fw-font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: none; color: var(--fw-muted); }
 
 /* one record = one row: [54px rail gutter] [card] */
-.fc-tl-row { display: grid; grid-template-columns: 26px minmax(0, 1fr); margin-left: -26px; }
+.fc-tl-row { display: grid; grid-template-columns: 26px minmax(0, 1fr); }
 .fc-tl-gutter { position: relative; }
 /* the continuous rail — every gutter draws it, so stacked rows form one line */
 .fc-tl-gutter::before { content: ''; position: absolute; left: 9px; top: 0; bottom: 0; width: 2px; background: var(--fw-session-rule); }
@@ -1835,15 +1896,16 @@ details.export-other .export-grid { margin-top: 12px; }
 .fc-tl-time { font-family: var(--fw-font-mono); font-size: 12px; color: var(--fw-muted); white-space: nowrap; padding-top: 4px; }
 
 /* quiet verdict — dot + label, no fill */
-.fc-timeline .fc-action-label { background: transparent; padding: 0; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; letter-spacing: 0.07em; text-transform: none; color: var(--fw-muted); }
+.fc-timeline .fc-action-label { background: transparent; padding: 0; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; letter-spacing: var(--fw-track-label); text-transform: none; color: var(--fw-muted); }
 .fc-timeline .fc-action-label::before { content: ''; width: 6px; height: 6px; border-radius: 0; background: var(--fw-muted); }
 .fc-timeline .fc-action-label.hidden::before { background: var(--fw-red); }
 .fc-timeline .fc-action-label.rewritten::before { background: var(--fw-amber); }
 .fc-timeline .fc-action-label.passed::before { background: var(--fw-green); }
-.fc-timeline .fc-action-label.blocked::before { background: var(--fw-purple); }
+.fc-timeline .fc-action-label.blocked::before { background: var(--fw-noise); }
+.fc-timeline .fc-action-label.flagged::before { background: var(--fw-amber); }
 
 /* verbatim shown large, as a calm quote */
-.fc-timeline .fc-original.fc-tl-quote { border: 0; padding: 0; white-space: normal; margin-top: 15px; font-size: 18px; line-height: 1.5; color: var(--fw-text); font-weight: 450; letter-spacing: -0.01em; }
+.fc-timeline .fc-original.fc-tl-quote { border: 0; padding: 0; white-space: normal; margin-top: 15px; font-size: 18px; line-height: 1.5; color: var(--fw-text); font-weight: 400; letter-spacing: -0.01em; }
 .fc-tl-row.sub .fc-original.fc-tl-quote { font-size: 14px; margin-top: 10px; }
 
 /* soft footer — reach (mono, quiet) + right-aligned actions */
@@ -1854,7 +1916,8 @@ details.export-other .export-grid { margin-top: 12px; }
 .fc-tl-foot .more { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 13px; padding-top: 13px; border-top: 1px solid var(--fw-session-rule); }
 .fc-tl-row.sub .fc-tl-foot .more { margin: 0 0 0 auto; padding: 0; border-top: 0; }
 .fc-timeline .fc-tl-foot .fc-action-btn { padding: 5px 9px; font-size: 12px; }
-.fc-timeline .fc-drawer { margin-top: 12px; margin-left: 0; }
+.fc-timeline .fc-drawer { margin-left: 0; }
+.fc-timeline .fc-drawer-body { margin-top: 12px; }
 
 /* ── alignment + media + professional action bar (2026-06-16 fixes) ── */
 /* kill the platform-shell auto-centering / max-width so every card fills its
@@ -1964,8 +2027,8 @@ details.export-other .export-grid { margin-top: 12px; }
 .dash-header-centre { justify-self: center; display: flex; align-items: center; }
 .dash-wordmark { display: flex; align-items: center; gap: 12px; }
 .dash-wordmark-mark { width: 34px; height: 34px; flex-shrink: 0; }
-.dash-wordmark-text { font-size: 15.5px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.05; color: var(--fw-text); }
-.dash-wordmark-text small { display: block; font-size: 12px; font-weight: 600; letter-spacing: 0.16em; text-transform: none; color: var(--fw-muted); margin-top: 2px; }
+.dash-wordmark-text { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.05; color: var(--fw-text); }
+.dash-wordmark-text small { display: block; font-size: 12px; font-weight: 600; letter-spacing: var(--fw-track-label); text-transform: none; color: var(--fw-muted); margin-top: 2px; }
 .dash-integrity-pill.ok { display: inline-flex; align-items: center; gap: 9px; white-space: nowrap; flex-shrink: 0; font-size: 12px; font-weight: 600; padding: 6px 14px 6px 10px; border-radius: var(--fw-radius-pill); border: 1px solid color-mix(in oklch, var(--fw-green) 38%, var(--fw-border)); background: color-mix(in oklch, var(--fw-green) 9%, var(--fw-card)); color: var(--fw-text); }
 .dash-integrity-pill .dash-ecg { width: 38px; height: 14px; }
 .dash-header-meta { justify-self: end; display: flex; align-items: center; gap: 11px; flex-wrap: nowrap; flex-shrink: 0; }
@@ -1993,9 +2056,9 @@ details.export-other .export-grid { margin-top: 12px; }
 .dash-tier-stack .dash-last-record { display: inline-flex; align-items: center; gap: 6px; font-family: var(--fw-font-mono); font-size: 12px; color: var(--fw-muted); opacity: 1; }
 .dash-tier-stack .dash-last-record svg { width: 12px; height: 12px; opacity: 0.65; }
 .pg-records-chip { border: 1px solid color-mix(in oklch, var(--fw-accent) 38%, var(--fw-border-strong)); background: color-mix(in oklch, var(--fw-accent) 10%, var(--fw-card)); padding: 4px 12px; gap: 8px; border-radius: var(--fw-radius-pill); }
-.pg-records-chip .pg-trust-chip-label { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: none; color: var(--fw-muted); }
-.pg-records-chip .pg-trust-chip-count { font-size: 14px; font-weight: 800; color: var(--fw-text); }
-.dash-tier-pill { text-transform: none; letter-spacing: 0.09em; font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 0; background: var(--fw-surface-2); color: var(--fw-text-secondary); border: 1px solid var(--fw-border); }
+.pg-records-chip .pg-trust-chip-label { font-size: 12px; font-weight: 700; letter-spacing: var(--fw-track-label); text-transform: none; color: var(--fw-muted); }
+.pg-records-chip .pg-trust-chip-count { font-size: 14px; font-weight: 700; color: var(--fw-text); }
+.dash-tier-pill { text-transform: none; letter-spacing: var(--fw-track-label); font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 0; background: var(--fw-surface-2); color: var(--fw-text-secondary); border: 1px solid var(--fw-border); }
 .dash-record-actions { display: inline-flex; align-items: center; gap: 2px; padding: 3px; background: var(--fw-card); border: 1px solid var(--fw-border); border-radius: var(--fw-r-1); }
 .dash-record-btn { font-size: 12px; font-weight: 600; padding: 5px 11px; border-radius: 0; background: transparent; border: 0; color: var(--fw-text-secondary); cursor: pointer; font-family: inherit; transition: background .12s ease, color .12s ease; }
 .dash-record-btn:hover { background: var(--fw-surface); color: var(--fw-text); }
@@ -2018,13 +2081,13 @@ details.export-other .export-grid { margin-top: 12px; }
 ::-webkit-scrollbar { width: 12px; height: 12px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: color-mix(in oklch, var(--fw-muted) 30%, transparent);
+  background: color-mix(in oklab, var(--fw-muted) 30%, transparent);
   border-radius: 0; border: 3px solid transparent; background-clip: padding-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: color-mix(in oklch, var(--fw-muted) 50%, transparent); background-clip: padding-box;
+  background: color-mix(in oklab, var(--fw-muted) 50%, transparent); background-clip: padding-box;
 }
-html { scrollbar-width: thin; scrollbar-color: color-mix(in oklch, var(--fw-muted) 32%, transparent) transparent; }
+html { scrollbar-width: thin; scrollbar-color: color-mix(in oklab, var(--fw-muted) 32%, transparent) transparent; }
 
 .stats-card,
 .side-panel,
@@ -2076,24 +2139,22 @@ html { scrollbar-width: thin; scrollbar-color: color-mix(in oklch, var(--fw-mute
    Fence: nothing here touches fc-timeline / FeedCard / virtual-scroll.
    ════════════════════════════════════════════════════════════════════ */
 .ov-shell { max-width: 1180px; margin: 0 auto; padding: 22px 24px 60px; }
-.ov-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }
+.ov-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; align-items: start; }
 .ov-card {
   background: var(--fw-card); border: 1px solid var(--fw-border);
-  border-radius: var(--fw-r-1); padding: 16px 18px; min-width: 0;
+  border-radius: var(--fw-r-1); padding: 24px; min-width: 0;
 }
 .ov-grid .span-12 { grid-column: span 12; }
-.ov-grid .span-7 { grid-column: span 7; }
 .ov-grid .span-6 { grid-column: span 6; }
-.ov-grid .span-5 { grid-column: span 5; }
 @media (max-width: 980px) {
-  .ov-grid .span-7, .ov-grid .span-6, .ov-grid .span-5 { grid-column: span 12; }
+  .ov-grid .span-6 { grid-column: span 12; }
 }
 .ov-eyebrow {
   font-size: 12px; font-weight: 600; text-transform: none;
   letter-spacing: 0.06em; color: var(--fw-muted); margin: 0 0 6px;
 }
 .ov-card-title { font-size: 14px; font-weight: 600; margin: 0 0 2px; }
-.ov-card-sub { font-size: 12px; color: var(--fw-muted); margin: 0 0 12px; }
+.ov-card-sub { font-size: .875rem; line-height: 1.45; color: var(--fw-muted); margin: 0 0 12px; }
 .ov-footnote { font-size: 12px; color: var(--fw-muted); margin-top: 10px; }
 .ov-link {
   background: none; border: none; padding: 0; font: inherit; font-size: 12px;
@@ -2103,9 +2164,15 @@ html { scrollbar-width: thin; scrollbar-color: color-mix(in oklch, var(--fw-mute
   min-height: 24px; min-width: 24px;
 }
 .ov-link:hover { text-decoration: underline; }
+/* A link inside a sentence is told from the words around it by its underline, not by colour alone (its teal and the muted
+   sentence differ by about 1.2:1). Exposure's late-night figure is also an .ov-link but is a legend, not a sentence, so it
+   keeps the underline for hover only. */
+.ov-card .ov-link {
+  text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px;
+}
 
 /* brief */
-.ov-brief { display: flex; flex-direction: column; gap: 4px; padding: 20px 22px; }
+.ov-brief { display: flex; flex-direction: column; gap: 4px; padding: 24px; }
 
 /* ── hero: the one figure the page leads with ──
    Replaced `.ov-brief-line` (a 21px sentence carrying six numbers) and the
@@ -2134,9 +2201,9 @@ html { scrollbar-width: thin; scrollbar-color: color-mix(in oklch, var(--fw-mute
 .ov-hero-trend .delta.down { color: var(--fw-teal); }
 /* a quiet day is the product working, so it gets a sentence, not a zero */
 .ov-hero-calm { align-items: baseline; }
-.ov-hero-calm-title { font-size: 27px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.25; color: var(--fw-text); }
+.ov-hero-calm-title { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.25; color: var(--fw-text); }
 .ov-hero-sub { font-size: 15px; font-weight: 500; line-height: 1.5; color: var(--fw-text); }
-.ov-hero-context { font-size: 12.5px; line-height: 1.55; color: var(--fw-muted); margin-top: 5px; }
+.ov-hero-context { font-size: 13px; line-height: 1.55; color: var(--fw-muted); margin-top: 5px; }
 @media (max-width: 620px) { .ov-hero-value { font-size: 48px; } }
 
 .ov-brief-meta { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px; }
@@ -2158,7 +2225,7 @@ button.ov-chip:hover { border-color: var(--fw-teal); }
    not lost — it moved onto the one number that leads. */
 
 /* feed balance */
-.ov-balance-headline { font-size: 24px; font-weight: 700; letter-spacing: -0.01em; margin: 2px 0 10px; }
+.ov-balance-headline { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; margin: 2px 0 10px; }
 .ov-balance-bar { display: flex; height: 18px; border-radius: var(--fw-r-1); overflow: hidden; gap: 2px; background: var(--fw-bg); }
 .ov-balance-bar .seg { height: 100%; }
 .ov-balance-bar .seg:first-child { border-radius: var(--fw-r-1) 0 0 var(--fw-r-1); }
@@ -2177,20 +2244,20 @@ button.ov-chip:hover { border-color: var(--fw-teal); }
 .ov-att-row:first-of-type { border-top: none; }
 .ov-att-sev { width: 10px; height: 10px; border-radius: 0; margin-top: 4px; flex: none; }
 .ov-att-main { flex: 1; min-width: 0; }
-.ov-att-why { font-size: 12.5px; font-weight: 600; }
+.ov-att-why { font-size: 13px; font-weight: 600; }
 .ov-att-meta { font-size: 12px; color: var(--fw-muted); margin-top: 1px; overflow-wrap: anywhere; }
 
 /* sessions strip */
 .ov-sess-axis { position: relative; height: 74px; margin: 14px 0 4px; }
 .ov-sess-track {
-  position: absolute; left: 0; right: 0; top: 18px; height: 30px;
+  position: absolute; left: 0; right: 0; top: 18px; height: 32px;
   border-radius: 0; background: var(--fw-bg); border: 1px solid var(--fw-border);
 }
 .ov-sess-block {
   /* The backstop for the same fault: whatever a block carries, it stays inside
      itself rather than drawing over the session next to it. */
   overflow: hidden;
-  position: absolute; top: 18px; height: 30px; min-width: 7px;
+  position: absolute; top: 18px; height: 32px; min-width: 7px;
   background: color-mix(in srgb, var(--fw-teal) 13%, transparent);
   border: 1px solid var(--fw-teal); border-radius: 0; cursor: pointer;
   display: flex; align-items: center; justify-content: center; gap: 3px;
@@ -2198,7 +2265,7 @@ button.ov-chip:hover { border-color: var(--fw-teal); }
 }
 .ov-sess-block:hover { background: color-mix(in srgb, var(--fw-teal) 24%, transparent); }
 .ov-sess-block .cnt { font-size: 12px; font-weight: 600; color: var(--fw-text-secondary); }
-.ov-sess-flag { position: absolute; top: 52px; width: 2px; height: 7px; background: var(--fw-amber); border-radius: 0; }
+.ov-sess-flag { position: absolute; top: 54px; width: 2px; height: 7px; background: var(--fw-amber); border-radius: 0; }
 .ov-sess-hour { position: absolute; top: 0; font-size: 12px; color: var(--fw-muted); transform: translateX(-50%); }
 /* The two at the ends sit at 0% and 100%, so half of each hung outside the card:
    12px past the right edge for 24:00, and the same to the left for 00:00, where
@@ -2210,7 +2277,7 @@ button.ov-chip:hover { border-color: var(--fw-teal); }
 
 /* served-surface rows */
 .ov-srv-row {
-  display: grid; grid-template-columns: 110px 1fr 118px; gap: 10px; align-items: center;
+  display: grid; grid-template-columns: 110px 1fr 150px; gap: 10px; align-items: center;
   padding: 6px 0; width: 100%; background: none; border: none; cursor: pointer;
   font-family: inherit; text-align: left; color: inherit; border-radius: 0;
 }
@@ -2237,7 +2304,7 @@ button.ov-chip:hover { border-color: var(--fw-teal); }
   font-size: 12px; font-weight: 700; color: var(--fw-text-secondary);
 }
 .ov-src-name {
-  flex: 1; min-width: 0; font-size: 12.5px; font-weight: 600;
+  flex: 1; min-width: 0; font-size: 13px; font-weight: 600;
   overflow: hidden; overflow-wrap: anywhere;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
 }
@@ -2250,6 +2317,11 @@ button.ov-chip:hover { border-color: var(--fw-teal); }
 .ov-src-type.group { color: var(--fw-purple); border-color: var(--fw-purple); }
 .ov-src-nums { font-size: 12px; color: var(--fw-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .ov-src-nums .fl { color: var(--fw-amber); }
+/* Each account row opens the Feed log on that account; the chevron at its end says so, drawn as the log rows' is. */
+.ov-src-row::after {
+  content: ''; flex: none; width: 7px; height: 7px; margin: 0 5px 0 6px;
+  border: solid var(--fw-record); border-width: 0 2px 2px 0; transform: rotate(-45deg);
+}
 
 /* rhythm heat */
 .ov-heat-wrap { display: grid; grid-template-columns: 44px 1fr; gap: 6px; margin-top: 10px; }
@@ -2280,12 +2352,12 @@ button.ov-chip:hover { border-color: var(--fw-teal); }
 .fb-lensbar { display: flex; gap: 6px; margin: 0 0 18px; flex-wrap: wrap; }
 .fb-lens {
   border: 1px solid var(--fw-border); background: var(--fw-card); color: var(--fw-text-secondary);
-  border-radius: 0; font-size: 12px; padding: 5px 14px; cursor: pointer; font-family: inherit;
+  border-radius: 0; font-size: 12px; padding: 5px 14px; min-height: 32px; cursor: pointer; font-family: inherit;
 }
 .fb-lens.active { border-color: var(--fw-teal); color: var(--fw-teal); font-weight: 600; }
 .fb-lens-note { font-size: 12px; color: var(--fw-muted); align-self: center; }
 
-.fb-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; margin-bottom: 14px; }
+.fb-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; margin-bottom: 16px; }
 .fb-card {
   background: var(--fw-card); border: 1px solid var(--fw-border);
   border-radius: var(--fw-r-1); padding: 16px 18px; min-width: 0;
@@ -2327,10 +2399,10 @@ button.ov-chip:hover { border-color: var(--fw-teal); }
    copies of two inline style objects (components/PatternSection.tsx). */
 .pat-section {
   background: var(--fw-card); border: 1px solid var(--fw-border);
-  border-radius: var(--fw-r-1); padding: 14px 16px; margin-bottom: 14px; min-width: 0;
+  border-radius: var(--fw-r-1); padding: 24px; margin-bottom: 16px; min-width: 0;
 }
 .pat-section-title { margin: 0 0 2px; font-size: 14px; font-weight: 600; }
-.pat-section-sub { color: var(--fw-muted); font-size: 12px; margin: 2px 0 10px; max-width: 78ch; }
+.pat-section-sub { color: var(--fw-muted); font-size: .875rem; line-height: 1.45; margin: 2px 0 10px; max-width: 78ch; }
 .pat-section-empty { padding: 10px 16px; }
 .pat-section-empty > summary {
   cursor: pointer; list-style: none; display: flex; flex-wrap: wrap;
@@ -2384,9 +2456,16 @@ table.fb-plain th {
   color: var(--fw-muted); font-weight: 600; padding: 4px 8px 4px 0; border-bottom: 1px solid var(--fw-border);
 }
 table.fb-plain td { padding: 6px 8px 6px 0; border-bottom: 1px solid var(--fw-border); vertical-align: top; }
+/* A long handle has no break, so the table grew past its card (37px at 1280, 44 in Romanian; sweep of 12 Oct 2026). */
+table.fb-plain td:not(.num) { overflow-wrap: anywhere; }
 table.fb-plain tr:last-child td { border-bottom: none; }
 table.fb-plain td.num { font-variant-numeric: tabular-nums; color: var(--fw-text-secondary); white-space: nowrap; }
-.fb-pf-dot { display: inline-block; width: 7px; height: 7px; border-radius: 0; margin-right: 6px; }
+/* Floated, the dot never takes a line of its own: a handle too long to fit beside an inline dot was moved down whole, with the dot alone above it. */
+/* The dot and the handle are two boxes of a row, so a handle that wraps continues under its own first letter and not
+   under the dot; the dot's 4px puts its middle level with the first line. */
+.fb-voice { display: flex; align-items: flex-start; gap: 6px; }
+.fb-voice-name { min-width: 0; }
+.fb-pf-dot { flex: none; width: 7px; height: 7px; border-radius: 0; margin-top: 4px; }
 
 .fb-chain-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--fw-border); }
 .fb-chain-row:last-child { border-bottom: none; }
@@ -2400,11 +2479,11 @@ table.fb-plain td.num { font-variant-numeric: tabular-nums; color: var(--fw-text
 
 .fb-caution-tag {
   display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: none;
-  color: var(--fw-amber); border: 1px solid var(--fw-amber); border-radius: 0; padding: 1px 6px;
+  color: var(--fw-muted); border: 1px dashed var(--fw-ink); border-radius: 0; padding: 1px 6px;
 }
 .fb-caution-item {
   display: flex; gap: 10px; padding: 8px 0;
-  border-top: 1px solid color-mix(in srgb, var(--fw-amber) 25%, var(--fw-border)); font-size: 12.5px;
+  border-top: 1px solid color-mix(in srgb, var(--fw-amber) 25%, var(--fw-border)); font-size: 13px;
 }
 .fb-caution-item:first-of-type { border-top: none; }
 .fb-caution-item .n {
@@ -2467,6 +2546,7 @@ table.fb-plain td.num { font-variant-numeric: tabular-nums; color: var(--fw-text
      which are longer, and the ellipsis stays as the last resort. */
   display: grid; grid-template-columns: 240px 1fr 64px;
   align-items: center; gap: 10px; padding: 4px 0; min-height: 22px;
+  transition: background-color .12s ease, box-shadow .12s ease;
 }
 /* Was nowrap + ellipsis. This row's text sits beside a swatch dot inside a
    flex box, and line-clamp only counts lines of a box's OWN content, so it
@@ -2499,9 +2579,25 @@ table.fb-plain td.num { font-variant-numeric: tabular-nums; color: var(--fw-text
   text-align: right; white-space: nowrap;
 }
 .fwc-count .fwc-pct { color: var(--fw-muted); }
-.fwc-row.drill { cursor: pointer; border-radius: 0; }
+/* A row with a note (V3, 12 Oct 2026): the count column is wide enough for "1060/1060 · 100%", and the interval
+   sits on its own line under the bar, where the track's width is, instead of running past the card. */
+.fwc-row.has-note { grid-template-columns: 240px 1fr 120px; row-gap: 2px; }
+.fwc-note {
+  grid-column: 2 / 4; font-family: var(--fw-font-mono); font-size: 12px; color: var(--fw-muted);
+  overflow-wrap: anywhere;
+}
+/* A row that opens the Timeline is pressed, so it is 32px edge to edge; the plain row's min-height counts content only. */
+.fwc-row.drill { cursor: pointer; border-radius: 0; box-sizing: border-box; min-height: 32px; }
 .fwc-row.drill:hover { background: var(--fw-card-hover); }
 .fwc-row.drill:hover .fwc-label { color: var(--fw-text); }
+/* A row that opens the Timeline shows a chevron after its label; the rows that only report stay without one, so the two
+   kinds differ at rest and not only under the pointer. */
+.fwc-row.drill .fwc-label::after {
+  content: ''; flex: none; width: 6px; height: 6px; margin: 0 4px 0 6px;
+  border: solid var(--fw-record); border-width: 0 2px 2px 0; transform: rotate(-45deg);
+}
+.fwc-row.drill .fwc-label::after { transition: border-color .12s ease; }
+.fwc-row.drill:hover .fwc-label::after, .fwc-row.drill:focus-visible .fwc-label::after { border-color: var(--fw-ink); }
 
 .fwc-stack {
   display: flex; height: 14px; border-radius: 0; overflow: hidden;
@@ -2565,15 +2661,26 @@ table.fb-plain td.num { font-variant-numeric: tabular-nums; color: var(--fw-text
 }
 .fwc-axis.per-col { justify-content: initial; gap: 2px; }
 .fwc-axis.per-col span { flex: 1; text-align: center; overflow: hidden; }
+/* A column chart with few columns (the weekly flags: often two) kept them as wide as the card, two slabs with no scale.
+   Capped, a column is at most 72px, they start at the left, and each carries its value on top (12 Oct 2026). */
+.fwc-cols.capped { gap: 10px; }
+.fwc-cols.capped .fwc-col { flex: 0 1 72px; }
+.fwc-axis.per-col.capped { gap: 10px; }
+.fwc-axis.per-col.capped span { flex: 0 1 72px; }
+.fwc-col-val { font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--fw-text); text-align: center; line-height: 1.2; }
 /* CSS tooltip layer — no JS. */
-.fwc-col[data-tip]:hover::after {
+/* Inside the plot (12 Oct 2026): 6 px over the bar while that fits under the plot's top edge, else pinned 2 px under
+   it over the bar's top; it rose above the plot and covered the card's sub-title. The tip is 23 px tall. */
+.fwc-col[data-tip]:hover::after, .fwc-col[data-tip]:focus-visible::after {
   content: attr(data-tip);
-  position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  position: absolute; bottom: min(calc(var(--bar, 0px) + 6px), calc(100% - 25px)); left: 50%; transform: translateX(-50%);
   background: var(--fwc-tip-bg); color: var(--fwc-tip-text);
   font-size: 12px; font-family: var(--fw-font-mono); white-space: pre;
   padding: 4px 8px; border-radius: 0; pointer-events: none; z-index: 10;
   box-shadow: var(--fw-shadow-3);
 }
+.fwc-col[data-tip]:first-child:hover::after, .fwc-col[data-tip]:first-child:focus-visible::after { left: 0; transform: none; }
+.fwc-col[data-tip]:last-child:hover::after, .fwc-col[data-tip]:last-child:focus-visible::after { left: auto; right: 0; transform: none; }
 
 .fwc-callout {
   border-left: 3px solid var(--fw-border-light); border-radius: 0;
@@ -2586,7 +2693,7 @@ table.fb-plain td.num { font-variant-numeric: tabular-nums; color: var(--fw-text
 .fwc-chip-stat .fwc-v { font-size: 13px; font-weight: 600; color: var(--fw-text); }
 .fwc-list-row {
   display: flex; align-items: baseline; gap: 12px;
-  padding: 7px 0; border-bottom: 1px solid var(--fw-border); font-size: 12.5px;
+  padding: 7px 0; border-bottom: 1px solid var(--fw-border); font-size: 13px;
 }
 .fwc-list-row:last-child { border-bottom: none; }
 /* Was nowrap + ellipsis. Same shape as .fwc-row .fwc-label above: this is a
@@ -2609,7 +2716,7 @@ table.fb-plain td.num { font-variant-numeric: tabular-nums; color: var(--fw-text
   border: 1px solid var(--fw-border); border-radius: var(--fw-r-1); padding: 3px;
 }
 .fwc-seg-switch button {
-  padding: 5px 12px; font-size: 12px; border: none; cursor: pointer;
+  padding: 5px 12px; font-size: 12px; border: none; cursor: pointer; white-space: nowrap;
   border-radius: 0; background: transparent; color: var(--fw-muted); font-weight: 400;
 }
 .fwc-seg-switch button.active { background: var(--fw-card); color: var(--fw-text); font-weight: 600; }
@@ -2624,7 +2731,7 @@ table.fb-plain td.num { font-variant-numeric: tabular-nums; color: var(--fw-text
   margin: 12px 16px 0;
   border: 1px solid var(--fw-amber, #d98a00);
   border-left-width: 4px;
-  border-radius: var(--fw-r-1);
+  border-radius: var(--fw-radius-lg);
   background: color-mix(in srgb, var(--fw-amber, #d98a00) 7%, transparent);
   padding: 12px 14px;
 }
@@ -2644,7 +2751,7 @@ table.fb-plain td.num { font-variant-numeric: tabular-nums; color: var(--fw-text
    a fix that existed and could not be found. */
 .dash-attention-cta {
   font-weight: 600;
-  padding: 8px 16px;
+  padding: 6px 16px;
   border-color: var(--fw-amber, #d98a00);
 }
 .dash-attention-hide {
@@ -2673,9 +2780,11 @@ table.fb-plain td.num { font-variant-numeric: tabular-nums; color: var(--fw-text
   .fx-ledger-row {
     grid-template-columns: 1fr;
   }
-  .fwc-row {
+  .fwc-row,
+  .fwc-row.has-note {
     grid-template-columns: 1fr;
   }
+  .fwc-note { grid-column: 1; text-align: right; }
   .fb-skew-row {
     grid-template-columns: 1fr;
   }
@@ -2717,7 +2826,7 @@ table.fb-plain td.num { font-variant-numeric: tabular-nums; color: var(--fw-text
 .fw-panel-failed {
   background: var(--fw-card);
   border: 1px solid var(--fw-border);
-  border-radius: var(--fw-r-1);
+  border-radius: var(--fw-radius-lg);
   padding: 20px;
   max-width: 640px;
 }

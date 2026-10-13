@@ -89,10 +89,12 @@ export function Wordmark({ size = 32, style, className }: BrandProps) {
       <g transform={`scale(${64 / FP_VIEWBOX})`}>
         <FpTile ids={ids} />
       </g>
+      {/* The name is the header's largest word and the byline can be read (the polish read of 12 Oct 2026, row 1): at
+          28 px tall they were 10.5 px and 5.25 px type, smaller than the tabs. */}
       <text
-        x="74" y="36"
+        x="74" y="31"
         fontFamily="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
-        fontSize="24" fontWeight="600" letterSpacing="-0.4"
+        fontSize="30" fontWeight="600" letterSpacing="-0.4"
         fill="currentColor"
       >
         Feedprint
@@ -100,8 +102,8 @@ export function Wordmark({ size = 32, style, className }: BrandProps) {
       <text
         x="74" y="54"
         fontFamily="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
-        fontSize="12" fontWeight="500" letterSpacing="0.2"
-        fill="currentColor" opacity="0.6"
+        fontSize="19" fontWeight="500" letterSpacing="0.2"
+        fill="currentColor" opacity="0.8"
       >
         by FeelingWise
       </text>

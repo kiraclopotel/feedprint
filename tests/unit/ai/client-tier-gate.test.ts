@@ -17,6 +17,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 import { utcDayKey, utcMonthKey, CURRENT_SETTINGS_SCHEMA_VERSION } from '../../../src/storage/settings';
 import { installChromeStorageStub } from '../../helpers/chrome-storage';
+import { readingConsentFor } from '../../helpers/reading-consent';
 
 function installStorageStub(initial: Record<string, unknown> = {}): { state: Record<string, unknown> } {
   // The shared stub (tests/helpers/chrome-storage.ts). chrome.runtime.sendMessage is installed, as this
@@ -109,6 +110,7 @@ describe('callAI — tier-aware budget gate (in-client backstop)', () => {
     installStorageStub(
       baselineSettings({
         fw_license_key: 'fw-starter-abc12345',
+        ...readingConsentFor('fw-starter-abc12345'),
         dailyCap: 2500,
         totalChecksToday: 0,
         totalTokensThisMonth: 100,

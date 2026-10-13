@@ -836,7 +836,12 @@ the recorder sends to the authority; it is not hashed again, and a checker that
 hashes the hex text rejects every token), under algorithm SHA-256
 (2.16.840.1.101.3.4.2.1); the signature and the certificate chain
 inside the token are checked; the root certificate's SHA-256 is compared with
-the authorities the recorder pins. A token that verifies under an unrecognised
+the authorities the recorder pins. Checking the chain means, for every
+certificate above the signing one: its signature over the certificate below it
+verifies, it carries BasicConstraints with cA TRUE, its KeyUsage (when present)
+includes keyCertSign, and the token's genTime falls inside its validity. A
+matching name and a verifying signature are not enough: a pinned root can sit
+above certificates that were never allowed to issue (added 13 October 2026). A token that verifies under an unrecognised
 root is reported as such and MUST NOT date anything on its own: anyone can run
 a timestamping service.
 

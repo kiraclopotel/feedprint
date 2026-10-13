@@ -14,7 +14,7 @@ import type { Mode } from '../../types/mode';
 export type JudgeFamily = 'hostile' | 'threat' | 'commercial' | 'body' | 'profanity' | 'none';
 type Target = 'present' | 'public' | 'group' | 'thing' | 'nobody';
 type Protect = 'none' | 'self-harm' | 'drug' | 'grooming' | 'sexual' | 'violence' | 'challenge';
-export type Rail = 'blocklist' | 'identity-slur' | 'coded-harm' | 'sponsored';
+export type Rail = 'blocklist' | 'identity-slur' | 'coded-harm' | 'sponsored' | 'topic';
 export type Action = 'allow' | 'context' | 'mark' | 'soften' | 'mask' | 'collapse' | 'hide' | 'record';
 /** The household's own topic rule: what to do with a topic the reader asked not to see. */
 type TopicRule = 'collapse' | 'hide';
@@ -103,6 +103,9 @@ export const POLICY_ROWS: readonly Row[] = [
   { id: 'R2', when: (r) => hasRail(r, 'identity-slur'), cells: cells('hide', 'hide', 'hide'), reason: () => 'rail:identity-slur' },
   { id: 'R3', when: (r) => hasRail(r, 'coded-harm'), cells: cells('hide', 'hide', 'hide'), reason: () => 'rail:coded-harm' },
   { id: 'R4', when: (r) => hasRail(r, 'sponsored'), cells: cells('collapse', 'collapse', 'collapse'), reason: () => 'rail:sponsored' },
+  // A topic the person switched on (src/core/policy/topic-lexicon.ts). Their choice, so it hides at every level and nothing
+  // lowers it; a written list found it and no model read the item, so the record names no technique and no severity.
+  { id: 'R5', when: (r) => hasRail(r, 'topic'), cells: cells('hide', 'hide', 'hide'), reason: () => 'rail:topic' },
   { id: 'P1', when: (r) => protect(r) === 'grooming', cells: cells('hide', 'hide', 'mark'), reason: () => 'protect:grooming' },
   { id: 'P2', when: (r) => protect(r) === 'self-harm', cells: cells('hide', 'hide', 'mark'), reason: () => 'protect:self-harm' },
   { id: 'P3', when: (r) => protect(r) === 'sexual', cells: cells('hide', 'hide', 'allow'), reason: () => 'protect:sexual' },
@@ -120,12 +123,11 @@ export const POLICY_ROWS: readonly Row[] = [
   // dev split), 28 percent of a child's feed, in a band where the judge's precision is not
   // measured: it is measured from 4 up.
   { id: 'J8', when: (r) => inBand(r, 1, 3), cells: cells('allow', 'allow', 'allow'), reason: (r) => `judge:${family(r)}:${sev(r)}` },
-  { id: 'T2', when: (r) => topic(r) === 'gambling', cells: cells('hide', 'collapse', 'allow'), reason: () => 'topic:gambling' },
   { id: 'D1', when: () => true, cells: cells('allow', 'allow', 'allow'), reason: () => 'not-charged' },
 ];
 
 /** The rails' actions are final; nothing lowers them. */
-const RAIL_ROWS = new Set(['R1', 'R2', 'R3', 'R4']);
+const RAIL_ROWS = new Set(['R1', 'R2', 'R3', 'R4', 'R5']);
 
 export function decide(reading: Reading, household: Household): Decision {
   const row = POLICY_ROWS.find((x) => x.when(reading, household));

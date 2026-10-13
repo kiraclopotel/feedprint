@@ -37,7 +37,8 @@ import { getSettings, isFeatureEnabled } from '../../storage/settings';
 import { resolveUiLanguage } from '../../i18n';
 import { MARKER_STRINGS } from '../../i18n/marker-strings';
 import { getEffectiveThreshold } from '../../core/calibration';
-import { injectIntoElement, injectCollapseOrHide, injectAdHide, injectHardHide, markOnlyElement } from '../injector';
+import { injectIntoElement, injectCollapseOrHide, injectAdHide, injectHardHide, markOnlyElement, offerRewriteBehindMark } from '../injector';
+import { opensOnOriginal } from '../markers/entry-view';
 import { videoWordsOf, kindOnVideo, rewriteOnVideo, markCaptionYellow } from './video-feed-words';
 import type { DecisionAction } from '../../types/forensic';
 import { countHiddenFor } from '../engagement/mark-hidden';
@@ -90,6 +91,7 @@ export interface ResultApplyDeps {
  */
 const SKIP_RECORD_REASONS: ReadonlySet<string> = new Set([
   'pre-llm-free-tier-no-ai',
+  'pre-llm-level-reads-nothing',
   'pre-llm-too-short',
   'pre-llm-non-substantive',
   'pre-llm-cap-exhausted',
@@ -127,8 +129,10 @@ export function createResultApplier(deps: ResultApplyDeps) {
       && techniques.every((t) => t.technique === 'profanity');
   }
 
+  // 'offered' and 'offered-unwritable' are the Open level's: the page keeps the author's words behind a red dot and the calm
+  // version is a tap away (injector.ts offerRewriteBehindMark); the second could not write it in place.
   type RewriteProtectionTerminal =
-    'released' | 'released-unapplied' | 'committed' | 'retained' | 'skipped' | 'marked';
+    'released' | 'released-unapplied' | 'committed' | 'retained' | 'skipped' | 'marked' | 'offered' | 'offered-unwritable';
 
   /**
    * Apply a verified rewrite, or convert a Child failure into a confirmed safe
@@ -157,6 +161,17 @@ export function createResultApplier(deps: ResultApplyDeps) {
       return video.caption ? 'marked' : 'released-unapplied';
     }
     const target = video ? video.caption : el;
+    // Open (adult) with the mark shown: the author's own words stay on the page behind a red dot, and the calm version is
+    // the dot's second tap. A swear mask is not an offer (its stars are the first view at every level), and a video item
+    // has its own caption rule above.
+    if (!video && !isMask && opensOnOriginal(settings.mode, showMarkers)
+      && rewriteChangesText(neutralized.rewrittenText, post.text)) {
+      const offered = offerRewriteBehindMark(el, neutralized, post.text, lang);
+      if (offered) {
+        settleProtection(post, { record: 'verdict', reason: 'rewrite-offered' });
+        return offered;
+      }
+    }
     let rewriteApplied = false;
     if (onVideo !== 'skip' && target) {
       try {
@@ -312,7 +327,7 @@ export function createResultApplier(deps: ResultApplyDeps) {
     // First-encounter measurement: a stored late verdict reached its
     // re-encounter — the recovery event the 2026-07-02 rule wants counted.
     bumpCounter('firstEncounterRecovered');
-    const carried = { detectionMode: late.detectionMode, aiMeta: late.aiMeta };
+    const carried = { detectionMode: late.detectionMode, aiMeta: late.aiMeta, ...(late.rewriteWhy ? { rewriteWhy: late.rewriteWhy } : {}) };
     const result: PipelineResult = late.kind === 'neutralize'
       ? { action: 'neutralize', neutralized: late.neutralized, ...carried }
       : { action: late.kind, analysis: late.analysis, ...carried };
@@ -381,6 +396,12 @@ export function createResultApplier(deps: ResultApplyDeps) {
     const showMarkers = isFeatureEnabled(settings, 'show-reframe-markers', post.platform);
     const lang = resolveUiLanguage(settings.uiLanguage);
     const video = videoWordsOf(el);
+    // The "seen a lot" count is not a flag: its pill goes after the text (or the video's caption) at every level, and
+    // it never yellows the caption or skips a video.
+    if (analysis.primaryTechnique === 'repeat-exposure' && analysis.exposure) {
+      markOnlyElement(video?.caption ?? el, analysis, showMarkers, post.text, lang);
+      return 'mark';
+    }
     if (!video) {
       markOnlyElement(el, analysis, showMarkers, post.text, lang);
       return 'mark';
@@ -644,13 +665,18 @@ export function createResultApplier(deps: ResultApplyDeps) {
         const heldByCover = terminal === 'retained';
         const appliedOnPage: DecisionAction = terminal === 'committed' || terminal === 'skipped'
           ? 'hide'
-          : terminal === 'marked' || heldByCover ? 'mark' : rewriteLanded ? 'soften' : 'allow';
+          : terminal === 'marked' || terminal === 'offered' || terminal === 'offered-unwritable' || heldByCover
+            ? 'mark' : rewriteLanded ? 'soften' : 'allow';
         // Skipped and marked are outcomes chosen for the video, not a rewrite that failed; and a skip that
         // did not land never tried a rewrite.
         const skipTried = !!videoWordsOf(el) && settings.mode === 'child';
+        // An offered rewrite was written and is behind the dot, not on the page: the record says so ('offered'), with no
+        // neutralizedText below (that field is what the reader was shown instead). One that could not be written in place
+        // is a rewrite that did not land.
         const rewriteOnPage = terminal === 'skipped' || terminal === 'marked' || (heldByCover && skipTried)
           ? { attempted: false, outcome: 'off' }
-          : rewriteStage(rewriteLanded, writerOfRewrite(neutralized, post.text));
+          : terminal === 'offered' ? { attempted: true, outcome: 'offered' }
+            : rewriteStage(rewriteLanded, writerOfRewrite(neutralized, post.text), terminal === 'released-unapplied' ? (rewriteChangesText(neutralized.rewrittenText, post.text) ? 'not-written' : 'unchanged') : undefined);
 
         // Store verdict in session cache so subsequent re-detections of this
         // post.id (Twitter virtualizer remount, SPA back-navigation re-mount)
@@ -797,7 +823,7 @@ export function createResultApplier(deps: ResultApplyDeps) {
         const verification = verifyAnchorMatch(computeAnchorKey(post), post, post.domRef);
         if (verification !== 'match') {
           // Confirmed flag, node gone — store for act-on-re-encounter.
-          storeLateVerdict(post, { kind: 'mark', analysis, detectionMode: result.detectionMode, aiMeta: result.aiMeta });
+          storeLateVerdict(post, { kind: 'mark', analysis, detectionMode: result.detectionMode, aiMeta: result.aiMeta, ...(result.rewriteWhy ? { rewriteWhy: result.rewriteWhy } : {}) });
           const cancelVerdict = cancelVerdictFor(verification);
           if (cancelVerdict !== null && shouldLogCancelForensic(forensicDedupKey(post))) {
             await emitCancelLog(post, cancelVerdict, analysis, result.aiMeta);
@@ -867,7 +893,7 @@ export function createResultApplier(deps: ResultApplyDeps) {
                       landed: skipNotLanded ? false : undefined,
                       mask: blanketProfanitySoften(settings, post.platform),
                       rewrite: result.detectionMode === 'combined-detect-neutralize'
-                        ? { attempted: true, outcome: 'failed' }
+                        ? rewriteStage(false, null, result.rewriteWhy)
                         : { attempted: false, outcome: 'off' },
                       // A Child video skipped in place of a mark is the video rule's choice, not a failure.
                       videoRule: shownOnPage === 'hide' ? 'skipped' : undefined,
@@ -1633,6 +1659,9 @@ export function createResultApplier(deps: ResultApplyDeps) {
           // so a re-served advert still counts.
           day: new Date().toISOString().slice(0, 10),
           textHash: post.text ? creativeHash(post.text) : undefined,
+          // Only a sighting from the recommended feed is counted, and the profile keeps the day the notice spoke.
+          surface: post.feedSource,
+          noticed: result.action === 'mark' && result.analysis?.primaryTechnique === 'repeat-exposure',
         },
       });
     }

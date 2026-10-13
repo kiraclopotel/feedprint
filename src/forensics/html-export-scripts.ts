@@ -11,6 +11,14 @@
 import type { ExportI18nStrings } from '../types/export-strings';
 import { VERIFIER_CORE_FNS_SOURCE } from './verifier-core-source';
 
+// One colour per platform and one per level, shared by the scripts that draw them. The card chip, the platform tab and the platform
+// bars were three different colours for the same platform (X was near-black on the tab, blue on the card and teal in the chart), and
+// a level was drawn in one amber on a bar and a teal that a score of 3 or 4 (Medium in the legend) did not get on a card.
+const PLATFORM_COLORS = "{twitter:'#1da1f2',facebook:'#4267b2',youtube:'#ff0000',tiktok:'#0f8f98',instagram:'#e1306c'}";
+const LEVEL_HIGH = '#e53935';
+const LEVEL_MID = '#c97a12';
+const LEVEL_LOW = '#4fb3a9';
+
 export const ANCHOR_CHECK_SCRIPT = `(function(){
   var data=window.__FW_EXPORT__;
   if(!data||!data.anchors||!data.anchors.length) return;
@@ -239,6 +247,8 @@ export const KEY_GENESIS_SCRIPT = `(function(){
 export const COMPLETENESS_SCRIPT = `(function(){
   ${VERIFIER_CORE_FNS_SOURCE}
   var host=document.getElementById('fw-completeness');
+  var nfCount;try{nfCount=new Intl.NumberFormat((window.__FW_EXPORT__||{}).locale||'en');}catch(e){nfCount=null;}
+  function fmtCount(n){return nfCount&&typeof n==='number'&&isFinite(n)?nfCount.format(n):''+n;}
   var data=window.__FW_EXPORT__;
   if(!host||!data||!data.records) return;
   function el(tag,cls,children){
@@ -269,32 +279,32 @@ export const COMPLETENESS_SCRIPT = `(function(){
     var manyRuns=coverage.present>0&&coverage.runs>1;
     if(manyRuns){
       cov.appendChild(el('p','',[i18n.completenessRuns
-        .replace('{r}',String(coverage.runs))
-        .replace('{n}',String(coverage.present))]));
+        .replace('{r}',fmtCount(coverage.runs))
+        .replace('{n}',fmtCount(coverage.present))]));
     }else if(coverage.present>0){
       cov.appendChild(el('p','',[i18n.completenessRun
-        .replace('{a}',String(coverage.firstPosition))
-        .replace('{b}',String(coverage.lastPosition))
-        .replace('{n}',String(coverage.present))]));
+        .replace('{a}',fmtCount(coverage.firstPosition))
+        .replace('{b}',fmtCount(coverage.lastPosition))
+        .replace('{n}',fmtCount(coverage.present))]));
     }
     var complete=true;
     if(coverage.missingBefore>0){
       complete=false;
-      cov.appendChild(el('p','',[i18n.completenessMissingBefore.replace('{n}',String(coverage.missingBefore))]));
+      cov.appendChild(el('p','',[i18n.completenessMissingBefore.replace('{n}',fmtCount(coverage.missingBefore))]));
     }
     if(coverage.gapsInside>0){
       complete=false;
-      cov.appendChild(el('p','',[i18n.completenessGaps.replace('{n}',String(coverage.gapsInside))]));
+      cov.appendChild(el('p','',[i18n.completenessGaps.replace('{n}',fmtCount(coverage.gapsInside))]));
     }
     if(anchorInfo.notInFile>0){
       complete=false;
-      cov.appendChild(el('p','fw-completeness-hit',[i18n.completenessAnchorMissing.replace('{n}',String(anchorInfo.notInFile))]));
+      cov.appendChild(el('p','fw-completeness-hit',[i18n.completenessAnchorMissing.replace('{n}',fmtCount(anchorInfo.notInFile))]));
     }
     if(anchorInfo.beyondTail>0){
       complete=false;
       cov.appendChild(el('p','fw-completeness-hit',[i18n.completenessAnchorBeyond
-        .replace('{p}',String(anchorInfo.beyondPosition))
-        .replace('{n}',String(anchorInfo.beyondTail))]));
+        .replace('{p}',fmtCount(anchorInfo.beyondPosition))
+        .replace('{n}',fmtCount(anchorInfo.beyondTail))]));
     }
     if(anchorInfo.checked>0&&anchorInfo.notInFile===0&&anchorInfo.beyondTail===0){
       cov.appendChild(el('p','',[i18n.completenessAnchorHolds]));
@@ -311,11 +321,11 @@ export const COMPLETENESS_SCRIPT = `(function(){
     }
     if(sel&&typeof sel.totalSource==='number'&&typeof sel.included==='number'&&sel.totalSource>sel.included){
       cov.appendChild(el('p','',[i18n.completenessFiltered
-        .replace('{n}',String(sel.totalSource-sel.included))
-        .replace('{m}',String(sel.totalSource))]));
+        .replace('{n}',fmtCount(sel.totalSource-sel.included))
+        .replace('{m}',fmtCount(sel.totalSource))]));
     }
     if(manualCount>0){
-      cov.appendChild(el('p','fw-completeness-hit',[i18n.completenessManual.replace('{n}',String(manualCount))]));
+      cov.appendChild(el('p','fw-completeness-hit',[i18n.completenessManual.replace('{n}',fmtCount(manualCount))]));
     }
     if(complete&&coverage.present>0) cov.appendChild(el('p','',[manyRuns?i18n.completenessWholeRuns:i18n.completenessWhole]));
     if(anchorInfo.checked>0||coverage.present>0){
@@ -336,8 +346,8 @@ export const COMPLETENESS_SCRIPT = `(function(){
         for(var si=0;si<stampRuns.length;si++){
           var sr=stampRuns[si];
           stampHost.appendChild(el('p','',[(sr.newest?i18n.completenessStampRunNewest:i18n.completenessStampRun)
-            .replace('{a}',String(sr.first)).replace('{b}',String(sr.last))
-            .replace('{n}',String(sr.stamped)).replace('{m}',String(sr.records))
+            .replace('{a}',fmtCount(sr.first)).replace('{b}',fmtCount(sr.last))
+            .replace('{n}',fmtCount(sr.stamped)).replace('{m}',fmtCount(sr.records))
             .replace('{t}',sr.newest||'')]));
         }
       });
@@ -346,6 +356,10 @@ export const COMPLETENESS_SCRIPT = `(function(){
 
 export const VERIFIER_SCRIPT_TEMPLATE = `(function(){
   ${VERIFIER_CORE_FNS_SOURCE}
+  // The name a reader knows for a platform, as the cards, the tabs and the bars say it; an id this page has no name for stays as it is.
+  var nfCount;try{nfCount=new Intl.NumberFormat((window.__FW_EXPORT__||{}).locale||'en');}catch(e){nfCount=null;}
+  function fmtCount(n){return nfCount&&typeof n==='number'&&isFinite(n)?nfCount.format(n):''+n;}
+  var PN={twitter:'X',facebook:'Facebook',youtube:'YouTube',tiktok:'TikTok',instagram:'Instagram'};
   function el(tag,attrs,children){
     var e=document.createElement(tag);
     if(attrs)for(var k in attrs){if(k==='class')e.className=attrs[k];else e.setAttribute(k,attrs[k]);}
@@ -524,26 +538,26 @@ export const VERIFIER_SCRIPT_TEMPLATE = `(function(){
     }
     var withheldNote=function(){
       if(withheldCount===0) return;
-      summary.appendChild(el('p',null,[FIXED.chainWithheld.replace('{n}',String(withheldCount))]));
-      if(withheldUnchecked>0)summary.appendChild(el('p',null,[FIXED.chainWithheldUnchecked.replace('{u}',String(withheldUnchecked))]));
+      summary.appendChild(el('p',null,[FIXED.chainWithheld.replace('{n}',fmtCount(withheldCount))]));
+      if(withheldUnchecked>0)summary.appendChild(el('p',null,[FIXED.chainWithheldUnchecked.replace('{u}',fmtCount(withheldUnchecked))]));
     };
     if(state==='verified'){
-      summary.appendChild(el('h2',null,[sel&&chain.outside>0?FIXED.chainVerifiedSelection.replace('{x}',String(sel.included)).replace('{y}',String(sel.totalSource)):FIXED.chainVerified]));
+      summary.appendChild(el('h2',null,[sel&&chain.outside>0?FIXED.chainVerifiedSelection.replace('{x}',fmtCount(sel.included)).replace('{y}',fmtCount(sel.totalSource)):FIXED.chainVerified]));
       summary.appendChild(el('p',null,[FIXED.chainVerifiedBody]));
       withheldNote();
     }else if(state==='partial'){
       summary.appendChild(el('h2',null,[FIXED.chainPartial]));
       // Worst first: a signature that was run and failed is the one a reader
       // must not miss under a softer sentence about old installs.
-      if(rejectedCount>0)summary.appendChild(el('p',null,[FIXED.chainPartialRejected.replace('{n}',String(rejectedCount))]));
-      if(priorKeyCount>0)summary.appendChild(el('p',null,[FIXED.chainPartialBody.replace('{n}',String(priorKeyCount)).replace('{k}',String(Object.keys(priorKeyFps).length))]));
-      if(unsignedCount>0)summary.appendChild(el('p',null,[FIXED.chainPartialUnsigned.replace('{n}',String(unsignedCount))]));
-      if(uncheckableCount>0)summary.appendChild(el('p',null,[FIXED.chainPartialUncheckable.replace('{n}',String(uncheckableCount))]));
-      if(carriedCount>0)summary.appendChild(el('p',null,[FIXED.chainPartialCarriedKey.replace('{n}',String(carriedCount))]));
+      if(rejectedCount>0)summary.appendChild(el('p',null,[FIXED.chainPartialRejected.replace('{n}',fmtCount(rejectedCount))]));
+      if(priorKeyCount>0)summary.appendChild(el('p',null,[FIXED.chainPartialBody.replace('{n}',fmtCount(priorKeyCount)).replace('{k}',fmtCount(Object.keys(priorKeyFps).length))]));
+      if(unsignedCount>0)summary.appendChild(el('p',null,[FIXED.chainPartialUnsigned.replace('{n}',fmtCount(unsignedCount))]));
+      if(uncheckableCount>0)summary.appendChild(el('p',null,[FIXED.chainPartialUncheckable.replace('{n}',fmtCount(uncheckableCount))]));
+      if(carriedCount>0)summary.appendChild(el('p',null,[FIXED.chainPartialCarriedKey.replace('{n}',fmtCount(carriedCount))]));
       withheldNote();
     }else{
       var hdr=FIXED.chainBroken;
-      if(brokenAt>0)hdr=hdr+' '+FIXED.chainBrokenAtRecord+brokenAt;
+      if(brokenAt>0)hdr=hdr+' '+FIXED.chainBrokenAtRecord+fmtCount(brokenAt);
       summary.appendChild(el('h2',null,[hdr]));
       if(brokenReason){
         var reasonText=brokenReason==='tampered'?FIXED.failReasonTampered
@@ -572,9 +586,10 @@ export const VERIFIER_SCRIPT_TEMPLATE = `(function(){
     var RESULTS_PAGE=500,resultsDrawn=0;
     var tally={},tallyOrder=[],views=[];
     for(var ti=0;ti<perRecord.length;ti++){var tv=verdictView(perRecord[ti],i18n);views.push(tv);if(!tally[tv.label]){tally[tv.label]={n:0,icon:tv.icon,cls:tv.cls};tallyOrder.push(tv.label);}tally[tv.label].n++;}
-    var tallyEl=el('p',{'class':'fw-results-tally'},[tallyOrder.map(function(l){return tally[l].icon+tally[l].n+' '+l;}).join(' · ')]);
+    var tallyEl=el('p',{'class':'fw-results-tally'},[tallyOrder.map(function(l){return tally[l].icon+fmtCount(tally[l].n)+' '+l;}).join(' · ')]);
     resultsEl.appendChild(tallyEl);
     var resultsMore=el('button',{'class':'fw-feed-more','type':'button'},['']);
+    var resultsNote=el('p',{'class':'fw-print-note'},['']);
     function failText(pr){
       // The three reasons above are every reason verifyOne returns. The last
       // arm is the guard for a reason added later. Until 2026-09-19 it named a
@@ -601,7 +616,7 @@ export const VERIFIER_SCRIPT_TEMPLATE = `(function(){
           mrb.title=i18n.manualExplain;
           card.appendChild(mrb);
         }
-        card.appendChild(el('p',null,[i18n.perRecordPlatform+': '+r.platform+' · '+i18n.perRecordCaptured+' '+r.timestamp]));
+        card.appendChild(el('p',null,[i18n.perRecordPlatform+': '+(PN[r.platform]||r.platform)+' · '+i18n.perRecordCaptured+' '+r.timestamp]));
         if(r.redacted){card.appendChild(el('p',{'class':'fw-withheld'},[i18n.feedWithheld]));}
         else {
           // Same rule as the feed card's authorDisplay (FEED_SCRIPT): the
@@ -671,7 +686,7 @@ export const VERIFIER_SCRIPT_TEMPLATE = `(function(){
       var r=records[j],pr=perRecord[j];
       var view=views[j];
       var card=el('details',{'class':'fw-record fw-'+view.cls});
-      card.appendChild(el('summary',null,[view.icon+'#'+(typeof r.chainPosition==='number'&&r.chainPosition>=0?r.chainPosition:j+1)+': '+view.label+' · '+r.platform+' · '+r.timestamp+(pr.ok?'':' · '+failText(pr))]));
+      card.appendChild(el('summary',null,[view.icon+'#'+(typeof r.chainPosition==='number'&&r.chainPosition>=0?r.chainPosition:j+1)+': '+view.label+' · '+(PN[r.platform]||r.platform)+' · '+r.timestamp+(pr.ok?'':' · '+failText(pr))]));
       card.addEventListener('toggle',function(){ if(card.open&&!card.__fwBuilt){card.__fwBuilt=true;recordDetail(card,r,pr);} });
       return card;
     }
@@ -682,10 +697,15 @@ export const VERIFIER_SCRIPT_TEMPLATE = `(function(){
       resultsDrawn=end;
       resultsEl.insertBefore(frag,resultsMore);
       var left=records.length-resultsDrawn;
-      if(left<=0){resultsMore.remove();return;}
-      resultsMore.textContent=(i18n.feedShowMore||'Show the next {n}').replace('{n}',''+Math.min(RESULTS_PAGE,left))+' ('+(i18n.feedRemainingRecords||'{n} records not shown yet').replace('{n}',''+left)+')';
+      if(left<=0){resultsMore.remove();resultsNote.remove();return;}
+      resultsMore.textContent=(i18n.feedShowMore||'Show the next {n}').replace('{n}',fmtCount(Math.min(RESULTS_PAGE,left)))+' ('+(i18n.feedRemainingRecords||'{n} records not shown yet').replace('{n}',fmtCount(left))+')';
+      // On paper the rows of passed records are left out, so what matters is the records that did not pass and are not drawn yet:
+      // the line names how many, and is empty (hidden) when there are none.
+      var undrawnBad=0;for(var jb=resultsDrawn;jb<records.length;jb++){if(views[jb].cls!=='pass')undrawnBad++;}
+      resultsNote.textContent=undrawnBad?(i18n.feedRemainingRecords||'{n} records not shown yet').replace('{n}',fmtCount(undrawnBad)):'';
     }
     resultsEl.appendChild(resultsMore);
+    resultsEl.appendChild(resultsNote);
     resultsMore.addEventListener('click',drawResults);
     drawResults();
     // The button is a re-run from here on.
@@ -774,24 +794,27 @@ export const FEED_SCRIPT = `(function(){
   function standIn(r){var k=typeof FWN!=='undefined'?FWN.standInKey(r):null;return k?i18n[k]:null;}
   var LOCS={en:'en-US',ro:'ro-RO',es:'es-ES','pt-BR':'pt-BR'};
   var loc=LOCS[data.locale]?data.locale:'en';
+  // A count is written with its thousands separator wherever it is written, in the page's own language: the first screen
+  // already did, and the tiles and bars wrote the same number bare ('1500' beside '1,500').
+  var nfCount;try{nfCount=new Intl.NumberFormat(data.locale||'en');}catch(e){nfCount=null;}
+  function fmtCount(n){return nfCount?nfCount.format(n):''+n;}
   function el(tag,attrs,kids){
     var e=document.createElement(tag);
     if(attrs)for(var k in attrs){if(k==='class')e.className=attrs[k];else e.setAttribute(k,attrs[k]);}
     if(kids)for(var i=0;i<kids.length;i++){var c=kids[i];if(c==null)continue;e.appendChild(typeof c==='string'?document.createTextNode(c):c);}
     return e;
   }
-  function sevColor(s){return s>=8?'#e53935':s>=5?'#e0a458':(s>=1?'#4fb3a9':'#cfcfcf');}
-  // Colour keyed by the FULL technique enum (the record's t.name). The prior
-  // map used short keys ('consumer-rapid','body-comparison','parasocial') that
-  // never matched the persisted enum names → ads etc. fell back to grey.
-  var TECH={'fear-appeal':'#ef5350','anger-trigger':'#ff7043','shame-attack':'#ab47bc','false-urgency':'#ffab40','bandwagon':'#42a5f5','scapegoating':'#ec407a','fomo':'#ffa726','toxic-positivity':'#66bb6a','misleading-format':'#78909c','combined':'#5c6bc0','combined-stack':'#5c6bc0','profanity':'#ef5350','ai-content-block':'#7b1fa2','body-comparison-priming':'#26a69a','parasocial-coercion':'#7e57c2','consumer-rapid-frame':'#9ccc65','hyperreal-trauma-bait':'#8d6e63','genuine-opinion':'#90a4ae','sexual':'#c2185b','violence-graphic':'#d32f2f','self-harm':'#ff6f00','drug-promotion':'#7b1fa2','unsafe-health-experiment':'#ff8f00','extreme-toxicity':'#1565c0'};
+  function sevColor(s){return s>=6?'${LEVEL_HIGH}':s>=3?'${LEVEL_MID}':(s>=1?'${LEVEL_LOW}':'var(--line)');}
+  // One colour for a technique: the record's own. A technique used to have its own hue out of eight, and several of them were the
+  // level colours (a red next to High, an amber next to Medium), so a bar could be read as a level it was not.
+  var TECH_COLOR='var(--record)';
   // Display-only labels, served from the envelope so the export, the dashboard
   // and the Romanian build cannot disagree about what one enum is called. The
   // SIGNED record keeps the precise enum either way. This replaced a third
   // hardcoded map that said "anger bait" where the dashboard said "anger".
   var LBL=data.techLabels||{};
   function techLabel(nm){return LBL[nm]||nm;}
-  var PLAT={twitter:'#1da1f2',facebook:'#4267b2',instagram:'#e1306c',tiktok:'#69c9d0',youtube:'#ff0000'};
+  var PLAT=${PLATFORM_COLORS};
   // Q60 (W57): RO values carry full diacritics like the rest of the RO
   // export table (this renders in a court-facing document), and the
   // en/ro key parity of this inline table is locked by
@@ -896,7 +919,7 @@ export const FEED_SCRIPT = `(function(){
     var t=r.techniques||[],out=[];
     var yours=userRuleLabel(r);
     if(yours!==null){
-      out.push(el('span',{'class':'fw-tag fw-tag-rule'},[dot('#7b1fa2'),i18n.feedYourRule+': '+yours]));
+      out.push(el('span',{'class':'fw-tag fw-tag-rule'},[el('span',{'class':'fw-dot fw-dot-rule'},[]),i18n.feedYourRule+': '+yours]));
       return out;
     }
     /* A verdict one of the product's fixed gates set (overrideOrigin, wiring
@@ -919,7 +942,7 @@ export const FEED_SCRIPT = `(function(){
     if(gate){
       for(var gi=0;gi<t.length;gi++){
         var gn=t[gi].name;if(!gn||gn==='none')continue;
-        out.push(el('span',{'class':'fw-tag fw-tag-gate','title':i18n.feedGateRule},[dot(TECH[gn]||'#888'),techLabel(gn)+' · '+gate]));
+        out.push(el('span',{'class':'fw-tag fw-tag-gate','title':i18n.feedGateRule},[dot(TECH_COLOR),techLabel(gn)+' · '+gate]));
       }
       if(!out.length)out.push(el('span',{'class':'fw-tag fw-tag-gate','title':i18n.feedGateRule},[dot('#888'),gate]));
       return out;
@@ -936,9 +959,9 @@ export const FEED_SCRIPT = `(function(){
          record does not claim. Name what matched instead — that IS what the
          record holds, and it is the more useful fact anyway. */
       if(isBlock(r)){
-        out.push(el('span',attrs,[dot(TECH[nm]||'#888'),techLabel(nm)+' · '+blockReasonLabel(r)]));
+        out.push(el('span',attrs,[dot(TECH_COLOR),techLabel(nm)+' · '+blockReasonLabel(r)]));
       }else{
-        out.push(el('span',attrs,[dot(TECH[nm]||'#888'),techLabel(nm)+' ('+i18n.feedSeverityWord+' '+(t[i].severity||0)+'/10)']));
+        out.push(el('span',attrs,[dot(TECH_COLOR),techLabel(nm)+' ('+i18n.feedSeverityWord+' '+(t[i].severity||0)+'/10)']));
       }
     }
     var dv=descriptorTag(r);if(dv)out.push(dv);
@@ -1101,10 +1124,32 @@ export const FEED_SCRIPT = `(function(){
     var holder=el('div',{'class':'fw-qr-holder'},[]);
     det.appendChild(holder);
     var built=false;
-    det.addEventListener('toggle',function(){if(det.open&&!built){built=true;buildQr(holder,src);}});
+    function drawCode(){if(!built){built=true;buildQr(holder,src);}}
+    // Kept on the panel so printing can draw the code without waiting for the toggle event.
+    det.fwDrawCode=drawCode;
+    det.addEventListener('toggle',function(){if(det.open)drawCode();});
     box.appendChild(det);
     return box;
   }
+  // Paper cannot open a panel. A shut panel printed shut: no code beside the link, no criteria and AI instructions, no cautious
+  // reading. Before print the panels that carry evidence open (the codes are drawn first, since the toggle event comes too late
+  // for the print layout), and after print each goes back as the reader had it. The list of per-record rows is not among them:
+  // the tally above it says how many there are, and the print rule leaves a passed row out unless the reader opened it.
+  var shutForPrint=[];
+  window.addEventListener('beforeprint',function(){
+    var panels=document.querySelectorAll('details.fw-qr,details.fw-methodology,details.fw-mth-prompt,details.fw-interpretation,details.fw-orig-details');
+    for(var i=0;i<panels.length;i++){
+      var d=panels[i];
+      if(d.open)continue;
+      if(d.fwDrawCode)d.fwDrawCode();
+      d.open=true;
+      shutForPrint.push(d);
+    }
+  });
+  window.addEventListener('afterprint',function(){
+    for(var i=0;i<shutForPrint.length;i++)shutForPrint[i].open=false;
+    shutForPrint=[];
+  });
   // ── popularity over time ──
   // The same post recorded on different sessions accrues multiple records
   // (the dedup gate is session-scoped), each with its own timestamp + metrics.
@@ -1137,20 +1182,21 @@ export const FEED_SCRIPT = `(function(){
   }
   function miniSparkline(values){
     var w=120,h=28,pad=3,NS='http://www.w3.org/2000/svg';
-    var max=Math.max.apply(null,values),min=Math.min.apply(null,values),range=(max-min)||1;
+    // From zero, not from the lowest value: a rise of 63 percent and one of 476 percent drew the same 22 px.
+    var max=Math.max.apply(null,values)||1;
     var stepX=(w-pad*2)/(values.length-1);
-    function xy(v,i){return [pad+i*stepX,h-pad-((v-min)/range)*(h-pad*2)];}
+    function xy(v,i){return [pad+i*stepX,h-pad-(v/max)*(h-pad*2)];}
     var svg=document.createElementNS(NS,'svg');
     svg.setAttribute('width',''+w);svg.setAttribute('height',''+h);
     svg.setAttribute('viewBox','0 0 '+w+' '+h);svg.setAttribute('role','img');svg.setAttribute('class','fw-spark');
     var pl=document.createElementNS(NS,'polyline');
     pl.setAttribute('points',values.map(function(v,i){return xy(v,i).join(',');}).join(' '));
-    pl.setAttribute('fill','none');pl.setAttribute('stroke','#0288a3');pl.setAttribute('stroke-width','1.5');
+    pl.setAttribute('fill','none');pl.setAttribute('stroke','var(--record)');pl.setAttribute('stroke-width','1.5');
     pl.setAttribute('stroke-linejoin','round');pl.setAttribute('stroke-linecap','round');
     svg.appendChild(pl);
     values.forEach(function(v,i){
       var p=xy(v,i),c=document.createElementNS(NS,'circle');
-      c.setAttribute('cx',''+p[0]);c.setAttribute('cy',''+p[1]);c.setAttribute('r','2');c.setAttribute('fill','#0288a3');
+      c.setAttribute('cx',''+p[0]);c.setAttribute('cy',''+p[1]);c.setAttribute('r','2');c.setAttribute('fill','var(--record)');
       svg.appendChild(c);
     });
     return svg;
@@ -1362,29 +1408,31 @@ export const FEED_SCRIPT = `(function(){
   root.appendChild(el('div',{'class':'fw-feed-opinion-head'},[i18n.feedOpinionHeader]));
   root.appendChild(el('p',{'class':'fw-feed-intro fw-feed-opinion-note'},[i18n.feedOpinionNote]));
   root.appendChild(el('div',{'class':'fw-glance'},[
-    el('div',{'class':'fw-stat'},[el('b',null,[''+nPost]),el('span',null,[i18n.feedPosts])]),
-    el('div',{'class':'fw-stat'},[el('b',null,[''+nComment]),el('span',null,[i18n.feedComments])]),
-    el('div',{'class':'fw-stat'},[el('b',null,[''+nReply]),el('span',null,[i18n.feedReplies])]),
-    el('div',{'class':'fw-stat'},[el('b',null,[''+nFlag]),el('span',null,[i18n.feedFlagged])]),
+    el('div',{'class':'fw-stat'},[el('b',null,[fmtCount(nPost)]),el('span',null,[i18n.feedPosts])]),
+    el('div',{'class':'fw-stat'},[el('b',null,[fmtCount(nComment)]),el('span',null,[i18n.feedComments])]),
+    el('div',{'class':'fw-stat'},[el('b',null,[fmtCount(nReply)]),el('span',null,[i18n.feedReplies])]),
+    el('div',{'class':'fw-stat'},[el('b',null,[fmtCount(nFlag)]),el('span',null,[i18n.feedFlagged])]),
     /* Rendered only when the blocker actually fired, so exports from installs
        with no blocklist do not carry an empty tile. */
-    nBlock>0?el('div',{'class':'fw-stat'},[el('b',null,[''+nBlock]),el('span',null,[i18n.feedBlockedCount])]):null
+    nBlock>0?el('div',{'class':'fw-stat'},[el('b',null,[fmtCount(nBlock)]),el('span',null,[i18n.feedBlockedCount])]):null
   ]));
   if(nBlock>0)root.appendChild(el('p',{'class':'fw-feed-intro'},[i18n.feedBlockedNote]));
   /* Named rather than dropped: the file holds these records and a reader can
      see them in the list below, so the page says how many there are and why
      they are not in the count above. */
   if(nFlagImage>0)root.appendChild(el('p',{'class':'fw-feed-intro'},[
-    (i18n.feedFlaggedImagesNote||'{n} image records are flagged in this file and are not counted above.').replace('{n}',''+nFlagImage)
+    (i18n.feedFlaggedImagesNote||'{n} image records are flagged in this file and are not counted above.').replace('{n}',fmtCount(nFlagImage))
   ]));
   function barRow(label,color,count,total){
-    var pct=total>0?Math.round(count/total*100):0;
+    var pct=total>0?(count>0?Math.max(1,Math.round(count/total*100)):0):0;
     return el('div',{'class':'fw-barrow'},[
       el('span',{'class':'fw-barlabel'},[color?dot(color):null,label]),
       el('div',{'class':'fw-bartrack'},[el('div',{'class':'fw-barfill','style':'width:'+pct+'%;background:'+(color||'#888')})]),
-      el('span',{'class':'fw-barnum'},[''+count])
+      el('span',{'class':'fw-barnum'},[fmtCount(count)])
     ]);
   }
+  /* One stated whole under each list of bars: what the widest bar is a share of. */
+  function wholeNote(tpl,n){if(!(n>0))return document.createDocumentFragment();return el('p',{'class':'fw-bar-whole'},[tpl.replace('{n}',fmtCount(n))]);}
   if(nFlag>0){
     /* The bands are named with the numbers that define them, the same labels
        the level filter uses, so a reader can see that the bar and the filter
@@ -1393,22 +1441,24 @@ export const FEED_SCRIPT = `(function(){
        three bars that never reach the end of the track and never say why. */
     var nLevelled=sevHi+sevMid+sevLo;
     root.appendChild(el('div',{'class':'fw-barlist'},[
-      barRow(i18n.exposureSevHigh||i18n.feedSevHigh,'#e53935',sevHi,nLevelled),
-      barRow(i18n.exposureSevMid||i18n.feedSevMid,'#e0a458',sevMid,nLevelled),
-      barRow(i18n.exposureSevLow||i18n.feedSevLow,'#4fb3a9',sevLo,nLevelled)
+      barRow(i18n.exposureSevHigh||i18n.feedSevHigh,'${LEVEL_HIGH}',sevHi,nLevelled),
+      barRow(i18n.exposureSevMid||i18n.feedSevMid,'${LEVEL_MID}',sevMid,nLevelled),
+      barRow(i18n.exposureSevLow||i18n.feedSevLow,'${LEVEL_LOW}',sevLo,nLevelled)
     ]));
+    root.appendChild(wholeNote(i18n.barWholeLevelled,nLevelled));
     /* Named, never folded into a band: a rule match and a hand-typed entry are
        in the flagged tile above because the file acted on them, and neither was
        read by a model, so neither has a level to be in. */
     if(nNoLevel>0)root.appendChild(el('p',{'class':'fw-feed-intro fw-feed-nolevel-note'},[
-      (i18n.feedNoLevelNote||'{n} of these carry no level: a rule matched them, or they were typed in by hand, and no model read them.').replace('{n}',''+nNoLevel)
+      (i18n.feedNoLevelNote||'{n} of these carry no level: a rule matched them, or they were typed in by hand, and no model read them.').replace('{n}',fmtCount(nNoLevel))
     ]));
     var techArr=Object.keys(techCount).map(function(k){return {name:k,n:techCount[k]};}).sort(function(a,b){return b.n-a.n;});
     if(techArr.length){
       root.appendChild(el('h3',null,[i18n.feedTechniquesHeader]));
-      var maxN=techArr[0].n,tl=el('div',{'class':'fw-barlist'},[]);
-      techArr.slice(0,8).forEach(function(t){tl.appendChild(barRow(techLabel(t.name),TECH[t.name]||'#888',t.n,maxN));});
+      var tl=el('div',{'class':'fw-barlist'},[]);
+      techArr.slice(0,8).forEach(function(t){tl.appendChild(barRow(techLabel(t.name),TECH_COLOR,t.n,nFlag));});
       root.appendChild(tl);
+      root.appendChild(wholeNote(i18n.barWholeFlagged,nFlag));
     }
   }
   // ── per-account block ──
@@ -1585,7 +1635,7 @@ export const FEED_SCRIPT = `(function(){
       });
       node.appendChild(ml);
     }
-    if(r.textCapture==='cut'){node.appendChild(el('div',{'class':'fw-text-capture'},[i18n.feedTextCaptureCut.replace('{n}',String(r.originalLength||0))]));}
+    if(r.textCapture==='cut'){node.appendChild(el('div',{'class':'fw-text-capture'},[i18n.feedTextCaptureCut.replace('{n}',fmtCount(r.originalLength||0))]));}
     else if(r.textCapture==='folded'){node.appendChild(el('div',{'class':'fw-text-capture'},[i18n.feedTextCaptureFolded]));}
     // The recorder saw a name beside this item and refused it. The reading
     // view says so under the item, in the same place as the text-capture
@@ -1757,14 +1807,18 @@ export const FEED_SCRIPT = `(function(){
   for(var si=0;si<topLevel.length;si++){cum+=subtreeSize(topLevel[si],sizeSeen);sizes.push(cum);}
   var totalShown=cum;
   var more=el('button',{'class':'fw-feed-more','type':'button'},['']);
+  // The button is hidden on paper. This line stands where it is, in the file's own words for what is left, so a reader of the
+  // paper is told that later records are not on it. It is hidden on screen (the button says it there).
+  var moreNote=el('p',{'class':'fw-print-note'},['']);
+  function recordsLeftNow(){return totalShown-(rendered>0?sizes[rendered-1]:0);}
   function moreLabel(){
     var left=topLevel.length-rendered;
     var end=Math.min(topLevel.length,rendered+FEED_PAGE);
     var recordsNow=(sizes[end-1]||0)-(rendered>0?sizes[rendered-1]:0);
     var recordsLeft=totalShown-(rendered>0?sizes[rendered-1]:0);
-    return (i18n.feedShowMore||'Show the next {n}').replace('{n}',''+Math.min(FEED_PAGE,left))
-      +' ('+(i18n.feedRemainingRecords||'{n} records not shown yet').replace('{n}',''+recordsLeft)
-      +', '+(i18n.feedNextRecords||'{n} in the next page').replace('{n}',''+recordsNow)+')';
+    return (i18n.feedShowMore||'Show the next {n}').replace('{n}',fmtCount(Math.min(FEED_PAGE,left)))
+      +' ('+(i18n.feedRemainingRecords||'{n} records not shown yet').replace('{n}',fmtCount(recordsLeft))
+      +', '+(i18n.feedNextRecords||'{n} in the next page').replace('{n}',fmtCount(recordsNow))+')';
   }
   function renderPage(){
     var end=Math.min(topLevel.length,rendered+FEED_PAGE);
@@ -1772,9 +1826,10 @@ export const FEED_SCRIPT = `(function(){
     for(var i=rendered;i<end;i++)frag.appendChild(renderNode(topLevel[i],0));
     rendered=end;
     root.insertBefore(frag,more);
-    if(rendered>=topLevel.length){more.remove();}else{more.textContent=moreLabel();}
+    if(rendered>=topLevel.length){more.remove();moreNote.remove();}else{more.textContent=moreLabel();moreNote.textContent=(i18n.feedRemainingRecords||'{n} records not shown yet').replace('{n}',fmtCount(recordsLeftNow()));}
   }
   root.appendChild(more);
+  root.appendChild(moreNote);
   more.addEventListener('click',renderPage);
   renderPage();
   }
@@ -1816,7 +1871,7 @@ export const READING_SCRIPT = `(function(){
   function num(n){return nf?nf.format(n):String(n);}
   // Display names; the record keeps the internal id ('twitter').
   var NAMES={twitter:'X',facebook:'Facebook',youtube:'YouTube',tiktok:'TikTok',instagram:'Instagram'};
-  var COLORS={twitter:'#1a1a1a',facebook:'#4267b2',youtube:'#ff0000',tiktok:'#69c9d0',instagram:'#e1306c'};
+  var COLORS=${PLATFORM_COLORS};
   var state={platform:null,surface:null,sitting:null,seen:undefined,level:undefined,column:undefined};
   // How many sittings the file holds, over the whole file, so the select is
   // stable whatever the other filters say.
@@ -1843,6 +1898,8 @@ export const READING_SCRIPT = `(function(){
     markButtons[key||'all']=b;
     return b;
   }
+  // The group of platform buttons and the first column of the table have a name, from a string the file already carries.
+  if(i18n.perRecordPlatform)marksRoot.setAttribute('aria-label',i18n.perRecordPlatform);
   marksRoot.appendChild(mark(null,i18n.rdAll));
   for(var pi=0;pi<FWN.PLATFORM_ORDER.length;pi++){var p=FWN.PLATFORM_ORDER[pi];marksRoot.appendChild(mark(p,NAMES[p]));}
   // ── the other filters ──
@@ -1872,7 +1929,7 @@ export const READING_SCRIPT = `(function(){
   // ── the numbers ──
   var COLS=[['impressions','rdColImpressions'],['uniquePosts','rdColUnique'],['extraCopies','rdColSeenBefore'],['paidPlacements','rdColPaid'],['userHidden','rdColUserHidden'],['modelNamed','rdColModelNamed']];
   var table=el('table',{'class':'fw-numbers'},[]);
-  var thead=el('thead',null,[]),hr=el('tr',null,[el('th',null,[''])]);
+  var thead=el('thead',null,[]),hr=el('tr',null,[el('th',i18n.perRecordPlatform?{'aria-label':i18n.perRecordPlatform}:null,[''])]);
   for(var ci=0;ci<COLS.length;ci++)hr.appendChild(el('th',null,[i18n[COLS[ci][1]]]));
   thead.appendChild(hr);table.appendChild(thead);
   var tbody=el('tbody',null,[]);table.appendChild(tbody);
@@ -1886,7 +1943,7 @@ export const READING_SCRIPT = `(function(){
   var note=(rdSel&&typeof rdSel.totalSource==='number'&&rdSel.totalSource>records.length)
     ?fill(i18n.rdSelectionNote,num(records.length),num(rdSel.totalSource))
     :fill(i18n.rdWholeChain,num(records.length),'');
-  numbersRoot.appendChild(el('p',{'class':'fw-meta fw-numbers-note'},[note+' '+i18n.rdNumbersHint]));
+  numbersRoot.appendChild(el('p',{'class':'fw-meta fw-numbers-note'},[note+' ',el('span',{'class':'fw-numbers-hint'},[i18n.rdNumbersHint])]));
   // How two of the columns are counted, said under the table that prints them. The
   // dedupe key is the text's hash with no platform in it, and a text is unique on the
   // first impression of it anywhere in the file (export-numbers.ts contentIdentity,
@@ -1903,7 +1960,10 @@ export const READING_SCRIPT = `(function(){
   function numberButton(row,col){
     var platform=row.platform==='total'?null:row.platform;
     var pressed=col!=='impressions'&&state.column===col&&state.platform===platform;
-    var b=el('button',{'class':'fw-num','type':'button','aria-pressed':pressed?'true':'false','data-col':col},[num(row[col])]);
+    // 'X: Impressions 885' rather than a bare '885': the number is a button, and a screen reader says what it counts and where.
+    var colWord='';for(var cj=0;cj<COLS.length;cj++)if(COLS[cj][0]===col)colWord=i18n[COLS[cj][1]]||'';
+    var rowWord=platform?(NAMES[platform]||platform):i18n.rdTotal;
+    var b=el('button',{'class':'fw-num','type':'button','aria-pressed':pressed?'true':'false','data-col':col,'aria-label':rowWord+': '+colWord+' '+num(row[col])},[num(row[col])]);
     b.addEventListener('click',function(){
       state.platform=platform;
       state.column=(col==='impressions'||pressed)?undefined:col;
@@ -1977,6 +2037,10 @@ export const EXPOSURE_SCRIPT = `(function(){
   function techLabel(nm){return LBL[nm]||nm;}
   var LOCS={en:'en-US',ro:'ro-RO',es:'es-ES','pt-BR':'pt-BR'};
   var loc=LOCS[data.locale]?data.locale:'en';
+  // A count is written with its thousands separator wherever it is written, in the page's own language: the first screen
+  // already did, and the tiles and bars wrote the same number bare ('1500' beside '1,500').
+  var nfCount;try{nfCount=new Intl.NumberFormat(data.locale||'en');}catch(e){nfCount=null;}
+  function fmtCount(n){return nfCount?nfCount.format(n):''+n;}
   function el(tag,attrs,kids){
     var e=document.createElement(tag);
     if(attrs)for(var k in attrs){if(k==='class')e.className=attrs[k];else e.setAttribute(k,attrs[k]);}
@@ -2052,13 +2116,15 @@ export const EXPOSURE_SCRIPT = `(function(){
 
   // headline counters: total recorded items + date range
   root.appendChild(el('div',{'class':'fw-exp-glance'},[
-    el('div',{'class':'fw-exp-stat'},[el('b',null,[''+nEvents]),el('span',null,[i18n.exposureEvents])]),
+    el('div',{'class':'fw-exp-stat'},[el('b',null,[fmtCount(nEvents)]),el('span',null,[i18n.exposureEvents])]),
     el('div',{'class':'fw-exp-stat'},[el('b',null,[fmtDate(earliest)+' – '+fmtDate(latest)]),el('span',null,[i18n.exposureDateRange])])
   ]));
 
+  /* One stated whole under each list of bars: what the widest bar is a share of. */
+  function wholeNote(tpl,n){if(!(n>0))return document.createDocumentFragment();return el('p',{'class':'fw-bar-whole'},[tpl.replace('{n}',fmtCount(n))]);}
   function bar(label,color,count,total,shareWord){
-    var pct=total>0?Math.round(count/total*100):0;
-    var num=''+count+(shareWord?(' ('+pct+'% '+shareWord+')'):'');
+    var pct=total>0?(count>0?Math.max(1,Math.round(count/total*100)):0):0;
+    var num=fmtCount(count)+(shareWord?(' ('+pct+'% '+shareWord+')'):'');
     return el('div',{'class':'fw-exp-barrow'},[
       el('span',{'class':'fw-exp-barlabel'},[color?el('span',{'class':'fw-dot','style':'background:'+color}):null,label]),
       el('div',{'class':'fw-exp-bartrack'},[el('div',{'class':'fw-exp-barfill','style':'width:'+pct+'%;background:'+(color||'#888')})]),
@@ -2080,18 +2146,20 @@ export const EXPOSURE_SCRIPT = `(function(){
   if(nFlagged>0){
     root.appendChild(el('h3',null,[i18n.exposureSeverityHeader]));
     root.appendChild(el('div',{'class':'fw-exp-barlist'},[
-      levelBar(bar(i18n.exposureSevHigh,'#e53935',sevHi,sevAll,i18n.exposureShareWord),'high'),
-      levelBar(bar(i18n.exposureSevMid,'#e0a458',sevMid,sevAll,i18n.exposureShareWord),'medium'),
-      levelBar(bar(i18n.exposureSevLow,'#4fb3a9',sevLo,sevAll,i18n.exposureShareWord),'low')
+      levelBar(bar(i18n.exposureSevHigh,'${LEVEL_HIGH}',sevHi,sevAll,i18n.exposureShareWord),'high'),
+      levelBar(bar(i18n.exposureSevMid,'${LEVEL_MID}',sevMid,sevAll,i18n.exposureShareWord),'medium'),
+      levelBar(bar(i18n.exposureSevLow,'${LEVEL_LOW}',sevLo,sevAll,i18n.exposureShareWord),'low')
     ]));
+    root.appendChild(wholeNote(i18n.barWholeLevelledPeriod,sevAll));
 
     // top techniques by count — 5 most frequent
     var techArr=Object.keys(techCount).map(function(k){return {name:k,n:techCount[k]};}).sort(function(a,b){return b.n-a.n;});
     if(techArr.length){
       root.appendChild(el('h3',null,[i18n.exposureTechHeader]));
-      var maxN=techArr[0].n,tl=el('div',{'class':'fw-exp-barlist'},[]);
-      techArr.slice(0,5).forEach(function(t){tl.appendChild(bar(techLabel(t.name),'#5c6bc0',t.n,maxN,null));});
+      var tl=el('div',{'class':'fw-exp-barlist'},[]);
+      techArr.slice(0,5).forEach(function(t){tl.appendChild(bar(techLabel(t.name),'var(--record)',t.n,nFlagged,null));});
       root.appendChild(tl);
+      root.appendChild(wholeNote(i18n.barWholeFlaggedPeriod,nFlagged));
     }
   }
 
@@ -2099,10 +2167,12 @@ export const EXPOSURE_SCRIPT = `(function(){
   var platArr=Object.keys(platCount).map(function(k){return {name:k,n:platCount[k]};}).sort(function(a,b){return b.n-a.n;});
   if(platArr.length){
     root.appendChild(el('h3',null,[i18n.exposurePlatformHeader]));
-    var maxP=platArr[0].n,pl=el('div',{'class':'fw-exp-barlist'},[]);
+    var pl=el('div',{'class':'fw-exp-barlist'},[]);
     var EXP_NAMES={twitter:'X',facebook:'Facebook',youtube:'YouTube',tiktok:'TikTok',instagram:'Instagram'};
-    platArr.forEach(function(p){pl.appendChild(bar(EXP_NAMES[p.name]||p.name,'#0288a3',p.n,maxP,null));});
+    var EXP_COLORS=${PLATFORM_COLORS};
+    platArr.forEach(function(p){pl.appendChild(bar(EXP_NAMES[p.name]||p.name,EXP_COLORS[p.name]||'#888',p.n,nEvents,null));});
     root.appendChild(pl);
+    root.appendChild(wholeNote(i18n.barWholeRecordedPeriod,nEvents));
   }
 })();`;
 
@@ -2704,6 +2774,8 @@ export const CERT_SCRIPT = `(function(){
   if(sentence)head.appendChild(sentence);
   var seal=el('div','fw-cert-seal');
   var sealWord=el('div','fw-cert-word','');
+  // A long word (a report's 'as a report of x of y' or a failed check's sentence) is set smaller: at the size of VERIFIED it took three lines.
+  function setSeal(t){sealWord.textContent=t;sealWord.classList.toggle('fw-cert-long',t.length>20);}
   seal.appendChild(sealWord);
   if(i18n.certCheckedHere)seal.appendChild(el('div','fw-cert-what',i18n.certCheckedHere));
   head.appendChild(seal);
@@ -2727,9 +2799,9 @@ export const CERT_SCRIPT = `(function(){
   var STATES={'fw-pass':'ok','fw-warn':'warn','fw-fail':'fail'};
   function read(){
     var banner=status.querySelector('.fw-chain-summary');
-    if(!banner){seal.className='fw-cert-seal';sealWord.textContent=status.textContent||'';return;}
+    if(!banner){seal.className='fw-cert-seal';setSeal(status.textContent||'');return;}
     var h=banner.querySelector('h2');
-    for(var k in STATES){if(banner.classList.contains(k)){seal.className='fw-cert-seal '+STATES[k];sealWord.textContent=word(h?h.textContent:'');return;}}
+    for(var k in STATES){if(banner.classList.contains(k)){seal.className='fw-cert-seal '+STATES[k];setSeal(word(h?h.textContent:''));return;}}
   }
   if(!status||!window.crypto||!window.crypto.subtle){seal.style.display='none';return;}
   read();

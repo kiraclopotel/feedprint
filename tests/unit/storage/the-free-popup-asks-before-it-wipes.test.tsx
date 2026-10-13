@@ -25,6 +25,11 @@
 //
 // Found 2026-09-19 by a read-only scout over the Off product, verified against
 // the write path before anything moved.
+//
+// 12 Oct 2026: the prompt stayed, but the list of words, phrases and accounts left it. The prompt was the only thing that saved
+// the list, and after "Switch and reset" it was gone and nothing said so. The Leader decided the list is the person's, not the
+// level's: a level now keeps it, so only the level's switches are reset and only they make a switch ask
+// (a-level-keeps-the-persons-own-list.test.tsx). The cases below that spoke of the rules being wiped now speak of the switches.
 
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
@@ -54,19 +59,25 @@ function anInstallWithRules(): FeatureToggles {
 }
 
 describe('the free popup asks before it wipes (2026-09-19)', () => {
-  it('the preset really does throw the rules away, which is the whole reason for the prompt', () => {
-    // Stated as a measurement, not as a claim about intent. The preset is right
-    // to be a clean slate; what was missing is anybody being told.
+  it('the preset is a clean slate, and the prompt does not count the person\'s list as something it resets', () => {
+    // Stated as a measurement, not as a claim about intent. The preset hands back
+    // empty lists; the write that applies it puts the person's own list back
+    // (levelGridKeepingTheirs), so the list is never what a switch would reset.
     const before = anInstallWithRules();
     const after = applyPreset('adult').features as unknown as Record<string, { value?: { words?: string[] } }>;
     expect((before as unknown as Record<string, { value: { words: string[] } }>)['parent-blocklist'].value.words)
       .toEqual(['gateword']);
     expect(after['parent-blocklist'].value?.words, 'the preset hands back empty lists').toEqual([]);
-    expect(modeSwitchResetsToggles(before, 'adult'), 'so the switch is destructive here').toBe(true);
+    expect(modeSwitchResetsToggles(before, 'adult'), 'the list alone resets nothing').toBe(false);
+    expect(modeSwitchResetsToggles(before, 'child'), 'a different grid of switches does').toBe(true);
   });
 
-  it('a switch that would reset anything asks first', () => {
-    expect(resolveModeClick({ mode: 'teen', features: anInstallWithRules() }, 'adult')).toBe('confirm');
+  it('a switch that would undo a switch the person changed asks first; rules, hours and a break are not that', () => {
+    // Asked only when the grid differs from the level they are on (12 Oct 2026): rules, quiet hours and a break are not the
+    // level's switches, so this install moves in one tap; the same install with one of the level's switches turned off asks.
+    expect(resolveModeClick({ mode: 'teen', features: anInstallWithRules() }, 'child'), 'rules and hours alone lose nothing').toBe('apply');
+    const edited = { ...anInstallWithRules(), 'show-reframe-markers': { enabled: false } } as unknown as FeatureToggles;
+    expect(resolveModeClick({ mode: 'teen', features: edited }, 'child')).toBe('confirm');
   });
 
   it('a switch that would change nothing applies in one tap', () => {

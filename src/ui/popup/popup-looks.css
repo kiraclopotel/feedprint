@@ -49,13 +49,22 @@
   --fw-r-lg: 6px;
   --pop-r-scale: 0.4;
 }
-/* Flat: no shadow and no tint behind the header. The counting card is told apart by a bar of the accent instead. */
+/* Flat: no shadow and no tint behind the header. The counting card keeps the plain card colour: an accent bar inside its
+   left edge read as a stray line beside the figure. */
 html.fw-life-depth[data-look="b"],
 html.fw-life-depth[data-look="b"][data-theme] { --pop-elev: none; --pop-elev-cta: none; }
 html[data-look="b"] .fw-popup .pop-header { background: var(--fw-bg); }
-html[data-look="b"] .fw-popup .today-card { background: var(--fw-card); box-shadow: inset 3px 0 0 var(--fw-teal); }
+html[data-look="b"] .fw-popup .today-card { background: var(--fw-card); }
+/* The flat promise kept everywhere (the polish read of 12 Oct 2026, rows 38 to 40): the open tab cast a 3 px shadow and
+   a glow, the page pill's hover a tinted glow, and the pills were rounder than the card above them. The tab keeps its
+   edge, the pill its edge colour and 1 px lift; the pill takes the controls' corner. */
+html[data-look="b"] .fw-popup .pop-tab.active { box-shadow: none; }
+html[data-look="b"] .fw-page-btn:hover { box-shadow: none; }
+html[data-look="b"] .fw-page-btn { border-radius: var(--fw-r-md); }
 /* Numbers in the fixed-width face, the way a ledger prints them. */
 html[data-look="b"] .fw-popup .pop-hero-value { font-family: var(--fw-font-mono); letter-spacing: -0.04em; }
+/* The fixed-width face's digit has a smaller left side bearing than the sans one, so it takes back less. */
+html[data-look="b"] .fw-popup .today-card .pop-hero-value { margin-left: -2px; }
 
 /* ─── Look C, graphite: softer corners and shadows, ink for "on", a dusk blue for the count ───────────────────── */
 :root[data-look="c"]:not([data-theme="light"]) {
@@ -201,7 +210,8 @@ html[data-look="d"] .fw-popup .pop-header,
 html[data-look="e"] .fw-popup .pop-header,
 html.fw-life-depth[data-look="d"] .fw-popup .pop-header,
 html.fw-life-depth[data-look="e"] .fw-popup .pop-header {
-  background: linear-gradient(120deg,
+  /* It fades out at its lower edge as A's does, so no line runs across the window (row 3, 12 Oct 2026). */
+  background: linear-gradient(180deg, transparent 50%, var(--fw-bg) 100%), linear-gradient(120deg,
     color-mix(in oklch, var(--fw-teal) 30%, var(--fw-bg)) 0%,
     color-mix(in oklch, var(--fw-purple) 18%, var(--fw-bg)) 70%,
     var(--fw-bg) 100%);
@@ -211,20 +221,21 @@ html[data-look="d"][data-theme="light"] .fw-popup .pop-header,
 html[data-look="e"][data-theme="light"] .fw-popup .pop-header,
 html.fw-life-depth[data-look="d"][data-theme="light"] .fw-popup .pop-header,
 html.fw-life-depth[data-look="e"][data-theme="light"] .fw-popup .pop-header {
-  background: linear-gradient(120deg,
+  background: linear-gradient(180deg, transparent 50%, var(--fw-bg) 100%), linear-gradient(120deg,
     color-mix(in oklch, var(--fw-teal) 18%, var(--fw-bg)) 0%,
     color-mix(in oklch, var(--fw-purple) 12%, var(--fw-bg)) 70%,
     var(--fw-bg) 100%);
 }
 /* The count glows in the second colour; in light the glow would smudge the digits, so it is a soft halo there. */
 html[data-look="d"] .fw-popup .pop-hero-value,
-html[data-look="e"] .fw-popup .pop-hero-value { color: var(--fw-purple); text-shadow: 0 0 18px color-mix(in oklch, var(--fw-purple) 65%, transparent); }
+html[data-look="e"] .fw-popup .pop-hero-value { color: var(--fw-teal); text-shadow: 0 0 18px color-mix(in oklch, var(--fw-teal) 65%, transparent); }
 html[data-look="d"][data-theme="light"] .fw-popup .pop-hero-value,
-html[data-look="e"][data-theme="light"] .fw-popup .pop-hero-value { text-shadow: 0 0 14px color-mix(in oklch, var(--fw-purple) 25%, transparent); }
+html[data-look="e"][data-theme="light"] .fw-popup .pop-hero-value { text-shadow: 0 0 14px color-mix(in oklch, var(--fw-teal) 25%, transparent); }
 html[data-look="d"] .fw-popup .today-card,
 html[data-look="e"] .fw-popup .today-card {
   background: linear-gradient(160deg, color-mix(in oklch, var(--fw-teal) 16%, var(--fw-card)) 0%, var(--fw-card) 65%);
-  border-color: color-mix(in oklch, var(--fw-teal) 40%, var(--fw-border-light));
+  /* An edge as strong as D's other cards (row 10, 12 Oct 2026). */
+  border-color: color-mix(in oklab, var(--fw-teal) 25%, var(--fw-border));
 }
 
 /* ─── The chooser: the swatches beside the appearance heading ────────────────────────────────────────────────── */
@@ -236,7 +247,8 @@ html[data-look="e"] .fw-popup .today-card {
   background: transparent; border: 1px solid transparent; border-radius: 999px; cursor: pointer;
 }
 .fw-popup .look-btn[aria-checked="true"] { border-color: var(--fw-teal); cursor: default; }
-.fw-popup .look-btn:focus-visible { outline: 2px solid var(--fw-teal); outline-offset: 1px; }
+.fw-popup .look-btn:not([aria-checked="true"]):hover { border-color: var(--fw-border); }
+.fw-popup .look-btn:focus-visible { outline: 2px solid var(--fw-teal); outline-offset: 2px; }
 .fw-popup .look-swatch {
   width: 14px; height: 14px; border-radius: 999px; border: 1px solid var(--fw-border);
   background: linear-gradient(135deg, var(--sw-1) 0 50%, var(--sw-2) 50% 100%);

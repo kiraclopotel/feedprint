@@ -7,6 +7,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { installChromeStorageStub } from '../../helpers/chrome-storage';
+import { readingConsentFor } from '../../helpers/reading-consent';
 import { utcDayKey, utcMonthKey, CURRENT_SETTINGS_SCHEMA_VERSION } from '../../../src/storage/settings';
 
 const KEY = 'fw-starter-abc12345';
@@ -17,6 +18,7 @@ function settings(extra: Record<string, unknown> = {}): Record<string, unknown> 
     lastResetDate: utcDayKey(),
     lastResetMonth: utcMonthKey(),
     fw_license_key: KEY,
+    ...readingConsentFor(KEY),
     dailyCap: 2500,
     totalChecksToday: 0,
     totalTokensThisMonth: 0,
@@ -140,7 +142,11 @@ describe('a key the proxy refuses stops sending words', () => {
   });
 
   it('a different key is tried at once', async () => {
-    const stub = installChromeStorageStub({ initial: settings(), sendMessage: () => undefined });
+    // The go-ahead is kept per key, so the key pasted in has its own.
+    const stub = installChromeStorageStub({
+      initial: settings(readingConsentFor(KEY, 'fw-starter-zzz98765')),
+      sendMessage: () => undefined,
+    });
     fetchSpy.mockResolvedValueOnce(refused('license_expired')).mockResolvedValue(ok());
     const { callAI } = await import('../../../src/ai/client');
     await callAI('sys', 'one');

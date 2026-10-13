@@ -61,3 +61,41 @@ describe('violence-narrating video — MUST PASS (no over-block)', () => {
     });
   }
 });
+
+// A death shown or narrated as it happens (the Tester's full test, 12 Oct 2026: a Facebook video of a failed resuscitation,
+// its caption naming it, was left unmarked). Phrasings that put the death in front of the viewer hide; grief, news and
+// first-aid teaching stay.
+describe('violence-narrating video — a death as it happens', () => {
+  const hide = [
+    'Failed resuscitation: a man dies in front of the crew',
+    'Paramedics try CPR on the street, failed CPR after ten minutes',
+    'Dies on camera after the crash, shocking footage',
+    'The moment he died, caught on video',
+    'Death caught on camera at the crossing',
+    'A dying man begs for help while people film',
+    'She takes her last breath in the ambulance',
+    'Fatal stabbing at the market, footage inside',
+    'Dead body found floating near the pier, video',
+  ];
+  for (const t of hide) {
+    it(`hides: ${t.slice(0, 50)}`, () => {
+      expect(detectViolenceNarratingVideo(t).triggered).toBe(true);
+    });
+  }
+
+  const pass = [
+    'Rest in peace grandad, he died last spring and we miss him',
+    'How to do CPR: a first aid class for beginners',
+    'The patient was resuscitated at the hospital and recovered',
+    'According to police, the fatal crash happened at dawn',
+    'My phone died in the middle of the match',
+    'The battery is dying, charge it before the trip',
+    'This song is dead on arrival, honestly',
+    'Death Stranding gameplay: boss fight',
+  ];
+  for (const t of pass) {
+    it(`passes: ${t.slice(0, 50)}`, () => {
+      expect(detectViolenceNarratingVideo(t).triggered).toBe(false);
+    });
+  }
+});

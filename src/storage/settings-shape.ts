@@ -87,6 +87,7 @@ export const ALL_FEATURE_IDS: readonly FeatureId[] = [
   'media-timeout',
   'block-ads',
   'parent-blocklist',
+  'topic-gambling',
   'soften-swearing',
   'reframe-rewrites',
   'comments-to-analyze-per-video',

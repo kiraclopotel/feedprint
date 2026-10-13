@@ -40,9 +40,44 @@ const STORE_NAME = 'profiles';
  */
 export const EXPOSURE_DISTINCT_DAYS = 7;
 export const EXPOSURE_SAME_CREATIVE = 5;
+/**
+ * The notice counts the last this many days (13 Oct 2026). Before it a source seen on seven days in the whole life of
+ * the install was over the line for good; the audit's own case was 33 days in three months.
+ */
+export const EXPOSURE_WINDOW_DAYS = 30;
 
 /** Cap on tracked creatives per source. Bounds unbounded map growth. */
 const MAX_TRACKED_CREATIVES = 20;
+
+/**
+ * The surface the feed chose for the person. Only a sighting here is counted (13 Oct 2026): the notice is about
+ * being pushed, and a subscription, a profile the person opened or a thread they followed is not a push. A sighting
+ * with no surface, or an unknown one, is neither counted nor does it clear anything.
+ */
+export function isRecommendedSurface(surface: string | undefined): boolean {
+  return surface === 'for-you';
+}
+
+/**
+ * A surface the person went to: a feed they picked (following, a joined group), a profile, a thread they opened, a
+ * search, or a watch page. The record has no YouTube subscriptions page, so the watch page is the one sign on YouTube
+ * that the person went to the channel.
+ */
+export function isSoughtSurface(surface: string | undefined): boolean {
+  return surface === 'following' || surface === 'profile' || surface === 'permalink'
+    || surface === 'search' || surface === 'video';
+}
+
+function dayNumber(day: string): number {
+  return Math.floor(Date.parse(`${day}T00:00:00Z`) / 86_400_000);
+}
+
+/** The days among `days` that fall in the window ending on `today` (inclusive). */
+function daysInWindow(days: readonly string[] | undefined, today: string): string[] {
+  if (!days || days.length === 0) return [];
+  const t = dayNumber(today);
+  return days.filter((d) => t - dayNumber(d) < EXPOSURE_WINDOW_DAYS);
+}
 
 /**
  * Identity of one piece of copy, for the creative counter only.
@@ -68,8 +103,12 @@ export function creativeHash(text: string): string {
 export interface ExposurePressure {
   fired: boolean;
   reason: 'days' | 'creative' | null;
+  /** Recommended days in the window. */
   distinctDays: number;
+  /** Recommended sightings of this exact copy in the window (at most EXPOSURE_SAME_CREATIVE). */
   creativeCount: number;
+  /** The surface of the sighting that carries the notice. */
+  surface?: string;
 }
 
 /**
@@ -80,18 +119,28 @@ export interface ExposurePressure {
  * sighting is recorded by `updateAuthorProfile` after the decision, so a
  * source crossing the line is named on the sighting that crosses it, never
  * retroactively on the one that made it.
+ *
+ * Speaks only on a sighting from the recommended feed (a post met on a
+ * surface the person went to is never painted), counts the last
+ * EXPOSURE_WINDOW_DAYS days, and is quiet for a source it already spoke
+ * for today, on any tab (`lastNoticedDay`).
  */
 export function getExposurePressure(
   profile: AuthorProfile | null,
-  textHash?: string,
+  textHash: string | undefined,
+  today: string,
+  surface?: string,
 ): ExposurePressure {
-  const distinctDays = profile?.distinctDays ?? 0;
-  const creativeCount = (textHash && profile?.creatives?.[textHash]) || 0;
+  const distinctDays = daysInWindow(profile?.recDays, today).length;
+  const creativeCount = textHash ? daysInWindow(profile?.creativeDays?.[textHash], today).length : 0;
+  if (!isRecommendedSurface(surface) || profile?.lastNoticedDay === today) {
+    return { fired: false, reason: null, distinctDays, creativeCount };
+  }
   if (distinctDays >= EXPOSURE_DISTINCT_DAYS) {
-    return { fired: true, reason: 'days', distinctDays, creativeCount };
+    return { fired: true, reason: 'days', distinctDays, creativeCount, surface };
   }
   if (creativeCount >= EXPOSURE_SAME_CREATIVE) {
-    return { fired: true, reason: 'creative', distinctDays, creativeCount };
+    return { fired: true, reason: 'creative', distinctDays, creativeCount, surface };
   }
   return { fired: false, reason: null, distinctDays, creativeCount };
 }
@@ -192,29 +241,46 @@ export function applyExposureSighting(
   profile: AuthorProfile,
   day?: string,
   textHash?: string,
+  surface?: string,
 ): void {
-  // A day counts once however many posts it carried, so one long scroll
-  // through one source is one day, not fifty sightings.
-  //
-  // `>` rather than `!==`: sightings are stamped at render time so the day is
-  // monotonic in practice, and the strict comparison means an out-of-order or
-  // replayed sighting cannot inflate the count. `YYYY-MM-DD` sorts correctly.
-  if (day && (profile.lastSeenDay === undefined || day > profile.lastSeenDay)) {
-    profile.distinctDays = (profile.distinctDays ?? 0) + 1;
-    profile.lastSeenDay = day;
+  if (!day) return;
+  // The person went to this source themselves: what the feed pushed before is no longer a push at them, so the day
+  // count starts again. (The same exact post keeps its own count: that fact says nothing about the account.)
+  if (isSoughtSurface(surface)) {
+    profile.recDays = [];
+    return;
   }
+  // Only the recommended feed is counted; an unknown surface is neither.
+  if (!isRecommendedSurface(surface)) return;
+
+  // A day counts once however many posts it carried, so one long scroll through one source is one day, not fifty
+  // sightings. A set of days keeps an out-of-order or replayed sighting from inflating the count.
+  const days = daysInWindow(profile.recDays, day);
+  if (!days.includes(day)) {
+    days.push(day);
+    days.sort();
+  }
+  profile.recDays = days;
+
   if (textHash) {
-    const creatives = profile.creatives ?? {};
-    // Evict the least-seen creative once the map is full, and only when the
-    // incoming hash is genuinely new — an already-tracked creative always
-    // increments, so a long-running advert can never be evicted by churn.
-    if (creatives[textHash] === undefined
-        && Object.keys(creatives).length >= MAX_TRACKED_CREATIVES) {
-      const coldest = Object.entries(creatives).sort((a, b) => a[1] - b[1])[0];
-      if (coldest) delete creatives[coldest[0]];
+    const creativeDays = profile.creativeDays ?? {};
+    // Forget copy last seen outside the window. Then, once the map is full and the incoming copy is new, drop the
+    // least-seen one (ties: the one seen longest ago): an already-tracked creative always gets its stamp, so a
+    // long-running advert is never evicted by churn.
+    for (const [h, stamps] of Object.entries(creativeDays)) {
+      if (daysInWindow(stamps, day).length === 0) delete creativeDays[h];
     }
-    creatives[textHash] = (creatives[textHash] ?? 0) + 1;
-    profile.creatives = creatives;
+    if (creativeDays[textHash] === undefined && Object.keys(creativeDays).length >= MAX_TRACKED_CREATIVES) {
+      const coldest = Object.entries(creativeDays)
+        .sort((a, b) => a[1].length - b[1].length
+          || (a[1][a[1].length - 1] ?? '').localeCompare(b[1][b[1].length - 1] ?? ''))[0];
+      if (coldest) delete creativeDays[coldest[0]];
+    }
+    const stamps = daysInWindow(creativeDays[textHash], day);
+    stamps.push(day);
+    stamps.sort();
+    creativeDays[textHash] = stamps.slice(-EXPOSURE_SAME_CREATIVE);
+    profile.creativeDays = creativeDays;
   }
 }
 
@@ -227,6 +293,11 @@ export async function updateAuthorProfile(
   day?: string,
   /** Hash of this sighting's copy. Omitted → creative not counted. */
   textHash?: string,
+  /**
+   * Where the sighting came from, and whether the notice spoke on it (so the profile can keep the once-a-day cap
+   * for every tab). A sighting with no surface is not counted.
+   */
+  exposure?: { surface?: string; noticed?: boolean },
 ): Promise<AuthorProfile> {
   const db = await openDB();
   const now = new Date().toISOString();
@@ -261,7 +332,10 @@ export async function updateAuthorProfile(
   profile.lastSeen = now;
   profile.platform = platform;
 
-  applyExposureSighting(profile, day, textHash);
+  if (exposure?.noticed && day && (profile.lastNoticedDay === undefined || day > profile.lastNoticedDay)) {
+    profile.lastNoticedDay = day;
+  }
+  applyExposureSighting(profile, day, textHash, exposure?.surface);
 
   // Put (upsert)
   return new Promise((resolve, reject) => {

@@ -69,10 +69,10 @@ describe.each(UI_LANGUAGES)('Home at Strict, %s', (lang) => {
     expect(html).not.toContain(esc(PLAN_LINE_START[lang]));
     expect(html, 'no counters line either: Receipts hides no counters').not.toContain('pop-hero-secondary');
     // His word, 8 Oct 2026: Strict is said beside the level choice in Settings, not on Home.
-    expect(html, 'no Strict sentence on Home').not.toContain(esc(s.strictNoCallsLine));
+    for (const line of [s.strictNoKeyLine, s.strictKeyLine, s.strictNeedsAgreement]) expect(html, 'no Silent sentence on Home').not.toContain(esc(line));
   });
 
-  it('with a key held: the header chip alone says the key is saved, and the AI count is gone', () => {
+  it('with a key: the header chip alone says the key\'s state, and Home carries no AI count', () => {
     const html = home('child', PAID, lang);
     expect(html, 'no plan line under the chip').not.toContain('pop-tier');
   });

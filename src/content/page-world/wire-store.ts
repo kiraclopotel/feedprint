@@ -38,6 +38,9 @@
 // fragment cut at a "See more" or "Show more" control, when the platform's text for the
 // same item is longer and begins with that fragment. The fragment was judged as if it were
 // the whole post, so the whole text replaces it and the record is marked 'platform' too.
+// The same goes for a whole text this device recorded for the item earlier (rememberRecordedText):
+// the item drawn again with its caption folded takes the text it was recorded with, and the record
+// says 'platform', which here means: not read off this screen.
 
 import type { PostContent } from '../../types/post';
 
@@ -83,6 +86,18 @@ function prune(): void {
 }
 
 /**
+ * The longer of two texts the platform sent for one item. A continuation response often repeats an item with
+ * a shorter caption (a feed's snippet beside the item's own page), and the first one seen used to win whatever its
+ * length, which left the record with half a post marked as the platform's.
+ */
+function longerText(held: string | undefined, sent: string): string | undefined {
+  const incoming = sent.trim().length > 0 ? sent : undefined;
+  if (held === undefined) return incoming;
+  if (incoming === undefined) return held;
+  return incoming.trim().length > held.trim().length ? incoming : held;
+}
+
+/**
  * Remember what the platform said about one item. Later captures of the same
  * identity fill gaps but never clobber a value that was already real: a
  * continuation response often repeats an item with fewer fields.
@@ -95,9 +110,26 @@ export function rememberWireItem(post: PostContent): void {
     isSponsored: existing?.isSponsored === true ? true : post.is_sponsored === true ? true : existing?.isSponsored,
     mediaUrls: existing?.mediaUrls ?? post.mediaUrls,
     author: existing?.author ?? (post.author && post.author !== 'unknown' ? post.author : undefined),
-    text: existing?.text ?? (post.text.trim().length > 0 ? post.text : undefined),
+    text: longerText(existing?.text, post.text),
   };
   byIdentity.set(key, next);
+  prune();
+}
+
+/**
+ * Remember the text this device recorded for an item, so a later read of the same item that shows only a cut of it (the item
+ * at a second address, scrolled back to, drawn again with its caption folded) takes the whole text it already has. The
+ * Instagram reel of the Tester's recheck (12 Oct 2026) was recorded whole from the Reels view (272 characters) and again,
+ * cut at 37 characters, on the reel's own page, because the caption folds there and nothing carried the first text across.
+ * Only the text is kept, only for an item that is not a comment, and never a text the page itself cut; the longer of two wins.
+ */
+export function rememberRecordedText(post: PostContent): void {
+  if (post.kind === 'comment' || post.kind === 'top-comment' || post.kind === 'reply' || post.kind === 'reply-to-reply') return;
+  if (post.textCapture === 'cut') return;
+  if (post.text.trim().length === 0) return;
+  const key = wireIdentity(post.platform, post.id);
+  const existing = byIdentity.get(key);
+  byIdentity.set(key, { ...existing, text: longerText(existing?.text, post.text) });
   prune();
 }
 
@@ -178,9 +210,20 @@ export function enrichPostFromWire(post: PostContent): string[] {
   return filled;
 }
 
-/** Page-life scoped; cleared on a route change and by the tests. */
+/** Page-life scoped; emptied by the tests. */
 export function clearWireStore(): void {
   byIdentity.clear();
+}
+
+/**
+ * A route change. What the platform said about an item (its caption, its paid-placement flag, its media, its author) is
+ * keyed by the item's own number and stays true when the address moves; it used to be erased with the surface, so a
+ * caption Instagram sent while a reel was on screen was gone by the time the reader came back to it, and on Reels,
+ * where the address changes with every scroll, almost none was ever used. Only the surface the item was served on
+ * belongs to the page that is being left.
+ */
+export function clearWireSurface(): void {
+  for (const fields of byIdentity.values()) delete fields.feedSource;
 }
 
 export function _wireStoreSizeForTesting(): number {

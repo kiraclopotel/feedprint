@@ -16,6 +16,7 @@
 // vitest harness.
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { readingConsentFor } from '../../helpers/reading-consent';
 
 import {
   utcDayKey,
@@ -67,6 +68,7 @@ function baselineSettings(extra: Record<string, unknown> = {}): Record<string, u
     lastResetDate: utcDayKey(),
     lastResetMonth: utcMonthKey(),
     fw_license_key: 'fw-starter-abc12345',
+    ...readingConsentFor('fw-starter-abc12345'),
     dailyCap: 2500,
     totalChecksToday: 0,
     totalTokensThisMonth: 0,

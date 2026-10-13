@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
-// N1, 29 Sep 2026: Strict says one thing everywhere. At Strict nothing leaves the computer
-// (makesNoOutsideCall, src/types/mode.ts): no AI reading, no license check, no outside time stamp.
+// N1, 29 Sep 2026: Strict says one thing everywhere. At Strict nothing left the computer then; since 12 Oct 2026 Silent (the
+// Strict level) reads once a key is added and agreed to, and the screens that spoke as if a key did nothing there
+// (points 3 and 4 below) now show Silent as the other levels, with the setup (points 1 and 2) unchanged.
 // A fresh reader of Receipts 2.5.16 found four popup screens still speaking as if a key mattered
 // there (rc-rewalk/rw2-VERDICT.md, "Other stumbles"):
 //   1. setup step 5 at Strict said a key changes nothing, then offered "Save the key and finish";
@@ -207,38 +208,38 @@ describe.each(UI_LANGUAGES)('%s', (lang) => {
   });
 
   describe('3. Settings on the free tier sells no key', () => {
-    it('at Strict with a key the AI row says Strict', () => {
-      expect(settingsPanel('child', PAID, lang)).toContain(esc(t.featAiMasterStrictNote));
+    it('at Silent with a key the AI row is the ordinary one, with no level note', () => {
+      const html = settingsPanel('child', PAID, lang);
+      expect(html).toContain(esc(t.featAiMasterName));
+      expect(html).not.toContain(esc(t.featAiMasterOffNote));
     });
 
-    it('without a key, at Strict or Moderate, there is no AI row to explain', () => {
+    it('without a key, at Silent or Calm, there is no AI row to explain', () => {
       for (const mode of ['child', 'teen'] as const) {
         const html = settingsPanel(mode, FREE, lang);
-        expect(html).not.toContain(esc(t.featAiMasterStrictNote));
         expect(html).not.toContain(esc(t.featAiMasterName));
       }
     });
   });
 
   // His word, 8 Oct 2026: the key's state is said once, by the header chip; Home and the License tab carry no pill.
-  describe('4. Strict with a key: the license is held, not reading', () => {
-    it('the home card shows no pill and no AI call counter', () => {
-      const html = home('child', PAID, lang);
-      expect(html).not.toContain('class="pill"');
-      expect(html).not.toContain(esc(t.metaUsage(0, 2000, 0)));
-      expect(html).not.toContain(esc(t.metaMonthly(0)));
+  describe('4. Silent with a key: the license reads, like at the other levels', () => {
+    it('the home card shows no pill', () => {
+      expect(home('child', PAID, lang)).not.toContain('class="pill"');
     });
 
-    it('the License tab has no pill, and its line says the key is not checked in Strict', () => {
+    it('the License tab has no pill, and its line says the key is active', () => {
       const html = keys('child', PAID, lang);
       expect(html).not.toContain('class="key-pill');
-      expect(html).toContain(esc(t.keySubStrict));
+      expect(html).toContain(esc(t.keySubActive));
     });
 
-    it('at Moderate the counter stays, on the License tab, with no pill', () => {
-      const html = keys('teen', PAID, lang);
-      expect(html).toContain(esc(t.metaUsage(0, 2000, 0)));
-      expect(html).not.toContain('class="pill"');
+    it('at Silent as at Calm the counter is on the License tab, with no pill', () => {
+      for (const mode of ['child', 'teen'] as const) {
+        const html = keys(mode, PAID, lang);
+        expect(html).toContain(esc(t.metaUsage(0, 2000, 0)));
+        expect(html).not.toContain('class="pill"');
+      }
     });
   });
 });

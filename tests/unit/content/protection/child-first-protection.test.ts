@@ -426,7 +426,7 @@ describe('Child first protection manager', () => {
     manager.release(post);
   });
 
-  it('mounts the Romanian checking cover text once setLang(ro) is called', () => {
+  it('mounts a plain veil with the Romanian label once setLang(ro) is called', () => {
     const manager = new ChildProtectionManager<Item>();
     manager.setMode('child');
     manager.setLang('ro');
@@ -436,14 +436,14 @@ describe('Child first protection manager', () => {
 
     try {
       const overlay = target.element.querySelector('.fw-provisional-shield') as HTMLElement;
-      expect(overlay.textContent).toBe('O clipă, verificăm postarea asta…');
+      expect(overlay.textContent, 'a plain veil: no words on it while it waits').toBe('');
       expect(overlay.getAttribute('aria-label')).toBe('Se verifică…');
     } finally {
       manager.release(target.item);
     }
   });
 
-  it('defaults to the English checking cover text when setLang is never called', () => {
+  it('defaults to a plain veil with the English label when setLang is never called', () => {
     const manager = new ChildProtectionManager<Item>();
     manager.setMode('child');
     const target = item();
@@ -452,7 +452,7 @@ describe('Child first protection manager', () => {
 
     try {
       const overlay = target.element.querySelector('.fw-provisional-shield') as HTMLElement;
-      expect(overlay.textContent).toBe('One moment, checking this one…');
+      expect(overlay.textContent, 'a plain veil: no words on it while it waits').toBe('');
       expect(overlay.getAttribute('aria-label')).toBe('Checking…');
     } finally {
       manager.release(target.item);
@@ -576,11 +576,11 @@ describe('Child first protection manager', () => {
       const target = item('held-ro');
       manager.protect(target.item);
       const cover = target.element.querySelector('.fw-provisional-shield');
-      expect(cover?.textContent).toBe('O clipă, verificăm postarea asta…');
+      expect(cover?.textContent, 'a plain veil while it waits').toBe('');
 
       manager.hold(target.item);
 
-      expect(cover?.textContent).toBe('Filtrul tău Strict a sărit peste asta. Continuă să derulezi.');
+      expect(cover?.textContent).toBe('Filtrul tău Silențios a sărit peste asta. Continuă să derulezi.');
       manager.release(target.item);
     });
 

@@ -114,12 +114,12 @@ describe('screen sentences match what the code does', () => {
 
   // The read-one-item card and its sentence left Home on 9 Oct 2026 (his word).
 
-  it('the PIN sentence says the second ask is for leaving Strict', () => {
+  it('the PIN sentence says the second ask is for leaving Silent', () => {
     everyLangHas(P, 'setupPinBody', {
-      en: /leaving Strict asks for it again/,
-      es: /salir de Estricto lo vuelve a pedir/,
-      'pt-BR': /sair do Rigoroso pede o PIN de novo/,
-      ro: /ieșirea din Strict îl cere din nou/,
+      en: /leaving Silent asks for it again/,
+      es: /salir de Silencioso lo vuelve a pedir/,
+      'pt-BR': /sair do Silencioso pede o PIN de novo/,
+      ro: /ieșirea din nivelul Silențios îl cere din nou/,
     });
     noLangHas(P, 'setupPinBody', {
       en: /asked a second time before the mode itself changes/,
@@ -159,10 +159,11 @@ describe('screen sentences match what the code does', () => {
     expect((D.ro.backupHealthInstallLockedOnly as (a: string) => string)('X')).toMatch(/nicio copie nu a fost salvată cu parolă/);
   });
 
-  // B2 unit 5 (30 Sep 2026): the code leaves only at Moderate and Relaxed, and Strict sends nothing. The claim is
-  // the same in kind (the record stays here, only a code with no post text leaves) and is now said for the levels
-  // it is true at. es, pt-BR and ro say "a code that identifies the record" in place of "fingerprint".
-  it('the welcome line says the record stays on the computer and only a code leaves, and only at Moderate and Relaxed', () => {
+  // B2 unit 5 (30 Sep 2026), said again on 12 Oct 2026 (packet 33) now that Silent reads with a key: the record stays on
+  // this computer and only a code with no post text leaves, for the time stamp; Silent without a key sends nothing at
+  // all; the rephrasing the levels describe needs a key for Live Rephrase, and without one every level filters on this
+  // computer. es, pt-BR and ro say "a code that identifies the record" in place of "fingerprint".
+  it('the welcome line says the record stays on the computer, only a code leaves, Silent without a key sends nothing, and the rephrasing needs a key', () => {
     everyLangHas(P, 'setupWelcomeBody1', {
       en: /keeps that record on this computer\./,
       es: /guarda ese registro en este ordenador\./,
@@ -170,23 +171,23 @@ describe('screen sentences match what the code does', () => {
       ro: /păstrează acest registru pe acest calculator\./,
     });
     everyLangHas(P, 'setupWelcomeBody1', {
-      en: /At Moderate and Relaxed, only a fingerprint of it, with no post text, goes to independent time-stamp services/,
-      es: /En Moderado y Relajado, solo un código que identifica el registro, sin texto de publicaciones/,
-      'pt-BR': /No Moderado e no Relaxado, só um código que identifica o registro, sem texto de publicações/,
-      ro: /În Moderat și Relaxat, doar un cod care identifică registrul, fără textul postărilor/,
+      en: /Only a fingerprint of it, with no post text, goes to independent time-stamp services so the record can be dated; Silent without a key sends nothing at all\./,
+      es: /Solo un código que identifica el registro, sin texto de publicaciones, se envía a servicios de sellado de tiempo independientes para poder fechar el registro; Silencioso sin clave no envía nada en absoluto\./,
+      'pt-BR': /Só um código que identifica o registro, sem texto de publicações, vai para serviços independentes de carimbo de tempo, para que o registro possa ser datado; o Silencioso sem chave não envia nada\./,
+      ro: /Doar un cod care identifică registrul, fără textul postărilor, ajunge la servicii independente de marcare a timpului, ca registrul să poată fi datat; nivelul Silențios fără cheie nu trimite nimic deloc\./,
     });
     everyLangHas(P, 'setupWelcomeBody1', {
-      en: /Strict sends nothing\./,
-      es: /Estricto no envía nada\./,
-      'pt-BR': /O Rigoroso não envia nada\./,
-      ro: /Strict nu trimite nimic\./,
+      en: /needs a key for Live Rephrase; without one, every level filters on this computer\./,
+      es: /necesita una clave para Live Rephrase; sin ella, cada nivel filtra en este ordenador\./,
+      'pt-BR': /precisa de uma chave do Live Rephrase; sem ela, todos os níveis filtram neste computador\./,
+      ro: /are nevoie de o cheie pentru Live Rephrase; fără cheie, fiecare nivel filtrează pe acest calculator\./,
     });
-    // The old unconditional sentence, false at Strict, does not come back.
+    // The old sentences, each false now, do not come back: the time stamp as the whole story, "Silent sends nothing until".
     noLangHas(P, 'setupWelcomeBody1', {
-      en: /(^|\. )Only a fingerprint/,
-      es: /(^|\. )Solo una huella/,
-      'pt-BR': /(^|\. )Só uma impressão digital/,
-      ro: /(^|\. )Doar o amprentă/,
+      en: /so the record can be dated\./,
+      es: /para poder fechar el registro\./,
+      'pt-BR': /para que o registro possa ser datado\./,
+      ro: /ca registrul să poată fi datat\./,
     });
     noLangHas(P, 'setupWelcomeBody1', {
       en: /on this computer only/,

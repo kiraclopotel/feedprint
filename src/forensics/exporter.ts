@@ -27,6 +27,8 @@ import { buildMethodologyBlock, currentExtensionVersion } from './methodology';
 import { extensionLabel } from './extension-label';
 import { getKeyGenesis } from './key-genesis';
 import { readHealLog } from './auto-heal';
+import { readExclusions } from './author-exclusions';
+import type { ExportMetadata } from './html-export-types';
 import { attachSignedManifest } from './html-export';
 import { applyRedactions } from './redaction';
 import { buildExportProfile, profileNameSlug } from './profile';
@@ -135,7 +137,7 @@ export function applyExportGate(
  */
 function actedOnByRule(r: ForensicRecord): boolean {
   const mode = r.detectionMode ?? '';
-  return r.aiSource === 'rules' || r.aiSource === 'none' || mode.startsWith('blocklist:') || mode.startsWith('block:');
+  return r.aiSource === 'rules' || r.aiSource === 'none' || mode.startsWith('blocklist:') || mode.startsWith('topic:') || mode.startsWith('block:');
 }
 
 const NOT_A_FINDING = 'It is not a legal opinion, a complete capture record, or a determination of intent by the post author.';
@@ -301,11 +303,26 @@ export async function exportHtml(
  * document, so what a recipient organisation receives is byte-for-byte the
  * file the user could have saved and checked themselves.
  */
+/**
+ * The accounts the person set aside on this computer, for the file's "Accounts not recorded" section (his word, 12 Oct
+ * 2026). The names come from the setting and not from the chain, which carries only the count of records withheld, so the
+ * section says both. `named: false` prints the number alone, for a file that leaves the person's hands.
+ */
+async function excludedAccountsForExport(named: boolean): Promise<ExportMetadata['excludedAccounts']> {
+  const list = await readExclusions();
+  if (list.length === 0) return undefined;
+  const accounts = list
+    .map(e => ({ platform: e.platform, author: e.author, addedAt: e.addedAt }))
+    .sort((a, b) => a.platform.localeCompare(b.platform) || a.author.localeCompare(b.author));
+  return { accounts, named };
+}
+
 export async function buildHtmlExportDocument(
   records: ForensicRecord[],
   filter?: ExportFilterResult,
   locale: ExportLocale = 'en',
   precisionDisclosure?: string,
+  options: { nameExcludedAccounts?: boolean } = {},
 ): Promise<string> {
   const targetRecords = filter ? filter.included : records;
   const publicKeyJwk = await getPublicKeyJWK();
@@ -334,6 +351,7 @@ export async function buildHtmlExportDocument(
     healLog: await readHealLog(),
     signingKeyCreatedAt,
     methodology: buildMethodologyBlock(currentExtensionVersion()),
+    excludedAccounts: await excludedAccountsForExport(options.nameExcludedAccounts !== false),
     // The same exclusion facts CSV and JSON have always carried in their
     // caveat paragraph. Without them this file states a count and lets the
     // reader assume it is everything.
@@ -530,6 +548,7 @@ export async function exportEverythingHtml(
     healLog: await readHealLog(),
     signingKeyCreatedAt,
     methodology: buildMethodologyBlock(currentExtensionVersion()),
+    excludedAccounts: await excludedAccountsForExport(true),
     unreadableArchivedRows,
   }));
   await stage('saving', all.length);
@@ -749,7 +768,7 @@ const PDF_STRINGS: Record<PDFLocale, Record<string, string>> = {
     configSnapshot: 'Configuration at detection',
     enabledFeaturesLabel: 'Protections on at capture',
     settingsReadFailedNote: 'Settings were unreadable when this record was written; the app protected at maximum strength. The mode shown is the fail-safe default, not an attested setting.',
-    visualNotAppliedNote: 'The hide could not be applied on the page. At Strict the checking cover stayed on; at the other levels the post may have been visible.',
+    visualNotAppliedNote: 'The hide could not be applied on the page. At Silent the checking cover stayed on; at the other levels the post may have been visible.',
     videoUnderstandingLabel: 'Media Safety Signals',
     imageUnderstandingLabel: 'Image Safety Signals',
     mediaState_on: 'on',
@@ -814,7 +833,7 @@ const PDF_STRINGS: Record<PDFLocale, Record<string, string>> = {
     configSnapshot: 'Configurație la detectare',
     enabledFeaturesLabel: 'Protecții active la capturare',
     settingsReadFailedNote: 'Setările nu au putut fi citite când a fost scrisă această înregistrare; aplicația a protejat la nivel maxim. Modul afișat este valoarea implicită de siguranță, nu o setare atestată.',
-    visualNotAppliedNote: 'Ascunderea nu a putut fi aplicată pe pagină. La Strict, acoperirea de verificare a rămas activă; la celelalte niveluri postarea poate să fi fost vizibilă.',
+    visualNotAppliedNote: 'Ascunderea nu a putut fi aplicată pe pagină. La nivelul Silențios, acoperirea de verificare a rămas activă; la celelalte niveluri postarea poate să fi fost vizibilă.',
     videoUnderstandingLabel: 'Media Safety Signals',
     imageUnderstandingLabel: 'Image Safety Signals',
     mediaState_on: 'pornit',
@@ -879,7 +898,7 @@ const PDF_STRINGS: Record<PDFLocale, Record<string, string>> = {
     configSnapshot: 'Configuración en el momento de la detección',
     enabledFeaturesLabel: 'Protecciones activas al capturar',
     settingsReadFailedNote: 'Los ajustes no se pudieron leer cuando se escribió este registro; la aplicación protegió al máximo. El modo que se muestra es el valor seguro por defecto, no un ajuste atestiguado.',
-    visualNotAppliedNote: 'La ocultación no se pudo aplicar en la página. En Estricto la tapa de comprobación se mantuvo; en los otros niveles la publicación puede haber estado visible.',
+    visualNotAppliedNote: 'La ocultación no se pudo aplicar en la página. En Silencioso la tapa de comprobación se mantuvo; en los otros niveles la publicación puede haber estado visible.',
     videoUnderstandingLabel: 'Señales de seguridad en medios',
     imageUnderstandingLabel: 'Señales de seguridad en imágenes',
     mediaState_on: 'activo',
@@ -944,7 +963,7 @@ const PDF_STRINGS: Record<PDFLocale, Record<string, string>> = {
     configSnapshot: 'Configuração no momento da detecção',
     enabledFeaturesLabel: 'Proteções ligadas na hora da captura',
     settingsReadFailedNote: 'As configurações não puderam ser lidas quando este registro foi escrito; o aplicativo protegeu no máximo. O modo mostrado é o padrão seguro, não uma configuração atestada.',
-    visualNotAppliedNote: 'A ocultação não pôde ser aplicada na página. No Rigoroso a tampa de conferência continuou; nos outros níveis a publicação pode ter ficado visível.',
+    visualNotAppliedNote: 'A ocultação não pôde ser aplicada na página. No Silencioso a tampa de conferência continuou; nos outros níveis a publicação pode ter ficado visível.',
     videoUnderstandingLabel: 'Sinais de segurança em mídia',
     imageUnderstandingLabel: 'Sinais de segurança em imagens',
     mediaState_on: 'ligado',

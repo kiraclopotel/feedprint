@@ -1,17 +1,20 @@
 // @vitest-environment jsdom
 //
-// Strict makes no outside call of any kind. The popup and the site say so in one sentence, so this
-// drives every path that can send something out (the reading on a post, a video and a comment
-// room, the licence probe, the time-stamp round) over a modelled day on each of the five sites,
-// with a paid key present and the stored reading switch ON (the state an install that was moved to
-// Strict later can be in), and counts everything that would leave: fetch, sendBeacon, WebSocket,
-// XMLHttpRequest and EventSource. The pipeline, the AI client, the scorer and the time-stamp client
-// run for real; only storage around them is stubbed.
+// Silent (the Strict level) makes no outside call without a key and the agreement. The popup and the site say so in one
+// sentence, so this drives every path that can send something out (the reading on a post, a video and a comment
+// room, the licence probe, the time-stamp round) over a modelled day on each of the five sites, and counts everything
+// that would leave: fetch, sendBeacon, WebSocket, XMLHttpRequest and EventSource. The pipeline, the AI client, the
+// scorer and the time-stamp client run for real; only storage around them is stubbed.
 //
-// The same run at Moderate and Relaxed shows the calls are made there, so a zero in Strict is the
-// gate and not a fetch that never fired.
+// Since 12 Oct 2026 Silent reads once a key is added and the agreement is given: with a key and no agreement the only call
+// is the licence check (the key is checked like at any level); with both, the reading and the time stamps go out like
+// Calm's. The same run at Calm and Open shows the calls are made there, so a zero at Silent is the gate and not a
+// fetch that never fired.
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+
+// What the gate finds for the key and the agreement.
+const HELD = vi.hoisted(() => ({ tier: 'family' as string, agreed: false }));
 
 const SETTINGS = vi.hoisted(() => ({
   mode: 'child',
@@ -34,8 +37,12 @@ vi.mock('../../src/storage/settings', () => ({
   ) => s.features?.[id]?.enabled === true,
   recordAiCall: vi.fn(async () => undefined),
 }));
+vi.mock('../../src/storage/reading-consent', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/storage/reading-consent')>()),
+  getReadingConsent: vi.fn(async () => (HELD.agreed ? { at: '2026-10-12T10:00:00Z', provider: 'p', textHash: 'h' } : null)),
+}));
 vi.mock('../../src/storage/license', () => ({
-  getLicense: vi.fn(async () => ({ tier: 'family', secret: 's' })),
+  getLicense: vi.fn(async () => ({ tier: HELD.tier, secret: HELD.tier === 'free' ? '' : 's' })),
   dailyCapForTier: vi.fn(() => 2000),
   effectiveMonthlyTokenCap: vi.fn(() => 1_000_000),
   isUncappedTier: vi.fn(() => false),
@@ -78,6 +85,7 @@ const TSA_HOSTS = ['freetsa.org', 'timestamp.digicert.com', 'timestamp.sectigo.c
 const HASH = 'ab'.repeat(32);
 
 let calls: string[];
+let probeSeq = 0;
 
 function record(kind: string, target: unknown): void {
   calls.push(`${kind} ${typeof target === 'string' ? target : (target as { url?: string })?.url ?? String(target)}`);
@@ -111,8 +119,8 @@ function makePost(platform: Platform, kind: 'post' | 'video'): PostContent {
   } as PostContent;
 }
 
-/** One modelled day: a post, a video and a comment room on the site, then the licence probe and a time-stamp round. */
-async function modelledDay(platform: Platform): Promise<void> {
+/** One modelled day: a post, a video and a comment room on the site, then the licence probe (a key is needed for it) and a time-stamp round. */
+async function modelledDay(platform: Platform, probe = true): Promise<void> {
   await analyse(makePost(platform, 'post'));
   await analyse(makePost(platform, 'video'));
   await scoreBatch(
@@ -124,7 +132,8 @@ async function modelledDay(platform: Platform): Promise<void> {
     }),
     SETTINGS.mode as 'child' | 'teen' | 'adult',
   );
-  await probeProxy(`fw-family-${platform}-${SETTINGS.mode}-secret`);
+  // A new key each time: the probe keeps a definite answer for five minutes per key, and a cached one makes no call.
+  if (probe) await probeProxy(`fw-family-${platform}-${SETTINGS.mode}-secret-${++probeSeq}`);
   await requestVerifiedTimestamps(HASH);
 }
 
@@ -150,19 +159,31 @@ afterEach(() => {
   vi.restoreAllMocks();
   SETTINGS.mode = 'child';
   SETTINGS.aiAnalysisEnabled = true;
+  HELD.tier = 'family';
+  HELD.agreed = false;
 });
 
-describe('Strict, with a paid key and the stored reading switch on', () => {
+describe('Silent without a key', () => {
   it.each(PLATFORMS)('%s: a modelled day sends nothing anywhere', async (platform) => {
     SETTINGS.mode = 'child';
-    await modelledDay(platform);
+    HELD.tier = 'free';
+    await modelledDay(platform, false);
     expect(calls).toEqual([]);
   });
+});
 
-  it('the licence probe answers from what it had, or unchecked, and asks nobody', async () => {
+describe('Silent with a key and the stored reading switch on, no agreement given yet', () => {
+  it.each(PLATFORMS)('%s: a modelled day sends only the licence check', async (platform) => {
     SETTINGS.mode = 'child';
-    expect(await probeProxy('fw-family-abc-secret')).toBe('unknown');
-    expect(calls).toEqual([]);
+    await modelledDay(platform);
+    // The key is checked like at any level; the reading and the time stamps wait for the agreement.
+    expect(calls).toEqual([`fetch ${PROXY}v1/models`]);
+  });
+
+  it('the licence probe asks the relay about the key', async () => {
+    SETTINGS.mode = 'child';
+    expect(await probeProxy('fw-family-abc-secret')).toBe('ok');
+    expect(calls).toEqual([`fetch ${PROXY}v1/models`]);
   });
 
   it('a time-stamp round returns no anchor and names why, on both routes', async () => {
@@ -174,9 +195,31 @@ describe('Strict, with a paid key and the stored reading switch on', () => {
   });
 });
 
-describe('Moderate and Relaxed make the calls Strict does not', () => {
+describe('Silent with a key and the agreement given', () => {
+  it('the reading, the licence check and the time stamps all go out, as at Calm', async () => {
+    SETTINGS.mode = 'child';
+    HELD.agreed = true;
+    await modelledDay('twitter');
+    const proxyCalls = calls.filter((c) => c.includes(PROXY));
+    expect(proxyCalls.some((c) => c.includes('/v1/chat/completions'))).toBe(true);
+    expect(proxyCalls.some((c) => c.includes('/v1/models'))).toBe(true);
+    for (const host of TSA_HOSTS) expect(calls.some((c) => c.includes(host))).toBe(true);
+  });
+
+  it('with the reading switched off nothing is read and no time stamp goes out; only the licence check does', async () => {
+    SETTINGS.mode = 'child';
+    HELD.agreed = true;
+    SETTINGS.aiAnalysisEnabled = false;
+    await modelledDay('twitter');
+    expect(calls).toEqual([`fetch ${PROXY}v1/models`]);
+  });
+});
+
+describe('Calm and Open make the calls Silent does not make without a key and the agreement', () => {
   it.each(['teen', 'adult'] as const)('%s: the reading, the licence probe and the time stamps all go out', async (mode) => {
     SETTINGS.mode = mode;
+    // The client reads the go-ahead before any reading leaves (cold audit 13 Oct 2026, finding 4), at every level.
+    HELD.agreed = true;
     await modelledDay('twitter');
     const proxyCalls = calls.filter((c) => c.includes(PROXY));
     expect(proxyCalls.some((c) => c.includes('/v1/chat/completions'))).toBe(true);

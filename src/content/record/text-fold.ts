@@ -20,52 +20,11 @@
 import type { PostContent, Platform } from '../../types/post';
 import type { TextCapture } from '../../types/forensic';
 import { TEXT_SCOPE_SELECTORS } from '../engagement/emoji-stripper';
+import { FOLD_LABELS, normalizeLabel, squash } from '../../core/fold-labels';
+
+export { normalizeLabel };
 
 export type { TextCapture };
-
-/**
- * Labels a fold control carries, lower-cased, with any ellipsis or dots and the
- * surrounding whitespace stripped. The platforms' interface languages the
- * recorder's users read (English, Spanish, Portuguese, Romanian) and the
- * larger ones. Exact match on the whole label: "View more comments" is not a
- * fold control, "See more" is.
- */
-const FOLD_LABELS: ReadonlySet<string> = new Set([
-  // English
-  'see more', 'show more', 'read more', 'more', 'see original', 'view more',
-  // Romanian, both comma-below and cedilla spellings
-  'vezi mai mult', 'afișează mai mult', 'afişează mai mult', 'afiseaza mai mult', 'mai mult', 'mai multe',
-  'citește mai mult', 'citeşte mai mult', 'citeste mai mult',
-  // Spanish
-  'ver más', 'ver mas', 'mostrar más', 'mostrar mas', 'leer más', 'leer mas', 'más', 'mas',
-  // Portuguese
-  'ver mais', 'mostrar mais', 'ler mais', 'mais', 'veja mais',
-  // French
-  'voir plus', 'afficher plus', 'afficher la suite', 'lire la suite', 'en voir plus', 'plus',
-  // German
-  'mehr anzeigen', 'mehr ansehen', 'weiterlesen', 'mehr',
-  // Italian
-  'altro', 'mostra altro', 'leggi altro', 'visualizza altro', 'vedi altro',
-  // Dutch
-  'meer weergeven', 'lees meer', 'meer',
-  // Polish
-  'zobacz więcej', 'pokaż więcej', 'czytaj więcej', 'więcej',
-  // Turkish
-  'daha fazla göster', 'daha fazlasını gör', 'devamını oku', 'daha fazla',
-  // Russian and Ukrainian
-  'ещё', 'еще', 'показать ещё', 'показать еще', 'читать дальше', 'читать далее', 'подробнее',
-  'ще', 'показати більше', 'читати далі',
-  // Hindi
-  'और देखें', 'और पढ़ें', 'और',
-  // Indonesian
-  'lihat selengkapnya', 'baca selengkapnya', 'selengkapnya',
-  // Vietnamese
-  'xem thêm', 'thêm',
-  // Japanese, Korean, Chinese
-  'もっと見る', '続きを読む', '더 보기', '더보기', '查看更多', '显示更多', '顯示更多', '展开', '展開', '更多',
-  // Arabic and Thai
-  'عرض المزيد', 'اقرأ المزيد', 'المزيد', 'ดูเพิ่มเติม', 'เพิ่มเติม',
-]);
 
 /**
  * Where a fold control can be. YouTube's `#more` is matched by attribute
@@ -89,19 +48,6 @@ const NESTED_ITEM_SELECTOR = 'ul, [role="article"], article, li, div[role="link"
 const MAX_LABEL_LENGTH = 32;
 /** How far above the text element the search may climb before giving up. */
 const MAX_ANCESTOR_DEPTH = 4;
-
-function squash(s: string): string {
-  return s.replace(/\s+/g, ' ').trim();
-}
-
-/** A control's label as the list carries it: lower-cased, ellipsis and dots off both ends. */
-export function normalizeLabel(raw: string): string {
-  return squash(raw)
-    .toLowerCase()
-    .replace(/^[\s.…]+/, '')
-    .replace(/[\s.…]+$/, '')
-    .trim();
-}
 
 function isHidden(el: Element): boolean {
   return el.hasAttribute('hidden') || el.getAttribute('aria-hidden') === 'true';
@@ -213,6 +159,9 @@ export function resolveTextElement(root: Element, text: string, platform: Platfo
 export function stampTextFold(post: PostContent): void {
   // A text taken from the platform's own data is not what this element shows, so the element cannot describe it.
   if (post.textCapture === 'platform') return;
+  // X leaves no ellipsis on a long post, so this reading would call the fragment folded; the adapter saw the page cut it
+  // (twitter.ts, the "Show more" link) and said so, and the platform's text did not complete it.
+  if (post.textCapture === 'cut') return;
   const el = post.domRef?.deref();
   if (!el || !post.text) return;
   try {

@@ -82,12 +82,14 @@ describe('the licence sells the reading, not the time stamps', () => {
     }
   });
 
-  it('the switch that does rewrite is still called a rewrite, in every language', () => {
+  it('the switch that does rewrite still says it rephrases, in every language', () => {
     // The opposite failure: a sweep that renamed the feature itself would leave
-    // the household unable to find the switch the copy is about.
+    // the household unable to find the switch the copy is about. Since packet 36
+    // (13 Oct 2026) its name is the level's first switch, "Show the calm version
+    // first", and its line says what it does: a flagged post arrives rephrased.
     for (const lang of UI_LANGUAGES) {
-      const name = POPUP_STRINGS[lang].reframeRewritesName.toLowerCase();
-      expect(REWRITE_WORDS.some(w => name.includes(w)), `${lang}: "${name}"`).toBe(true);
+      const line = POPUP_STRINGS[lang].reframeRewritesDesc.toLowerCase();
+      expect([...REWRITE_WORDS, 'rephras', 'reformul'].some(w => line.includes(w)), `${lang}: "${line}"`).toBe(true);
     }
   });
 

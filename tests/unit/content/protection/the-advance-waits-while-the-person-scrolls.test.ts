@@ -12,8 +12,13 @@
 //
 // Site B, B2 and C's test files are not edited; their cases are the controls here.
 
+// Since 13 Oct 2026 a TikTok card is hidden with its box kept (video-feed-hide.ts keepsItemBox), so a test of the move or the
+// hold that needs a card to lose its box makes the collapse itself (tests/helpers/collapse-a-card.ts): the timing belongs to
+// any hide that moves the feed, whichever card takes it.
+
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { injectHardHide, injectAdHide } from '../../../../src/content/injector';
+import { collapseCard } from '../../../helpers/collapse-a-card';
 import {
   _resetAdvanceBreakerForTesting,
   _setHostForTesting,
@@ -69,7 +74,7 @@ function feedWithTheCardOnScreen(): { a: TikTokItem; next: HTMLElement; advanced
   const a = tiktokItem(list, 'the card on screen');
   const b = tiktokItem(list, 'the next card');
   let moved = false;
-  placeCollapsing(a.item, 0);
+  placeCollapsing(a.item, () => (moved ? -window.innerHeight : 0));
   placeAt(b.item, () => (moved ? 0 : window.innerHeight));
   return { a, next: b.item, advanced: scrollSpy(b.item), moveOn: () => { moved = true; } };
 }
@@ -115,7 +120,7 @@ describe('F47 site D: the advance waits while the person is scrolling', () => {
     const { a, advanced } = feedWithTheCardOnScreen();
     wheel();
     injectHardHide(a.desc, 'tiktok');
-    expect(a.item.style.getPropertyValue('display'), 'the hide still landed').toBe('none');
+    expect(a.item.style.getPropertyValue('visibility'), 'the hide still landed, the box kept').toBe('hidden');
     expect(advanced, 'no move while the person scrolls').not.toHaveBeenCalled();
   });
 
@@ -126,11 +131,13 @@ describe('F47 site D: the advance waits while the person is scrolling', () => {
     expect(advanced).not.toHaveBeenCalled();
   });
 
-  it('the ad hide path waits the same way', () => {
+  it('the ad hide path waits the same way, and moves on once, when the person is quiet', () => {
     const { a, advanced } = feedWithTheCardOnScreen();
     wheel();
     injectAdHide(a.desc, 'tiktok');
     expect(advanced).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1500);
+    expect(advanced).toHaveBeenCalledTimes(1);
   });
 
   it('held, not dropped: once the person has been quiet and is still on the blank card, the feed moves on, once', () => {
@@ -170,7 +177,7 @@ describe('F47 site D: a scrollbar drag held past 800 ms still counts as scrollin
     press();
     vi.advanceTimersByTime(1000);
     document.documentElement.dispatchEvent(new MouseEvent('pointermove', { bubbles: true, buttons: 0 }));
-    injectHardHide(past.desc, 'tiktok');
+    collapseCard(past.item);
     expect(back).toHaveBeenCalledTimes(1);
   });
 
@@ -179,7 +186,7 @@ describe('F47 site D: a scrollbar drag held past 800 ms still counts as scrollin
     press();
     vi.advanceTimersByTime(1000);
     document.documentElement.dispatchEvent(new MouseEvent('pointermove', { bubbles: true, buttons: 1 }));
-    injectHardHide(past.desc, 'tiktok');
+    collapseCard(past.item);
     expect(back, 'the drag is still going').not.toHaveBeenCalled();
   });
 });

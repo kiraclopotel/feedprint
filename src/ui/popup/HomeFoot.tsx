@@ -11,6 +11,7 @@ import { Contrast, MessageCircle, Moon, Sun } from '../shared/icons/lucide';
 import { applyTheme } from '../shared/theme';
 import { getFwVersion } from './fw-version';
 import { POPUP_LOOKS, type PopupLook, applyLook, isPopupLook } from '../shared/looks';
+import { rovingGroup } from './controls';
 
 /** The theme the one button moves to next: dark, light, then the browser's own. */
 export const NEXT_THEME: Record<DashboardTheme, DashboardTheme> = { dark: 'light', light: 'system', system: 'dark' };
@@ -26,14 +27,17 @@ export function LookDots({ settings, onChange }: { settings: FWSettings; onChang
     await saveSettings({ popupLook: next });
     await onChange?.();
   };
+  // The dots are one Tab stop; the arrow keys move to the next look and show it, which is what pressing it does.
+  const roving = rovingGroup(POPUP_LOOKS.indexOf(look), (i) => { void pick(POPUP_LOOKS[i]); });
   return (
-    <span className="look-row" role="radiogroup" aria-label={t.lookAria} title={t.lookAria}>
-      {POPUP_LOOKS.map((l) => (
+    <span className="look-row" role="radiogroup" aria-label={t.lookAria} title={t.lookAria} onKeyDown={roving.onKeyDown}>
+      {POPUP_LOOKS.map((l, i) => (
         <button
           key={l}
           type="button"
           role="radio"
           aria-checked={look === l}
+          tabIndex={roving.tabIndexOf(i)}
           aria-label={name(l)}
           title={name(l)}
           className="look-btn"

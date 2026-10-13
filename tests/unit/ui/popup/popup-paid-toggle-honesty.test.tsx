@@ -51,7 +51,7 @@ function settingsWith(rewriteEnabled: boolean): FWSettings {
   } as FWSettings;
 }
 
-function renderPanel(tier: LicenseInfo['tier'], rewriteEnabled: boolean): string {
+function renderPanel(tier: LicenseInfo['tier'], rewriteEnabled: boolean, openOn: 'main' | 'general' = 'main'): string {
   return renderToString(
     createElement(I18nProvider, {
       lang: 'en',
@@ -60,6 +60,7 @@ function renderPanel(tier: LicenseInfo['tier'], rewriteEnabled: boolean): string
         license: { tier } as LicenseInfo,
         onBack: () => { /* no-op */ },
         onChange: async () => { /* no-op */ },
+        openOn,
       }),
     }),
   );
@@ -94,7 +95,7 @@ describe('Q86 — paid AI rows hidden without a license, honest when revealed', 
   });
 
   it('the swear mask row renders on the free tier: stars need no model (2026-09-07)', () => {
-    const html = renderPanel('free', true);
+    const html = renderPanel('free', true, 'general');
     expect(hasSwitch(html, EN.softenSwearingName)).toBe(true);
   });
 

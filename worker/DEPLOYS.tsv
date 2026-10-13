@@ -1,0 +1,11 @@
+#	One row per worker deploy. The stamp is what GET /health reports.
+#	Written by scripts/deploy.mjs; a deploy run by hand with `wrangler deploy` leaves no row
+#	and makes /health read "unstamped", which is how you tell the two apart.
+deployed_at	stamp	commit	dirty
+2026-09-19T22:16:17.567Z	c87b4846-2026-09-19	c87b4846	no
+2026-09-21T01:46:41.364Z	b7a84e57-2026-09-21	b7a84e57	no
+2026-09-21T09:36:03.029Z	8b70b7c4-2026-09-21	8b70b7c4	no
+2026-09-23T07:01:38.828Z	dc840e5c-2026-09-23	dc840e5c	no
+2026-09-27T16:17:55.165Z	39bb88d5-2026-09-27	39bb88d5	no
+2026-10-10T02:24:02.413Z	a38417d9-2026-10-10	a38417d9	no
+2026-10-11T01:49:37.000Z	7bfb4dfe-2026-10-11	7bfb4dfe	no

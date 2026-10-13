@@ -95,10 +95,10 @@ describe('computeEpochSummaries: modes and conditions', () => {
 
   it('a record written under a level says the level, with no note, in the four languages', () => {
     const e = { modes: [{ mode: 'strict', records: 2 }, { mode: 'relaxed', records: 1 }, { mode: 'child', records: 1 }] } as Parameters<typeof modesText>[0];
-    expect(modesText(e, I18N.en)).toBe('2 recorded with the app in strict mode, 1 recorded with the app in relaxed mode, 1 recorded with the app in child mode (a setting from before the three modes)');
-    expect(modesText(e, I18N.ro)).toContain('2 înregistrate cu aplicația în modul strict, 1 înregistrate cu aplicația în modul relaxat');
-    expect(modesText(e, I18N.es)).toContain('2 registrados con la aplicación en modo estricto');
-    expect(modesText(e, I18N['pt-BR'])).toContain('2 registrados com o aplicativo em modo rigoroso');
+    expect(modesText(e, I18N.en)).toBe('2 recorded with the app in silent mode, 1 recorded with the app in open mode, 1 recorded with the app in child mode (a setting from before the three modes)');
+    expect(modesText(e, I18N.ro)).toContain('2 înregistrate cu aplicația în modul silențios, 1 înregistrate cu aplicația în modul deschis');
+    expect(modesText(e, I18N.es)).toContain('2 registrados con la aplicación en modo silencioso');
+    expect(modesText(e, I18N['pt-BR'])).toContain('2 registrados com o aplicativo em modo silencioso');
   });
 });
 

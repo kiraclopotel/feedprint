@@ -39,16 +39,19 @@ body:not(.fw-detached) .fw-popup {
   margin: 8px 16px 2px; padding: 3px; gap: 2px;
   border: 1px solid var(--fw-border-light);
   border-radius: calc(10px * var(--pop-r-scale, 1));
-  background: color-mix(in oklch, var(--fw-text) 5%, var(--fw-bg));
+  background: color-mix(in oklab, var(--fw-text) 5%, var(--fw-bg));
 }
 .fw-popup .pop-tab {
   padding: 6px 0; border: 1px solid transparent; background: transparent; color: var(--fw-text-secondary);
   border-radius: calc(7px * var(--pop-r-scale, 1));
 }
-.fw-popup .pop-tab:hover:not(.active) { color: var(--fw-text); background: color-mix(in oklch, var(--fw-text) 6%, transparent); }
+/* Mixes of a near-grey text colour are made in oklab (row 11, 12 Oct 2026): in oklch Chrome kept the mix's chroma and
+   dropped its hue, so the tab strip and the tabs' pointer wash painted at hue 0, a warm pink behind License in looks A
+   and B (Cobalt dark strip 25,19,22, now 19,21,27). oklab has no hue to lose; every such mix in the popup sheets moved. */
+.fw-popup .pop-tab:hover:not(.active) { color: var(--fw-text); background: color-mix(in oklab, var(--fw-text) 6%, transparent); }
 .fw-popup .pop-tab.active {
   background: var(--fw-card); color: var(--fw-teal);
-  border-color: color-mix(in oklch, var(--fw-teal) 40%, transparent);
+  border-color: color-mix(in oklab, var(--fw-teal) 85%, transparent);
   box-shadow: 0 1px 2px rgb(0 0 0 / 0.22), 0 0 12px -6px color-mix(in oklch, var(--fw-teal) 70%, transparent);
 }
 
@@ -56,8 +59,8 @@ body:not(.fw-detached) .fw-popup {
 /* 1. The page in one line, led by a dot that says the state before the words do. */
 .fw-popup .home-status {
   display: flex; align-items: center; gap: 9px;
-  margin: 14px 16px 0; padding: 0 2px;
-  font-size: 12.5px; font-weight: 600; line-height: 1.4; color: var(--fw-text);
+  margin: 16px 16px 0; padding: 0 2px;
+  font-size: var(--fw-text-12); font-weight: 600; line-height: 1.4; color: var(--fw-text);
 }
 .fw-popup .home-status-dot {
   flex-shrink: 0; width: 8px; height: 8px; border-radius: 50%; background: var(--fw-muted);
@@ -72,24 +75,52 @@ body:not(.fw-detached) .fw-popup {
 .fw-popup .home-status.idle .home-status-dot { background: transparent; border: 1.5px solid var(--fw-muted); width: 7px; height: 7px; }
 
 /* 2. Today: the card gets room to breathe and the figure the size of the one thing it is. */
-.fw-popup .today-card { margin-top: 12px; padding: 14px 14px 12px; }
+.fw-popup .today-card { margin-top: 12px; padding: 8px 14px 16px; }
 .fw-popup .today-card .pop-hero { padding: 6px 4px 4px; }
-.fw-popup .today-card .pop-hero-value { font-size: 44px; font-variant-numeric: tabular-nums; }
+/* The figure is a button that opens the feed, and nothing said so: the pointer brings the page buttons' wash and
+   accent edge, and a drawn chevron sits at the row's end at rest. */
+.fw-popup .today-card .pop-hero:hover {
+  background: color-mix(in oklab, var(--fw-text) 7%, transparent);
+  border-color: color-mix(in srgb, var(--fw-teal) 55%, var(--fw-border));
+}
+.fw-popup .today-card .pop-hero-chev { flex: none; margin-left: auto; align-self: center; color: var(--fw-muted); transition: color 120ms ease, transform 120ms ease; }
+.fw-popup .today-card .pop-hero-total + .pop-hero-chev { margin-left: 6px; }
+.fw-popup .today-card .pop-hero:hover .pop-hero-chev { color: var(--fw-teal); transform: translateX(1px); }
+@media (prefers-reduced-motion: reduce) {
+  .fw-popup .today-card .pop-hero-chev { transition: none; }
+  .fw-popup .today-card .pop-hero:hover .pop-hero-chev { transform: none; }
+}
+/* The negative margin takes back the digit's left side bearing at 44 px, so the figure's ink starts near the same edge as
+   the sentence, the bar and the legend under it. The bearing depends on the first digit (a 1 has the widest in the
+   tabular face), so the margin is the middle of them: read in the built popup, a figure starting with 2 to 9 lands within
+   1.5 px of the edge and one starting with 1 at 2.5 px right of it; -4 px lined a 1 up and left a 4 3 px left of it. */
+.fw-popup .today-card .pop-hero-value { font-size: 44px; font-variant-numeric: tabular-nums; margin-left: -2px; color: var(--fw-teal); }
 .fw-popup .today-card .pop-count-line { margin-top: 6px; padding: 8px 4px 0; border-top: 1px solid var(--fw-border-light); }
 
 /* 3. The record button, and the reading beside it when there is one. */
-.fw-popup .home-actions { display: flex; gap: 8px; margin: 14px 16px 16px; }
+.fw-popup .home-actions { display: flex; gap: 8px; margin: 16px 16px 16px; }
 .fw-popup .home-actions .pop-cta { flex: 1 1 0; width: auto; margin: 0; }
 .fw-popup .home-actions .pop-cta-second {
   flex: 0 1 auto; background: transparent; color: var(--fw-teal);
-  border-color: color-mix(in oklch, var(--fw-teal) 50%, transparent);
+  border-color: color-mix(in srgb, var(--fw-teal) 55%, var(--fw-border));
 }
 html.fw-life-depth .fw-popup .home-actions .pop-cta-second { box-shadow: none; }
 
 /* 4. The bottom row: version at the left, privacy at the right, the style dots, the theme and contact between. It
    sits at the window's foot as every tab's footer does (design scout, 9 Oct 2026, fix 9: a fixed 16 px here left Home's
    row under its content and the other tabs' at the bottom); the button above keeps the 16 px as its own space below. */
-.fw-popup .home-foot { margin-top: auto; padding: 8px 12px 8px 16px; border-top-color: var(--fw-border-light); gap: 8px; }
+.fw-popup .home-foot {
+  margin-top: auto; padding: 8px 12px 8px 16px; border-top-color: var(--fw-border-light); gap: 8px;
+  /* Three columns with the middle one sized to its buttons, so the style dots stay on the window's centre whatever
+     the version and the privacy word weigh (in Romanian the privacy word is more than twice the English width). The
+     side columns are minmax(0, 1fr): a plain 1fr never shrinks below its content, so the longer word widened its own
+     side and pulled the middle off the centre. */
+  display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center;
+}
+.fw-popup .home-foot > a { justify-self: end; }
+/* The privacy word is a way out, not the loudest thing in the row: Off's quiet link colour, underlined on hover. */
+.fw-popup .foot a { color: color-mix(in srgb, var(--fw-teal) 80%, var(--fw-muted)); text-decoration: none; }
+.fw-popup .foot a:hover { text-decoration: underline; text-underline-offset: 3px; }
 .fw-popup .foot-version { font-variant-numeric: tabular-nums; }
 .fw-popup .foot-mid { display: inline-flex; align-items: center; gap: 2px; }
 .fw-popup .home-foot .look-row { margin: 0; }
@@ -97,9 +128,11 @@ html.fw-life-depth .fw-popup .home-actions .pop-cta-second { box-shadow: none; }
 .fw-popup .home-foot .theme-icon-btn { width: 26px; height: 26px; }
 .fw-popup .home-foot .look-btn { width: 24px; height: 24px; }
 .fw-popup .contact { position: relative; display: inline-flex; }
+/* Its right edge sits on the chat button's: the button is the right-hand one of the row, so a menu centred on it ran past the
+   window's edge, and a longer language (the Romanian report line) lost its border and corner. */
 .fw-popup .contact-menu {
-  position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); z-index: 5;
-  display: flex; flex-direction: column; min-width: 220px; padding: 4px;
+  position: absolute; bottom: calc(100% + 8px); left: auto; right: 0; z-index: 5;
+  display: flex; flex-direction: column; min-width: 220px; max-width: calc(100vw - 2 * var(--pop-edge)); padding: 4px;
   background: var(--fw-card); border: 1px solid var(--fw-border-light);
   border-radius: calc(10px * var(--pop-r-scale, 1));
   box-shadow: 0 10px 28px -10px rgb(0 0 0 / 0.55), 0 0 0 1px color-mix(in oklch, var(--fw-teal) 18%, transparent);
@@ -110,7 +143,10 @@ html.fw-life-depth .fw-popup .home-actions .pop-cta-second { box-shadow: none; }
   color: var(--fw-text); text-decoration: none; font-size: 12px; white-space: nowrap;
 }
 .fw-popup .contact-menu a:hover,
-.fw-popup .contact-menu a:focus-visible { background: color-mix(in oklch, var(--fw-teal) 12%, transparent); outline: none; }
+.fw-popup .contact-menu a:focus-visible { background: color-mix(in oklch, var(--fw-teal) 12%, transparent); }
+/* The wash alone is 1.2:1 against the menu, so the keyboard's place needs a drawn ring; inside the link so the menu's own
+   padding does not clip it. */
+.fw-popup .contact-menu a:focus-visible { outline: 2px solid var(--fw-teal); outline-offset: -2px; }
 
 /* ─── Settings: a locked switch says why in its tooltip and its (i) fold ─────────────────────────────────────── */
 .fw-popup .fr-ctl { display: inline-flex; flex-shrink: 0; }
@@ -121,21 +157,45 @@ html.fw-life-depth .fw-popup .home-actions .pop-cta-second { box-shadow: none; }
 .fw-popup .site-read { margin-top: 8px; padding: 10px 4px 0; border-top: 1px solid var(--fw-border-light); }
 .fw-popup .site-bar {
   display: flex; gap: 2px; height: 6px; border-radius: 999px; overflow: hidden;
-  background: color-mix(in oklch, var(--fw-text) 8%, transparent);
+  background: color-mix(in oklab, var(--fw-text) 8%, transparent);
 }
 .fw-popup .site-seg { min-width: 6px; flex-basis: 0; }
-.fw-popup .site-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 8px; font-size: 11.5px; color: var(--fw-text-secondary); }
+.fw-popup .site-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 8px; font-size: var(--fw-text-12); color: var(--fw-text-secondary); }
 .fw-popup .site-key { display: inline-flex; align-items: center; gap: 6px; }
 .fw-popup .site-read-line { font-size: 12px; color: var(--fw-text-secondary); line-height: 1.5; margin-bottom: 8px; }
 .fw-popup .site-dot { width: 7px; height: 7px; border-radius: 2px; font-style: normal; }
-/* Tints of the accent by rank, largest first (stage 3, 10 Oct 2026). A colour per site made YouTube's alarm red fill the
-   whole bar on a YouTube-only day; the names are in the legend, so the colour only has to tell the parts apart. */
-.fw-popup .site-seg.rank-0, .fw-popup .site-dot.rank-0 { background: var(--fw-teal); }
-.fw-popup .site-seg.rank-1, .fw-popup .site-dot.rank-1 { background: color-mix(in srgb, var(--fw-teal) 78%, transparent); }
-.fw-popup .site-seg.rank-2, .fw-popup .site-dot.rank-2 { background: color-mix(in srgb, var(--fw-teal) 58%, transparent); }
-.fw-popup .site-seg.rank-3, .fw-popup .site-dot.rank-3 { background: color-mix(in srgb, var(--fw-teal) 42%, transparent); }
-.fw-popup .site-seg.rank-4, .fw-popup .site-dot.rank-4 { background: color-mix(in srgb, var(--fw-teal) 30%, transparent); }
+/* One colour per site, the same every day, so a bar read on Monday reads the same on Friday: five hues that stand apart
+   on the dark page and on the light one. Tints of one accent by rank told two sites apart by a shade and five not at all.
+   The names are in the legend, so the colour only has to be told apart and remembered. A one-site day shows the sentence
+   alone and no bar, so no site's colour ever fills the bar by itself. */
+.fw-popup { --site-youtube: #e5484d; --site-twitter: #8da2b5; --site-facebook: #4f8ff7; --site-instagram: #e05aa8; --site-tiktok: #16b3a4; }
+:root[data-theme="light"] .fw-popup { --site-youtube: #c62a2f; --site-twitter: #5b6b7c; --site-facebook: #1d5fd1; --site-instagram: #b0237f; --site-tiktok: #0b7d79; }
+.fw-popup .site-seg.site-youtube, .fw-popup .site-dot.site-youtube { background: var(--site-youtube); }
+.fw-popup .site-seg.site-twitter, .fw-popup .site-dot.site-twitter { background: var(--site-twitter); }
+.fw-popup .site-seg.site-facebook, .fw-popup .site-dot.site-facebook { background: var(--site-facebook); }
+.fw-popup .site-seg.site-instagram, .fw-popup .site-dot.site-instagram { background: var(--site-instagram); }
+.fw-popup .site-seg.site-tiktok, .fw-popup .site-dot.site-tiktok { background: var(--site-tiktok); }
 .fw-popup .set-pin-card { margin-top: 14px; }
+
+/* ─── Settings: the level card and the pages under it ─────────────────────────────────────────────────────────── */
+/* The chosen level wears the Live Rephrase green, the one colour that means "this is on" in every look; the accent
+   stood for the look, not for the choice, and in the violet look it read as purple. */
+.fw-popup .mode-seg-btn.active { background: var(--ai-pill-bg); border-color: transparent; color: var(--ai-pill-ink); box-shadow: none; }
+/* The level names are plain words in the page buttons' weight; the shell's bold and letter-spacing made 8 letters read as
+   a heading. */
+.fw-popup .mode-seg-name { font-weight: 600; letter-spacing: 0; }
+/* What the chosen level shows: one sentence under the three buttons. */
+.fw-popup .level-sentence { margin: var(--pop-2) 0 0; padding: 0 2px; font-size: var(--fw-text-12); line-height: 1.45; color: var(--fw-text); }
+/* The Topics fold's one lead line, over its rows (13 Oct 2026). */
+.fw-popup .topics-lead { margin: 0 0 var(--pop-2); padding: 0 2px; font-size: var(--fw-text-12); line-height: 1.45; color: var(--fw-text-secondary); }
+/* With the switches changed from the level's defaults, the way back is one small link at the list's right. */
+.fw-popup .mode-state { display: flex; justify-content: flex-end; margin-top: 6px; }
+.fw-popup .mode-state .lnk { display: inline-flex; margin: 0; }
+/* Inside the sentence the link is a word of its line, in the sentence's size; it keeps itself whole, and the sentence's
+   lines are balanced so the last one has room for it (13 Oct 2026). */
+.fw-popup .level-sentence:has(.mode-state) { text-wrap: balance; }
+.fw-popup .level-sentence .mode-state { display: inline; margin: 0 0 0 2px; white-space: nowrap; }
+.fw-popup .level-sentence .mode-state .lnk { display: inline; min-width: 0; min-height: 0; font-size: inherit; }
 
 /* The header's three icon buttons drawn as plain icons: two fresh judges, shown only this Home beside Ghostery's
    (9 Oct 2026), each named the row of boxed buttons as the one template habit left. A wash on hover and focus keeps
@@ -145,7 +205,7 @@ html .fw-popup .pop-header .hdr-iconbtn {
 }
 html .fw-popup .pop-header .hdr-iconbtn:hover,
 html .fw-popup .pop-header .hdr-iconbtn:focus-visible {
-  background: color-mix(in oklch, var(--fw-text) 8%, transparent); color: var(--fw-text);
+  background: color-mix(in oklab, var(--fw-text) 8%, transparent); color: var(--fw-text);
 }
 
 /* Today's handled count over the all-time total, both small, at the right of the figure. */
@@ -162,7 +222,7 @@ html:has(body:not(.fw-detached)) { background: var(--fw-bg); scrollbar-gutter: a
 body:not(.fw-detached) { padding: 0; background: var(--fw-bg); }
 body:not(.fw-detached) .fw-popup,
 :root[data-theme="light"] body:not(.fw-detached) .fw-popup {
-  width: 396px; border: none; border-radius: 0; box-shadow: none; padding: 8px 0 6px; overflow: visible;
+  width: 396px; border: none; border-radius: 0; box-shadow: none; padding: 0 0 6px; overflow: visible;
 }
 body:not(.fw-detached) .fw-popup::after {
   content: ""; position: fixed; inset: 1px; pointer-events: none; z-index: 4;
@@ -170,7 +230,9 @@ body:not(.fw-detached) .fw-popup::after {
   border-radius: calc(12px * var(--pop-r-scale, 1));
   box-shadow: inset 0 0 18px -8px color-mix(in oklch, var(--fw-teal) 60%, transparent);
 }
-body:not(.fw-detached) .fw-popup .pop-header { margin: 0 6px; border-radius: calc(10px * var(--pop-r-scale, 1)) calc(10px * var(--pop-r-scale, 1)) 0 0; }
+/* The header plate meets the frame line, 1 px in with a radius 1 px smaller, so it reads as the window's own top and
+   not as a second rounded frame 6 px inside the first (row 2, 12 Oct 2026). */
+body:not(.fw-detached) .fw-popup .pop-header { margin: 1px 1px 0; border-radius: calc(11px * var(--pop-r-scale, 1)) calc(11px * var(--pop-r-scale, 1)) 0 0; }
 body:not(.fw-detached) .fw-popup .foot { margin-left: 6px; margin-right: 6px; }
 
 /* One edge, 11 Oct 2026. The shell's 8 px edge (popup-design.css) and this sheet's 16 px rows left six left edges on
@@ -178,12 +240,14 @@ body:not(.fw-detached) .fw-popup .foot { margin-left: 6px; margin-right: 6px; }
    content at 14 or 22, Settings' bar and section labels at 0 with text at 8. Every box now stands 16 px in, and the
    header and footer, which keep their 6 px for the frame line's corners, pad the rest of the way. */
 .fw-popup { --pop-edge: 16px; }
-body:not(.fw-detached) .fw-popup .pop-header,
 body:not(.fw-detached) .fw-popup .foot { padding-left: calc(var(--pop-edge) - 6px); padding-right: calc(var(--pop-edge) - 6px); }
+body:not(.fw-detached) .fw-popup .pop-header { padding-left: calc(var(--pop-edge) - 1px); padding-right: calc(var(--pop-edge) - 1px); padding-top: calc(var(--pop-2) + 7px); }
+/* The gear's glyph ended 8.5 px inside the cards' right edge while the logo starts 2 px inside the left (row 35). */
+.fw-popup .pop-header .hdr-iconbtn:last-child { margin-right: -6px; }
 
 /* A status dot belongs to the first line it leads. Centred on the block, it sat beside the middle of a two-line
-   status ("Open X, Facebook...") and of the License card's four lines (11 Oct 2026). The first line is 17.5 px tall at
-   12.5 px and 1.4 here, and about 17 px for the card's 13 px name. */
+   status ("Open X, Facebook...") and of the License card's four lines (11 Oct 2026). The first line is 16.8 px tall at
+   12 px and 1.4 here, and about 17 px for the card's 13 px name. */
 .fw-popup .home-status { align-items: flex-start; }
 .fw-popup .home-status-dot { margin-top: calc(0.7em - 4px); }
 .fw-popup .home-status.idle .home-status-dot { margin-top: calc(0.7em - 3.5px); }
@@ -193,6 +257,42 @@ body:not(.fw-detached) .fw-popup .foot { padding-left: calc(var(--pop-edge) - 6p
    Welcome's three paragraphs stood about 40 px apart and read as three loose notes (11 Oct 2026). */
 .setup-step > p.tag { margin: 0; }
 
-/* The reason under "limited here", one quieter line under the page's line. */
-.fw-popup .home-status-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+/* The reason under "limited here", one quieter line under the page's line. The text is balanced, so a line that only just
+   overflows (the Spanish, Portuguese and Romanian "open a site" lines) splits into two even lines instead of leaving one
+   word alone on the second. */
+.fw-popup .home-status-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; text-wrap: balance; }
 .fw-popup .home-status-note { font-size: 12px; font-weight: 500; line-height: 1.45; color: var(--fw-text-secondary); }
+
+/* The own-rules row is the one row on the General page that opens something, and it shares the card and the type of
+   the switches above it: a hairline above it is what tells it apart. */
+.fw-popup .set-rules-jump { margin-top: var(--pop-2); padding-top: var(--pop-1); border-top: 1px solid var(--fw-border-light); }
+.fw-popup .set-rules-jump:hover { background: color-mix(in oklab, var(--fw-text) 6%, transparent); }
+.fw-popup .set-rules-jump:active { background: color-mix(in oklab, var(--fw-text) 10%, transparent); }
+
+/* The main button answers the pointer and the press. With depth on, the resting glow (popup-life.css) outranks the
+   design sheet's hover shadow, so the hover is written here at the same rank: a little brighter and a longer glow;
+   the press sinks it one pixel and dims it. */
+html.fw-life-depth .fw-popup .pop-cta:not(.sec):not(.secondary):not(:disabled):hover {
+  filter: brightness(1.08);
+  box-shadow: 0 10px 22px -10px color-mix(in oklch, var(--fw-teal) 85%, transparent);
+}
+html.fw-life-depth .fw-popup .pop-cta:not(.sec):not(.secondary):not(:disabled):active { transform: translateY(1px); filter: brightness(.96); }
+@media (prefers-reduced-motion: reduce) {
+  html.fw-life-depth .fw-popup .pop-cta:not(.sec):not(.secondary):not(:disabled):active { transform: none; }
+}
+
+/* A row's name, its (i) button and its control share one centre line. The 24 px (i) button sat inline in the name's line
+   box and pushed the text's baseline off the switch's and the button's; as a flex row of its own height, the name centres
+   on the 24 px of the switch beside it. A row whose control is a 32 px page button keeps that height for the name, so
+   the label and the button's words still share a centre. Only rows built by FeatRow: the own-rules title sets a space
+   and a muted count as inline text, which a flex row would run together. */
+.fw-popup .feat-row .fr-name { display: flex; align-items: center; gap: 2px; min-height: 24px; }
+/* In this flex row the (i) is its own item beside the words and never wraps alone, so the span that keeps the last
+   word with the (i) in Off's flowing row (Off U5) steps aside: the name is one text run again. Without this the last
+   word was a flex item of its own, centred on the 24 px button and drawn raised (12 Oct 2026). */
+.fw-popup .feat-row .fr-name .fr-tail { display: contents; }
+.fw-popup .feat-row:has(> .fw-page-btn) .fr-name { min-height: 32px; }
+/* A row whose field sits under its name (the rewrites' language) has no switch to centre on: the name is one line of
+   text and the field follows a step below it, the way a form's label sits on its field (13 Oct 2026). */
+.fw-popup .feat-row.fr-stack { flex-direction: column; align-items: stretch; gap: var(--pop-1); }
+.fw-popup .feat-row.fr-stack .fr-name { min-height: 0; }

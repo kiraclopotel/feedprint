@@ -10,12 +10,15 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { installChromeStorageStub } from '../../helpers/chrome-storage';
+import { readingConsentFor } from '../../helpers/reading-consent';
 import { utcDayKey, utcMonthKey, CURRENT_SETTINGS_SCHEMA_VERSION } from '../../../src/storage/settings';
 
 const KEY = 'fw-starter-abc12345';
 const MARKER = 'readingPaused';
 
-function settings(): Record<string, unknown> {
+// The key holds a stored go-ahead unless a test says otherwise: the client reads it before any reading leaves, so the
+// relay's own 403 can only be answered to a request that went out. The key a person might switch to has its own.
+function settings(goAhead = true): Record<string, unknown> {
   return {
     settingsSchemaVersion: CURRENT_SETTINGS_SCHEMA_VERSION,
     lastResetDate: utcDayKey(),
@@ -24,6 +27,7 @@ function settings(): Record<string, unknown> {
     dailyCap: 2500,
     totalChecksToday: 0,
     totalTokensThisMonth: 0,
+    ...(goAhead ? readingConsentFor(KEY, 'fw-starter-zzz98765') : {}),
   };
 }
 
@@ -76,6 +80,19 @@ describe('the relay asks for the go-ahead', () => {
     expect(second.ok).toBe(false);
     if (!second.ok) expect(second.error.kind).toBe('consent-required');
     expect(fetchSpy, 'nothing left for the second reading').toHaveBeenCalledTimes(1);
+  });
+
+  it('with no go-ahead stored, nothing leaves: the client asks before the relay has to', async () => {
+    stub = installChromeStorageStub({ initial: settings(false), sendMessage: () => undefined });
+    fetchSpy.mockResolvedValue(ok());
+    const { callAI } = await import('../../../src/ai/client');
+
+    const result = await callAI('sys', 'usr');
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.kind).toBe('consent-required');
+    expect(fetchSpy, 'no request made').not.toHaveBeenCalled();
+    await vi.waitFor(() => expect(stub.state[MARKER], 'the marker is in storage for the popup, the Issues tab and the icon').toMatchObject({ code: 'consent_required' }));
   });
 
   it('it is not counted as a licence refusal: the key is not paused for hours', async () => {

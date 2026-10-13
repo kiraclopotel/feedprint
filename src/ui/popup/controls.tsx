@@ -4,9 +4,9 @@
 // exact same switch, row and PIN surfaces without carrying the 2,000-line
 // Receipts popup. Bodies are unchanged.
 
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
 import {
-  verifyPin, pinLockRemainingMs, hasRecoveryPhrase, resetPinWithRecoveryPhrase, changePin,
+  verifyPin, pinLockRemainingMs, hasRecoveryPhrase, resetPinWithRecoveryPhrase, changePin, removePin,
   generateRecoveryPhrase, setRecoveryPhrase, setPin, getSettings, parentPinUnknown,
 } from '../../storage/settings';
 import { Eye, EyeOff, Info as InfoIcon, Lock as LockIcon } from '../shared/icons/lucide';
@@ -14,6 +14,42 @@ import { usePopupT } from '../../i18n/react';
 import { StatusLine } from '../shared/StatusLine';
 import { isOffProduct } from '../../product';
 import { flushSync } from 'react-dom';
+
+// ─── Arrow keys in a group of radios or tabs ───
+//
+// A radiogroup or a tablist is one Tab stop: its chosen member takes the Tab key and the arrow keys, Home and End move
+// among the rest. A group with nothing chosen keeps its first member on the Tab path, so it is never out of reach.
+// `choose` makes the move the choice too, for a group whose choice costs nothing (tabs, the style dots). The level
+// buttons leave it out: a level can ask for a PIN or wipe custom switches, so a pass over one with the arrow keys only
+// moves the focus and Enter or Space chooses.
+const GROUP_MEMBER = '[role="radio"], [role="tab"]';
+const GROUP_KEY_TARGET: Record<string, (from: number, last: number) => number> = {
+  ArrowRight: (from, last) => (from >= last ? 0 : from + 1),
+  ArrowLeft: (from, last) => (from <= 0 ? last : from - 1),
+  Home: () => 0,
+  End: (_from, last) => last,
+};
+
+export function rovingGroup(checkedIndex: number, choose?: (index: number) => void): {
+  onKeyDown: (e: ReactKeyboardEvent<HTMLElement>) => void;
+  tabIndexOf: (index: number) => 0 | -1;
+} {
+  const tabStop = Math.max(checkedIndex, 0);
+  return {
+    tabIndexOf: (index) => (index === tabStop ? 0 : -1),
+    onKeyDown: (e) => {
+      const target = GROUP_KEY_TARGET[e.key];
+      if (!target || e.ctrlKey || e.altKey || e.metaKey || e.shiftKey) return;
+      const members = Array.from(e.currentTarget.querySelectorAll<HTMLElement>(GROUP_MEMBER));
+      const from = members.indexOf(e.target as HTMLElement);
+      if (from < 0) return;
+      e.preventDefault();
+      const to = target(from, members.length - 1);
+      members[to]?.focus();
+      choose?.(to);
+    },
+  };
+}
 
 // ─── Toggle ───
 // `disabled` renders the switch in an informational state (visible but
@@ -80,7 +116,7 @@ export function Toggle({ on, onClick, label, disabled, heldByLevel }: {
 // screen reader reads it before the switch, and the (i) fold keeps only the
 // description (his word, 9 Oct 2026: a state line set apart under a switch was
 // one sentence too many).
-export function FeatRow({ name, desc, shown, note, noteColor, beta, stack, quiet, control }: {
+export function FeatRow({ name, desc, shown, note, noteColor, beta, stack, quiet, noteInFold, control }: {
   name: string;
   desc?: string;
   note?: ReactNode;
@@ -110,11 +146,17 @@ export function FeatRow({ name, desc, shown, note, noteColor, beta, stack, quiet
    * its name alone (the parent scout, 9 Oct 2026: "Show reframe markers" and "Strict language" were unexplained).
    */
   shown?: boolean;
+  /**
+   * A quiet note opens with the (i), above the description, instead of a line under the name: for a switch whose own
+   * label already says its state to a screen reader (the swear mask at Silent, 13 Oct 2026: the line ran the page past
+   * the popup).
+   */
+  noteInFold?: boolean;
   control: ReactNode;
 }) {
   const t = usePopupT();
   const [open, setOpen] = useState(false);
-  const quietNote = quiet && note ? note : null;
+  const quietNote = quiet && note && !noteInFold ? note : null;
   const fold = shown ? undefined : desc;
   return (
     <div
@@ -123,7 +165,9 @@ export function FeatRow({ name, desc, shown, note, noteColor, beta, stack, quiet
     >
       <div className="fr-body" style={stack ? { width: '100%' } : undefined}>
         <div className="fr-name">
-          {name}
+          {/* The last word keeps the (i) beside it, so a long name never leaves the icon alone on a line (12 Oct 2026).
+              Chrome breaks before an inline button whatever character joins it; only a nowrap span holds them. */}
+          {name.slice(0, name.lastIndexOf(' ') + 1)}<span className="fr-tail">{name.slice(name.lastIndexOf(' ') + 1)}
           {beta && <span className="beta-pill" style={{ marginLeft: 8 }}>BETA</span>}
           {fold && (
             <button
@@ -135,10 +179,11 @@ export function FeatRow({ name, desc, shown, note, noteColor, beta, stack, quiet
             >
               <InfoIcon size={13} />
             </button>
-          )}
+          )}</span>
         </div>
         {shown && desc && <div className="fr-desc fr-line">{desc}</div>}
         {quietNote && <div className="fr-desc fr-state">{quietNote}</div>}
+        {open && noteInFold && note && <div className="fr-desc fr-state">{note}</div>}
         {open && desc && <div className="fr-desc">{desc}</div>}
         {note && !quiet && (
           <div className="fr-desc" style={noteColor ? { color: noteColor } : undefined}>{note}</div>
@@ -596,7 +641,7 @@ export function ChangePinPanel({ onDone }: { onDone: () => void }) {
   // fieldset/legend per group gives it the name a screen reader announces
   // ahead of the digits, reusing the caption already printed above it.
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
+    <div className="pin-panel" style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
       <fieldset style={{ border: 'none', margin: 0, padding: 0 }}>
         <legend className="pin-legend">{t.changePinCurrent}</legend>
         <PinDigits value={current} set={setCurrent} autoFocus onComplete={() => focusRowIfEmpty(nextRowRef.current, next)} />
@@ -614,6 +659,42 @@ export function ChangePinPanel({ onDone }: { onDone: () => void }) {
         {nextMismatch && <PinErr>{t.offPinMismatch}</PinErr>}
       </PinErrSlot>
       <button ref={saveRef} className="pop-cta" disabled={!ready || busy} onClick={() => { void submit(); }}>{t.changePinSave}</button>
+    </div>
+  );
+}
+
+// ─── Remove the PIN (Off): behind the current PIN, and nothing else ───
+export function RemovePinPanel({ onDone }: { onDone: () => void }) {
+  const t = usePopupT();
+  const [current, setCurrent] = useState<string[]>(['', '', '', '']);
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const ready = current.join('').length === 4;
+  const submit = async () => {
+    setBusy(true);
+    setError('');
+    try {
+      if (!(await removePin(current.join('')))) {
+        const lockMs = await pinLockRemainingMs();
+        setError(lockMs > 0 ? t.pinLockedFor(Math.ceil(lockMs / 1000)) : t.changePinWrong);
+        setCurrent(['', '', '', '']);
+        return;
+      }
+      onDone();
+    } catch (e) {
+      setError(String((e as Error).message ?? e));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="pin-panel" style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
+      <fieldset style={{ border: 'none', margin: 0, padding: 0 }}>
+        <legend className="pin-legend">{t.changePinCurrent}</legend>
+        <PinDigits value={current} set={setCurrent} autoFocus />
+      </fieldset>
+      <PinErrSlot>{error && <PinErr>{error}</PinErr>}</PinErrSlot>
+      <button className="pop-cta" disabled={!ready || busy} onClick={() => { void submit(); }}>{t.offPinRemoveSave}</button>
     </div>
   );
 }
@@ -696,7 +777,7 @@ export function SetPinPanel({ onDone, onPhraseShown, commitOnConfirm }: {
     );
   }
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
+    <div className="pin-panel" style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
       <fieldset style={{ border: 'none', margin: 0, padding: 0 }}>
         <legend className="pin-legend">{t.offPinNew}</legend>
         <PinDigits value={next} set={setNext} autoFocus onComplete={() => focusRowIfEmpty(confirmRowRef.current, confirm)} />

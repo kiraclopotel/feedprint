@@ -13,14 +13,19 @@
 // extension never sees a Groq key.
 
 import { getSettings, recordAiCall, type FWSettings } from '../storage/settings';
-import { makesNoOutsideCall } from '../types/mode';
+import { levelMayCallOut } from '../types/reading-gate';
+import { readingActiveNow } from './gate-with-agreement';
 import { meteredTokenEquivalents } from '../storage/usage-weights';
 import { getLicense, isUncappedTier, type LicenseInfo } from '../storage/license';
 import { licenseHoldsFeature, readEntitlements, READING_FEATURE, refreshEntitlements } from '../storage/license-entitlements';
 import type { AIFailure, Result } from './ai-error';
 import { Err, Ok, parseRetryAfterMs } from './ai-error';
 import { buildGroqCallTelemetry, recordGroqCallTelemetry } from './telemetry';
-import { DeadlineError, fetchWithDeadline, PROXY_TEXT_DEADLINE_MS } from './fetch-with-deadline';
+import { DeadlineError, PROXY_TEXT_DEADLINE_MS } from './fetch-with-deadline';
+import { relayFetch } from './relay-fetch';
+import { noteReadingAnswered, noteReadingFailure } from '../storage/reading-trouble';
+import { noteReadingGotThrough } from './reading-got-through';
+import { bumpCounter } from '../diagnostics/diagnostics';
 import { noteCallProvenance } from './call-provenance';
 import { getBuildId } from '../core/build-id';
 import { countIdentifierHits, noteIdentifierHits } from '../core/name-labels';
@@ -203,6 +208,9 @@ let relayPausedUntil = 0;
 // the moment each would leave, so a burst of posts does not meet the same refusal twenty times in half a minute.
 const RATE_LIMIT_PAUSE_DEFAULT_MS = 5_000;
 const RATE_LIMIT_PAUSE_MAX_MS = 60_000;
+// A timer can fire a few milliseconds before the pause it was set for ends; the caller's own retry, which waited the
+// whole Retry-After, must not be turned away for that.
+const RATE_LIMIT_PAUSE_SLACK_MS = 250;
 let rateLimitedUntil = 0;
 
 let textCapLatch: { cap: ProxyCapPeriod; periodKey: string; licenseFingerprint?: string } | null = null;
@@ -315,9 +323,10 @@ export async function probeProxy(licenseBearer: string): Promise<ProxyProbeResul
   const now = Date.now();
   const cached = probeCache.get(trimmed);
   if (cached && cached.expiresAt > now) return cached.result;
-  // Strict asks nothing of the proxy, not even whether the key is alive. The last answer stands, or
-  // none, which the popup shows as unchecked.
-  if (makesNoOutsideCall(await getSettings())) return cached?.result ?? 'unknown';
+  // A level that sends nothing asks nothing of the proxy, not even whether the key is alive: Strict while it
+  // reads nothing, and an install whose level is not chosen. The last answer stands, or none, which the popup
+  // shows as unchecked.
+  if (!levelMayCallOut(await getSettings())) return cached?.result ?? 'unknown';
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 5000);
@@ -336,9 +345,15 @@ export async function probeProxy(licenseBearer: string): Promise<ProxyProbeResul
       claudeProviderName = providerNameFrom(resp.headers?.get?.(CLAUDE_PROVIDER_LEGAL_HEADER) ?? null);
     }
     else if (resp.status === 401 || resp.status === 403) result = 'revoked';
-    else result = 'unknown';
+    else {
+      result = 'unknown';
+      bumpCounter(`licenseProbe:status-${resp.status}`);
+    }
   } catch {
     result = 'unknown';
+    // The owner's chip read NOT CHECKED on a working install (13 Oct 2026) and nothing said why: a timeout (the list is slow) and a
+    // dropped connection are told apart here, and any other status above.
+    bumpCounter(controller.signal.aborted ? 'licenseProbe:timeout' : 'licenseProbe:network');
   } finally {
     clearTimeout(timeout);
   }
@@ -360,12 +375,12 @@ export async function probeProxy(licenseBearer: string): Promise<ProxyProbeResul
 
 /**
  * Whether the reading may run for this install now: the refusals callAI makes before it reads (the master switch,
- * a level that sends nothing, no key, a plan without the reading), without its network refresh. Work the reading did
+ * a level that sends nothing, Strict without the adult's agreement, no key, a plan without the reading), without its
+ * network refresh. Work the reading did
  * earlier, such as a cached rewrite, is served only while this holds, so a key that is removed or lapses stops it too.
  */
 export async function readingAllowed(settings: FWSettings, license: LicenseInfo): Promise<boolean> {
-  if (settings.aiAnalysisEnabled === false || makesNoOutsideCall(settings)) return false;
-  if (license.tier === 'free') return false;
+  if (!await readingActiveNow(settings, license)) return false;
   return licenseHoldsFeature(license, READING_FEATURE);
 }
 
@@ -394,9 +409,9 @@ async function callAIInner(
 
   // Master AI breaker. Checked FIRST: when the parent flips aiAnalysisEnabled
   // off, no license read, no cap math, no network. Every Groq caller funnels
-  // through here, so this one gate is the whole guarantee. Strict is the same refusal whatever the
-  // stored switch says: the person's own setting is kept, so leaving Strict gives it back.
-  if (settings.aiAnalysisEnabled === false || makesNoOutsideCall(settings)) {
+  // through here, so this one gate is the whole guarantee. A level that sends nothing is the same refusal whatever
+  // the stored switch says: the person's own setting is kept, so leaving Strict gives it back.
+  if (settings.aiAnalysisEnabled === false || !levelMayCallOut(settings)) {
     return Err({ kind: 'cap-exhausted', cap: 'master-off' });
   }
 
@@ -411,6 +426,11 @@ async function callAIInner(
     // Once per post read on the free tier: behind the debug switch, so it does not fill the page's console.
     fwDebug(`[FeelingWise] Pipeline: PASS (free tier — ${license.tier}) — regex/harm-floor cleared`);
     return Err({ kind: 'cap-exhausted', cap: 'tier-free' });
+  }
+  // Strict reads only for an adult who agreed (the reading consent, kept per key): without it Strict is the
+  // refusal it has always been. The other levels pass here untouched; the relay holds their agreement.
+  if (!await readingActiveNow(settings, license)) {
+    return Err({ kind: 'cap-exhausted', cap: 'master-off' });
   }
   // Plan gate: a paid key whose plan does not include the reading makes no call, and reads to the
   // callers exactly like the free tier. The proxy refuses such a call anyway (403 feature_missing);
@@ -459,6 +479,14 @@ async function callAIInner(
   // The relay asked this key for the reading go-ahead lately (403 consent_required): nothing more leaves until the
   // person gives it or a few minutes pass, and the Issues tab and the toolbar icon say why (storage/reading-pause.ts).
   if (await readingPauseHolds(fingerprint)) {
+    return Err({ kind: 'consent-required' });
+  }
+
+  // The go-ahead is read here, before any post text leaves: a key with no stored consent sends nothing, and the
+  // Issues tab and the toolbar icon say why, as for the relay's own refusal. Until 13 Oct 2026 only the relay held
+  // this line (cold audit, finding 4).
+  if (!await getReadingConsent(bearer)) {
+    noteReadingPaused(fingerprint);
     return Err({ kind: 'consent-required' });
   }
 
@@ -545,6 +573,8 @@ async function callAIInner(
   return first;
 }
 
+const warnedOfCallFailure = new Set<string>();
+
 let callSeq = 0;
 /** Unique across the tabs that share one telemetry buffer, not only within this one. */
 function newCallId(): string {
@@ -619,15 +649,15 @@ async function callProxyOnce(
     // wall-clock cost (DNS + TLS + server + body parse). TTFT is out of
     // scope this turn (would require streaming).
     // The person's go-ahead for the paid reading rides with every call; the proxy keeps the first
-    // it sees. A key with none still calls: a key the proxy grandfathered is served without one.
+    // it sees. callAIInner already refused a key with none, so it is always here.
     const consent = await getReadingConsent(licenseBearer);
     const t0 = Date.now();
     const sent = await withProxyFetchSlot(async () => {
       // A call that waited for its turn while another met a 429 does not add to it: it goes back to its caller as the
       // same refusal, which waits out the Retry-After and tries once more.
       const waitMs = rateLimitedUntil - Date.now();
-      if (waitMs > 0) return waitMs;
-      const answered = await fetchWithDeadline(PROXY_URL, {
+      if (waitMs > RATE_LIMIT_PAUSE_SLACK_MS) return waitMs;
+      const answered = await relayFetch(PROXY_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -635,8 +665,8 @@ async function callProxyOnce(
           ...(consent ? { [READING_CONSENT_HEADER]: consentHeaderValue(consent) } : {}),
         },
         body: JSON.stringify(requestBody),
-        // This call runs inside the social site's page, so without a policy of its own the browser
-        // would attach that page's address as the referrer, under the site's rules, not ours.
+        // The worker carries this call out (relay-fetch.ts). Where it goes out from a page instead, without a policy of
+        // its own the browser would attach that page's address as the referrer, under the site's rules, not ours.
         referrerPolicy: 'no-referrer',
       }, PROXY_TEXT_DEADLINE_MS, signal);
       // Set before the slot is let go, so the call queued behind this one meets the pause and not the same refusal. Only a
@@ -659,6 +689,12 @@ async function callProxyOnce(
       return Err({ kind: 'rate-limit', retryAfterMs: sent });
     }
     const res = sent;
+    // A relay that answers at all, with an error below 500 included, is there; one that fails, or does not answer, several
+    // times in a row is told to the person (storage/reading-trouble.ts).
+    if (res.status >= 500) noteReadingFailure();
+    else noteReadingAnswered();
+    // A reading that came back is the best check there is that this key is accepted (the header chip takes it when the models list gives none).
+    if (res.ok) noteReadingGotThrough(fingerprint);
     const retryAfterMs = parseRetryAfterMs(res.headers.get('Retry-After')) ?? null;
     if (!res.ok) {
       lastCallMeta = null;
@@ -885,9 +921,18 @@ async function callProxyOnce(
     // the vendor did not answer in time.
     if (error instanceof DeadlineError) {
       console.warn(`[FeelingWise] proxy call exceeded ${error.deadlineMs} ms; treating as a network failure`);
+      noteReadingFailure();
       return Err({ kind: 'network', message: error.message });
     }
+    noteReadingFailure();
     const message = error instanceof Error ? error.message : undefined;
+    // One line per kind of failure, so a call that fails before the relay answers says how (the Tester's twenty-fifth read
+    // saw five of them at Silent and nothing on the page to tell them apart); the worker's refusals name their cause besides.
+    const said = error instanceof Error ? `${error.name}: ${error.message}` : 'not an error object';
+    if (!warnedOfCallFailure.has(said)) {
+      warnedOfCallFailure.add(said);
+      console.warn(`[FeelingWise] a reading call failed before the relay answered (${said})`);
+    }
     return Err({ kind: 'network', message });
   }
 }

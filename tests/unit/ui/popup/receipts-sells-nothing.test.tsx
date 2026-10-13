@@ -1,8 +1,8 @@
 // Feedprint holds no price inside the extension, and its License tab says what a key adds.
 //
 // The price lives on the site's help page, which can change it without an update. Inside the extension a free
-// install sees one line on what a key adds and one link to that page, on the License tab only and never at Strict,
-// where nothing is read. A person who already holds a key pastes it in the same box and keeps the reading.
+// install sees one line on what a key adds and one link to that page, on the License tab only, at every level
+// (Silent reads with a key since 12 Oct 2026, so it says it too). A person who already holds a key pastes it in the same box and keeps the reading.
 //
 // What this holds, in every interface language: no price, no checkout and no buying words in the popup or dashboard
 // strings; the License tab carries exactly that line and that link; no other screen links to the help page.
@@ -136,15 +136,15 @@ describe('no price inside Feedprint, and one line on what a key adds', () => {
     expect(KEY_HELP_URL).toBe('https://feelingwise.org/help#ai-reading');
   });
 
-  it('at Strict, where nothing is read, the tab neither says what a key adds nor links to get one', () => {
+  it('at Silent the tab says what a key adds and links to get one, like the other levels', () => {
     for (const lang of UI_LANGUAGES) {
       const html = keysTab(FREE, lang, 'child');
-      expect(html, lang).not.toContain(esc(POPUP_STRINGS[lang].keyAdds));
-      expect(html, lang).not.toContain('#ai-reading');
+      expect(html, lang).toContain(esc(POPUP_STRINGS[lang].keyAdds));
+      expect(html, lang).toContain('#ai-reading');
     }
   });
 
-  it('a key held outside Strict shows the name of what it turns on and the rows it covers, and no line or link to get one', () => {
+  it('a key held shows the name of what it turns on and the rows it covers, and no line or link to get one', () => {
     for (const lang of UI_LANGUAGES) {
       const html = keysTab(PAID, lang);
       const t = POPUP_STRINGS[lang];
@@ -169,14 +169,19 @@ describe('no price inside Feedprint, and one line on what a key adds', () => {
           render: () => true, toggle: async () => {}, overrideNote: () => undefined, onChange: async () => {},
         }),
       }));
-      const shown = [...html.matchAll(/class="fr-name"[^>]*>(?:<[^>]+>)*([^<]+)/g)].map((m) => m[1].trim());
-      expect(shown, lang).toEqual(readingRowNames(POPUP_STRINGS[lang]).map(esc));
+      // The name as shown: the row's words with the BETA pill and the (i) button set aside (the last word has its own
+      // span since Off U5, 12 Oct 2026).
+      const shown = [...html.matchAll(/class="fr-name"[^>]*>([\s\S]*?)<\/div>/g)].map((m) => m[1]
+        .replace(/<span class="beta-pill"[^>]*>[^<]*<\/span>/g, '').replace(/<button[\s\S]*?<\/button>/g, '').replace(/<[^>]+>/g, '').trim());
+      // The dot's row sits in the card since packet 36 (13 Oct 2026) but is no part of what a key adds: every install draws it.
+      expect(shown.filter((n) => n !== esc(POPUP_STRINGS[lang].featMarkersName)), lang).toEqual(readingRowNames(POPUP_STRINGS[lang]).map(esc));
+      expect(shown, lang).toContain(esc(POPUP_STRINGS[lang].featMarkersName));
     }
   });
 
-  it('a key held at Strict lists no rows, since nothing is read there', () => {
+  it('a key held at Silent lists the rows it covers, since Silent reads with it', () => {
     for (const lang of UI_LANGUAGES) {
-      expect(keysTab(PAID, lang, 'child'), lang).not.toContain('key-rows');
+      expect(keysTab(PAID, lang, 'child'), lang).toContain('key-rows');
     }
   });
 

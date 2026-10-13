@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 // The paid reading starts on the person's request. The popup asks once per licence key, in every
-// level that reads (Strict sends nothing and is never asked), only while the reading is on; the button stores the text version, the hash of the words
+// level that reads (Silent included since 12 Oct 2026; a level nobody has chosen is never asked), only while the reading is on; the button stores the text version, the hash of the words
 // shown and the time, under a digest of the key; "Not now" is the caller's to turn the reading off;
 // and every paid call carries the stored consent in the header the proxy reads.
 
@@ -39,12 +39,12 @@ beforeEach(() => {
 afterEach(() => { vi.restoreAllMocks(); document.body.innerHTML = ''; });
 
 describe('when the popup asks', () => {
-  it('only with a key, the reading on, a level that reads (never Strict), no consent for the key, and a key the proxy did not refuse', async () => {
+  it('only with a key, the reading on, a level that reads (a level nobody has chosen does not), no consent for the key, and a key the proxy did not refuse', async () => {
     const { needsReadingConsent } = await import('../../../../src/ui/popup/panels/ReadingConsentScreen');
     const base = { license: KEY, settings: { aiAnalysisEnabled: true, mode: 'adult' as const }, consent: null, servedProvider: PROVIDER as string | null, keyRefused: false };
     expect(needsReadingConsent(base)).toBe(true);
     expect(needsReadingConsent({ ...base, settings: { aiAnalysisEnabled: true, mode: 'teen' } })).toBe(true);
-    expect(needsReadingConsent({ ...base, settings: { aiAnalysisEnabled: true, mode: 'child' } })).toBe(false);
+    expect(needsReadingConsent({ ...base, settings: { aiAnalysisEnabled: true, mode: 'child' } })).toBe(true);
     expect(needsReadingConsent({ ...base, settings: { aiAnalysisEnabled: true, mode: 'teen', levelChosen: false } })).toBe(false);
     expect(needsReadingConsent({ ...base, settings: { aiAnalysisEnabled: false, mode: 'adult' } })).toBe(false);
     expect(needsReadingConsent({ ...base, license: { tier: 'free', secret: '' } })).toBe(false);
@@ -59,8 +59,9 @@ describe('when the popup asks', () => {
     expect(needsReadingConsent({ ...base, servedProvider: PROVIDER })).toBe(false);
     expect(needsReadingConsent({ ...base, servedProvider: 'Another Company Ltd., EU' })).toBe(true);
     expect(needsReadingConsent({ ...base, servedProvider: null })).toBe(false);
-    expect(needsReadingConsent({ ...base, servedProvider: 'Another Company Ltd., EU', settings: { aiAnalysisEnabled: true, mode: 'child' } })).toBe(false);
-    // Moderate still reads, so it still asks when the company changes.
+    expect(needsReadingConsent({ ...base, servedProvider: 'Another Company Ltd., EU', settings: { aiAnalysisEnabled: true, mode: 'child' } })).toBe(true);
+    // A level nobody has chosen asks nothing; Calm reads, so it asks when the company changes.
+    expect(needsReadingConsent({ ...base, servedProvider: 'Another Company Ltd., EU', settings: { aiAnalysisEnabled: true, mode: 'teen', levelChosen: false } })).toBe(false);
     expect(needsReadingConsent({ ...base, servedProvider: 'Another Company Ltd., EU', settings: { aiAnalysisEnabled: true, mode: 'teen', levelChosen: true } })).toBe(true);
   });
 });
@@ -94,19 +95,22 @@ describe('the paid call', () => {
     return res as unknown as Response;
   }
 
-  it('carries the stored consent, and calls without one when none is stored (a grandfathered key)', async () => {
+  // Changed to the new behaviour (cold audit 13 Oct 2026, finding 4): a key with no stored consent sends nothing, where it used to call without the header.
+  it('carries the stored consent, and sends nothing when none is stored', async () => {
     const fetchSpy = vi.fn(async () => okResponse());
     (globalThis as { fetch: unknown }).fetch = fetchSpy;
     const { callAI } = await import('../../../../src/ai/client');
     const rc = await import('../../../../src/storage/reading-consent');
 
-    await callAI('sys', 'usr');
-    const before = (fetchSpy.mock.calls[0] as unknown as [string, RequestInit])[1].headers as Record<string, string>;
-    expect(before['X-FW-Consent']).toBeUndefined();
+    const before = await callAI('sys', 'usr');
+    expect(before.ok).toBe(false);
+    if (!before.ok) expect(before.error.kind).toBe('consent-required');
+    expect(fetchSpy).not.toHaveBeenCalled();
 
     const c = await rc.recordReadingConsent(rc.bearerOf(KEY), 'the words shown', PROVIDER);
     await callAI('sys', 'usr 2');
-    const after = (fetchSpy.mock.calls[1] as unknown as [string, RequestInit])[1].headers as Record<string, string>;
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    const after = (fetchSpy.mock.calls[0] as unknown as [string, RequestInit])[1].headers as Record<string, string>;
     expect(after['X-FW-Consent']).toBe(rc.consentHeaderValue(c));
   });
 });

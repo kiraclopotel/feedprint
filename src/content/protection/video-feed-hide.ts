@@ -135,6 +135,20 @@ export function videoFeedItemOf(el: Element | null): { item: HTMLElement; surfac
   return null;
 }
 
+/**
+ * True when `el` is an item of a feed whose items snap into one scrolling column (TikTok's For You and Following): a hidden
+ * item there keeps its box. The owner's report of 13 Oct 2026: scrolling down the feed snapped back up to the post before two
+ * or three times, and the console showed the same card hidden nine times. Taking a card's box away (display:none) moves the
+ * cards after it in a column that snaps card by card, and TikTok redraws a card that has no size, so the hide is applied
+ * again; the AI-content filter and the Shorts ad card keep their box because display:none made TikTok's own observer loop
+ * (ai-content-blocker.ts BLOCKED_CSS). The item is hidden by visibility and one quiet line stands in its place
+ * (hide-primitives.ts noteAdSlot).
+ */
+export function keepsItemBox(el: HTMLElement): boolean {
+  const feed = videoFeedItemOf(el);
+  return feed !== null && feed.item === el && feed.surface.name === 'tiktok-feed';
+}
+
 // ─── Scoped silence ─────────────────────────────────────────────────────────
 
 /** `muted` as it was before FeelingWise first touched the element. */

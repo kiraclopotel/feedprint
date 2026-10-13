@@ -10,6 +10,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { injectHardHide, injectCollapseOrHide, injectAdHide } from '../../../../src/content/injector';
 import { muteAndPauseMedia } from '../../../../src/content/hide-primitives';
+import { collapseCard } from '../../../helpers/collapse-a-card';
 import {
   advancePastHiddenVideo,
   afterVideoHidden,
@@ -125,7 +126,8 @@ describe('1. advance after a hide', () => {
     onScreen(a.item);
     const scrolled = scrollSpy(b.item);
     expect(injectHardHide(a.desc, 'tiktok')).toBe(true);
-    expect(a.item.style.getPropertyValue('display')).toBe('none');
+    expect(a.item.style.getPropertyValue('visibility'), 'hidden, and the card keeps its box').toBe('hidden');
+    expect(a.item.style.getPropertyValue('display')).toBe('');
     expect(scrolled).toHaveBeenCalledTimes(1);
     expect(document.querySelector(`[${RUN_NOTICE_ATTR}]`)).toBeNull();
   });
@@ -176,7 +178,7 @@ describe('1a. only the card on screen moves the feed', () => {
     onScreen(watching.item);
     const spies = [past, between, watching].map((c) => scrollSpy(c.item));
     expect(injectHardHide(past.desc, 'tiktok')).toBe(true);
-    expect(past.item.style.getPropertyValue('display')).toBe('none');
+    expect(past.item.style.getPropertyValue('visibility')).toBe('hidden');
     for (const s of spies) expect(s).not.toHaveBeenCalled();
     expect(document.querySelector(`[${RUN_NOTICE_ATTR}]`)).toBeNull();
   });
@@ -202,8 +204,20 @@ describe('1a. only the card on screen moves the feed', () => {
     // A feed that does not hold its place: the collapse above pulls the watched card up a screen.
     placeAt(watching.item, () => (past.item.style.getPropertyValue('display') === 'none' ? -window.innerHeight : 0));
     const back = scrollSpy(watching.item);
-    injectHardHide(past.desc, 'tiktok');
+    collapseCard(past.item);
     expect(back).toHaveBeenCalledTimes(1);
+  });
+
+  it('must not act: a hard hide of a TikTok card keeps its box, so the one on screen does not move and is not scrolled', () => {
+    const list = feedList();
+    const past = tiktokItem(list, 'marked late');
+    const watching = tiktokItem(list, 'the one on screen');
+    placeAt(past.item, -window.innerHeight);
+    placeAt(watching.item, () => (past.item.style.getPropertyValue('display') === 'none' ? -window.innerHeight : 0));
+    const back = scrollSpy(watching.item);
+    injectHardHide(past.desc, 'tiktok');
+    expect(past.item.style.getPropertyValue('display')).toBe('');
+    expect(back).not.toHaveBeenCalled();
   });
 
   it('must not act: an ad scrolled past is hidden; the feed does not turn back', () => {
@@ -436,7 +450,8 @@ describe('2. the mute is scoped to the marked video', () => {
     tiktokItem(list, 'next');
     const pause = vi.spyOn(a.video, 'pause').mockImplementation(() => undefined);
     injectHardHide(a.desc, 'tiktok', { noticeText: 'hid', showLabel: 'show', hideLabel: 'hide' });
-    const notice = a.item.previousElementSibling as HTMLElement;
+    // The notice of a kept TikTok card stands inside it (a sibling would add a block to the snapping column).
+    const notice = a.item.querySelector('[data-fw-hide-notice]') as HTMLElement;
     notice.querySelector('button')!.click();
     expect(a.item.hasAttribute(SILENCED_ATTR)).toBe(false);
     pause.mockClear();

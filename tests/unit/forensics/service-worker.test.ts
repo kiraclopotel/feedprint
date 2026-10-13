@@ -1442,6 +1442,30 @@ describe('service-worker — async ack envelope handlers', () => {
     );
   });
 
+  it('AUTHOR_UPDATE forwards the surface and whether the notice spoke, for the gate\'s window and once-a-day cap', async () => {
+    const payload = {
+      author: '@source',
+      platform: 'youtube',
+      flagged: false,
+      techniques: [],
+      day: '2026-10-13',
+      textHash: 'abc123',
+      surface: 'for-you',
+      noticed: true,
+    };
+    const { responsePromise } = dispatchMessage({ type: 'AUTHOR_UPDATE', payload });
+    expect(await responsePromise).toEqual({ ok: true });
+    expect(mocks.updateAuthorProfile).toHaveBeenCalledWith(
+      payload.author,
+      payload.platform,
+      payload.flagged,
+      payload.techniques,
+      payload.day,
+      payload.textHash,
+      { surface: 'for-you', noticed: true },
+    );
+  });
+
   it('AUTHOR_UPDATE updateAuthorProfile rejection acks {ok:false}', async () => {
     mocks.updateAuthorProfile.mockRejectedValueOnce(new Error('boom'));
     const { responsePromise } = dispatchMessage({

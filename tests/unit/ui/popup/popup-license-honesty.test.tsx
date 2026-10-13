@@ -302,8 +302,11 @@ describe('resolveModeClick (POP-3)', () => {
     expect(resolveModeClick({ mode: 'teen', features: teenPreset() }, 'teen')).toBe('noop');
   });
 
-  it('different mode that would wipe customizations → confirm', () => {
-    expect(resolveModeClick({ mode: 'teen', features: teenPreset() }, 'child')).toBe('confirm');
+  it('different mode that would wipe customizations → confirm; an untouched level moves in one tap', () => {
+    const custom = teenPreset();
+    custom['show-reframe-markers'] = { enabled: !custom['show-reframe-markers'].enabled };
+    expect(resolveModeClick({ mode: 'teen', features: custom }, 'child')).toBe('confirm');
+    expect(resolveModeClick({ mode: 'teen', features: teenPreset() }, 'child')).toBe('apply');
   });
 
   it('different mode but the grid already matches the target → apply (no confirm)', () => {
@@ -342,7 +345,7 @@ describe('mode state line (laydown 4.1)', () => {
 
   it('any toggled-away switch reads as customized for the own mode', () => {
     const custom = childPreset();
-    custom['show-reframe-markers'] = { enabled: false };
+    custom['show-reframe-markers'] = { enabled: true };
     expect(modeSwitchResetsToggles(custom, 'child')).toBe(true);
   });
 });

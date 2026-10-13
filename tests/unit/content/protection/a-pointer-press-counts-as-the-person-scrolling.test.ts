@@ -6,8 +6,12 @@
 // the person scrolling too (the same 800 ms), and a hide that lands just after it does not scroll the feed back against them.
 // Site B's test file is not edited; this one carries the new inputs and the two controls.
 
+// Since 13 Oct 2026 a TikTok card is hidden with its box kept (video-feed-hide.ts keepsItemBox), so a test of the move or the
+// hold that needs a card to lose its box makes the collapse itself (tests/helpers/collapse-a-card.ts): the timing belongs to
+// any hide that moves the feed, whichever card takes it.
+
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { injectHardHide } from '../../../../src/content/injector';
+import { collapseCard } from '../../../helpers/collapse-a-card';
 import {
   _resetAdvanceBreakerForTesting,
   _setHostForTesting,
@@ -74,14 +78,14 @@ afterEach(() => {
 describe('F47 site B2: a pointer press counts as the person scrolling', () => {
   it('control: no input at all, the watched card is put back, once', () => {
     const { past, back } = feedWhereTheHideMovesTheWatchedCard();
-    injectHardHide(past.desc, 'tiktok');
+    collapseCard(past.item);
     expect(back).toHaveBeenCalledTimes(1);
   });
 
   it('a press on the scrollbar just before the hide: the feed is not scrolled back', () => {
     const { past, back } = feedWhereTheHideMovesTheWatchedCard();
     document.documentElement.dispatchEvent(new Event('pointerdown', { bubbles: true }));
-    injectHardHide(past.desc, 'tiktok');
+    collapseCard(past.item);
     expect(past.item.style.getPropertyValue('display'), 'the hide still landed').toBe('none');
     expect(back, 'the feed is not scrolled back after a press').not.toHaveBeenCalled();
   });
@@ -91,7 +95,7 @@ describe('F47 site B2: a pointer press counts as the person scrolling', () => {
     const nextButton = document.createElement('button');
     document.body.appendChild(nextButton);
     nextButton.dispatchEvent(new Event('pointerdown', { bubbles: true }));
-    injectHardHide(past.desc, 'tiktok');
+    collapseCard(past.item);
     expect(back).not.toHaveBeenCalled();
   });
 
@@ -99,7 +103,7 @@ describe('F47 site B2: a pointer press counts as the person scrolling', () => {
     const { past, back } = feedWhereTheHideMovesTheWatchedCard();
     document.documentElement.dispatchEvent(new Event('pointerdown', { bubbles: true }));
     vi.advanceTimersByTime(1000);
-    injectHardHide(past.desc, 'tiktok');
+    collapseCard(past.item);
     expect(back).toHaveBeenCalledTimes(1);
   });
 });

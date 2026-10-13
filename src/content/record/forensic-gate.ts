@@ -76,8 +76,20 @@ const loggedForensicTexts = new Set<string>();
  */
 export function forensicDedupKey(post: { platform: string; id: string; text: string; sourceUrl?: string; anchorUrl?: string; kind?: string }): string {
   const isComment = post.kind === 'comment' || post.kind === 'top-comment' || post.kind === 'reply' || post.kind === 'reply-to-reply';
-  const ownAddress = isComment ? post.anchorUrl : post.sourceUrl;
+  const ownAddress = isComment ? post.anchorUrl : sameItemAddress(post.platform, post.sourceUrl);
   return post.platform + '\u0000' + (ownAddress || post.id) + '\u0000' + post.text;
+}
+
+/**
+ * One Instagram post or reel has more than one address: /reels/<code>/ in the Reels view, /<account>/reel/<code>/ on the
+ * account's page, /p/<code>/ for a post. Two reads of the one reel at two of them keyed differently, so a reel recorded whole
+ * and read again at its second address wrote a second row (the Tester's recheck, 12 Oct 2026). The code names the item; the
+ * address is read down to it. Other platforms, comments and an address with no code are left as they were.
+ */
+function sameItemAddress(platform: string, address: string | undefined): string | undefined {
+  if (platform !== 'instagram' || !address) return address;
+  const code = address.match(/\/(?:p|reels?|tv)\/([A-Za-z0-9_-]+)/)?.[1];
+  return code ? `instagram.com/post/${code}` : address;
 }
 const cancelLoggedTexts = new Set<string>();
 

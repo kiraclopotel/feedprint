@@ -39,9 +39,10 @@ export const AD_SLOT_NOTE_ATTR = 'data-fw-ad-slot-note';
  * Instagram keeps a hidden ad's box, which reads as an unexplained gap, so one line says an ad was
  * there. The line is absolutely positioned because Instagram places and loads its feed from the
  * heights it has measured: shrinking the box to 0 or to 60px stopped the feed loading on the
- * live page.
+ * live page. TikTok's For You feed keeps the box of a hidden card for the same kind of reason
+ * (video-feed-hide.ts keepsItemBox); there the line stands in the middle of the card.
  */
-export function noteAdSlot(container: HTMLElement, text: string): void {
+export function noteAdSlot(container: HTMLElement, text: string, centered = false): void {
   if (container.querySelector(`:scope > [${AD_SLOT_NOTE_ATTR}]`)) return;
   const position = getComputedStyle(container).position;
   // '' is jsdom, which computes no position at all; a browser says 'static'.
@@ -52,8 +53,12 @@ export function noteAdSlot(container: HTMLElement, text: string): void {
   const note = document.createElement('div');
   note.setAttribute(AD_SLOT_NOTE_ATTR, 'true');
   note.textContent = text;
-  note.style.cssText = 'visibility:visible;position:absolute;top:0;left:0;right:0;padding:14px 16px;'
-    + 'font:12px/1.4 system-ui,sans-serif;color:#8e8e8e;text-align:center;pointer-events:none;';
+  note.style.cssText = centered
+    ? 'visibility:visible;position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;'
+      + 'justify-content:center;padding:16px;font:14px/1.4 system-ui,sans-serif;color:#8e8e8e;text-align:center;'
+      + 'pointer-events:none;'
+    : 'visibility:visible;position:absolute;top:0;left:0;right:0;padding:14px 16px;'
+      + 'font:12px/1.4 system-ui,sans-serif;color:#8e8e8e;text-align:center;pointer-events:none;';
   container.prepend(note);
 }
 

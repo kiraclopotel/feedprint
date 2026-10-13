@@ -18,6 +18,8 @@ const WORDS = new RegExp(
   'i',
 );
 
+// The three level sentences say what a level does to a flagged post and name no age, so they are held to the same
+// rule as every other key: no key is exempt.
 function texts(table: Record<string, unknown>): Array<[string, string]> {
   const out: Array<[string, string]> = [];
   for (const [key, value] of Object.entries(table)) {
@@ -45,9 +47,9 @@ describe('the popup speaks to the person whose feed it is', () => {
 
   it('the three level words are the ones the dashboard uses', () => {
     const P = POPUP_STRINGS as unknown as Record<string, Record<string, string>>;
-    expect([P.en.modeChild, P.en.modeTeen, P.en.modeAdult]).toEqual(['Strict', 'Moderate', 'Relaxed']);
-    expect([P.es.modeChild, P.es.modeTeen, P.es.modeAdult]).toEqual(['Estricto', 'Moderado', 'Relajado']);
-    expect([P['pt-BR'].modeChild, P['pt-BR'].modeTeen, P['pt-BR'].modeAdult]).toEqual(['Rigoroso', 'Moderado', 'Relaxado']);
-    expect([P.ro.modeChild, P.ro.modeTeen, P.ro.modeAdult]).toEqual(['Strict', 'Moderat', 'Relaxat']);
+    expect([P.en.modeChild, P.en.modeTeen, P.en.modeAdult]).toEqual(['Silent', 'Calm', 'Open']);
+    expect([P.es.modeChild, P.es.modeTeen, P.es.modeAdult]).toEqual(['Silencioso', 'Tranquilo', 'Abierto']);
+    expect([P['pt-BR'].modeChild, P['pt-BR'].modeTeen, P['pt-BR'].modeAdult]).toEqual(['Silencioso', 'Calmo', 'Aberto']);
+    expect([P.ro.modeChild, P.ro.modeTeen, P.ro.modeAdult]).toEqual(['Silențios', 'Calm', 'Deschis']);
   });
 });

@@ -5,6 +5,8 @@
 // stubbed, so the provider comes off the header the proxy sets.
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { installChromeStorageStub, type ChromeStorageStub } from '../../../helpers/chrome-storage';
+import { readingConsentFor } from '../../../helpers/reading-consent';
 
 vi.mock('../../../../src/storage/settings', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../../../src/storage/settings')>();
@@ -98,16 +100,24 @@ async function unjudgedRecordFor(post: PostContent): Promise<Extract<FWMessage, 
   enqueueComment(post);
   // Past the batch debounce and the client's one retry of a transient failure.
   await vi.advanceTimersByTimeAsync(5000);
-  const cancel = vi
+  const cancelSent = () => vi
     .mocked(sendHighStakesForensicLog)
     .mock.calls.map((c) => c[0] as FWMessage)
     .find((m): m is Extract<FWMessage, { type: 'CANCEL_LOG' }> => m.type === 'CANCEL_LOG');
+  // The stored go-ahead is read through a real digest, so the retry's pause is set a moment after the clock first
+  // moved: waitFor moves it on while it waits.
+  await vi.waitFor(() => expect(cancelSent()).toBeDefined(), { timeout: 5000, interval: 100 });
+  const cancel = cancelSent();
   expect(cancel).toBeDefined();
   expect(cancel!.payload.verdict).toBe('cancelled-batch-llm-failure');
   return cancel!.payload;
 }
 
+// The licence is the mocked family key; its stored go-ahead lets the batch reach the (stubbed) network.
+let storage: ChromeStorageStub;
+
 beforeEach(() => {
+  storage = installChromeStorageStub({ initial: readingConsentFor('fw-family-s') });
   document.body.innerHTML = '';
   vi.useFakeTimers();
   resetFlushBudget();
@@ -117,6 +127,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  storage.restore();
   clearPendingCommentBatchState();
   _resetViewportTrackerForTesting();
   document.body.innerHTML = '';

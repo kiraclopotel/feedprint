@@ -273,6 +273,20 @@ export function buildNameLabelMapForPost(
   return { ...map, authorValue: authorEntry.unknown ? 'unknown' : authorEntry.token };
 }
 
+/**
+ * The text and the post it answers, each with a letter in place of every name, for a call that sends both and gets
+ * back only fixed words (the descriptor, "Read this for me"). Nothing comes back with a name in it, so nothing is
+ * restored. With the step off (a measurement arm) both go as written.
+ */
+export function labelledPair(input: { author?: string; context?: string; text: string; parentText?: string }): { text: string; parentText: string | undefined } {
+  if (!isNameLabelStepOn()) return { text: input.text, parentText: input.parentText };
+  const labels = buildNameLabelMapForPost(input.author, input.context, [input.text, input.parentText]);
+  return {
+    text: replaceNamesInText(labels, input.text),
+    parentText: input.parentText ? replaceNamesInText(labels, input.parentText) : input.parentText,
+  };
+}
+
 /** The token for a node's author. An author the map never saw gets a fresh token rather than a name. */
 export function tokenForAuthor(map: NameLabelMap, author: AuthorLike): string {
   const known = map.byAuthor.get(author);

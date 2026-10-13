@@ -9,8 +9,8 @@ import { readFileSync } from 'node:fs';
 import { repoPath } from '../../helpers/repo-root';
 
 const MASTER: Record<string, string> = {
-  'en|setupWelcomeBody1': 'cd7170a8900ffaf41e4bc6bbe00e98606cabb40db4316262b5e988e3c4aee4bb', // the release that names Receipts Feedprint // 11 Oct 2026: the first sentence says what the record holds without a key (words method, crew/site/words-2026-10-11 packet 05)
-  'en|setupPinBody': 'b8fff8bf0c5247157ab35899af5e3d4f90554e106f68b0e623698c0a811061f8',
+  'en|setupWelcomeBody1': 'dedc8189a17be91bf1f05c9b231a41e9917ef37b2adf437f2d425eed96443e30', // 12 Oct 2026, packet 33: says what each level sends, and that the rephrasing needs a key for Live Rephrase
+  'en|setupPinBody': 'b8b858d90607fabbeafcd1392b6c5f837b2cf9b909bce209c79ea5fb5a485bc2', // names the level Silent
   'en|setupPinBodyModerate': '420085cfecc3ba6e02d7ea69c30e8ccfd65b57e230061d399269e7425cbc4ae8',
   'en|setupRecoveryBody': 'f715b1c0bd13fd803b0d5efacc040c3b778e589777b1fe5ce35a30348576d9d8', // the release that names Receipts Feedprint
   'en|setupRecoveryBodyOff': 'cdb52104d7b2b89035989e1006799784e477fe6e0db737f454df0f5fd1259435',
@@ -25,8 +25,8 @@ const MASTER: Record<string, string> = {
   'en|consentMoney': 'f12c074904b4acabe8ec1efb3dfbd5bacdf6433b3392010300dfb8aba74918a1',
   'en|consentStart': '51723c1ae084c0ce9d1581a535d76f0a162a35be008510c2107809827e90bccf', // 11 Oct 2026: the feature is named Live Rephrase (words method, crew/site/words-2026-10-11 packet 15)
   'en|consentNotNow': '45d9b9d29f41c218b37a504768fc3f023e4dd25e877b43e95dd0d639ae75d326',
-  'es|setupWelcomeBody1': '318c028e61ce3c08c1dea6a9760075275c3178b7d563b5d423120848d9ee6a82', // the release that names Receipts Feedprint // 11 Oct 2026: the first sentence says what the record holds without a key (words method, crew/site/words-2026-10-11 packet 05)
-  'es|setupPinBody': '5606189fb93452c4d94d3afb16a017b5afae3a89f1c0c9d7d041aab35be3888b',
+  'es|setupWelcomeBody1': '8c1b56286e32182247c97f56cb10fe3109a109d84f57df9807e32c061bc6dc1c', // 12 Oct 2026, packet 33: says what each level sends, and that the rephrasing needs a key for Live Rephrase
+  'es|setupPinBody': '1d5c8ea10819ee531a5c9b8b233106063eaa9a62b9605a2528ac2d41c490ee26', // names the level Silencioso
   'es|setupPinBodyModerate': 'df1ca7daaa994941e6bda2db031553b1a9b94c7690fc503a3658159621850c74',
   'es|setupRecoveryBody': '396cfcada9d9a44c90cef084ca87cf2276063376f4a3ded303f95b31fd50d1dd', // the release that names Receipts Feedprint
   'es|setupRecoveryBodyOff': '65517129cff6818df765d1cd001d9f3b79e6f8ee15a320f50c4df449383e69cf',
@@ -41,8 +41,8 @@ const MASTER: Record<string, string> = {
   'es|consentMoney': 'c9874a0314daf16c29f36e6669609d2b05eeca1bce93e352622ea6286f031f0b',
   'es|consentStart': 'ce2bfc7da4ce756acc53d8dac92b6c2ae5e084294714b69a47845b7b8df31615', // 11 Oct 2026: the feature is named Live Rephrase (words method, crew/site/words-2026-10-11 packet 15)
   'es|consentNotNow': '230802ddcec8e8af0fba8cdf08d7052b5f0514b927c3978ba7a6dafb1c24501c',
-  'pt-br|setupWelcomeBody1': '9ef6568b2cb125d1d4b739b87360854162af6e7a913cc19500f9975a240b03c8', // the release that names Receipts Feedprint // 11 Oct 2026: the first sentence says what the record holds without a key (words method, crew/site/words-2026-10-11 packet 05)
-  'pt-br|setupPinBody': 'd03b5b09f0e42e0aaa7b1b4585e864ed10e199990c2914cab9ff34abd35ab726',
+  'pt-br|setupWelcomeBody1': 'd06efc1e8e51b8d8a2c2be2ce8494311ccea55b6fedc4cc57c963836377a29e2', // 12 Oct 2026, packet 33: says what each level sends, and that the rephrasing needs a key for Live Rephrase
+  'pt-br|setupPinBody': 'df05219433fa75cfb4d8146f57c7853aac1392dbc96ad6b31d66cd6059559a58', // names the level Silencioso
   'pt-br|setupPinBodyModerate': 'e44bf2ee2e410115b2b21f0d454d4efe0de288e5c9050615ad5cfb8faf88079a',
   'pt-br|setupRecoveryBody': '539586709ae1957bc5b8b14a8c3073a656858d50437e2d0cfc2dfed83dd2048b', // the release that names Receipts Feedprint
   'pt-br|setupRecoveryBodyOff': '346b909cd0a86e077afee8f90bf3e2944f23b048e6e79a3e338feb594cf7e836',
@@ -57,8 +57,8 @@ const MASTER: Record<string, string> = {
   'pt-br|consentMoney': '258c9c604a3cc02e72a58a4f2b934c889e7728d12d22f55621954aabe6f02af7',
   'pt-br|consentStart': 'f5f7a72f7f77340194452c210e71b492c0ecdfee14c5afcf4be50a559889c5c5', // 11 Oct 2026: the feature is named Live Rephrase (words method, crew/site/words-2026-10-11 packet 15)
   'pt-br|consentNotNow': '450045b31e84df0d69147bb38ed6f6c5756d7f5d1c986e3bda63fc3b3aaa61e3',
-  'ro|setupWelcomeBody1': '0bfc7486addacd701c198c0173a32f06767f88230a1ddd5b6a01a1901de83968', // the release that names Receipts Feedprint // 9 Oct 2026, on the head's word: "marcare a timpului", the site's word // 11 Oct 2026: the first sentence says what the record holds without a key (words method, crew/site/words-2026-10-11 packet 05)
-  'ro|setupPinBody': '4987d62cfcb0e419068b529c7aeecd2ac73d116602bc1caa7326fe53f8d0f669',
+  'ro|setupWelcomeBody1': '8113b6112adc70c9aaf707e8708b3bade124fa18aeedee84f246dbc8a5d693b1', // 12 Oct 2026, packet 33: says what each level sends, and that the rephrasing needs a key for Live Rephrase
+  'ro|setupPinBody': '71f9b8fe5140e6cac4540d889a9ed97f08c004e42b75bb75e5e332a25d1382b1', // names the level Silențios
   'ro|setupPinBodyModerate': '2a39cd70d2839789f293248c7fc85d764d1f90c1e363037fa5d4a81918ce4685',
   'ro|setupRecoveryBody': '186991bc5d7af0d0e59a2d2d5beb1395bebda6962d63a220a3f5d183577fc604', // the release that names Receipts Feedprint
   'ro|setupRecoveryBodyOff': '2095373cd3131d39dac8409fbd4a22ecc345555dc6aceca08e7331ef17ec3c4b',

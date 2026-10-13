@@ -5,5 +5,7 @@
   "receiptsActionTitle": { "message": "Feedprint de FeelingWise" },
   "offName": { "message": "Off - Oculta palabrotas, me gusta, Reels, Shorts y anuncios" },
   "offDescription": { "message": "Apaga palabrotas, contadores de me gusta, Reels, Shorts y anuncios en Facebook, Instagram, X, TikTok y YouTube. Gratis, sin cuenta." },
-  "offActionTitle": { "message": "Off" }
+  "offActionTitle": { "message": "Off" },
+  "actionTitleReadingPaused": { "message": "Feedprint de FeelingWise: la lectura espera tu visto bueno. Abre esto para empezarla." },
+  "actionTitleReadingTrouble": { "message": "Feedprint de FeelingWise: el servicio de lectura no responde, así que las publicaciones se ven tal cual. Lo reintenta solo." }
 }

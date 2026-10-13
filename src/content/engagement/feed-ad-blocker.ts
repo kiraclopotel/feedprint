@@ -44,7 +44,7 @@ import { startPlayerAdCover } from './youtube-player-ad';
 import { decisionForBlock } from '../record/decision';
 import { currentPageAddress } from '../record/post-url';
 import {
-  afterFeedItemHidden, isHiddenByUs, isWatchedItem, releaseVideoItem, snapshotCommentPanel, snapshotWatched, videoFeedItemOf,
+  afterFeedItemHidden, isHiddenByUs, isWatchedItem, keepsItemBox, releaseVideoItem, snapshotCommentPanel, snapshotWatched, videoFeedItemOf,
   type VideoFeedSurface,
 } from '../protection/video-feed-hide';
 
@@ -125,7 +125,8 @@ const RULES: Record<Platform, AdRule> = {
     exclude: '[data-e2e^="comment"], [data-e2e="video-desc"], [data-e2e="browse-video-desc"]',
     platformSignal: extractIsTikTokSponsored,
     genericLeaf: true,
-    hideMode: 'display',
+    // The card keeps its box (video-feed-hide.ts keepsItemBox); hideAd reads the card, not this.
+    hideMode: 'visibility',
   },
   youtube: {
     container: 'ytd-rich-item-renderer, ytd-video-renderer, ytd-compact-video-renderer',
@@ -227,12 +228,12 @@ const FEED_AD_FEATURE = 'block-ads';
 function hideAd(container: HTMLElement, rule: AdRule, lang: ResolvedUiLanguage, counted = true): boolean {
   const { target, hosted } = hideTargetFor(container, rule);
   // A host that is a card of a single-player video feed (a YouTube Shorts ad
-  // card; no other rule names one): read, while it still holds its box, which
-  // card is on screen and whether comments are open, so the feed can move on
-  // after the hide (video-feed-hide.ts, as the AI-label and the recorder's ad
-  // hides do). An ad container that is itself a feed item (TikTok For-You,
-  // Instagram) keeps its own hide, as before.
-  const feed = hosted ? videoFeedItemOf(target) : null;
+  // card), or a card of TikTok's For-You column: read, while it still holds its
+  // box, which card is on screen and whether comments are open, so the feed can
+  // move on after the hide (video-feed-hide.ts, as the AI-label and the
+  // recorder's ad hides do). Both keep their box (a TikTok card also keeps one
+  // line, below). An Instagram article keeps its own hide, as before.
+  const feed = hosted || keepsItemBox(target) ? videoFeedItemOf(target) : null;
   const card = feed && feed.item === target ? feed : null;
   const comments = card ? snapshotCommentPanel(card.surface) : null;
   const watch = card ? snapshotWatched(target, card.surface) : null;
@@ -250,6 +251,7 @@ function hideAd(container: HTMLElement, rule: AdRule, lang: ResolvedUiLanguage, 
   muteAndPauseMedia(target);
   if (card && comments && watch) {
     target.style.setProperty('pointer-events', 'none', 'important');
+    if (keepsItemBox(target)) noteAdSlot(target, MARKER_STRINGS[lang].videoHiddenScrollOn, true);
     // A move that happened (or ended for good: no further card, the run cap,
     // the breaker) is not made again on landing; a move only held while the
     // person scrolls, which may give up, leaves landing to make it later.
@@ -486,6 +488,7 @@ function revealHost(el: HTMLElement): void {
   el.style.removeProperty('display');
   el.style.removeProperty('visibility');
   el.style.removeProperty('pointer-events');
+  removeAdSlotNote(el);
   releaseVideoItem(el);
 }
 

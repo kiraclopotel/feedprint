@@ -56,6 +56,7 @@ function renderPanel(mode: FWSettings['mode']): string {
         license: { tier: 'family' } as LicenseInfo,
         onBack: () => { /* no-op */ },
         onChange: async () => { /* no-op */ },
+        openOn: 'general',
       }),
     }),
   );

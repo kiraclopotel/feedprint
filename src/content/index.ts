@@ -33,6 +33,7 @@ export {
 } from './comment-batch/queue';
 import { flushBatch as runFlushBatch, type FlushDeps } from './comment-batch/flush';
 import { ruleHitAtTheDoor, hideAtTheDoor, maskAtTheDoor } from './comment-batch/door';
+import { restoreScoredText } from '../core/door-star';
 import { createResultApplier } from './post-path/result-apply';
 import { createProtectionTerminals } from './protection/protection-terminals';
 // URL helpers live in ./post-url; re-exported for the existing import-from-index tests.
@@ -80,7 +81,7 @@ export {
   _isAuthoritativeSessionPassReasonForTesting,
 } from './post-path/late-verdict-cache';
 import { installPageWorldRelay } from './page-world/relay';
-import { clearWireStore, enrichPostFromWire } from './page-world/wire-store';
+import { clearWireSurface, enrichPostFromWire, rememberRecordedText } from './page-world/wire-store';
 import { releaseHeldRoomVerdicts } from './post-path/room-verdict';
 import { ChildProtectionManager } from './protection/child-first-protection';
 import { signalContentShieldReady, waitForDocumentBody } from './protection/document-start-shield';
@@ -114,7 +115,8 @@ import { armMetricsProbe } from './probes/metrics-probe';
 import { armInstagramBlankProbe } from './probes/instagram-blank-probe';
 import { installForensicRetryUnloadFlush } from './record/forensic-retry';
 import { installGapLedgerUnloadFlush, setGapLedgerPlatform } from './record/gap-ledger';
-import { removeAllTeenMarkers } from './markers/teen-marker';
+import { hasTeenMarker, removeAllTeenMarkers } from './markers/teen-marker';
+import { flattenCommentEntryToOriginal } from './protection/comment-overlay';
 import { setGuardStandDownHandler } from './injector';
 import { keepRecorderStamp } from './engagement/recorder-runs';
 
@@ -129,9 +131,22 @@ const recordProtectionTerminal = (post: PostContent, elapsedMs: number): void =>
   void recordSpan({ platform: post.platform, mode: 'child' }, 'protection_terminal', elapsedMs);
 };
 setGuardStandDownHandler((el) => activeInterceptor?.rearmElement(el));
+// Posts whose cover reached its deadline and were settled by the local result. The reading still on its way for them
+// would be the same rules again (or the late verdict of a post already lifted), so the queue's completion for them is
+// dropped; a post the rules left alone is not in here, and its reading lands late as before.
+const settledAtDeadline = new WeakSet<PostContent>();
 const childProtection = new ChildProtectionManager<PostContent>((_post, anchor) => {
   activeInterceptor?.rearmElement(anchor);
-}, recordProtectionTerminal);
+}, recordProtectionTerminal, 'post', async (post, stillCovered) => {
+  // A comment's own list, slurs and swearing were applied at the door before it was batched; only a post waits behind
+  // the queue with its rules not yet run.
+  if (post.kind === 'comment' || post.kind === 'top-comment' || post.kind === 'reply' || post.kind === 'reply-to-reply') return false;
+  const local = await processPipeline(post, undefined, { localOnly: true });
+  if (!stillCovered() || local.action === 'pass') return false;
+  settledAtDeadline.add(post);
+  onProcessingResult(post, local);
+  return true;
+});
 // M68: the extension can be replaced under an open tab. This script keeps
 // running, because extraction and cover mounting are pure DOM, while every
 // call into the extension throws. Without this line the covers already up wait
@@ -268,6 +283,32 @@ function reapplyResolvedComment(
       // comment that was judged. Somebody else's words replaced, and a signed
       // record saying it was the right ones.
       const row = resolveCommentRow(post);
+      if (row && resolved.offer) {
+        // Open: the fresh row gets its red dot back and keeps the author's words; the calm version is the dot's second tap.
+        // Never the swap or the hide below: an Open comment is not rewritten on the page.
+        if (!prepareCurrentPostMutation(post, row.el)) {
+          settleProtection(post, { record: 'replay', reason: 'comment-reapply-unresolved' });
+          return;
+        }
+        const host = row.entry.textEl;
+        const marker = renderCommentMarkerForCurrentClassification(post, {
+          el: host,
+          analysis: resolved.offer.analysis,
+          originalText: post.text,
+          kind: 'rewrite',
+          rewriteText: resolved.rewrite,
+          mount: resolved.offer.mount,
+          lang: resolved.offer.lang,
+          ...(resolved.writer ? { aiRewrite: resolved.writer } : {}),
+          entry: 'original',
+          flatten: () => flattenCommentEntryToOriginal(row.entry, post.text),
+        });
+        settleProtection(post, {
+          record: 'replay',
+          reason: marker !== null || hasTeenMarker(host) ? 'comment-rewrite-offered-reapplied' : 'comment-reapply-unresolved',
+        });
+        return;
+      }
       if (row && prepareCurrentPostMutation(post, row.el)) {
         const terminal = applyCommentRewriteTerminal(
           row.entry,
@@ -328,6 +369,9 @@ function routeBatchedComment(
  * settings are read, so the raw text is never bare while the door looks.
  */
 async function routeBatchedCommentThroughTheDoor(post: PostContent, detectedAt: number): Promise<void> {
+  // A comment given back for reading again (off screen at the flush, a cooldown, an abandoned bucket) is read from a row
+  // that may still show the door's stars; it is the comment that was starred, so its words go back (core/door-star.ts).
+  restoreScoredText(post);
   const settled = shouldBypassResolvedBatchedComment(post) || sessionCommentResolutionByKey.has(sessionVerdictKey(post));
   if (!settled) {
     mountProtection(post, detectedAt);
@@ -337,8 +381,10 @@ async function routeBatchedCommentThroughTheDoor(post: PostContent, detectedAt: 
       // A hide that landed is the end of it. One that did not (the row moved) is still on the record, and the comment
       // goes on to the batch like any other, whose flush finds the record written and re-applies the hide.
       if (hit && hideAtTheDoor(post, hit, settings, applyCommentHide)) return;
-      // No rule hides it. If it only swears and no reading will follow, the mask is a rule too: star it now.
-      if (await maskAtTheDoor(post, settings, applyCommentMask)) {
+      // No rule hides it. If it only swears, the mask is a rule too: star it now. When no reading follows that is the end of it;
+      // when one does ('provisional') the stars are on the page and the comment goes on to the batch, which reads the words
+      // it was scored on and rewrites, hides or re-stars it.
+      if ((await maskAtTheDoor(post, settings, applyCommentMask)) === 'final') {
         settleProtection(post, { record: 'verdict', reason: 'comment-masked-at-door' });
         return;
       }
@@ -434,7 +480,7 @@ async function init(): Promise<void> {
     activeAdapter = adapter;
     queue = new ProcessingQueue(
       withDescriptorV1(processPipeline),
-      onProcessingResult,
+      (post, result) => { if (!settledAtDeadline.has(post)) onProcessingResult(post, result); },
       onQueueDrop,
     );
     // Runtime diagnostics: sample the JS heap over time + FW activity counters,
@@ -618,9 +664,9 @@ export function clearPendingBatchesForRouteChange(
   // has left: a record that arrives without its room is still evidence, a
   // record that never arrives is not.
   releaseHeldRoomVerdicts();
-  // What the platform said about the items on the previous surface is not
-  // about the items on this one.
-  clearWireStore();
+  // Where the previous surface served an item from is not where this one does;
+  // what the platform said about the item itself is kept (wire-store.ts).
+  clearWireSurface();
 }
 
 /** The bound comment-batch drain: flushBatch (comment-batch/flush.ts) with the
@@ -686,8 +732,9 @@ async function prepareDetectedPost(post: PostContent, detectedAt: number): Promi
   // What the platform's own JSON said about this same item, filled into the
   // gaps the DOM left (PLAN-2026-09-14 item 4). Runs FIRST, before
   // deriveAccountType reads is_sponsored and before the pipeline reads
-  // feedSource. Never overwrites a value the DOM already read, never supplies
-  // the item's own text, and never creates a record of its own — the dedup
+  // feedSource. Never overwrites a value the DOM already read, supplies the
+  // item's own text only where the DOM read none or a fragment the page cut
+  // (and then the record says 'platform'), and never creates a record of its own — the dedup
   // guarantee is that the wire path has no emit path at all
   // (src/content/page-world/wire-store.ts).
   const wireFilled = enrichPostFromWire(post);
@@ -719,6 +766,8 @@ async function prepareDetectedPost(post: PostContent, detectedAt: number): Promi
   // to the record via the same emit sites as the two stamps above.
   stampTextFold(post);
   stampMediaUrls(post);
+  // The text this item is recorded with, kept for a later cut read of it (wire-store rememberRecordedText).
+  rememberRecordedText(post);
 
   const isCommentKind =
     post.kind === 'comment' ||

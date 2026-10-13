@@ -43,6 +43,7 @@ import { isButtonReading } from '../../forensics/export-numbers';
 import { carriesFlagVerdict, carriesHideVerdict, isRepeatMarkOnly } from '../../forensics/flag-verdict';
 import { isPaidPlacement } from '../../forensics/paid-placement';
 import { isTextPlaceholder } from '../../forensics/stand-in';
+import { withoutStuckFoldLabel } from '../../forensics/stuck-fold-label';
 import { localDayKey } from '../shared/format-time';
 
 /** Every set the dashboard counts, by the key its noun has in each language file. */
@@ -100,7 +101,7 @@ export function isRuleBlocked(r: ForensicRecord): boolean {
 export { isHiddenAd, isTextPlaceholder } from '../../forensics/stand-in';
 
 export function readableText(r: ForensicRecord): string {
-  return isTextPlaceholder(r) ? '' : (r.originalText || '');
+  return isTextPlaceholder(r) ? '' : withoutStuckFoldLabel(r.originalText || '', r.platform, r.textCapture);
 }
 
 /** Hidden from the feed because the reading found it too harmful to show, which an ad is never. */

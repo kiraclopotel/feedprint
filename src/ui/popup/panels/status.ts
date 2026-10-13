@@ -11,6 +11,9 @@ import type { DotState } from './header';
 export function computeStatusStates(
   license: { tier: string },
   probeResult: ProxyProbeResult | null = null,
+  // A reading call with this key got through lately (ai/reading-got-through.ts): the key is accepted, whatever the
+  // models list said. It stands in only where the list gave no answer; a refusal is never overruled by it.
+  readingGotThrough = false,
 ): { licenseState: DotState } {
   let licenseState: DotState;
   if (license.tier === 'free') {
@@ -21,7 +24,7 @@ export function computeStatusStates(
   } else if (probeResult === 'ok') {
     licenseState = 'ok';
   } else if (probeResult === 'unknown') {
-    licenseState = 'unchecked';
+    licenseState = readingGotThrough ? 'ok' : 'unchecked';
   } else {
     licenseState = 'checking';
   }

@@ -1,0 +1,547 @@
+{
+ "topic": "gambling",
+ "version": 1,
+ "language": "ro",
+ "madeOn": "2026-10-13",
+ "entries": [
+  {
+   "term": "pariuri",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Bets, almost always sport or casino betting. Listed separately in case the plural is not reached from the base."
+  },
+  {
+   "term": "pariurile",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "The bets. Listed separately as the definite plural."
+  },
+  {
+   "term": "pariaza",
+   "kind": "word",
+   "exact": false,
+   "risk": "medium",
+   "note": "He bets or 'bet now' in ads. Casual use ('pariaza pe mine') exists but is rarer."
+  },
+  {
+   "term": "pariat",
+   "kind": "word",
+   "exact": false,
+   "risk": "medium",
+   "note": "Bet (past). Mostly 'am pariat pe', ticket talk."
+  },
+  {
+   "term": "parior",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Bettor. Almost only about betting."
+  },
+  {
+   "term": "cazinou",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Standard Romanian spelling for casino. Figurative use is rare."
+  },
+  {
+   "term": "cazinouri",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Casinos, listed separately as the plural."
+  },
+  {
+   "term": "cazino",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Common informal spelling of casino."
+  },
+  {
+   "term": "casino",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "The English spelling, used in Romanian ads and handles. Also the Casino de Monte Carlo style place name, rare."
+  },
+  {
+   "term": "pacanele",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Slang for slot machines, very Romanian. Also used as a joke for any noisy machine, rare."
+  },
+  {
+   "term": "blackjack",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Card casino game. Almost no ordinary use."
+  },
+  {
+   "term": "bacara",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Baccarat, Romanian spelling. The crystal brand writes it the same way, rare."
+  },
+  {
+   "term": "loto",
+   "kind": "word",
+   "exact": false,
+   "risk": "medium",
+   "note": "Lottery (Loto 6/49, Loto 5/40). Also loto as a board game at family evenings."
+  },
+  {
+   "term": "bookmaker",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Betting company. Almost no ordinary use."
+  },
+  {
+   "term": "bookmakeri",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "Plural, listed separately."
+  },
+  {
+   "term": "betting",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "English loan used in Romanian ads and group names."
+  },
+  {
+   "term": "crupier",
+   "kind": "word",
+   "exact": false,
+   "risk": "medium",
+   "note": "Casino dealer. Rare outside gambling, some figurative use for someone who deals out things."
+  },
+  {
+   "term": "onjn",
+   "kind": "word",
+   "exact": true,
+   "risk": "low",
+   "note": "The national gambling regulator, named in every licensed ad and warning. Short acronym, no endings."
+  },
+  {
+   "term": "pariuri sportive",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Sports betting. The most common ad phrase."
+  },
+  {
+   "term": "pariuri online",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Online betting."
+  },
+  {
+   "term": "casa de pariuri",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Bookmaker shop or company."
+  },
+  {
+   "term": "case de pariuri",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Plural of the above."
+  },
+  {
+   "term": "agentie de pariuri",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Betting agency, the licence wording."
+  },
+  {
+   "term": "ponturi pariuri",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Betting tips. 'ponturi' alone is left out (ordinary tips)."
+  },
+  {
+   "term": "jocuri de noroc",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Games of chance, the legal term and warning text."
+  },
+  {
+   "term": "sala de pacanele",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Slot hall in everyday speech."
+  },
+  {
+   "term": "slot machine",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "English loan for a slot machine."
+  },
+  {
+   "term": "casino online",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Online casino in the English spelling."
+  },
+  {
+   "term": "rotiri gratuite",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Free spins, the Romanian wording in bonus ads."
+  },
+  {
+   "term": "rotiri gratis",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Free spins, shorter wording."
+  },
+  {
+   "term": "free spins",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "English form used in Romanian bonus ads."
+  },
+  {
+   "term": "bonus fara depunere",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "No deposit bonus."
+  },
+  {
+   "term": "bonus casino",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Casino bonus."
+  },
+  {
+   "term": "cote marite",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Boosted odds."
+  },
+  {
+   "term": "cota marita",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Boosted odds, singular. 'cota' alone is left out."
+  },
+  {
+   "term": "pariu gratuit",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Free bet offer."
+  },
+  {
+   "term": "pariu fara risc",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Risk free bet offer."
+  },
+  {
+   "term": "joaca responsabil",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "The warning line in licensed ads. Catches ads that avoid the other words."
+  },
+  {
+   "term": "sweet bonanza",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Very popular slot among Romanian players."
+  },
+  {
+   "term": "book of ra",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Classic slot machine name."
+  },
+  {
+   "term": "gates of olympus",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Popular slot."
+  },
+  {
+   "term": "casa pariurilor",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Romanian bookmaker name, kept as a phrase because it is two tokens."
+  },
+  {
+   "term": "betano",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Strong in Romania, ads on football pages. Shared with other markets."
+  },
+  {
+   "term": "superbet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Romanian bookmaker, biggest in the market."
+  },
+  {
+   "term": "unibet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Bookmaker with Romanian licence."
+  },
+  {
+   "term": "betfair",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Exchange and casino brand, present in Romania."
+  },
+  {
+   "term": "netbet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Online bookmaker and casino, Romanian ads."
+  },
+  {
+   "term": "winbet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Romanian bookmaker and slot hall chain."
+  },
+  {
+   "term": "mozzart",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Bookmaker from the Balkans, active in Romania. Not the composer's spelling."
+  },
+  {
+   "term": "stanleybet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Long-standing Romanian betting shops."
+  },
+  {
+   "term": "efbet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Bookmaker from Bulgaria, active in Romania."
+  },
+  {
+   "term": "winmasters",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Romanian bookmaker and casino."
+  },
+  {
+   "term": "1xbet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Offshore bookmaker with Romanian-language ads and promotions."
+  },
+  {
+   "term": "bet365",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "International bookmaker, known to Romanian players."
+  },
+  {
+   "term": "pokerstars",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Poker site, shared across markets."
+  },
+  {
+   "term": "betway",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Bookmaker with Romanian sponsorship ads."
+  },
+  {
+   "term": "magic jackpot",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Romanian slot hall chain, two tokens."
+  },
+  {
+   "term": "loteria romana",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "The national lottery operator, named in every draw result and ad. Replaces the rejected \"loterie\"."
+  },
+  {
+   "term": "loz in plic",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "The scratch ticket sold in newsagents, a very Romanian wording. Replaces the rejected \"loz\"."
+  },
+  {
+   "term": "pariu sportiv",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "A sports bet. Needed because the base word \"pariu\" was rejected."
+  },
+  {
+   "term": "pariu online",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "An online bet. Needed because the base word \"pariu\" was rejected."
+  },
+  {
+   "term": "ruleta online",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Online roulette. Keeps the game without hitting the tape measure."
+  },
+  {
+   "term": "poker online",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Online poker, common in ads. Keeps the game without hitting \"poker face\"."
+  },
+  {
+   "term": "texas holdem",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "The usual poker variant in Romanian ads and group names."
+  },
+  {
+   "term": "bingo online",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Online bingo with money, in ads. Avoids the \"bingo!\" exclamation."
+  },
+  {
+   "term": "jocul aviator",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "medium",
+   "note": "The crash game, named this way in ads and videos. Medium because a post about a flight simulator could use it."
+  },
+  {
+   "term": "aviator online",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "medium",
+   "note": "Common ad wording for the crash game. Medium because a pilot course or flight game could use the same words."
+  },
+  {
+   "term": "sloturi online",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "medium",
+   "note": "Online slots, very common wording. Medium because a booking post could say \"sloturi online disponibile\"."
+  },
+  {
+   "term": "jocuri de sloturi",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Slot games, the usual ad wording. Avoids hitting free time slots."
+  },
+  {
+   "term": "jackpot progresiv",
+   "kind": "phrase",
+   "exact": false,
+   "risk": "low",
+   "note": "Progressive jackpot, casino wording with no figurative use."
+  },
+  {
+   "term": "tipster",
+   "kind": "word",
+   "exact": false,
+   "risk": "low",
+   "note": "English loan for a person who sells betting tips, used in Romanian groups and ads. Prefix reaches \"tipsteri\"."
+  },
+  {
+   "term": "novomatic",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Slot machine maker, named on machines and in Romanian slot hall ads."
+  },
+  {
+   "term": "pragmatic play",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Slot provider behind Sweet Bonanza and Gates of Olympus, named in many Romanian bonus ads."
+  },
+  {
+   "term": "mostbet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Offshore bookmaker advertising in Romanian."
+  },
+  {
+   "term": "melbet",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Offshore bookmaker with Romanian-language promotions."
+  },
+  {
+   "term": "parimatch",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "International bookmaker with Romanian-language ads."
+  },
+  {
+   "term": "1win",
+   "kind": "brand",
+   "exact": false,
+   "risk": "low",
+   "note": "Offshore bookmaker and casino with Romanian-language ads."
+  }
+ ]
+}

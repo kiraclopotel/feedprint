@@ -1,12 +1,12 @@
 {
   "name": "feelingwise",
-  "version": "2.5.11",
+  "version": "2.5.18",
   "private": true,
   "license": "AGPL-3.0-or-later",
   "engines": {
     "node": ">=24 <25"
   },
-  "description": "Two Chrome extensions from one tree: Receipts, a signed record on your own computer of what a feed showed, and Off, a fixed-rule feed filter.",
+  "description": "Two Chrome extensions from one tree: Feedprint, a signed record on your own computer of what a feed showed, and Off, a fixed-rule feed filter.",
   "scripts": {
     "dev": "node scripts/new-build-id.mjs && npm-run-all --parallel dev:popup dev:bootstrap dev:content dev:pageworld",
     "dev:popup": "vite build --watch",

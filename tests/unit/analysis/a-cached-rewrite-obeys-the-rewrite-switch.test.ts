@@ -11,6 +11,8 @@
 // it after it served a rewrite.
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { installChromeStorageStub, type ChromeStorageStub } from '../../helpers/chrome-storage';
+import { readingConsentFor } from '../../helpers/reading-consent';
 
 const SETTINGS = vi.hoisted(() => ({
   mode: 'teen' as 'child' | 'teen' | 'adult',
@@ -153,7 +155,11 @@ async function primeCachedRewrite(mode: 'child' | 'teen' | 'adult', analysis: An
   processingCache.set(key, analysis, REWRITE_TEXT, JUDGE, 'the-writer');
 }
 
+// The licence is the mocked family key; its stored go-ahead lets the reading reach the (stubbed) network.
+let storage: ChromeStorageStub;
+
 beforeEach(() => {
+  storage = installChromeStorageStub({ initial: readingConsentFor('fw-family-s') });
   resetFlushBudget();
   processingCache.clear();
   SETTINGS.mode = 'teen';
@@ -186,6 +192,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  storage.restore();
   vi.unstubAllGlobals();
 });
 
@@ -228,6 +235,7 @@ describe('a cached rewrite obeys the rewrite switch', () => {
   it('switch off in Child (Strict makes no call, PLAN-A S2): the stale cache is dropped and nothing local catches it, so it passes', async () => {
     await primeCachedRewrite('child', legacyFlag(6));
     SETTINGS.mode = 'child';
+    delete storage.state.readingConsent; // Strict reads only on a stored agreement; this child has none
     SETTINGS.features['reframe-rewrites'] = { enabled: false };
 
     const result = await process(makePost());

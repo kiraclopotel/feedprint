@@ -94,6 +94,26 @@ describe('export feed paging', () => {
     expect(more.textContent).toContain('150 in the next page');
   });
 
+  // PAPER HAS NO BUTTON. The print rule hides every button that acts, so a printed feed of the first page ended on its last card with
+  // nothing to say that 370 records were not on it. The file's own words for what is left stand beside the button as a line that is
+  // hidden on screen and shown on paper.
+  it('a line for paper stands beside the button with the same count, follows each press, and goes with the button', () => {
+    const feed = renderFeed(Array.from({ length: 620 }, (_, i) => rec(i)));
+    const more = feed.querySelector<HTMLButtonElement>('.fw-feed-more')!;
+    const note = more.nextElementSibling as HTMLElement;
+    expect(note.className).toBe('fw-print-note');
+    expect(note.textContent).toBe(I18N.en.feedRemainingRecords.replace('{n}', '370'));
+    more.click();
+    expect(note.textContent).toBe(I18N.en.feedRemainingRecords.replace('{n}', '120'));
+    more.click();
+    expect(feed.querySelector('.fw-print-note')).toBeNull();
+  });
+
+  it('a small set has neither the button nor the line', () => {
+    const feed = renderFeed(Array.from({ length: 12 }, (_, i) => rec(i)));
+    expect(feed.querySelector('.fw-print-note')).toBeNull();
+  });
+
   it('a small set renders whole, with no button', () => {
     const feed = renderFeed(Array.from({ length: 12 }, (_, i) => rec(i)));
     expect(feed.querySelectorAll(':scope > .fw-item')).toHaveLength(12);

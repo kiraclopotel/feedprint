@@ -23,6 +23,14 @@ const TIER1 = new RegExp(
     'mutilat(?:e|ed|ing)', 'dismember(?:ed|ing)?',
     'decapitat(?:e|ed|ing)', 'disembowel(?:ed|ing)?',
     'gang[\\s-]?raped?', 'lynch(?:ed|ing)',
+    // A death shown or narrated as it happens (a Facebook video of a failed resuscitation, its caption naming it, was
+    // left unmarked in the Tester's full test, 12 Oct 2026). Only phrasings that put the death in front of the viewer:
+    // a bare "died" or "hospital" is news or grief, and stays with the AI and with the news words below.
+    'failed\\s+(?:cpr|resuscitation)', 'resuscitation\\s+fail(?:s|ed)',
+    '(?:dies|died|dying|death|killed)\\s+(?:on|live\\s+on)\\s+(?:camera|video|tape|livestream)',
+    'death\\s+caught\\s+on\\s+(?:camera|video|tape)', 'caught\\s+on\\s+(?:camera|video|tape)\\s+(?:dying|as\\s+(?:he|she|they)\\s+die[sd]?)',
+    'moment\\s+(?:he|she|they|the\\s+(?:man|woman|boy|girl|child|baby))\\s+(?:dies|died|was\\s+killed)',
+    'takes?\\s+(?:his|her|their)\\s+last\\s+breath', 'dying\\s+(?:man|woman|person|child|baby|boy|girl|victim)s?',
     // Two assault verbs in a row ("kicking and stomping") are unambiguous, where one alone is not
     // ("kicking off the season").
     '(?:punch|kick|stomp|beat)(?:ed|ing)?[\\s,]+(?:and\\s+)?(?:punch|kick|stomp|beat)(?:ed|ing)?',
@@ -38,6 +46,7 @@ const TIER2 = new RegExp(
     '(?:legs?|limbs?|arms?|hands?|fingers?|head)\\s+(?:(?:are|is|were|was)\\s+)?(?:\\p{L}+\\s+){0,2}(?:'
       + 'gone|crushed|severed|mangled|chopped\\s+off|ripped\\s+off|torn\\s+off|broken\\s+off)',
     'broken\\s+bones?', 'serious\\s+injur(?:y|ies)', 'severe\\s+injur(?:y|ies)',
+    'fatal\\s+(?:crash|stabbing|shooting|attack|beating|fall|accident)', 'dead\\s+bod(?:y|ies)', 'lifeless\\s+bod(?:y|ies)',
   ].join('|') + ')' + RB,
   'iu',
 );

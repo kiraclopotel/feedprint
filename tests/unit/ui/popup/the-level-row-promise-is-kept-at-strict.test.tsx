@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 // W2 critic HOLD (A4). The level row promises the person can change the switches below it. At Strict that is not
-// true of every switch: Strict language, Mask swearing and AI checks are locked or greyed. The row now says
+// true of every switch: Mask swearing is locked (AI checks is live since Silent reads with a key, 12 Oct 2026). The row now says
 // "any switch below that is not locked or greyed out"; this checks the exception is real, on the screen.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -67,6 +67,7 @@ async function renderSettings(settings: FWSettings): Promise<void> {
         onBack: () => {},
         onChange: async () => {},
         platform: null,
+        openOn: 'general',
       }),
     }));
   });
@@ -104,6 +105,6 @@ describe('Settings at Strict: the level row promises only what the switches belo
       expect(el!.getAttribute('aria-disabled'), `"${label}" is locked or greyed at Strict`).toBe('true');
     }
     // Without a key there is no AI card, so no AI switch to lock.
-    expect(toggle(t.featAiMasterAriaStrict)).toBeNull();
+    expect(toggle(t.featAiMasterName)).toBeNull();
   });
 });

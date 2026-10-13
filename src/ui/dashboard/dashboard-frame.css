@@ -4,8 +4,9 @@
 /* What every direction shares (crew/dashboard/OUT.md; the owner asked for a finished look, not a
  * generic one): one face with figures that line up, a flat frame on the ground, ink for every action, and colour only where
  * it means something: the record colour for a thing Receipts wrote down, crimson for a thing taken out, the checker's
- * ok, warn and danger for verdicts. The platforms' brand colours and the technique hues stay in the data (the export and
- * the content script read them) but are not painted on this page. */
+ * ok, warn and danger for verdicts. The platforms' brand colours stay in the data (the export and the content script
+ * read them) but are not painted on this page. The technique hues are, on Statistics' technique charts, since his walk
+ * of 12 Oct 2026 ("everything is the same color"), so a technique is one colour from the feed card to the chart. */
 :root, :root[data-theme] {
   --fw-font-sans: var(--fw-font);
   /* Counts, clocks and serials were set in a monospace; they line up by tabular figures in the one face now. */
@@ -28,10 +29,25 @@
 
 /* Tabs: text on the ground, the active one in ink over a bar of the record colour, Receipts' own. The ink block it
    replaced was the heaviest thing on the page in dark, and the page carried no colour of its product at all. */
-.dash-tabs { background: transparent; border: 0; border-bottom: 1px solid var(--fw-line); padding: 0; gap: 0; }
-.dash-tab { font-size: 15px; font-weight: 500; padding: 11px 16px 8px; color: var(--fw-muted); background: transparent; border-bottom: 3px solid transparent; margin-bottom: -1px; }
+.dash-tabs { background: transparent; border: 0; border-bottom: 1px solid var(--fw-line); border-radius: 0; padding: 0; gap: 0; }
+.dash-tab { font-size: 15px; font-weight: 500; padding: 11px 16px 8px; color: var(--fw-muted); background: transparent; border-bottom: 3px solid transparent; margin-bottom: -1px;
+  transition: background-color .12s ease, color .12s ease, border-bottom-color .12s ease; }
 .dash-tab:hover { color: var(--fw-ink); background: transparent; }
-.dash-tab.active { background: transparent; color: var(--fw-ink); font-weight: 700; border-bottom-color: var(--fw-record); }
+/* The open tab keeps the strip's weight (row 10, 12 Oct 2026): bold made it 4 to 6px wider and the row shuffled 7px on
+   every click; its underline and its ink mark it. */
+.dash-tab.active { background: transparent; color: var(--fw-ink); font-weight: 500; border-bottom-color: var(--fw-record); }
+/* Under 1000px a tab gives up 4px a side, so the nine English tabs fit one row at 900 in the shipped face (855px
+   needed, 836 given; row 10, 12 Oct 2026). Romanian still takes its second row. */
+@media (max-width: 1000px) { .dash-tab { padding-left: 12px; padding-right: 12px; } }
+/* Romanian's nine tabs need about 970px even then: under 1000px the strip stays one line and scrolls sideways when it
+   must (a thin bar shows it), never a second row of two. The edge is an inset line, so the open tab's underline still
+   covers it inside the scroller. English fits with no scroll. */
+@media (max-width: 1000px) {
+  .dash-header .dash-last-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .dash-tabs { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin;
+    border-bottom: 0; box-shadow: inset 0 -1px 0 var(--fw-line); }
+  .dash-tab { flex: none; white-space: nowrap; margin-bottom: 0; }
+}
 .dash-tab .count-pill, .dash-tab.active .count-pill { background: transparent; color: inherit; padding: 0; font-weight: 400; }
 
 /* Bars in the side panels: ink on a quiet track; a chosen row in the record colour. Inline platform colours yield. */
@@ -40,17 +56,16 @@
 .bar-fill { background: var(--fw-ink) !important; }
 .bar-row.active .bar-fill { background: var(--fw-record) !important; }
 
-/* Marks in the feed: a letter tile, not a coloured disc; a chosen filter an ink block. */
+/* Marks in the feed: a letter tile, not a coloured disc. */
 .fc-avatar { background: var(--fw-card) !important; color: var(--fw-ink) !important; border: 1px solid var(--fw-line); font-weight: 700; }
-.frail-opt.on { background: var(--fw-ink); color: var(--fw-ground); }
 .frail-opt.on .frail-count { color: inherit; }
 
 /* Panels: a lift with a hairline and the panel corner, not a shadowed card with a strong edge. */
-.feed-card, .side-panel, .stats-card, .ov-card, .fb-card, .export-card, .chain-banner, .feed-controls, .feed-welcome, .fwc-tile,
-.pat-section, .usage-summary-item {
+.feed-card, .side-panel, .stats-card, .ov-card, .fb-card, .export-card, .chain-banner, .feed-controls, .feed-welcome,
+.pat-section {
   background: var(--fw-lift);
   border: 1px solid var(--fw-line);
-  border-radius: var(--fw-r-1);
+  border-radius: var(--fw-radius-lg);
 }
 
 /* ───────── The head (TodayHead.tsx): today in three short lines, the week beside it ───────── */
@@ -59,17 +74,21 @@
   display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr); column-gap: 56px; align-items: end;
 }
 .today-head-date { margin: 0 0 14px; font-size: 13px; font-weight: 500; letter-spacing: 0.02em; color: var(--fw-muted); }
-/* The one large voice on the page: 700, the house's line tracking. Only the first sentence is set this large; the rest
-   is said calmly under it (a judge called alternating weights inside one big line noisy). */
+/* The one large voice on the page: 700, with light tracking (the house's -0.025em made this face's letters touch at this
+   size). Only the first sentence is set this large; the rest is said calmly under it (a judge called alternating weights
+   inside one big line noisy). The size scales with the window, which left it at 42.24px at 1280, a size no other text on
+   the page has; it is rounded to a whole pixel so the type stays on the page's ladder of whole pixels. An engine without
+   round() keeps the plain clamp above it. The three other headings that scale with the window are written the same way. */
 .today-head-line {
-  margin: 0; font-size: clamp(2rem, 3.3vw, 3rem); line-height: 1.06; letter-spacing: -0.025em; font-weight: 700;
+  margin: 0; font-size: clamp(2rem, 3.3vw, 3rem); line-height: 1.06; letter-spacing: -0.01em; font-weight: 700;
+  font-size: round(nearest, clamp(2rem, 3.3vw, 3rem), 1px);
   color: var(--fw-ink); max-width: 22ch; font-variation-settings: "opsz" 96;
 }
 .today-head-rest { margin: 14px 0 0; font-size: 1.375rem; line-height: 1.35; font-weight: 400; color: var(--fw-ink); max-width: 40ch; }
 .today-head-side { display: flex; flex-direction: column; gap: 20px; padding-left: 28px; border-left: 1px solid var(--fw-line); }
 .today-head-week { display: flex; gap: 6px; height: 96px; align-items: flex-end; }
 .today-head-day { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; }
-.today-head-day i { display: flex; flex-direction: column; width: 100%; min-height: 2px; background: var(--fw-line); }
+.today-head-day i { display: flex; flex-direction: column; width: 100%; min-height: 2px; background: var(--fwc-neutral); }
 .today-head-day.focus i { background: var(--fw-ink); }
 .today-head-day.empty i { background: transparent; border-bottom: 1px dashed var(--fw-line); }
 /* The hidden share of each day, on top, in the colour of a thing taken out. */
@@ -93,9 +112,8 @@
 .feed-controls-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .feed-breakdown-btn {
   margin-left: auto; font: inherit; font-size: 14px; font-weight: 500; color: var(--fw-ink); background: transparent;
-  border: 1.5px solid var(--fw-edge); padding: 6px 12px; cursor: pointer;
+  border: 1.5px solid var(--fw-edge); padding: 4px 12px; min-height: 32px; box-sizing: border-box; cursor: pointer;
 }
-.feed-breakdown-btn[aria-expanded="true"] { background: var(--fw-ink); color: var(--fw-ground); border-color: var(--fw-ink); }
 .feed-breakdown-btn:focus-visible { outline: 2px solid var(--fw-focus); outline-offset: 2px; }
 /* A day heading: the date said once, on a rule, where the day changes. */
 .fc-day-head {
@@ -126,10 +144,12 @@
   background: transparent; border-color: transparent; padding-left: 0; padding-right: 0;
 }
 .dash-header .dash-integrity-pill .dash-ecg { display: none; }
-.dash-header .dash-integrity-pill.ok .dot { display: inline-block; background: var(--fw-ok); }
+.dash-header .dash-integrity-pill.ok .dot { display: inline-block; background: var(--fw-ok); width: 8px; height: 8px; box-shadow: 0 0 8px color-mix(in oklch, var(--fw-ok) 55%, transparent); }
 /* One left edge for the head, the tabs and every tab's content. */
 .dash-shell { max-width: 1236px; }
 .dash-tabs { justify-content: flex-start; margin-left: 0; margin-right: 0; width: auto; }
+/* Every tab's content starts the same distance under the strip; a panel that pads its own top would add to this, so none does. */
+.dash-tabs { margin-bottom: 24px; }
 /* The line over the list says what is shown; it is not a card. */
 .feed-controls { background: transparent; border: 0; padding: 0 0 4px; }
 /* Item marks speak in ink: technique, platform and the "frequent" note are words, not hues. */
@@ -180,9 +200,9 @@
 /* The first day: the steps alone, set like the head's sentence, left-aligned at the timeline's width. */
 .activity-grid[data-first-look] .filter-rail, .activity-grid[data-first-look] .feed-controls { display: none; }
 
-.activity-grid[data-first-look] .feed-welcome { text-align: left; margin: 8px 0 0; padding: 24px 0 48px; max-width: 46rem; }
+.activity-grid[data-first-look] .feed-welcome { text-align: left; margin: 8px 0 0; padding: 24px; max-width: 46rem; }
 .activity-grid[data-first-look] .feed-welcome svg { display: none; }
-.feed-welcome h3 { font-size: clamp(1.75rem, 2.6vw, 2.25rem); font-weight: 700; color: var(--fw-ink); margin: 0 0 20px; }
+.feed-welcome h3 { font-size: clamp(1.75rem, 2.6vw, 2.25rem); font-size: round(nearest, clamp(1.75rem, 2.6vw, 2.25rem), 1px); font-weight: 700; color: var(--fw-ink); margin: 0 0 20px; }
 .feed-welcome-steps { margin: 0; padding: 0; list-style: none; counter-reset: step; border-top: 1.5px solid var(--fw-ink); }
 .feed-welcome-steps li { counter-increment: step; display: grid; grid-template-columns: 2.5rem 1fr; padding: 14px 0; border-bottom: 1px solid var(--fw-line); font-size: 1.125rem; line-height: 1.45; color: var(--fw-ink); }
 .feed-welcome-steps li::before { content: counter(step); font-weight: 700; }
@@ -200,14 +220,16 @@
 
 /* Record tab: the record's state reads like the export's certificate, the verdict word large in its verdict colour, the
    three facts beside it, the actions under it. The shield tile repeated the word as a picture. */
-.chain-banner { grid-template-columns: minmax(0, 1fr) auto; gap: 16px 32px; padding: 24px 28px; align-items: start; }
+.chain-banner { grid-template-columns: minmax(0, 1fr) auto; gap: 16px 32px; padding: 24px; align-items: start; }
 .chain-banner::before { background: var(--fw-ok); }
 .chain-banner.warn::before { background: var(--fw-warn); }
 .chain-banner.err::before { background: var(--fw-danger); }
+.chain-banner.idle::before { background: var(--fw-line); }
 .chain-banner-shield { display: none; }
-.chain-banner-title { font-size: clamp(1.5rem, 2.4vw, 2rem); font-weight: 700; letter-spacing: -0.02em; color: var(--fw-ok); line-height: 1.1; }
+.chain-banner-title { font-size: clamp(1.5rem, 2.4vw, 2rem); font-size: round(nearest, clamp(1.5rem, 2.4vw, 2rem), 1px); font-weight: 700; letter-spacing: -0.02em; color: var(--fw-ok); line-height: 1.1; }
 .chain-banner.warn .chain-banner-title { color: var(--fw-warn); }
 .chain-banner.err .chain-banner-title { color: var(--fw-danger); }
+.chain-banner.idle .chain-banner-title { color: var(--fw-ink); }
 .chain-banner-desc { font-size: 1rem; line-height: 1.45; color: var(--fw-ink); margin-top: 8px; max-width: 62ch; }
 .chain-banner-stats { gap: 32px; }
 .chain-banner-stat-value { font-family: var(--fw-font); font-size: 1.5rem; font-weight: 700; }
@@ -216,8 +238,8 @@
 @media (max-width: 720px) { .chain-banner { grid-template-columns: 1fr; } .chain-banner-stats { justify-content: flex-start; } .chain-banner-stat { text-align: left; } }
 
 /* Issues: the panel opens like every other tab, a heading with room above it; the panel's own colours are verdicts. */
-.ops-panel { padding-top: 24px; }
-.ops-panel .ops-title { font-size: 1.5rem !important; font-weight: 700 !important; letter-spacing: -0.015em; margin-bottom: 12px !important; }
+.ops-panel { padding-top: 0; }
+.ops-panel .ops-title { font-size: 1.5rem !important; font-weight: 700 !important; letter-spacing: -0.015em; margin-bottom: 8px !important; }
 
 /* Every tab's cards keep A's order: the card's question as a heading a person reads first, then its numbers, then the
    small print. The old titles sat at body size, so a card's question and its footnote looked the same; Overview and Feed
@@ -229,14 +251,14 @@
 .stats-card.pat-section-empty, .fb-card.fb-card-empty { grid-column: 1 / -1; order: 99; background: none; border: 0;
   border-top: 1px solid var(--fw-line); border-radius: 0; padding: 10px 0; }
 .fb-card-empty .fb-eyebrow-line, .stats-card.pat-section-empty .pat-section-title { font-size: 1rem; font-weight: 600; letter-spacing: 0; color: var(--fw-ink); }
-.stats-sub { font-size: .9375rem; line-height: 1.45; }
+.stats-sub { font-size: .875rem; line-height: 1.45; }
 
 /* Issues, nothing to report: the verdict in ink at the head's size, the day it covers drawn hour by hour across the full
    width, then the figures. A lone green heading on an empty page lost the blind pair test twice: it read as unfinished. */
 .ops-allgood { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr); gap: 24px 48px; align-items: end;
   background: var(--fw-lift) !important; border: 1px solid var(--fw-line) !important; border-top: 3px solid var(--fw-ok) !important;
-  padding: 32px 32px 28px !important; margin-top: 8px; }
-.ops-allgood h3 { font-size: clamp(1.75rem, 2.6vw, 2.25rem) !important; font-weight: 700 !important; color: var(--fw-ink) !important; letter-spacing: -0.02em; margin: 0 0 8px !important; }
+  padding: 24px !important; margin-top: 24px; }
+.ops-allgood h3 { font-size: clamp(1.75rem, 2.6vw, 2.25rem) !important; font-size: round(nearest, clamp(1.75rem, 2.6vw, 2.25rem), 1px) !important; font-weight: 700 !important; color: var(--fw-ink) !important; letter-spacing: -0.02em; margin: 0 0 8px !important; }
 .ops-allgood-head > p { font-size: 1.125rem !important; color: var(--fw-ink) !important; max-width: 48ch; margin: 0 !important; }
 .ops-day { grid-column: 1 / -1; margin: 8px 0 0; }
 .ops-day-cells { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 3px; height: 56px; }
@@ -251,21 +273,22 @@
 
 /* Feed behavior in A's order: one lead line saying what the tab reads, the switches in one quiet row, then the cards,
    whose level tags and "what this means" lines are type, not boxes. */
-.fb-head { padding-top: 24px; align-items: flex-end !important; gap: 12px 16px !important; margin-bottom: 12px !important; }
+.fb-head { padding-top: 0; align-items: flex-end !important; gap: 12px 16px !important; margin-bottom: 12px !important; }
 .fb-head > span { display: none; }
 .fb-head .fb-intro { order: -1; flex-basis: 100%; font-size: 1.25rem !important; font-weight: 700; line-height: 1.3; max-width: 52ch; color: var(--fw-ink); }
 .fb-range { border: 0 !important; padding: 0 !important; background: none !important; }
-.fb-range button { font-size: .875rem !important; }
+.fb-range button { font-size: .875rem !important; border-radius: 0; }
 .fb-legend-strip { margin: 0 0 8px; }
 .fb-lensbar { align-items: center; margin-bottom: 24px; }
-.fb-lens { background: none; border-color: transparent; font-size: .875rem; color: var(--fw-muted); }
-.fb-lens.active { background: var(--fw-ink); border-color: var(--fw-ink); color: var(--fw-ground); }
+/* A lens that is not chosen keeps its edge: without one it reads as a caption beside the chosen lens, not as a switch. */
+.fb-lens { background: none; border-color: var(--fw-border); font-size: .875rem; color: var(--fw-muted); }
 /* The findings read as one document on hairlines, not a wall of boxes; a finding with nothing to show yet steps down to a
    quiet line after the others, so an empty box never breaks the rhythm. Both are what the blind pair test held against
    the tab. The dashed rule keeps the legend's meaning: interpretation. */
-.fb-grid { gap: 0 48px !important; margin-bottom: 24px !important; background: var(--fw-lift); border: 1px solid var(--fw-line); padding: 0 32px; }
-.fb-card { background: none !important; border: 0 !important; border-top: 1px solid var(--fw-line) !important; padding: 24px 0 28px !important; }
-.fb-grid > .fb-card:nth-child(-n+2) { border-top: 0 !important; }
+.fb-grid { gap: 0 48px !important; margin-bottom: 24px !important; background: var(--fw-lift); border: 1px solid var(--fw-line); border-radius: var(--fw-radius-lg); padding: 0 24px; }
+/* Each finding's hairline sits one pixel up, on the padding of the row above, so the first visible row's hairline lands on
+   the panel's own top edge, in the same colour, however many of the first findings have stepped down to the end. */
+.fb-card { background: none !important; border: 0 !important; border-top: 1px solid var(--fw-line) !important; border-radius: 0; margin-top: -1px; padding: 24px 0 28px !important; }
 .fb-card.interp { border-top: 1px dashed var(--fw-ink) !important; }
 .fb-card.fb-card-empty { order: 99; grid-column: span 12 !important; padding: 12px 0 !important; }
 /* One finding line per card at a reading size; the tab's own lead stays the only large voice. Three sizes of bold
@@ -290,17 +313,17 @@
   box-sizing: border-box; width: calc(min(1236px, 100%) - 64px); margin: 16px auto 8px;
   background: var(--fw-card); border: 1px solid var(--fw-line); border-left: 3px solid var(--fw-warn); padding: 16px 20px;
 }
-.dash-shell .dash-attention { width: auto; margin: 16px 0 8px; }
+.dash-shell .dash-attention { width: auto; margin: 16px 0; }
 .dash-attention-item { align-items: center; padding: 0; }
 .dash-attention-item + .dash-attention-item { border-top: 1px solid var(--fw-line); margin-top: 14px; padding-top: 14px; }
 .dash-attention-title { font-size: 1rem; font-weight: 700; color: var(--fw-ink); margin-bottom: 4px; }
 .dash-attention-body { font-size: .9375rem; color: var(--fw-ink); max-width: 78ch; }
 /* The Overview's cards line up with the head and the tabs above them. */
-.ov-shell { max-width: none; padding: 24px 0 60px; }
+.ov-shell { max-width: none; padding: 0; }
 
 /* The head now sits inside the timeline and Overview panels, under the tabs: the shell already sets the width. */
-[role="tabpanel"] > .today-head .today-head-inner, [role="tabpanel"] .today-head .today-head-inner { max-width: none; padding: 32px 0 28px; }
-[role="tabpanel"] .today-head { border-bottom: 1px solid var(--fw-line); margin-bottom: 8px; }
+[role="tabpanel"] > .today-head .today-head-inner, [role="tabpanel"] .today-head .today-head-inner { max-width: none; padding: 0 0 28px; }
+[role="tabpanel"] .today-head { border-bottom: 1px solid var(--fw-line); margin-bottom: 24px; }
 
 /* The record's reason sits on its own line under the item's words. Inline, it ran straight on from the text ("ads]Why:",
    "example-app.test/Why:") and read as part of what the feed showed. */
@@ -313,12 +336,10 @@
 .fb-grid, .stats-grid { grid-template-columns: repeat(12, minmax(0, 1fr)); }
 .ov-heat-wrap { grid-template-columns: 44px minmax(0, 1fr); min-width: 0; max-width: 100%; }
 /* Below 980 every Feed behaviour card already spans the row, but the twelve tracks kept their eleven 48 px gaps:
-   528 px of gap in a 311 px box. One track instead, and the second card takes its hairline like the rest. */
+   528 px of gap in a 311 px box. One track instead. */
 @media (max-width: 980px) {
   .fb-grid { grid-template-columns: minmax(0, 1fr); column-gap: 0 !important; }
   .fb-grid > *, .fb-grid > .fb-card.fb-card-empty { grid-column: 1 / -1 !important; }
-  .fb-grid > .fb-card:nth-child(2) { border-top: 1px solid var(--fw-line) !important; }
-  .fb-grid > .fb-card.interp:nth-child(2) { border-top: 1px dashed var(--fw-ink) !important; }
 }
 @media (max-width: 640px) {
   .fb-grid { padding: 0 16px; }

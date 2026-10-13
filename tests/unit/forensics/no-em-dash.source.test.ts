@@ -69,8 +69,8 @@ describe('Q64 — no em dashes in user-visible strings', () => {
     expect(src).toContain('written down as it happened, with the checker inside the file.');
     expect(src).toContain('again; yours may be damaged.');
     expect(src).toContain("(local clock, diagnostic)");
-    expect(src).toContain("['Comment judge: Strict'");
-    expect(src).toContain("['Post judge: Moderate");
+    expect(src).toContain("['Comment judge: Calm");
+    expect(src).toContain("['Post judge: Silent and Calm");
     expect(src).not.toContain(`judge ${EM}`);
   });
 });

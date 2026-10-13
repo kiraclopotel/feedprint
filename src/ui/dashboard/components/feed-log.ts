@@ -10,6 +10,7 @@ import { localDayKey } from '../../shared/format-time';
 import { isRepeatMarkOnly } from '../../../forensics/export-numbers';
 import { feedActionKeyFor, type FeedActionKey } from '../../../forensics/feed-action';
 import { BLOCKED_CATEGORY_LABELS } from './color-maps';
+import { exclusionKey } from '../../../forensics/author-exclusions';
 
 /** What Feedprint did with an item, in the page's words (one word per thing). */
 export type FeedAction = 'passed' | 'hidden' | 'masked' | 'flagged' | 'manual' | 'seenALot' | 'rewritten' | 'notChecked';
@@ -33,6 +34,8 @@ export interface FeedLogFilter {
   platform?: string;
   /** A local calendar day, YYYY-MM-DD, for a panel whose number is one day's. */
   day?: string;
+  /** One account, by the key the not-recorded list uses (platform and handle), opened from that list. */
+  account?: { key: string; label: string };
 }
 
 /**
@@ -75,7 +78,8 @@ export function feedWhy(r: ForensicRecord, action: FeedAction = feedAction(r)): 
   if (action !== 'hidden') return null;
   // The household's own list (a word, a phrase or an account the person chose) writes `blocklist:<kind>:<rule>`, not
   // `block:`; it is a reason all the same, and the row says so.
-  if (/^(?:late-after-rotation:)?blocklist:/.test(r.detectionMode ?? '')) return { kind: 'blocked', category: 'Your own list' };
+  // A topic the person switched on is their own choice as well (Topics U1).
+  if (/^(?:late-after-rotation:)?(?:blocklist|topic):/.test(r.detectionMode ?? '')) return { kind: 'blocked', category: 'Your own list' };
   // A hidden row never has an empty why: the rule's category its record names ('block:<reason>:<token>'), or that no
   // reason was saved.
   const reason = /^(?:late-after-rotation:)?block:([^:]+)/.exec(r.detectionMode ?? '')?.[1];
@@ -150,6 +154,7 @@ export function feedLogSlice(records: readonly ForensicRecord[], filter: FeedLog
     windowTotal++;
     if (filter.platform && r.platform !== filter.platform) continue;
     if (filter.day && localDayKey(r.timestamp) !== filter.day) continue;
+    if (filter.account && (!r.author || exclusionKey(r.platform, r.author) !== filter.account.key)) continue;
     const action = feedAction(r);
     counts[action]++;
     inWindow++;

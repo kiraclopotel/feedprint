@@ -168,7 +168,7 @@ describe('the production terminal in Child', () => {
       _stampClassificationForTesting(post);
       _mountProtectionForTesting(post, performance.now());
       const cover = article.querySelector('.fw-provisional-shield');
-      expect(cover?.textContent).toBe('One moment, checking this one…');
+      expect(cover?.textContent, 'a plain veil while it waits').toBe('');
 
       expect(settleProtection(post, {
         record: 'verdict',
@@ -177,8 +177,8 @@ describe('the production terminal in Child', () => {
       })).toBe('retained');
 
       // The verdict is in, so the cover stops claiming it is still checking.
-      expect(cover?.textContent).toBe('Skipped by your Strict filter. Keep scrolling.');
-      expect(cover?.getAttribute('aria-label')).toBe('Skipped by your Strict filter. Keep scrolling.');
+      expect(cover?.textContent).toBe('Skipped at your Silent level. Keep scrolling.');
+      expect(cover?.getAttribute('aria-label')).toBe('Skipped at your Silent level. Keep scrolling.');
 
       // The deadline reaper answers a verdict that never came. This one came.
       vi.advanceTimersByTime(180_000);

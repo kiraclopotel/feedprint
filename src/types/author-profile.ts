@@ -27,4 +27,19 @@ export interface AuthorProfile {
   distinctDays?: number;
   lastSeenDay?: string;
   creatives?: Record<string, number>;
+  /**
+   * The exposure notice's own counters (13 Oct 2026). The three above counted every surface for ever, so a channel the
+   * person subscribes to and a source the feed pushes read the same; the gate no longer reads them and nothing writes
+   * them. A profile written before this change keeps them and starts these from empty.
+   *
+   * `recDays` are the UTC days (`YYYY-MM-DD`, each once, ascending, the last 30) on which the source reached the
+   * person on the recommended feed; a visit the person made themselves (a followed feed, a profile, a thread they
+   * opened, a search, a watch page) empties them, so the count means "pushed since you last went to it".
+   * `creativeDays` are, for each piece of copy, the days of its last EXPOSURE_SAME_CREATIVE recommended sightings (a
+   * day may repeat). `lastNoticedDay` is the day the notice last spoke for this source, kept here so a second tab or a
+   * reload stays quiet.
+   */
+  recDays?: string[];
+  creativeDays?: Record<string, string[]>;
+  lastNoticedDay?: string;
 }

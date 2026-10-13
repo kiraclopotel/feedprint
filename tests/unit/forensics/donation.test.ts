@@ -60,7 +60,7 @@ describe('donateExport with a recipient', () => {
     _setDonationRecipientsForTesting([RECIPIENT]);
     const fetchSpy = vi.fn(async () => new Response('', { status: 200, headers: { 'X-Receipt': 'rcpt-42' } }));
     const out = await donateExport([record], filterOf([record]), 'ro', { fetch: fetchSpy, buildDocument });
-    expect(buildDocument).toHaveBeenCalledWith([record], filterOf([record]), 'ro');
+    expect(buildDocument).toHaveBeenCalledWith([record], filterOf([record]), 'ro', undefined, { nameExcludedAccounts: false });
     expect(fetchSpy).toHaveBeenCalledTimes(1);
     const [url, init] = fetchSpy.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe(RECIPIENT.endpoint);

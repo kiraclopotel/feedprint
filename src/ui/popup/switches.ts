@@ -3,8 +3,10 @@
 // Two things live here so the two popups cannot drift apart:
 //
 //   1. The mode switch. Applying a preset overwrites the whole feature grid,
-//      so a switch that would change something asks first, and leaving Child
-//      demands the PIN even inside the grace window. The pure helpers decide;
+//      so a switch that would undo something the person changed asks first, and
+//      leaving Child demands the PIN, where one is set, even inside the grace
+//      window. No level demands a PIN to enter (12 Oct 2026: the PIN is a
+//      feature, never forced). The pure helpers decide;
 //      `useModeSwitch` holds the pending state for the segment row.
 //
 //   2. Per-platform overrides. A feature can carry `perPlatform[p].enabled`,
@@ -19,7 +21,7 @@ import {
   applyPreset, getSettings, isFeatureEnabled, parentPinUnknown, saveSettings, updateFeature,
 } from '../../storage/settings';
 import type { Mode } from '../../types/mode';
-import { presetKeepingOffOnly, receiptsFeatures } from '../../storage/switch-scope';
+import { levelGridKeepingTheirs, presetKeepingOwnList, receiptsFeatures } from '../../storage/switch-scope';
 import { detectCoveragePlatform } from './coverage-map';
 
 // ─── Mode switch ───
@@ -52,22 +54,29 @@ export function modeSwitchResetsToggles(
   targetMode: Mode,
 ): boolean {
   // Only the switches Receipts has count: one stored for a switch now in Off is not a customization
-  // anyone can see or undo here.
-  return !deepEqual(receiptsFeatures(currentFeatures), receiptsFeatures(applyPreset(targetMode).features));
+  // anyone can see or undo here. The person's own list does not count either: a level keeps it, so
+  // it is never what a switch would reset.
+  const target = presetKeepingOwnList(applyPreset(targetMode).features, currentFeatures);
+  return !deepEqual(receiptsFeatures(currentFeatures), receiptsFeatures(target));
 }
 
 /**
  * Resolve what a click on a mode segment should do:
  *   'noop'    already in that mode.
- *   'confirm' different mode AND the switch would reset custom toggles.
- *   'apply'   different mode but nothing would change.
+ *   'confirm' different mode, the person changed a switch of the level they are on (the grid differs from that
+ *             level's own preset, the measure the reset link uses), AND the target preset would change the grid.
+ *   'apply'   everything else: an untouched level moves in one tap, and so does a grid that already equals the target.
+ * The question is about the person's own changes. It used to be asked whenever the target's grid differed from the
+ * current one, which asked an untouched install on every move to or from Strict, since swearing is the one switch that
+ * differs between the levels (12 Oct 2026).
  */
 export function resolveModeClick(
   settings: Pick<FWSettings, 'mode' | 'features'>,
   targetMode: Mode,
 ): 'noop' | 'apply' | 'confirm' {
   if (settings.mode === targetMode) return 'noop';
-  return modeSwitchResetsToggles(settings.features, targetMode) ? 'confirm' : 'apply';
+  const wouldLoseEdits = modeSwitchResetsToggles(settings.features, settings.mode);
+  return wouldLoseEdits && modeSwitchResetsToggles(settings.features, targetMode) ? 'confirm' : 'apply';
 }
 
 /**
@@ -89,16 +98,17 @@ export function modeSwitchRequiresPin(
 }
 
 /**
- * Write the preset for `mode` over the whole grid. Only the recorder's popup
+ * Write the preset for `mode` over the grid. Only the recorder's popup
  * has a preset row; Off's popup has none, so nothing there applies a preset.
  * A preset row added back to Off must come through this machine, or one tap
- * wipes the rules, the breaks and the quiet hours without a word.
+ * wipes the breaks and the quiet hours without a word. The person's own list
+ * of words, phrases and accounts is theirs and is never reset by a level.
  */
 async function applyModePreset(mode: Mode): Promise<void> {
   const patch = applyPreset(mode);
-  // A level sets Receipts' own switches; what the install stored for Off's switches is left as it was.
+  // A level sets Receipts' own switches; what the install stored for Off's switches, and the person's own list, is left as it was.
   const stored = (await getSettings()).features;
-  await saveSettings({ mode, levelChosen: true, features: presetKeepingOffOnly(patch.features, stored), presets: patch.presets });
+  await saveSettings({ mode, levelChosen: true, features: levelGridKeepingTheirs(patch.features, stored), presets: patch.presets });
 }
 
 export interface ModeSwitchState {

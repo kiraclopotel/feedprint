@@ -7,6 +7,7 @@ import { usePopupT } from '../../../i18n/react';
 import { Wordmark } from '../../shared/brand';
 import { AppWindow, ExternalLink, FileText, Home as HomeIcon, Key as KeyIcon, Settings as SettingsIcon } from '../../shared/icons/lucide';
 import { StatusLine } from '../../shared/StatusLine';
+import { rovingGroup } from '../controls';
 import type { Tab } from './types';
 
 // ─── Pop header ───
@@ -48,7 +49,8 @@ function StatusDot({
       onClick={onClick}
       disabled={!isClickable}
       title={tooltip}
-      aria-label={`${label}: ${tooltip}`}
+      // The chip's name and its tooltip can open with the same word (Strict: "Strict: the filter runs..."): say it once.
+      aria-label={tooltip.startsWith(label) ? tooltip : `${label}: ${tooltip}`}
     >
       <span className="status-dot" aria-hidden="true" />
       {/* The license state (checking, revoked, free, unchecked...) used to
@@ -84,26 +86,31 @@ function StatusDot({
 // failed check is a statement about the check, not about the license.
 
 export function PopHeader({
-  licenseState, keyHeld = false, strict = false, onClickStatus, onOpenSettings, onOpenDashboard, onDetach,
+  licenseState, strict = false, agreementWaits = false, levelPending = false, onClickStatus, onOpenSettings, onOpenDashboard, onDetach,
 }: {
   licenseState: DotState;
-  // At Strict with a key saved nothing is ever checked, so the chip says the key is saved instead of
-  // reading "Not checked" as a fault (M4).
-  keyHeld?: boolean;
-  // Strict makes no outside call, so a chip that says LICENSE or "Free tier: a license key turns on the AI
-  // reading" sits over "no license check" (B2F, P3-2). With no key it reads the level instead.
+  // Silent with no key reads nothing, so a chip that says LICENSE or "Free tier: a license key turns on the AI
+  // reading" sits over a filter that runs on this computer (B2F, P3-2). With no key it reads the level instead; with
+  // a key, the chip is the key's, and its tooltip says what Silent does with it.
   strict?: boolean;
+  // Silent holds a key the relay has not refused and the agreement is not given yet: nothing leaves until it is.
+  agreementWaits?: boolean;
+  // A fresh install that has not chosen its level makes no call yet, so nothing was left unchecked by a fault: the
+  // tooltip says the check waits for the choice instead of blaming the network (the Tester, 11 Oct 2026).
+  levelPending?: boolean;
   onClickStatus?: () => void;
   onOpenSettings?: () => void;
   onOpenDashboard?: () => void;
   onDetach?: () => void;
 }) {
   const t = usePopupT();
-  const held = keyHeld && (licenseState === 'unchecked' || licenseState === 'checking');
-  const strictNoKey = strict && !keyHeld && licenseState === 'free';
+  const strictNoKey = strict && licenseState === 'free';
+  const waitsForLevel = levelPending && (licenseState === 'unchecked' || licenseState === 'checking');
   const stateLabel = (s: DotState) => {
-    if (held)              return t.statusKeyHeld;
-    if (strictNoKey)       return t.strictNoCallsLine;
+    if (waitsForLevel)     return t.statusLevelPending;
+    if (strictNoKey)       return t.strictNoKeyLine;
+    if (strict && agreementWaits && s !== 'err') return t.strictNeedsAgreement;
+    if (strict && s === 'ok') return t.strictKeyLine;
     if (s === 'ok')        return t.statusOk;
     if (s === 'free')      return t.statusFree;
     if (s === 'err')       return t.statusRevoked;
@@ -115,16 +122,15 @@ export function PopHeader({
   // checked, so the two no-answer states put words in the chip. The three
   // answered states keep the plain label they have always had.
   const chipLabel = (s: DotState) => {
-    if (held)              return t.statusKeyHeldShort;
     if (strictNoKey)       return t.modeChild;
     if (s === 'checking')  return t.statusCheckingShort;
     if (s === 'unchecked') return t.statusUncheckedShort;
     return t.licenseLabel;
   };
-  // A free install away from Strict has nothing to report about a license: its chip read LICENSE beside the License
-  // tab and opened that tab, the same word twice (the head, 9 Oct 2026). So it shows none. At Strict the chip reads the
+  // A free install away from Silent has nothing to report about a license: its chip read LICENSE beside the License
+  // tab and opened that tab, the same word twice (the head, 9 Oct 2026). So it shows none. At Silent the chip reads the
   // level, and a saved key keeps its chip.
-  const chipShown = !(licenseState === 'free' && !keyHeld && !strictNoKey);
+  const chipShown = !(licenseState === 'free' && !strictNoKey);
   return (
     <div className="pop-header">
       <Wordmark size={28} />
@@ -174,13 +180,17 @@ export function PopTabBar({
   // 2026-09-19: until then both aria-controls pointed at ids that were nowhere
   // in the document, so the bar announced itself as tabs controlling panels
   // that did not exist.
+  // One Tab stop for the strip: the open tab takes it, and the arrow keys open the neighbour (a tab costs nothing to open).
+  const order: Tab[] = ['home', 'keys'];
+  const roving = rovingGroup(order.indexOf(active), (i) => onChange(order[i]));
   return (
-    <div className="pop-tabbar" role="tablist">
+    <div className="pop-tabbar" role="tablist" onKeyDown={roving.onKeyDown}>
       <button
         id="pop-tab-home"
         role="tab"
         aria-selected={active === 'home'}
         aria-controls="pop-tabpanel-home"
+        tabIndex={roving.tabIndexOf(0)}
         className={`pop-tab ${active === 'home' ? 'active' : ''}`}
         onClick={() => onChange('home')}
       >
@@ -192,6 +202,7 @@ export function PopTabBar({
         role="tab"
         aria-selected={active === 'keys'}
         aria-controls="pop-tabpanel-keys"
+        tabIndex={roving.tabIndexOf(1)}
         className={`pop-tab ${active === 'keys' ? 'active' : ''}`}
         onClick={() => onChange('keys')}
       >

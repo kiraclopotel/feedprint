@@ -200,11 +200,14 @@ export function PatternsTab({ records, archivesPending, readingOffered = true }:
   const start = windowed.length ? isoDay(windowed.reduce((a, r) => (r.timestamp < a ? r.timestamp : a), windowed[0].timestamp)) : '';
   const end = windowed.length ? isoDay(windowed.reduce((a, r) => (r.timestamp > a ? r.timestamp : a), windowed[0].timestamp)) : '';
 
-  // Sunday-anchored 7-day window for the per-theme streak grid, ending on the
-  // week that contains the most recent record (design: "Day squares run Sunday
-  // to Saturday").
+  // The per-theme day squares are the seven days that end on the day of the
+  // most recent record, so a theme seen on five of them draws five squares. A
+  // calendar week would end on days the record has not reached and drop the
+  // window's first days. Over a longer range the strip would still show only
+  // those seven, so its count could sit below the sentence's number: there the
+  // strip is not drawn and the sentence stands alone.
   const weekDays: string[] = [];
-  if (anchor !== null) {
+  if (anchor !== null && RANGE_DAYS[range] === 7) {
     // Stepped as CALENDAR dates, not as milliseconds: a local day is 23 or 25
     // hours on a transition day, so adding 86,400,000 seven times lands on the
     // wrong date for a reader whose clock moved that week. dayKeyAsLocalDate
@@ -212,7 +215,7 @@ export function PatternsTab({ records, archivesPending, readingOffered = true }:
     const anchorDate = dayKeyAsLocalDate(isoDay(anchor));
     for (let i = 0; i < 7; i++) {
       const d = new Date(anchorDate);
-      d.setDate(d.getDate() - anchorDate.getDay() + i);
+      d.setDate(d.getDate() - 6 + i);
       weekDays.push(isoDay(d));
     }
   }
@@ -228,7 +231,7 @@ export function PatternsTab({ records, archivesPending, readingOffered = true }:
 
 
   const segBase: React.CSSProperties = {
-    padding: '5px 12px', fontSize: 12, borderRadius: 0, border: 'none',
+    padding: '5px 12px', minHeight: 32, fontSize: 12, border: 'none',
     background: 'transparent', color: 'var(--fw-muted)', cursor: 'pointer',
   };
   const segActive: React.CSSProperties = {
@@ -369,10 +372,11 @@ export function PatternsTab({ records, archivesPending, readingOffered = true }:
                   cutting or overflowing translated content. Both now wrap;
                   the row grows instead of losing the text. */}
               <span style={{ fontWeight: 600, flex: 1, minWidth: 0 }}>{theme.label}</span>
-              <StreakGrid perDayCounts={theme.perDayCounts} weekDays={weekDays} />
-              <span style={{ color: 'var(--fw-muted)' }}>
+              {/* The strip ends the row: its start is the same on every row whatever the sentence beside it runs to. */}
+              <span style={{ color: 'var(--fw-muted)', textAlign: 'right' }}>
                 {t.patCrossDayLine(theme.daysActive, theme.recordCount)}
               </span>
+              <StreakGrid perDayCounts={theme.perDayCounts} weekDays={weekDays} />
             </div>
           ))
         )}
@@ -496,16 +500,18 @@ function NarrativePressurePlatform({ platform }: { platform: PlatformNarrativePr
 }
 
 /**
- * 7 grid squares (Sun→Sat) for the week containing the most recent record.
- * A square is "active" (teal) when that day had >=1 member record. Derived
- * from theme.perDayCounts (ISO-day keyed) — no fabricated data.
+ * 7 grid squares, the last seven days up to the most recent record. A square
+ * is "active" (teal) when that day had >=1 member record. Derived from
+ * theme.perDayCounts (ISO-day keyed) — no fabricated data. The strip is a
+ * fixed width so rows that stack show their squares in one column, and a day
+ * without a record is the hairline colour, quieter than a day with one.
  */
 function StreakGrid({ perDayCounts, weekDays }: { perDayCounts: Record<string, number>; weekDays: string[] }) {
   const lang = useUiLanguage();
   if (weekDays.length === 0) return null;
   return (
-    <span style={{ display: 'flex', gap: 3 }} aria-hidden="true">
-      {weekDays.map((day, i) => {
+    <span style={{ display: 'flex', gap: 3, width: 102, flex: 'none' }} aria-hidden="true">
+      {weekDays.map((day) => {
         const active = (perDayCounts[day] ?? 0) > 0;
         return (
           <span
@@ -513,8 +519,7 @@ function StreakGrid({ perDayCounts, weekDays }: { perDayCounts: Record<string, n
             title={formatWeekdayNarrow(dayKeyAsLocalDate(day), lang)}
             style={{
               width: 12, height: 12, borderRadius: 0,
-              background: active ? 'var(--fw-teal)' : 'var(--fw-border)',
-              opacity: active ? 0.8 : 1,
+              background: active ? 'var(--fw-teal)' : 'var(--fw-line)',
             }}
           />
         );
@@ -608,7 +613,7 @@ function ReserveRow({ instance, byId, line }: { instance: ReserveInstance; byId:
       <button
         type="button"
         onClick={() => setExpanded((e) => !e)}
-        style={{ marginTop: 4, fontSize: 12, color: 'var(--fw-teal)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textDecoration: 'underline' }}
+        style={{ marginTop: 4, fontSize: 13, minHeight: 24, display: 'inline-flex', alignItems: 'center', color: 'var(--fw-teal)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textDecoration: 'underline' }}
       >
         {expanded ? t.patHideRecords : t.patShowRecords}
       </button>
@@ -666,12 +671,12 @@ function ThemeCard({
         <span style={{ fontWeight: 600, fontSize: 13 }}>{theme.label}</span>
         <PlatformDots platforms={theme.platforms} />
         <span style={{ flex: 1 }} />
-        <StreakGrid perDayCounts={theme.perDayCounts} weekDays={weekDays} />
         {/* Accessibility audit found 2026-09-18: forced single line on a
             two-sentence translated string overflows in RO/PT-BR. */}
         <span style={{ fontFamily: 'var(--fw-font-mono)', color: 'var(--fw-text-secondary)', fontSize: 12 }}>
           {t.patItems(theme.recordCount)} · {t.patDays(theme.daysActive)}
         </span>
+        <StreakGrid perDayCounts={theme.perDayCounts} weekDays={weekDays} />
       </div>
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', fontSize: 12, color: 'var(--fw-muted)', marginTop: 4, alignItems: 'center' }}>
         <span>{formatDateLocal(dayKeyAsLocalDate(isoDay(theme.dateSpan.start)), lang)} – {formatDateLocal(dayKeyAsLocalDate(isoDay(theme.dateSpan.end)), lang)}</span>
@@ -683,8 +688,8 @@ function ThemeCard({
         <span style={{ color: 'var(--fw-muted)' }}>{t.patGroupedBy}</span>
         {theme.topTerms.slice(0, 5).map((term) => (
           <span key={term.term} style={{
-            display: 'inline-block', padding: '0 7px',
-            border: '1px solid var(--fw-border)', borderRadius: 2,
+            display: 'inline-block', padding: '1px 8px',
+            border: 'none', borderRadius: 2, background: 'var(--fw-surface-2)',
             fontStyle: term.kind === 'word' ? 'normal' : 'italic',
           }}>
             {term.term}
@@ -695,7 +700,7 @@ function ThemeCard({
         type="button"
         onClick={onToggle}
         style={{
-          marginTop: 6, fontSize: 12, color: 'var(--fw-teal)', background: 'none',
+          marginTop: 6, fontSize: 13, minHeight: 24, display: 'inline-flex', alignItems: 'center', color: 'var(--fw-teal)', background: 'none',
           border: 'none', padding: 0, cursor: 'pointer', textDecoration: 'underline',
         }}
       >
@@ -785,9 +790,9 @@ function LexicalLeague({
 function FeedTonePanel({ tone }: { tone: FeedTone }) {
   const t = useDashboardT();
   const bands: Array<{ pct: number; label: string; color: string }> = [
-    { pct: tone.positivePct, label: t.patTonePositive, color: TONE.light },
-    { pct: tone.neutralPct, label: t.patToneNeutral, color: TONE.mid },
-    { pct: tone.negativePct, label: t.patToneNegative, color: TONE.ink },
+    { pct: tone.positivePct, label: t.patTonePositive, color: TONE.tonePos },
+    { pct: tone.neutralPct, label: t.patToneNeutral, color: TONE.toneNeu },
+    { pct: tone.negativePct, label: t.patToneNegative, color: TONE.toneNeg },
   ];
   return (
     <PatternSection
@@ -799,7 +804,7 @@ function FeedTonePanel({ tone }: { tone: FeedTone }) {
         <></>
       ) : (
         <>
-          <div style={{ display: 'flex', height: 14, borderRadius: 0, overflow: 'hidden', border: '1px solid var(--fw-border)' }}>
+          <div className="fw-tone-bar" style={{ display: 'flex', gap: 2, height: 14, borderRadius: 0, overflow: 'hidden' }}>
             {bands.map((b) => b.pct > 0 && (
               <div key={b.label} style={{ width: `${b.pct}%`, background: b.color }} title={`${b.label} ${b.pct}%`} />
             ))}
@@ -807,7 +812,7 @@ function FeedTonePanel({ tone }: { tone: FeedTone }) {
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 8 }}>
             {bands.map((b) => (
               <span key={b.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
-                <span style={{ width: 9, height: 9, borderRadius: 0, background: b.color }} />
+                <span style={{ width: 10, height: 10, borderRadius: 0, background: b.color }} />
                 <strong style={{ fontFamily: 'var(--fw-font-mono)' }}>{b.pct}%</strong>
                 <span style={{ color: 'var(--fw-muted)' }}>{b.label}</span>
               </span>
@@ -953,7 +958,7 @@ function CompositionRow({ entry, byId, labelText, note }: {
       <button
         type="button"
         onClick={() => setExpanded((e) => !e)}
-        style={{ marginTop: 4, fontSize: 12, color: 'var(--fw-teal)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textDecoration: 'underline' }}
+        style={{ marginTop: 4, fontSize: 13, minHeight: 24, display: 'inline-flex', alignItems: 'center', color: 'var(--fw-teal)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textDecoration: 'underline' }}
       >
         {expanded ? t.patHideRecords : t.patShowRecords}
       </button>
@@ -1031,7 +1036,7 @@ function LexLeagueRow({ entry, byId }: { entry: SwearLeagueEntry; byId: Map<stri
       <button
         type="button"
         onClick={() => setExpanded((e) => !e)}
-        style={{ marginTop: 4, fontSize: 12, color: 'var(--fw-teal)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textDecoration: 'underline' }}
+        style={{ marginTop: 4, fontSize: 13, minHeight: 24, display: 'inline-flex', alignItems: 'center', color: 'var(--fw-teal)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textDecoration: 'underline' }}
       >
         {expanded ? t.patHideRecords : t.patShowRecords}
       </button>

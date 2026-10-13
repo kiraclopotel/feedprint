@@ -301,6 +301,14 @@ export function ChevronRight(props: IconProps) {
   );
 }
 
+export function ChevronLeft(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="m15 18-6-6 6-6" />
+    </Icon>
+  );
+}
+
 export function ThumbsUp(props: IconProps) {
   return (
     <Icon {...props}>

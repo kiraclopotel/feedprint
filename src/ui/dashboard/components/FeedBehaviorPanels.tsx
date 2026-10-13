@@ -14,6 +14,7 @@
 // FeedCard, virtual-scroll, or fc-timeline.
 
 import { TONE } from '../house-tones';
+import { breakableHandle } from '../shown-text';
 import * as React from 'react';
 import { useDashboardT, useUiLanguage } from '../../../i18n/react';
 import { dayKeyAsLocalDate, formatDateLocal, formatTimeLocal } from '../../shared/format-time';
@@ -161,6 +162,15 @@ export function FeedBehaviorPanels({ model, lens }: {
   ] as const).filter((s) => s.n > 0);
   const chainMax = Math.max(1, ...chains.handoffs.map((p) => p.n), ...chains.sustained.map((p) => p.n));
 
+  // The cards sit in pairs that fill one row (7 and 5, 6 and 6, 7 and 5). An empty card steps down to a line at the end of
+  // the grid, so its partner takes the whole row instead of leaving a hole beside it.
+  const runsEmpty = runs.length === 0;
+  const skewEmpty = skew.bigSessions === 0;
+  const returnsEmpty = returns.total === 0;
+  const ampEmpty = amp.total === 0 && adv.total === 0;
+  const chainsEmpty = chains.handoffs.length === 0 && chains.sustained.length === 0;
+  const voicesEmpty = voices.length === 0;
+
   const cautionLine = (c: Caution): { text: string; ev: string } => {
     switch (c.kind) {
       case 'run':
@@ -182,9 +192,9 @@ export function FeedBehaviorPanels({ model, lens }: {
     <div className="fb-grid">
 
       {/* ── Level 1a: unbroken runs ── */}
-      <FbCard title={t.fbRunsTitle} span={7} empty={runs.length === 0 ? t.fbRunsNone : undefined}>
+      <FbCard title={t.fbRunsTitle} span={skewEmpty ? 12 : 7} empty={runsEmpty ? t.fbRunsNone : undefined}>
         <div className="fb-card-sub">{t.fbRunsSub}</div>
-        {runs.length === 0 ? (
+        {runsEmpty ? (
           <></>
         ) : (
           <>
@@ -200,9 +210,9 @@ export function FeedBehaviorPanels({ model, lens }: {
       </FbCard>
 
       {/* ── Level 1b: in-sitting position skew ── */}
-      <FbCard title={t.fbSkewTitle} span={5} empty={skew.bigSessions === 0 ? t.fbSkewNone : undefined}>
+      <FbCard title={t.fbSkewTitle} span={runsEmpty ? 12 : 5} empty={skewEmpty ? t.fbSkewNone : undefined}>
         <div className="fb-card-sub">{t.fbSkewSub(skew.bigSessions, skew.totalSessions)}</div>
-        {skew.bigSessions === 0 ? (
+        {skewEmpty ? (
           <></>
         ) : (
           <>
@@ -226,9 +236,9 @@ export function FeedBehaviorPanels({ model, lens }: {
       </FbCard>
 
       {/* ── Level 2: the return after quiet ── */}
-      <FbCard title={t.fbReturnTitle} span={6} empty={returns.total === 0 ? t.fbReturnNone : undefined}>
+      <FbCard title={t.fbReturnTitle} span={ampEmpty ? 12 : 6} empty={returnsEmpty ? t.fbReturnNone : undefined}>
         <div className="fb-card-sub">{t.fbReturnSub}</div>
-        {returns.total === 0 ? (
+        {returnsEmpty ? (
           <></>
         ) : (
           <>
@@ -244,9 +254,9 @@ export function FeedBehaviorPanels({ model, lens }: {
       </FbCard>
 
       {/* ── Level 3: amplification + advertiser placement ── */}
-      <FbCard title={t.fbAmpTitle} span={6} empty={amp.total === 0 && adv.total === 0 ? t.fbAmpNone : undefined}>
+      <FbCard title={t.fbAmpTitle} span={returnsEmpty ? 12 : 6} empty={ampEmpty ? t.fbAmpNone : undefined}>
         <div className="fb-card-sub">{t.fbAmpSub}</div>
-        {amp.total === 0 && adv.total === 0 ? (
+        {ampEmpty ? (
           <></>
         ) : (
           <>
@@ -281,9 +291,9 @@ export function FeedBehaviorPanels({ model, lens }: {
       </FbCard>
 
       {/* ── Level 4a: technique hand-offs ── */}
-      <FbCard title={t.fbChainsTitle} span={7} empty={chains.handoffs.length === 0 && chains.sustained.length === 0 ? t.fbChainsNone : undefined}>
+      <FbCard title={t.fbChainsTitle} span={voicesEmpty ? 12 : 7} empty={chainsEmpty ? t.fbChainsNone : undefined}>
         <div className="fb-card-sub">{t.fbChainsSub}</div>
-        {chains.handoffs.length === 0 && chains.sustained.length === 0 ? (
+        {chainsEmpty ? (
           <></>
         ) : (
           <>
@@ -303,9 +313,9 @@ export function FeedBehaviorPanels({ model, lens }: {
       </FbCard>
 
       {/* ── Level 4b: recurring voices ── */}
-      <FbCard title={t.fbVoicesTitle} span={5} empty={voices.length === 0 ? t.fbVoicesNone : undefined}>
+      <FbCard title={t.fbVoicesTitle} span={chainsEmpty ? 12 : 5} empty={voicesEmpty ? t.fbVoicesNone : undefined}>
         <div className="fb-card-sub">{t.fbVoicesSub}</div>
-        {voices.length === 0 ? (
+        {voicesEmpty ? (
           <></>
         ) : (
           <>
@@ -321,9 +331,11 @@ export function FeedBehaviorPanels({ model, lens }: {
                 {voices.map((v) => (
                   <tr key={`${v.platform}:${v.author}`}>
                     <td>
-                      <span className="fb-pf-dot" title={PLATFORM_LABEL[v.platform] ?? v.platform}
-                        style={{ background: PLATFORM_COLOR[v.platform] ?? 'var(--fw-muted)' }} />
-                      {v.author}
+                      <span className="fb-voice">
+                        <span className="fb-pf-dot" title={PLATFORM_LABEL[v.platform] ?? v.platform}
+                          style={{ background: PLATFORM_COLOR[v.platform] ?? 'var(--fw-muted)' }} />
+                        <span className="fb-voice-name">{breakableHandle(v.author)}</span>
+                      </span>
                     </td>
                     <td className="num">{v.days}</td>
                     <td className="num">{v.seen}{v.flagged > 0 ? ` · ${t.fbVoicesFlaggedShort(v.flagged)}` : ''}</td>

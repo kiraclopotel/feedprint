@@ -95,9 +95,11 @@ export function ChainBanner({
   // (2026-09-18). It ranks under a failed read, which is a worse fact, and over
   // everything else, because none of the others can be true of an empty chain.
   const nothingRecorded = !readFailed && (integrity?.chainLength ?? records.length) === 0;
-  const state: 'ok' | 'warn' | 'err' =
+  // A fresh install has not gone wrong, so an empty chain gets the quiet state
+  // and not the warning colour.
+  const state: 'ok' | 'warn' | 'err' | 'idle' =
     readFailed ? 'err'
-      : nothingRecorded ? 'warn'
+      : nothingRecorded ? 'idle'
         : verification === 'failed' ? 'err'
           : someUnreadable ? 'warn'
             : verification === 'verified' ? 'ok' : 'warn';
@@ -188,7 +190,7 @@ export function ChainBanner({
   const recordCount = integrity?.chainLength ?? records.length;
   const onDiskDisplay = useMeasuredStorage(recordCount, lang);
 
-  const Icon = state === 'ok' ? ShieldCheck : state === 'warn' ? Shield : ShieldAlert;
+  const Icon = state === 'ok' ? ShieldCheck : state === 'err' ? ShieldAlert : Shield;
   // Verify and Export act on what was read. When the store could not be read,
   // there is nothing to verify or export, and an enabled button would produce a
   // green check or an empty file over a record that may be intact (D2-35).
@@ -223,7 +225,7 @@ export function ChainBanner({
               // Accessibility audit found 2026-09-18: a forced single line on
               // a translated button label overflows the button box in RO/PT-BR.
               style={{
-                fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 2,
+                fontSize: 12, fontWeight: 600, padding: '6px 12px', minHeight: 32, borderRadius: 2,
                 cursor: actionsOff ? 'default' : 'pointer',
                 border: '1px solid var(--fw-border)', background: 'transparent',
                 color: 'var(--fw-text-secondary)',
@@ -241,7 +243,7 @@ export function ChainBanner({
               // Accessibility audit found 2026-09-18: a forced single line on
               // a translated button label overflows the button box in RO/PT-BR.
               style={{
-                fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 2,
+                fontSize: 12, fontWeight: 600, padding: '6px 12px', minHeight: 32, borderRadius: 2,
                 cursor: actionsOff ? 'default' : 'pointer',
                 border: '1px solid var(--fw-teal)',
                 background: actionsOff ? 'transparent' : 'var(--fw-teal)',

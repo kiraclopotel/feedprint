@@ -265,6 +265,9 @@ function Dashboard() {
   const [feedLogFilter, setFeedLogFilter] = useState<FeedLogFilter>({ window: 'today' });
   /** Every "show me the posts" on the other tabs lands here, already filtered. A click-through names its own window. */
   const openFeedLog = (filter: FeedLogFilter) => { setFeedLogFilter({ window: 'all', ...filter }); setTab('feedlog'); };
+  // The Feed log's "Accounts not recorded" opens the Record tab at that list (his walk of 12 Oct 2026, V6).
+  const [exclusionsFocus, setExclusionsFocus] = useState(0);
+  const openExclusions = () => { setTab('forensics'); setExclusionsFocus((n) => n + 1); };
   /**
    * Which card the Export tab should put the reader on, when something sent
    * them there to do one thing (2026-09-19). Cleared the moment the reader
@@ -1133,7 +1136,8 @@ function Dashboard() {
           <TabBtn id="exposure"   tab={tab} onClick={setTab}>{t.tabExposure}</TabBtn>
           <TabBtn id="forensics"  tab={tab} onClick={setTab}>{t.tabRecord}</TabBtn>
           <TabBtn id="operational" tab={tab} onClick={setTab} hasIssues={opCount > 0}>
-            {t.tabIssues} {opCount > 0 && <span className="count-pill">{opCount}</span>}
+            {/* The mark, not a number: the count was of events in the last day, the page counts issues (12 against 1). */}
+            {t.tabIssues}
           </TabBtn>
           <TabBtn id="export"     tab={tab} onClick={setTab}>{t.tabExport}</TabBtn>
         </div>
@@ -1169,6 +1173,7 @@ function Dashboard() {
             integrity={integrity}
             onWithhold={withholdRecord}
             onViewOriginal={handleViewOriginal}
+            onOpenExclusions={openExclusions}
           />
         )}
         {/* Every tab below counts `allRecords`: the archived months plus the
@@ -1245,6 +1250,8 @@ function Dashboard() {
             onVerify={() => { void onVerify(); }}
             onExport={() => setTab('export')}
             onOpenFeedLog={() => openFeedLog({})}
+            onOpenAccount={(e) => openFeedLog({ account: { key: e.key, label: e.author } })}
+            focusExclusions={exclusionsFocus}
           />
         )}
         {tab === 'operational' && !archiveLoading && <OperationalTab integrity={integrity} />}
@@ -1252,6 +1259,7 @@ function Dashboard() {
           <ExportTab
             records={records}
             archivedCount={archivedRecordCount}
+            inBothCount={duplicatedInBoth}
             archivedCountSure={archivedCountSure}
             onRestored={(outcome) => { restoreNotice.show(outcome); void load({ quiet: true }); }}
             restoreNotice={restoreNotice.notice}

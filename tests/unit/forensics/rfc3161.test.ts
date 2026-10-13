@@ -270,6 +270,35 @@ describe('rfc3161 - a self-minted authority', () => {
   });
 });
 
+describe('rfc3161 - an issuer that may not issue', () => {
+  // Cold audit 13 Oct 2026, finding 2: the chain walk matched names and verified
+  // signatures, so a certificate that is not an authority could stand in the
+  // middle of a chain. tests/fixtures/rfc3161/forged-chain-README.md says how
+  // both fixtures were made.
+  const HASH = '4f1e629aaccdda8554e30f9489695949c3ae2248ab8b78d8481c73d0a895974d';
+
+  it('fails the chain when a certificate in it is not marked as a certificate authority', async () => {
+    const parsed = parseTimeStampResp(fixture('forged-nonca-issuer-resp.der'));
+    const v = await verifyTimeStampToken(parsed.token!, HASH);
+    expect(checkNamed(v, 'signature').ok).toBe(true);
+    const link = checkNamed(v, 'issuer-signature');
+    expect(link.ok).toBe(false);
+    expect(link.detail).toContain('is not marked as a certificate authority');
+    expect(v.ok).toBe(false);
+    expect(v.knownRootName).toBeNull();
+  });
+
+  it('fails the chain when an issuer was not valid at the stamp time', async () => {
+    const parsed = parseTimeStampResp(fixture('forged-expired-issuer-resp.der'));
+    const v = await verifyTimeStampToken(parsed.token!, HASH);
+    expect(checkNamed(v, 'genTime-in-cert-validity').ok).toBe(true);
+    const link = checkNamed(v, 'issuer-signature');
+    expect(link.ok).toBe(false);
+    expect(link.detail).toContain('was not valid at');
+    expect(v.ok).toBe(false);
+  });
+});
+
 describe('rfc3161 - the pinned authorities', () => {
   it('names every authority the client is configured to ask', async () => {
     // If an authority is in TSA_ENDPOINTS but its certificate is not pinned,
