@@ -21,7 +21,9 @@
 //      unsigned records remain readable but render amber and never claim
 //      their signatures matched." (P-2026-07-10b)
 
+import 'fake-indexeddb/auto';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { forgetSigningKey } from '../../helpers/indexeddb';
 
 import type { ForensicRecord } from '../../../src/types/forensic';
 import {
@@ -296,3 +298,6 @@ describe('tamper-grading — case B: real key rotation, earlier-key records stil
     expect(summary.counts.verified).toBe(2);
   });
 });
+
+// The key lives in IndexedDB: each test starts without one.
+afterEach(forgetSigningKey);

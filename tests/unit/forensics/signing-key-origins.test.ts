@@ -4,7 +4,9 @@
 // to an origin ledger in chrome.storage.local, best-effort, and the export
 // prints it per epoch. This locks the two writes and the never-throw contract.
 
+import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { forgetSigningKey } from '../../helpers/indexeddb';
 import { webcrypto } from 'node:crypto';
 import {
   clearSigningKeyCache, ensureSigningKey, getPublicKeyFingerprint, getSigningKeyOrigins,
@@ -90,3 +92,6 @@ describe('signing key origin ledger', () => {
     expect(await getSigningKeyOrigins()).toEqual([]);
   });
 });
+
+// The key lives in IndexedDB: each test starts without one.
+afterEach(forgetSigningKey);

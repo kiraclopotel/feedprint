@@ -3,7 +3,9 @@
 // the pure public-from-private derivation, which the restore path relies on to
 // rebuild the verify key from a backed-up private key.
 
+import 'fake-indexeddb/auto';
 import { afterEach, describe, it, expect, vi } from 'vitest';
+import { forgetSigningKey } from '../../helpers/indexeddb';
 import {
   clearSigningKeyCache,
   commitSigningKeyRestore,
@@ -61,3 +63,6 @@ describe('publicJwkFromPrivateJwk', () => {
     }));
   });
 });
+
+// The key lives in IndexedDB: each test starts without one.
+afterEach(forgetSigningKey);

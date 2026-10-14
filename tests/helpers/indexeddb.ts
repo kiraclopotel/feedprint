@@ -19,3 +19,12 @@ export function deleteDb(name: string): Promise<void> {
 export async function deleteDbs(...names: string[]): Promise<void> {
   for (const name of names) await deleteDb(name);
 }
+
+/**
+ * Empty the database the signing key lives in (src/forensics/signing.ts), so the next test starts with
+ * no key, the way a fresh chrome.storage stub gave it one before the key moved there. The module's own
+ * cache is the test's to clear: some files mock the signing module.
+ */
+export function forgetSigningKey(): Promise<void> {
+  return deleteDb('feelingwise-signing-key');
+}

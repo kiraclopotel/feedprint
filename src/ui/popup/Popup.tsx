@@ -407,12 +407,13 @@ function Popup() {
 }
 
 // ─── Mount ───
-// Guarded so the module can be imported in a DOM-less unit-test env
-// (renderToString / helper tests) without executing the real mount — in the
-// actual popup `document` is always present.
-if (typeof document !== 'undefined') {
+// Only into the popup page's own #root (index.html). A test that imports a panel
+// from this module has no #root, and a popup mounted into its page anyway was
+// never unmounted: its render could run after the test's DOM was torn down
+// ("window is not defined", public CI run 38493412145 on Linux).
+const rootEl = typeof document !== 'undefined' ? document.getElementById('root') : null;
+if (rootEl) {
   applyPopupLife();
-  const rootEl = document.getElementById('root') ?? document.body.appendChild(document.createElement('div'));
   createRoot(rootEl).render(
     <StrictMode>
       <Popup />

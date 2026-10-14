@@ -8,7 +8,9 @@
 // Phase 1.6.E2: preRekeyCount bucketing for records retired from the active
 // chain by a previous re-anchor action.
 
+import 'fake-indexeddb/auto';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { forgetSigningKey } from '../../helpers/indexeddb';
 
 // The signing module is spied on, not replaced (known-issues M120): by default
 // every call reaches the real Web Crypto implementation, and only the tests
@@ -432,3 +434,6 @@ describe('signature branch against real Web Crypto (M120)', () => {
     expect(result.brokenKind).toBe('tampered');
   });
 });
+
+// The key lives in IndexedDB: each test starts without one.
+afterEach(forgetSigningKey);

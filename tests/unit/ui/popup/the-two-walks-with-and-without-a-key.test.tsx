@@ -47,8 +47,9 @@ async function walk(stored: Record<string, unknown>): Promise<Places> {
   await act(async () => { await import('../../../../src/ui/popup/Popup'); });
   for (let i = 0; i < 40 && !rootEl.querySelector(`button[aria-label="${t.settingsBtn}"]`); i++) await pause(50);
   await pause(100);
-  // The helper's import of Popup mounts a second popup outside this root, so each id is in the page twice, and jsdom
-  // answers an #id query from the whole page; an attribute selector stays inside this root.
+  // An attribute selector stays inside this root. Until 14 Oct 2026 the helper's import of Popup also mounted a second
+  // popup outside it, so each id was in the page twice and an #id query, which jsdom answers from the whole page, could
+  // read the other one.
   const home = words(rootEl.querySelector('[id="pop-tabpanel-home"]'));
   const frame = words(rootEl).replace(home, '');
   const notice = words(rootEl.querySelector('.pop-update'));

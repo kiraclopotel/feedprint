@@ -1,4 +1,6 @@
+import 'fake-indexeddb/auto';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { forgetSigningKey } from '../../helpers/indexeddb';
 import { clearSigningKeyCache, ensureSigningKey } from '../../../src/forensics/signing';
 
 const originalChrome = globalThis.chrome;
@@ -56,3 +58,6 @@ describe('ensureSigningKey storage failures', () => {
     expect(set).not.toHaveBeenCalled();
   });
 });
+
+// The key lives in IndexedDB: each test starts without one.
+afterEach(forgetSigningKey);

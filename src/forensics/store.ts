@@ -948,7 +948,9 @@ export function markRelegated(record: ForensicRecord): ForensicRecord {
  * what the user SET — see below).
  *
  * **What it does NOT touch:**
- *   • The install ECDSA signing identity (`fw_signing_*`).
+ *   • The install ECDSA signing identity (`fw_signing_*`, and the private key's
+ *     IDB `feelingwise-signing-key`): the key outlives a reset, so records from
+ *     before it still verify under the same fingerprint.
  *   • User settings: mode, locale, dailyCap, parentPin.
  *   • Feature toggles + presets.
  *   Reset is "wipe what FW HAS DONE", not "factory reset what the parent SET".

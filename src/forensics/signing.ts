@@ -1,7 +1,7 @@
 // FeelingWise — Forensic chain-of-custody signing (per VISION §9)
 //
 // Generates a local ECDSA P-256 keypair on first use, persists the JWK form
-// to chrome.storage.local, and signs each forensic record's integrityHash
+// to the extension's own IndexedDB, and signs each forensic record's integrityHash
 // at write time. The public key + per-record signature accompany every
 // export so an external verifier (lawyer, journalist, DV worker) can confirm
 // the record wasn't fabricated or tampered with after capture.
@@ -22,8 +22,26 @@
 //     it was created. An adversary on the same device could backdate. For
 //     court-grade timestamping we'd hit an RFC 3161 TSA; out of V1 scope.
 
+import { openSimpleStore } from './idb-open';
 import { wrapPrivateKeyJwk, type WrappedKey } from './key-wrap';
 
+/**
+ * The private key lives in one record of the extension origin's IndexedDB, which a content script
+ * (page origin) cannot open; chrome.storage.local, where it lived until 2.5.18, a content script can
+ * read by default (cold audit 13 Oct 2026, finding 3). The record is written in one put. The public
+ * half and the creation date stay mirrored in chrome.storage.local, because other modules read them
+ * there (key-genesis.ts). The reset leaves this database alone: the key outlives a reset.
+ */
+const DB_NAME = 'feelingwise-signing-key';
+const KEY_STORE = 'keys';
+const KEY_ID = 'current';
+interface StoredKeys {
+  privateJwk: JsonWebKey;
+  publicJwk: JsonWebKey;
+  createdAt: string;
+}
+
+/** The slot an install from before held its private key in; read once to move it, then removed. */
 const STORAGE_KEY_PRIVATE = 'fw_signing_private_jwk';
 const STORAGE_KEY_PUBLIC = 'fw_signing_public_jwk';
 const STORAGE_KEY_CREATED_AT = 'fw_signing_created_at';
@@ -74,20 +92,68 @@ export function onSigningKeyBorn(listener: (() => void) | null): void {
   _keyBornListener = listener;
 }
 
+async function readKeyRecord(): Promise<StoredKeys | undefined> {
+  const db = await openSimpleStore(DB_NAME, 1, KEY_STORE);
+  try {
+    return await new Promise<StoredKeys | undefined>((resolve, reject) => {
+      const req = db.transaction(KEY_STORE, 'readonly').objectStore(KEY_STORE).get(KEY_ID);
+      req.onsuccess = () => resolve(req.result as StoredKeys | undefined);
+      req.onerror = () => reject(req.error);
+    });
+  } finally {
+    db.close();
+  }
+}
+
 /**
- * Read both JWKs + the creation timestamp from chrome.storage. Returns null
- * if any piece is missing — callers treat that as "not yet generated."
+ * Write the record, on disk before it reports done ('strict': the old slot may be removed next).
+ * 'add' writes only into an empty slot and answers false when a record is already there: the
+ * service worker and the dashboard are two realms, and a key one of them made or restored must
+ * never be overwritten by a key the other generated or moved at the same moment. 'put' replaces,
+ * which only a restore the person asked for does.
  */
-async function readStoredKeys(): Promise<{
-  privateJwk: JsonWebKey;
-  publicJwk: JsonWebKey;
-  createdAt: string;
-} | null> {
+async function writeKeyRecord(keys: StoredKeys, mode: 'add' | 'put'): Promise<boolean> {
+  const db = await openSimpleStore(DB_NAME, 1, KEY_STORE);
+  try {
+    return await new Promise<boolean>((resolve, reject) => {
+      const tx = db.transaction(KEY_STORE, 'readwrite', { durability: 'strict' });
+      const req = mode === 'add'
+        ? tx.objectStore(KEY_STORE).add(keys, KEY_ID)
+        : tx.objectStore(KEY_STORE).put(keys, KEY_ID);
+      let taken = false;
+      req.onerror = (event) => {
+        if (mode === 'add' && req.error?.name === 'ConstraintError') {
+          taken = true;
+          event.preventDefault(); // the transaction goes on and commits nothing
+          event.stopPropagation(); // and its onerror does not hear a refusal that was answered here
+        }
+      };
+      tx.oncomplete = () => resolve(!taken);
+      // The request's own error: tx.error is still null while that error is being dispatched.
+      tx.onerror = () => reject(req.error ?? tx.error ?? new Error('signing key write failed'));
+      tx.onabort = () => reject(tx.error ?? new Error('signing key write aborted'));
+    });
+  } finally {
+    db.close();
+  }
+}
+
+/**
+ * Read both JWKs + the creation timestamp. Returns null when this install has
+ * no key yet; callers treat that as "not yet generated."
+ *
+ * The database record wins. Without one, an install from before holds its key
+ * in chrome.storage.local: it is copied into the database, read back, and only
+ * when the copy matches is the old private slot removed. A crash anywhere in
+ * between leaves either the old slot or both, and the next read finishes the move.
+ */
+async function readStoredKeys(): Promise<StoredKeys | null> {
   // A failed read is not the same state as a successful read of an empty
   // store. Treating both as null can generate and persist a replacement
-  // keypair after a transient chrome.storage failure, making earlier records
+  // keypair after a transient storage failure, making earlier records
   // unverifiable under the silently changed identity. Let access failures
   // surface so the caller can retry without mutating key continuity.
+  const held = await readKeyRecord();
   const raw = await chrome.storage.local.get([
     STORAGE_KEY_PRIVATE, STORAGE_KEY_PUBLIC, STORAGE_KEY_CREATED_AT,
   ]);
@@ -95,13 +161,31 @@ async function readStoredKeys(): Promise<{
   const pub = raw[STORAGE_KEY_PUBLIC];
   const createdAt = raw[STORAGE_KEY_CREATED_AT];
   const hasPrivate = priv !== undefined && priv !== null;
+  if (held) {
+    if (hasPrivate) await chrome.storage.local.remove(STORAGE_KEY_PRIVATE);
+    const mirror = pub as JsonWebKey | undefined | null;
+    if (!mirror || mirror.x !== held.publicJwk.x || mirror.y !== held.publicJwk.y || createdAt !== held.createdAt) {
+      await chrome.storage.local.set({
+        [STORAGE_KEY_PUBLIC]: held.publicJwk,
+        [STORAGE_KEY_CREATED_AT]: held.createdAt,
+      });
+    }
+    return held;
+  }
   const hasPublic = pub !== undefined && pub !== null;
   const hasCreatedAt = createdAt !== undefined && createdAt !== null;
   if (!hasPrivate && !hasPublic && !hasCreatedAt) return null;
   if (!hasPrivate || !hasPublic || typeof createdAt !== 'string') {
     throw new Error('Stored signing key is incomplete; refusing to replace it.');
   }
-  return { privateJwk: priv, publicJwk: pub, createdAt };
+  // Another realm wrote a key between the read above and this copy: that one stands.
+  if (!(await writeKeyRecord({ privateJwk: priv, publicJwk: pub, createdAt }, 'add'))) return readStoredKeys();
+  const copied = await readKeyRecord();
+  if (!copied || copied.privateJwk.d !== (priv as JsonWebKey).d) {
+    throw new Error('The signing key copy did not read back; the old copy is kept.');
+  }
+  await chrome.storage.local.remove(STORAGE_KEY_PRIVATE);
+  return copied;
 }
 
 /** Read the origin ledger. Never throws: an unreadable ledger is an empty one. */
@@ -126,12 +210,20 @@ async function appendSigningKeyOrigin(entry: SigningKeyOriginEntry): Promise<voi
   }
 }
 
-async function persistKeys(privateJwk: JsonWebKey, publicJwk: JsonWebKey): Promise<void> {
+/** False when another realm stored a key first; the caller then uses that one. */
+async function persistKeys(privateJwk: JsonWebKey, publicJwk: JsonWebKey): Promise<boolean> {
+  const createdAt = new Date().toISOString();
+  if (!(await writeKeyRecord({ privateJwk, publicJwk, createdAt }, 'add'))) return false;
   await chrome.storage.local.set({
-    [STORAGE_KEY_PRIVATE]: privateJwk,
     [STORAGE_KEY_PUBLIC]: publicJwk,
-    [STORAGE_KEY_CREATED_AT]: new Date().toISOString(),
+    [STORAGE_KEY_CREATED_AT]: createdAt,
   });
+  return true;
+}
+
+async function importStoredKeys(stored: StoredKeys): Promise<void> {
+  _privateKey = await crypto.subtle.importKey('jwk', stored.privateJwk, KEY_ALGO, true, ['sign']);
+  _publicKey = await crypto.subtle.importKey('jwk', stored.publicJwk, KEY_ALGO, true, ['verify']);
 }
 
 /**
@@ -152,12 +244,7 @@ export async function ensureSigningKey(): Promise<void> {
       try {
         const stored = await readStoredKeys();
         if (stored) {
-          _privateKey = await crypto.subtle.importKey(
-            'jwk', stored.privateJwk, KEY_ALGO, true, ['sign'],
-          );
-          _publicKey = await crypto.subtle.importKey(
-            'jwk', stored.publicJwk, KEY_ALGO, true, ['verify'],
-          );
+          await importStoredKeys(stored);
           // Diagnostic: log fingerprint when key is established in this realm.
           // Helps correlate sign-time vs verify-time fingerprints if a
           // key-mismatch banner fires unexpectedly. Console.debug = quiet by
@@ -172,7 +259,13 @@ export async function ensureSigningKey(): Promise<void> {
         const keyPair = await crypto.subtle.generateKey(KEY_ALGO, true, ['sign', 'verify']);
         const privateJwk = await crypto.subtle.exportKey('jwk', keyPair.privateKey);
         const publicJwk = await crypto.subtle.exportKey('jwk', keyPair.publicKey);
-        await persistKeys(privateJwk, publicJwk);
+        if (!(await persistKeys(privateJwk, publicJwk))) {
+          // The other realm's key was stored first; this one was never used and is dropped.
+          const winner = await readStoredKeys();
+          if (!winner) throw new Error('A signing key was stored by another page but could not be read.');
+          await importStoredKeys(winner);
+          return;
+        }
         _privateKey = keyPair.privateKey;
         _publicKey = keyPair.publicKey;
         await appendSigningKeyOrigin({
@@ -367,9 +460,9 @@ export async function prepareSigningKeyRestore(
 
 /** Persist a previously validated identity and switch this realm's cache. */
 export async function commitSigningKeyRestore(staged: StagedSigningKeyRestore): Promise<string> {
-  // The origin entry rides in the same write as the keys: a commit stays one
-  // storage call, and the ledger can never say "restored" about a key that
-  // was not persisted.
+  // The key is written to the database first; the origin entry rides in the
+  // same storage write as the public mirror, after it, so the ledger can never
+  // say "restored" about a key that was not persisted.
   let previousFingerprint: string | undefined;
   try {
     const before = await readStoredKeys();
@@ -382,8 +475,8 @@ export async function commitSigningKeyRestore(staged: StagedSigningKeyRestore): 
     at: new Date().toISOString(),
     ...(previousFingerprint && previousFingerprint !== staged.fingerprint ? { previousFingerprint } : {}),
   });
+  await writeKeyRecord({ privateJwk: staged.privateJwk, publicJwk: staged.publicJwk, createdAt: staged.createdAt }, 'put');
   await chrome.storage.local.set({
-    [STORAGE_KEY_PRIVATE]: staged.privateJwk,
     [STORAGE_KEY_PUBLIC]: staged.publicJwk,
     [STORAGE_KEY_CREATED_AT]: staged.createdAt,
     [STORAGE_KEY_ORIGINS]: origins,

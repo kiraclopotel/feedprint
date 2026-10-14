@@ -2,7 +2,9 @@
 // authorities starts at birth instead of at the next six-hourly alarm. Signing never waits on the
 // dating and never fails with it.
 
+import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { forgetSigningKey } from '../../helpers/indexeddb';
 import { webcrypto } from 'node:crypto';
 import {
   clearSigningKeyCache, ensureSigningKey, onSigningKeyBorn, signHash,
@@ -64,3 +66,6 @@ describe('a new key is dated at birth', () => {
     expect(sw).toMatch(/function stampKeyGenesis\(\): void \{\n\s+ensureKeyGenesisAnchor\(\)/);
   });
 });
+
+// The key lives in IndexedDB: each test starts without one.
+afterEach(forgetSigningKey);

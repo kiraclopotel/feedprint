@@ -1,5 +1,5 @@
-source-commit 910a4637165fd4bdb74f86227a9955617739707c
-files 2057
+source-commit c02d36b54abedc27943d5ae48351263bd2f9b1d3
+files 2065
 
 df4aff888be9da428e9d29a7d12cc42463edbcdd6a74207f348080728aa2e874  .gitattributes
 d16212bb19a1fc18fe0724e4dd2975ac301a8dd344c1cb8e53d702a91ef200a9  .githooks/commit-msg
@@ -116,6 +116,7 @@ f166c83726c03d9f9ae1a5277a11316cbd6b337b673d3ed5a2240f9d04922c09  src/ai/call-pr
 713f5289941ef014334c7de5ad0e4f57fcadcf4c07eafe2f6ccc152a0c3434b0  src/ai/claude-reader.ts
 e5c010dc3be66f65548871d2dbd50fcec1f553eb78a90b05e07cd4a9d13bcd29  src/ai/client.ts
 28640b1050c88f3b51a5ea4ee67ff6d26d7940c470b6c700745087af1bb57c5c  src/ai/descriptor-v1.ts
+0cf49fe4b103f448fd3149b1e0e57a28056eaa741f669bf266634c14a040788f  src/ai/envelope.ts
 20eb52bb8b8bf6ea392b5f1aae2211a5da79c40c81c5c1462d5cdb3a0d0f79a4  src/ai/fetch-with-deadline.ts
 ad5295d726a53bbae924c66c9a47885584573b8fa74c30c9fd8abf029199874d  src/ai/gate-with-agreement.ts
 17a723a43e6e02912245add2aca99a353bf47a49eecbbe1587f97d04222427b5  src/ai/global-flush-budget.ts
@@ -441,9 +442,9 @@ d280afcf4bd3204c1050d530a8f1e11a13394d7207821cc7f6a5b701e6fff2fb  src/forensics/
 eb5d5d3932d41e60368083aec9c3340d9162efeafd77cab8c73160b24acdd65f  src/forensics/scan-activity.ts
 56f7c5bae925ea9afca7bdcd0fed14673247dfba75097f865be1306d9de4a684  src/forensics/scan-log.ts
 bf20626dc7d85341ffecfc85f1d384053d9386a40c4eda344cf7429d8f0a3861  src/forensics/sequence.ts
-22cfa33491238f5d8a348566bc0c43bfe3dcb0d5e59818c26a8b85a8c47d30a2  src/forensics/signing.ts
+527cdd0d7304b135a53d30a8a2e304ef8dc3eefd9c28db06e2d2298bff2c031e  src/forensics/signing.ts
 77f831374e2f860ba452e6764137885be1fd0db1f60785206eb214e5b22d1877  src/forensics/stand-in.ts
-bac2a6086dd09ff9622f0a4331c1060c130028abf47b61749cb51374d7618798  src/forensics/store.ts
+f1cdb598ec37631e37c7d5e69acd71d52907bf35e879d7e1f694d312c8aba539  src/forensics/store.ts
 8802e01f25260dd636a1dfaac66421fd7248eedf6242916f4bd70bfd1b6cbec4  src/forensics/stuck-fold-label.ts
 d608b561c3dac6445bb3e0ee2d94c4d0d453d4ff8f363d173f6f1f914754da4c  src/forensics/system-records.ts
 5c6dcd4c49a08094336b2a91976f39409f3ae074b7dcbb6a3d213d402e96759c  src/forensics/technique-canonical.ts
@@ -624,7 +625,7 @@ a0a04ee91de7d6910a7b398578698b698987926a8df20dbf8070cf0377e0f8bf  src/ui/dashboa
 92609b30106a06dd65e1b88de385cf328687df3f03935f66ec092dad31911a84  src/ui/popup/DescribePage.tsx
 f7b69479188c5d31ccfa8b40c38dc5752de84afabedc0c88d540c84b2ba60099  src/ui/popup/HomeFoot.tsx
 ee3de9f798f45e538c37d3c19166c3645002ab75dc89c14a87623a30081833d9  src/ui/popup/PickCard.tsx
-2d2fceb0fbfecb0b419276160e7300a94731e59af8104abb01afff644df3834e  src/ui/popup/Popup.tsx
+3bb750b648caa3b144fec5da4ee4e749b8264348eec6db5b9580db698f60ee91  src/ui/popup/Popup.tsx
 0f614c9ae8e524a9f7c686616cd95dc297b7ddc65614a8acf803b8adb8d99661  src/ui/popup/QuietHoursEditor.tsx
 51656df4b25d55b989d6cd66f25f0b5c4f056c68ed7092cbf83239bde77379ad  src/ui/popup/UpdateNotice.tsx
 bf57c7552cb720454c8c4d376b8ba2f6c637bf35b827e8a3b6e1f5f9ee689e44  src/ui/popup/controls.tsx
@@ -677,6 +678,7 @@ ce72eca33f2c85a599087e0576f954244425dc3698914e3c04b8ca58b42c7779  tests/fixtures
 236758da950a39cb2ce922fcd05ed41d10a84e89f7b5bf7659de33984858a22b  tests/fixtures/calibration/user-words-v1.json
 98364d9e59be1c871d7050b7a6fc1af7de2773c5dc5dbea3ba581a32f54c9e2c  tests/fixtures/chrome-web-store-install/receipts-2.5.8/installed-manifest.json
 8e171133069713375f9ec62c6a26ac856f7ca2021e32a0c3b2489068db04ab60  tests/fixtures/chrome-web-store-install/receipts-2.5.8/verified_contents.json
+70067d97c7b5be18c05cd5ba7d52f3e12817e90ccce838725a5fb86388ed2629  tests/fixtures/envelope/items.ts
 5155c1a92dbecd23193765094e81e2a02988a5020fa9406a59d5c85716ebe877  tests/fixtures/export-shapes/older-provenance-coverage.html
 f395c66ce7cb912b97cd39d09c6172dd7bcdf704ed5794db514dc507856bae94  tests/fixtures/instagram/README.md
 6bb811799e6afd77d5aa78ca1faa761f3a110c3717171ea5412720aa76dee160  tests/fixtures/instagram/from-tree.mjs
@@ -736,7 +738,7 @@ c8de43c9b7975ecfb4a247227dd3fba8f19c4a8390b9939636ee58e0234537ff  tests/helpers/
 328690a2a63de47c86fad256e08985ce07c3ffc2402d0e626d05c902b38c378d  tests/helpers/export-tamper-corpus.mjs
 514bc7b551a93a00a9608db265755a1add689fddefa16337535a634aa6f465ad  tests/helpers/fake-counter-chrome.ts
 944865885eab860c6766572cabc97b3b675fa722a177011763d7ef1aa8fd9e60  tests/helpers/faulty-indexeddb.ts
-957cecb5117041641bde1a87ef21001c23d20e4cd584649616cec35cb02fef9b  tests/helpers/indexeddb.ts
+a437f96bbcab8abf6989a3dfb041d65d2d1211e209d643ace6e37156c559de3a  tests/helpers/indexeddb.ts
 3b4e011e83ae3d9b24badd838916b70c82a27c875f3da5fd604ff871b70e7935  tests/helpers/popup-walk.tsx
 f4f97b41e3dab664c9f1031fecffdaab40ad09ab2986a4f022bb60024b95fada  tests/helpers/read-source.test.ts
 d8a9e038a5044c9ff3503090d302a5e3dec2c09ec3782d0ada91d8a23c76c92c  tests/helpers/read-source.ts
@@ -762,6 +764,7 @@ ca74ae9d1191d68e9e45706384c1560c9e930fa402ae8b070ea9542ce78c0e50  tests/repo/imp
 14ee88d7d928a97cf9817e06700e504a05562ddbd5f5ba377b961a9e2185c930  tests/repo/manifest-permissions.test.ts
 03cca7900e573a1932cde836a99e94a46685f0239cf31c1d0edb975b867fbb91  tests/repo/moved-ledger.test.ts
 81d3d1897b86205d532de82503381efe9fe235f625c457371e38f9c5d7bed4f0  tests/repo/no-binary-source.test.ts
+827dff88b4d4f941c504e0c2f80248ac216a42a4391636a982775858ad70eac5  tests/repo/no-code-keeps-the-private-signing-key-in-chrome-storage.test.ts
 d8c5c03c2b194d1d29cbfde98e700d520dca8db46103978b35f86feec100e54a  tests/repo/no-stylesheet-comment-eats-a-rule.test.ts
 d99d0b84e3c076aad2041fde70468442fb79f89175b625340638d82114fcb8b2  tests/repo/one-clock-per-surface.test.ts
 bfd00ad8dbe5ca30c33e0e8259511516090ce7bda4564727bde2d7a2a2368bab  tests/repo/one-fingerprint-rule-six-implementations.test.ts
@@ -822,6 +825,9 @@ eb4c4b83514a239630a6c2ef7273e85b20122cb4d64c71d5422ab434b99c5c0d  tests/unit/ai/
 a14e3f39b5d8d494024f7ad3b6e3165a676e5f97355a77dd3e25b05832441ad3  tests/unit/ai/the-batch-lines-say-only-what-was-seen.test.ts
 2955674054e90837fda8dfb6958efc22c1f01a37cd040c00c574cf2e6677dfaf  tests/unit/ai/the-chip-takes-a-reading-that-got-through.test.ts
 72f3ddd64f4339d5e5e7dae3559ebbf75db13c7bd883afa0bd42eecc6495ab31  tests/unit/ai/the-claude-reading-turns-on-with-the-consent.test.ts
+d65ac2d99c5a01cdbe2026e82c5d689532b2a2dc356b747860cca209e4e144f2  tests/unit/ai/the-envelope-names-no-platform-no-person-and-no-scan-flag.test.ts
+5d82c17db26e14b4367b3830c84b7c874877894f61fd4ef676711a3165bd4fae  tests/unit/ai/the-envelope-says-what-the-reader-saw.test.ts
+78c659f4ba4120f7b675f078581ce024cfb913d8fe96122c1a66720a74579a6c  tests/unit/ai/the-envelope-states-every-absence.test.ts
 98da5f5d6a2837c5b9b558a48f720e4239d8b867cddba3b6a41b574359578a26  tests/unit/ai/the-paid-reading-acts-on-agreement.test.ts
 623944d1a171c8b7961220f4703f671b8d505173eb22ddc45dcc2b15333bfd8f  tests/unit/ai/the-paid-reading-asks-haiku-to-agree.test.ts
 d03393fd05c0d3b15e9955a884951a193e491e08196b63a9bce0c54ba8bdf620  tests/unit/ai/the-reading-leaves-from-the-worker.test.ts
@@ -1282,7 +1288,7 @@ c086321223ddee5257bcaf81c1d679b6b5d3a3261488cbd38cb300e578a739fd  tests/unit/for
 800c18159bbc980d158ec8276d224bc01605a8a0ff3cfc1321b5188bcb2441f1  tests/unit/forensics/a-half-written-folder-says-so.test.ts
 dc800d339209a4688292e53420325810e6937315b2a56953e4805b1a1c673a81  tests/unit/forensics/a-late-verdict-leaves-a-record.test.ts
 c4613c32acafbd111d3268dc9477a98c97bc214e675cc5939dfefd20c7ca525a  tests/unit/forensics/a-marker-line-reads-as-a-sentence.test.ts
-d62ac3b4e631e4d5f24a2cdf6a916e29877bfb3befae902f6aa5dcd50b5c7c5e  tests/unit/forensics/a-new-key-is-dated-at-birth.test.ts
+4ea41f0f7a5d701854c34e3ff1e082fe390ea59634311567cc07c384066cc881  tests/unit/forensics/a-new-key-is-dated-at-birth.test.ts
 441f90c2dcefb4752193f329af6042207462162fac82670e968f6cb3cdcb4a61  tests/unit/forensics/a-one-shot-repair-that-did-not-finish.source.test.ts
 620451e2ade14e4d7c8e6ba7b4ed172f3cca422950a7f2d79e7c176c83e18a7e  tests/unit/forensics/a-partial-reset-names-what-it-left.test.ts
 f91ac969cf91763e2dcc567bc630c3411ce38dc6170c2b16cf4ad5f6b7c02f39  tests/unit/forensics/a-quiet-stretch-is-not-time-away.test.ts
@@ -1348,7 +1354,7 @@ b82b21b4234e496f46493c910faffd1b92b73cd18074abe627d82994716ab83e  tests/unit/for
 24d20aafa5820776f311d00113180a4b9b261bb316c891bc4b6da35daa656681  tests/unit/forensics/chain-debug-stats.test.ts
 33c160510bc5508496e1b4089584c6ac28b7bdc28216a8965bbf5713a233166b  tests/unit/forensics/chain-height-over-an-evicted-database.test.ts
 21b0834a34c921a63af4ac2bf3af2d68e5ebcd608c2b607b65d00d1d5276ecf2  tests/unit/forensics/chain-height-witness.test.ts
-cb1eba29610b5abe5e9540e4b395de125cc7a25459192d7663c9a1df1c6afbf3  tests/unit/forensics/chain-integrity.test.ts
+5a242c68d66988141c8f5b06622753c4197e383571b156bc28a3491eae6fa298  tests/unit/forensics/chain-integrity.test.ts
 b54bc79349931f1acc2cf815db37a4d7abe4609776c1038d3632cafde3c8648b  tests/unit/forensics/chain-prior-key.test.ts
 9973252ff2394416d0685a20b07b6f9ab04ed9c88b58d020b2a89fe97ab3c179  tests/unit/forensics/chain-read-failure.test.ts
 002fcf6a8c62d543e35c354c57fa41d00bfd11780120a6a575a30a26098801d9  tests/unit/forensics/chain-rotation-anchor-cutover.test.ts
@@ -1503,16 +1509,16 @@ df136a851a7a0b40be2d84c013760beaacba7b882d01df19505dca7c133024a1  tests/unit/for
 6fe2f830f8700e397e24530b86bd5a077ca115b57265b9cad40c8fb5ede1fad3  tests/unit/forensics/salvage-store.test.ts
 899a1d20936de2f77e032455735be14c7d7cd70c497c095f99b179ed8e984075  tests/unit/forensics/scan-activity.test.ts
 fafd69eacbd2c628758dbab04808dc8413f0f3b436109f681a0b4f85188a03c6  tests/unit/forensics/service-worker.test.ts
-24ca2ab260bda7151d61bec31450035eb12b9b79af18425a9458080865e71d00  tests/unit/forensics/signing-key-derive.test.ts
-ca3fae9e01df9a73d78365a19913418c8de97a31cd320dc2c22277abee4c9e06  tests/unit/forensics/signing-key-origins.test.ts
-37910e83c2e434a1dbdcf21cc35b9d7e0eb9b84d31bdbe531d1d4b97f19e11d1  tests/unit/forensics/signing-storage-failure.test.ts
+d4442e4497c8d39ef6fe0b1da740667eaa147ee0ae62fc4fc2f4c5af97860afb  tests/unit/forensics/signing-key-derive.test.ts
+1f84ed47c9dcb35b0139a49cf048861243d518071dc573be5b18d57c77ab8035  tests/unit/forensics/signing-key-origins.test.ts
+3c0fadd922ce70fff57b0a89716d58a7e3c4692208e473e024f88ddcc4aedcdb  tests/unit/forensics/signing-storage-failure.test.ts
 b085079b65f8dfea4fb3f7ccfb12ed79adca9ed3d3ba09c80f7b05c5b7e912dd  tests/unit/forensics/skipped-record-emission.test.ts
 26cfb21e1c72598c76e7ffd6c4cb5324793502c1e0cd260fa5822d7fbad1ac60  tests/unit/forensics/standalone-verifier.test.ts
 78a24678b7a9db539765cb9714ca35e4e63caa9923ea55d2d2b1ed5315d2da1d  tests/unit/forensics/stuck-fold-label.test.ts
 d6a399a70b51ba3c349805bb99b35ae6075c4d35d7e845e2a1a323399b91beb5  tests/unit/forensics/surface-origin.test.ts
 21048f98249fe78ae54c482140b9207cf477dd00cef4707af69e7b6a99672670  tests/unit/forensics/sw-smalls-w69.test.ts
 ae282947df9f069155ec54c186c4cbdf03276c8c9aa47c966faff67c361fd6b1  tests/unit/forensics/system-marker-exclusion.test.ts
-59bd517c76cedff902da2e1e0979e2dda37b98670379622254b344b83e75d1bd  tests/unit/forensics/tamper-grading.test.ts
+df63a17dc2865109b868e7e5979971950792f3555642f57d1a943d37f3d9b731  tests/unit/forensics/tamper-grading.test.ts
 b372ef98a80387415ea06f0ded8f8a6115ce96c28e37c9726aaf1b2365599d6d  tests/unit/forensics/taxonomy-item-axis.test.ts
 63a7c4d6b078602953729ed03eb6f9fcb39b67e3fca24713d8542fe4816d5b9c  tests/unit/forensics/technique-rationale-hash-compat.test.ts
 28a99f22a11fe9cc5d9db26b587936ba7ffafc817cb6c4e6041371cf043b2103  tests/unit/forensics/text-capture-record.test.tsx
@@ -1537,6 +1543,7 @@ d017ed0f3408bf80552b2695ee078f0f58928ee0469d5a91c2956fa9d23ca4a3  tests/unit/for
 0c9c3646301090b1b74d5163f39451b6ddff1bb9d58dfe23d071e5af4c5d2195  tests/unit/forensics/the-models-stated-reason-is-on-the-card.test.tsx
 689174c4d11c89bf185addc56cc428c54bed9a37340dc63efbbea2572b48386d  tests/unit/forensics/the-platform-comparison-has-no-entry.test.ts
 7a8eeecc988369f5b705b61e1e8de490d0dd94ed7aae656abd16aa30983ec55c  tests/unit/forensics/the-reading-box-is-not-per-card.test.tsx
+1d6745422fec5fbb814fd0fcc74fca1007192ecaa7cfb4f3774e8c955fc9b887  tests/unit/forensics/the-signing-key-lives-in-the-extension-database.test.ts
 f29895347902e73243df9356146211c32a63d1546c915ae75905987f3c73c56d  tests/unit/forensics/the-spec-token-order-is-the-code-order.source.test.ts
 49e280561328afd6a1700e2122c2982f3cbe5f33327640c3ac357ef3b3977ea3  tests/unit/forensics/theme-cache.test.ts
 260534397f0dca271cd6e32975bfaf6489907f8d338d8ff9e94fc1466f8e8de1  tests/unit/forensics/themes.test.ts
@@ -1885,6 +1892,7 @@ bb7cac9c5420e2fff591d166dd362fab7249328f28c6c905c5c0b2dd2a30934d  tests/unit/ui/
 760b04a4c94a10b1df7ef3bb48aa748b6131cb4ab4c178f41562bc8dd996f7a5  tests/unit/ui/popup/describe-page-shows-everything-before-anything-leaves.test.tsx
 a784307b75cbb70f7aaf3e76f6a9e885bc3be073a7db3fd7ae3d11e09e8d128e  tests/unit/ui/popup/each-switch-says-what-it-does.test.tsx
 b1907b1dafb99982cc36f801f391bc1d7e045573c6e705405240bfafd48f98f2  tests/unit/ui/popup/home-says-what-it-looked-at.test.tsx
+04553acf094e9b571cde8af52dbc0c5b9a50ec0f2516817fffa41b95beed6bff  tests/unit/ui/popup/importing-a-panel-mounts-no-popup.test.tsx
 ff35720427ff8d1ebea1021c12a36fffdc9bdfbddb1d281265f2b5a080e13cef  tests/unit/ui/popup/limited-here-says-why.test.tsx
 81b9778c25173e9cdf0204dc1fd90e0919c3d4694e990304a00f305c9df993a4  tests/unit/ui/popup/off-remove-pin.test.tsx
 8817aedd4e8d5e4141559ddd1a843c26286bef1fd837b4bc966b4481062155f4  tests/unit/ui/popup/off-switch-track-is-not-error-red.source.test.ts
@@ -1976,7 +1984,7 @@ e02f7e7af10ac0e169fefab6f299da74e2cf51af0a31bc177fdf74db1340582e  tests/unit/ui/
 5f724fbb9c13aa450d28f64914a359ae43bf555cee996b7b23edd53092265965  tests/unit/ui/popup/the-tab-bar-points-at-something.source.test.ts
 225f8dcf394f57bd3937765e0af058fc173987d1bcd706c3fc1eb0352072e696  tests/unit/ui/popup/the-tab-titles-say-receipts.source.test.ts
 3f5467ec29f5c3fc2aedf455fdfd43272aae1467bfb537e52049b395399ab2b6  tests/unit/ui/popup/the-topics-fold-holds-one-row.test.tsx
-62b420a287491ea238973a79c5a3203854aeb1af84ba9d7fffb93c0639ddf6d4  tests/unit/ui/popup/the-two-walks-with-and-without-a-key.test.tsx
+e9c4f7930c4a9348d337f9cd6a55704ff112b5c2c440097e3ce130d2e3cfdd1a  tests/unit/ui/popup/the-two-walks-with-and-without-a-key.test.tsx
 3a01b2d41b540bcc4c1cb19d3ee7451596995178d46472dec42db5c3eedd4d34  tests/unit/ui/popup/the-update-line-says-where-the-switches-went.test.tsx
 92cd7a118896c2e29d3e74db7646dfe5396a5b8490fd761c02510832af4aa763  tests/unit/ui/popup/u1-the-popup-header-and-tabs-12-oct.source.test.ts
 98d4cf39482b95ac1c7c8e41258d45091f4465cce890daa974b8665b526a7209  tests/unit/ui/popup/u6-look-b-stays-flat-12-oct.source.test.ts
