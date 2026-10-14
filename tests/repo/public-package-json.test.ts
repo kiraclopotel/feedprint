@@ -39,7 +39,9 @@ describe('the public package.json', () => {
   // commands and the filter must remove them. In the public copy, the package.json on disk is the
   // one the filter already wrote, so filtering it again must remove nothing. The fresh-clone proof
   // of 2026-09-16 found the first version of this test asserting the full-repository case in both.
-  const fullRepository = existsSync(repoPath('worker', 'package.json'));
+  // The marker is a file the public copy never carries: worker/wrangler.toml (worker/package.json went
+  // public with the relay's source on 13 Oct 2026, and the public CI went red on this very test).
+  const fullRepository = existsSync(repoPath('worker', 'wrangler.toml'));
 
   it.runIf(fullRepository)('removes only commands that could not run, and says which', () => {
     const dropped = Object.keys(before.scripts).filter((k) => !(k in after.scripts));

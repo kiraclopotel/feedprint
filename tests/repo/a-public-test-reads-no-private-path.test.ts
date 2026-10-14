@@ -143,7 +143,7 @@ const ALLOWED: Record<string, string[]> = {
   'tests/repo/snapshot-classification.test.ts': ['SOURCE-COMMIT'],
   // The real-tree count stands down in the public copy, where the tracked tree is the public half by construction (11 Oct 2026).
   'tests/unit/forensics/public-snapshot.source.test.ts': ['SOURCE-COMMIT'],
-  'tests/repo/public-package-json.test.ts': ['worker/package.json'],
+  'tests/repo/public-package-json.test.ts': ['worker/wrangler.toml'],
   'tests/repo/verification-gates.test.ts': ['CLAUDE.md'],
   // Not a repository path at all, and not a read. `hook-message` is the name this test gives the
   // file it WRITES inside a throwaway repository under the system temp folder, to hand to the

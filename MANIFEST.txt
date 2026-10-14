@@ -1,4 +1,4 @@
-source-commit 8b0f984ae7de7441593a491e40f4440835436dfa
+source-commit 910a4637165fd4bdb74f86227a9955617739707c
 files 2057
 
 df4aff888be9da428e9d29a7d12cc42463edbcdd6a74207f348080728aa2e874  .gitattributes
@@ -749,7 +749,7 @@ c23e42421fa0a50f2832e8252dc170ae62789b8fe178361819819135c3bd7a3d  tests/helpers/
 0042d695b2b6ce6820fd89bda152f8a1aa8afc445f0215ee94f529bf530463de  tests/helpers/screen-words.ts
 ca2c919301c07fe71f7b030306e6fbe9c9ac05fc0ddb01a7761a1578d4def236  tests/helpers/spawn-timeout.ts
 4a3be6861b8edd3b2d96fb37dd2e702b627665a3bdc20fae982047b7a5acf68f  tests/repo/a-corpus-probe-reads-its-published-set-where-it-lives.test.ts
-fb6d64aabbce22fd590dc82b9de0692ef479edfc5f72a887c8b483dd85e8b28a  tests/repo/a-public-test-reads-no-private-path.test.ts
+83b91c09017cc91672666467af11729d87126d49045a80acbac0536c794c83c3  tests/repo/a-public-test-reads-no-private-path.test.ts
 83038eb4d2249638a21954c9125c1a944c7f55fbe30ee725a269b4c331f43ada  tests/repo/architecture-layering.test.ts
 a546029fcbb1ee1efdaaf5944d92fbbae8a761dede63bf0bd54baecc1fbd1ba5  tests/repo/commit-gates.test.ts
 658bed847016efd2a72d3f7ff969746ad920ede4ec0fcbf5da8d5f93f46453c2  tests/repo/each-package-draws-its-letter-tile.test.ts
@@ -770,7 +770,7 @@ bfd00ad8dbe5ca30c33e0e8259511516090ce7bda4564727bde2d7a2a2368bab  tests/repo/one
 d6fca108936368d18ab2b55086c7d459dc513fdec2bcfb33bbc3c9a8bfb1dd01  tests/repo/pre-push-hook.test.ts
 02bbbaaf01d85dceb23e1f8382dde60ef4d92c7eb71f2aa354941fb4ab669797  tests/repo/public-ci.test.ts
 ce5233ac820267c594f3a30ddd936ee2664af6f737f83997c232a314e918014c  tests/repo/public-links.test.ts
-a0885d81151142763ebd309db23b3cdaa5c519530b56643a7bca239da1d2bbc7  tests/repo/public-package-json.test.ts
+b2c1bedcfc232daaaca58ce4f70d283374141e2d949fd82ffaef553eadb827de  tests/repo/public-package-json.test.ts
 8d93e6de427ea2014b52dee1086ec20aebc001dfc3253812c982dc2bf705f8bd  tests/repo/public-snapshot-release.test.ts
 486b37a5596955b1f07a17b5b04dba7709177b696272e1c656afab7895f4ea0e  tests/repo/releases.test.ts
 8367ef61c9a6a503e6e74b32e326ce8c17068bf7465b2ce7df859c52b40b6234  tests/repo/reproducible-build-id.test.ts
