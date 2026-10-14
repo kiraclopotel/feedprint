@@ -208,9 +208,23 @@ const PRIVATE_PATH = /^\/(?:messages|direct|messenger|inbox|t\/|chat)(?:\/|$)/i;
  * Facebook serves the Messenger dock through the same /api/graphql/ endpoint
  * as the feed, on the feed's own path, so the path cannot tell them apart.
  * The operation's name travels in the request body
- * (`fb_api_req_friendly_name`). A response is read only when that name is
- * present and is not a messaging operation; an unnamed request is not read.
+ * (`fb_api_req_friendly_name`). A response is read only when that name is one
+ * of the operations below, seen carrying posts in a logged-in session on
+ * 14 Oct 2026 (names only): the home feed, a page's timeline, a post opened,
+ * its comments, a video post. Any other name, and an unnamed request, is not
+ * read. The same session opened the Messenger menu and saw five requests, of
+ * which the messaging-word list below caught one (cold audit 13 Oct 2026,
+ * finding 6); that list stays as a second lock. Groups and search were not
+ * seen (the account's groups feed was empty): their posts still reach the
+ * record through the page, and their operations join this list once seen.
  */
+const FACEBOOK_FEED_OPERATIONS: ReadonlySet<string> = new Set([
+  'CometNewsFeedPaginationQuery',
+  'ProfileCometTimelineFeedRefetchQuery',
+  'CometSinglePostDialogContentQuery',
+  'CommentsListComponentsPaginationQuery',
+  'FBUnifiedVideoRootWithEntrypointQuery',
+]);
 const FACEBOOK_PRIVATE_OPERATION = /messenger|^mw|lsplatform|chat|inbox|thread|message|mailbox/i;
 
 function facebookOperationName(body: unknown): string | null {
@@ -235,7 +249,7 @@ function mayRead(site: Platform, requestBody: unknown): boolean {
     if (PRIVATE_PATH.test(window.location.pathname)) return false;
     if (site !== 'facebook') return true;
     const name = facebookOperationName(requestBody);
-    return name !== null && !FACEBOOK_PRIVATE_OPERATION.test(name);
+    return name !== null && FACEBOOK_FEED_OPERATIONS.has(name) && !FACEBOOK_PRIVATE_OPERATION.test(name);
   } catch {
     return false;
   }

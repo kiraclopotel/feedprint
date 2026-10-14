@@ -59,7 +59,7 @@
 import { createHash, createPublicKey, verify } from 'node:crypto';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { dirname, join, relative, resolve, sep } from 'node:path';
+import { dirname, join, posix, relative, resolve, sep, win32 } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { SOURCE_DIGEST_ENV } from './version-name.mjs';
@@ -155,7 +155,10 @@ export function productConfig(product) {
 
 /** True when two paths name the same file (Windows paths compare without case). */
 export function samePath(a, b, platform = process.platform) {
-  const norm = (p) => resolve(p).split(sep).join('/');
+  // The path rules of the platform named, not of the machine running this: on Linux, node's own resolve reads
+  // `e:\repo\x.zip` as a relative name (public CI, 14 Oct 2026).
+  const paths = platform === 'win32' ? win32 : posix;
+  const norm = (p) => paths.resolve(p).split(paths.sep).join('/');
   return platform === 'win32' ? norm(a).toLowerCase() === norm(b).toLowerCase() : norm(a) === norm(b);
 }
 

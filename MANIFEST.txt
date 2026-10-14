@@ -1,5 +1,5 @@
-source-commit c02d36b54abedc27943d5ae48351263bd2f9b1d3
-files 2065
+source-commit c72584827e1e1de9e2af6c10ab6add7bca292321
+files 2066
 
 df4aff888be9da428e9d29a7d12cc42463edbcdd6a74207f348080728aa2e874  .gitattributes
 d16212bb19a1fc18fe0724e4dd2975ac301a8dd344c1cb8e53d702a91ef200a9  .githooks/commit-msg
@@ -102,7 +102,7 @@ e26a9f0811171a170c5849908ff716b3e799c202ec89f916414277196bc09ec4  scripts/gen-rf
 c563df29f53d7aff4499319a25865d08d214c3213bc4291c517cced43ce36ec8  scripts/public-snapshot.d.mts
 18e40f46745f89a52f7b9a7ec033d70e6f715eccac3794746f64ca37d80ffadb  scripts/public-snapshot.mjs
 934fcb69a3d69edf2943e89bcd7899b357dc9d37909dc1a1953fc1374b9c148c  scripts/reproducible-build.d.mts
-9977f7e80dd6bfcda83f79eaea1397f6a230a4c0bdcc24e42eae0627da724b95  scripts/reproducible-build.mjs
+00b5625e6584e02e88f20382e75e9485fb480bdfa8ff4372d740c56a0cd1c6cf  scripts/reproducible-build.mjs
 4192933179001cbbdf28e68df385d9a5cd044de7d0c1f8a3da03c4174c9a3d54  scripts/salvage-extract.ts
 6df71a7ae19b28f147385976c43c16ecdf5d55719843ec4b2e4078fc51a9aaca  scripts/salvage-gather.ts
 d7ae3444113b043ea83709b68930b909985648c3f2bd06f72bf8a0fdab786803  scripts/salvage-keys.ts
@@ -196,7 +196,7 @@ f58c62ea5275b47eb2e418e89b0f32517bd51ce8f717887d195c6840e9c37e34  src/content/ma
 4798e8c796a786b73ab38879a55ce8ce8ac95ded0db696fd9778546a29b4aab0  src/content/markers/seen-a-lot-pill.ts
 007afdf675fc5b6b4f78949eed238a44fc426c53984e1c88f1e4d69bc4fda7e3  src/content/markers/teen-marker.ts
 4faf471eca81c34bd10d3e06f11192501aa93bfd51c0184347e8556f1aecce86  src/content/markers/update-notice.ts
-e912ec5621db13887cd6d68cfbba50e2dc7b4bb63adb44167365ad7fe0f850ac  src/content/page-world/fetch-interceptor.ts
+a1f5134ca162b9218590249ad8c81f0c1f3a26049c1e0302319ca3bd24f05659  src/content/page-world/fetch-interceptor.ts
 be24e80a3d89faec790117229d75d84752090056ab4ae548282cde3e6095d883  src/content/page-world/main.ts
 a0e6d3e3bba443a8c6d16a938b8844a735b3faee2c5a91f85bb2dc6e317a2068  src/content/page-world/relay.ts
 9b8a66b02bcb9f46abad81125975cf6eeaf3cd89294a69b39dee228ef9c8c3e7  src/content/page-world/route-notifier.ts
@@ -998,6 +998,7 @@ cf06da1fe33656eb91ef8647ff0a8d5b115e62f99ee5b6259178eef6d09fa350  tests/unit/con
 7b377ab1d9ee2538e2025ddb4793423093014b4857824ac98297b85bd3560120  tests/unit/content/page-world/a-cut-post-is-judged-whole.test.ts
 fcc94718bfff25a914d1b7e9ee2f5f6514d9a36e5ba3b52e16f08e55d814aab6  tests/unit/content/page-world/a-cut-read-takes-the-text-recorded-whole.test.ts
 41a68fd6c22a3ac86851bc9ab9c3ab03561beab04c12d897f2c01148bc941649  tests/unit/content/page-world/a-reply-that-lands-in-a-private-chat-is-not-read.test.ts
+73b67d8eb1bd14c143cd18b8ba569aeaefdf8950234524de6ca6e31c0868d2c2  tests/unit/content/page-world/facebook-reads-only-known-feed-operations.test.ts
 d42b803a1ab226da3a1c9b2ce98d546c89c5d41b12b13e29ae09339dd1a3b9b4  tests/unit/content/page-world/page-world-interceptor.test.ts
 bcd7d7cc982b327daab7381e5d3daddf38f6470b0228fc07b1c2478cf1657016  tests/unit/content/page-world/page-world-route-notifier.test.ts
 ff815d046bce3cc03ad629624f9c97d438de88a651a766cee9abebd683211520  tests/unit/content/page-world/the-page-keeps-its-own-fetch.test.ts
