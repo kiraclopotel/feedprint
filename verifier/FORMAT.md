@@ -419,6 +419,19 @@ keys out of order. An implementation that reproduces its `recordsDigest` has got
 every rule above right. One that cannot has a bug that would otherwise appear as
 a tampered record in somebody's evidence.
 
+**Against RFC 8785 (JSON Canonicalization Scheme).** A second implementer will
+reach for a JCS library first. Its strings and numbers are the rules above: JCS
+serialises both as ECMAScript's `JSON.stringify` does, so a JCS number
+serialiser is a correct way to print a number here. Two things differ, and each
+breaks the digest. JCS sorts every object's keys by UTF-16 code units, while
+this format keeps the order of the list above at the top and the stored order
+(integer-like keys first) inside nested values, so a JCS library run on a whole
+record gives a different hash. And JCS accepts I-JSON only, which has no lone
+surrogates, so a JCS library may refuse a record that carries one, where this
+format escapes it. Use JCS's number and string serialisers, never its object
+serialiser. Moving the format to JCS would change the hash, so it would be a
+new major version under the rule of section 0; this note changes no byte.
+
 ### A checker older than the file it reads
 
 That rule protects old records under a new checker. The other direction has no

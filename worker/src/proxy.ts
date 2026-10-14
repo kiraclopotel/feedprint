@@ -135,12 +135,12 @@ export interface Env {
   ANTHROPIC_API_KEY?: string;
   CLAUDE_PROVIDER_LEGAL_NAME?: string;
   // The relay's own ceiling for the Claude reading across every key, in USD per UTC calendar month
-  // (CLAUDE_MONTHLY_USD_CAP_DEFAULT when unset). The owner's API account carries the real stop; this one
+  // (CLAUDE_MONTHLY_USD_CAP_DEFAULT when unset). The operator's API account carries the real stop; this one
   // keeps the relay's share of it small whatever the number of paid keys.
   CLAUDE_MONTHLY_USD_CAP?: string;
   // The first moment the Claude reading may run, as an ISO time. The privacy page promises a notice 30
   // days before a material change takes effect; the page named the second company on 11 Oct 2026, so the
-  // route stays shut, and the licence probe does not offer it, before then (the owner's word, 11 Oct 2026).
+  // route stays shut, and the licence probe does not offer it, before then (the operator's decision, 11 Oct 2026).
   // Unset means no hold; a value that is not a time holds the route shut.
   CLAUDE_STARTS_AT?: string;
 }
@@ -249,7 +249,7 @@ const MONTHLY_USD_CAP_BY_TIER: Readonly<Record<LicenseTier, number>> = {
 // completion tokens (Groq pricing, live-verified 2026-07-13), and chat usage is
 // weighted by direction against this $0.10/M counter basis.
 // At the $3.50 cap this allows 35M token-equivalents/month; the heaviest real month measured
-// cost $2.60 (founder's key, 1 to 5 Oct 2026, with test runs).
+// cost $2.60 (an internal testing key, 1 to 5 Oct 2026, with test runs).
 // The rates and factors live in ./usage-weights.ts, a byte-identical copy of
 // src/ai/usage-weights.ts so the extension's local counter weighs every call
 // the way this counter does (tests/unit/usage-weights-parity.test.ts).
@@ -328,7 +328,7 @@ const CLAUDE_TIMEOUT_MS = 15_000;
 // keeps the rest of the month. A month that heavy then ends on today's reading instead of on none.
 const CLAUDE_MONTHLY_SHARE = 0.8;
 
-// The ceiling across every key (11 Oct 2026, the owner's word: an API account is never taken past 195 USD a
+// The ceiling across every key (11 Oct 2026, the operator's decision: an API account is never taken past 195 USD a
 // month). One name on the shared counter for all keys, counted in token-equivalents at Haiku's prices, per
 // UTC calendar month; reserved before the key's own share, released when the key's share refuses. The
 // extension already reads claude_paused_near_cap and stops asking for an hour at a time.
@@ -799,7 +799,7 @@ const CORS_ALLOW_METHODS = 'POST, GET, OPTIONS';
  * upstream headers into the response, but without this list a cross-origin
  * caller only sees the CORS-safelisted ones, so the client's rate-limit
  * telemetry (src/ai/telemetry.ts: x-ratelimit-remaining-*, retry-after)
- * read null on every one of 100 calls in the owner's 2026-09-02 dump.
+ * read null on every one of 100 calls in the operator's 2026-09-02 dump.
  */
 const CORS_EXPOSE_HEADERS = [
   'x-ratelimit-limit-requests',
@@ -2405,7 +2405,7 @@ async function handleSubscriptionCreated(env: Env, payload: LSWebhookSubscriptio
 
 // ─── Subscription lifecycle table ──────────────────────────────────────────
 //
-// ASSUMPTION (owner question 2 of the 2026-08-23 audit, unanswered): a
+// ASSUMPTION (an open question of the 2026-08-23 audit): a
 // cancelled subscription keeps access until the paid period ends, and every
 // non-paying status cuts access at once. Changing either answer is one row
 // in the tables below. The status table also covers `subscription_updated`,
@@ -2447,10 +2447,10 @@ const SUBSCRIPTION_EVENT_ACTION: Readonly<Record<string, LifecycleAction>> = {
   subscription_payment_failed: 'ignore',
   subscription_payment_success: 'ignore',
   subscription_payment_recovered: 'ignore',
-  // A refund is the one payment event that must act by itself. The owner's
-  // 2026-08-28 test purchase was refunded the same day; Lemon Squeezy kept
+  // A refund is the one payment event that must act by itself. A test
+  // purchase on 2026-08-28 was refunded the same day; Lemon Squeezy kept
   // the subscription "cancelled, expires 28 Sep" and no refund event was
-  // subscribed, so the key stayed active for a month of AI spend the owner
+  // subscribed, so the key stayed active for a month of AI spend the operator
   // pays for. Money back means service off, at once.
   subscription_payment_refunded: 'revoke_refunded_invoice',
   order_refunded: 'revoke_refunded_order',
@@ -2603,11 +2603,11 @@ async function revokeRefundedOrderKeys(env: Env, payload: LSWebhookSubscription,
       // email alone, by design, because a refund event names an order or an
       // invoice and never a subscription. Without this line one refund
       // revokes every key that email has ever held.
-      // Found 2026-09-20: the owner refunded his own test subscription and
-      // the sweep revoked the hand-minted founder key of 2026-07-14, held
-      // under the same address, which is what his own install runs on. The purchase
-      // and the founder key had nothing to do with each other except the
-      // email, and the email is the weakest link in the record.
+      // Found 2026-09-20: a refunded test subscription made the sweep revoke
+      // a hand-minted internal key of 2026-07-14 held under the same address,
+      // the key an internal install ran on. The purchase and that key had
+      // nothing to do with each other except the email, and the email is the
+      // weakest link in the record.
       if (!record.subscription_id) { skippedUnpaid++; continue; }
       await revokeLicense(env, name, record, stamp);
       revokedCount++;

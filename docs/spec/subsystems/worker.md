@@ -8,6 +8,8 @@ Cloudflare Worker proxy at api.feelingwise.org between the Chrome extension and 
 
 ## Key files
 
+The public copy of this repository carries worker/src and its tests. worker/wrangler.toml (it names the Cloudflare account), worker/scripts/* (operator tools that mint keys and print the licence ledger) and tests/private/worker/* (tests that read those private files) stay private; this page describes them so a reader knows what they do.
+
 - worker/src/index.ts - the DEPLOYED entry (wrangler.toml main). Exports the Durable Object class and a fetch handler that calls proxy.ts fetchWorker with requireAtomicCounter=true.
 - worker/src/proxy.ts - all route logic. Handlers: handleChatCompletions, handleModels, handleHealth, handleTsa, handleLemonsqueezyWebhook. The /v1/gemini and /v1/whisper routes were removed in 2.5.0 with the media features they served; GEMINI_API_KEY is no longer read. requireAtomicCounter defaults TRUE everywhere; for paid tiers the legacy KV path is reachable only behind env.ALLOW_LEGACY_COUNTER_FOR_TESTS. Dev-tier keys ALWAYS take the legacy path in production: `reserveUsage` short-circuits on `record.tier === 'dev'` to `checkCap` on the KV record (which returns null for dev) and `reconcileUsage` routes a legacy reservation to the KV read-modify-write `recordUsage`, never to the Durable Object. Dev keys are therefore uncapped and their usage is counted on the KV record only.
 - worker/src/license-counter-state.ts - pure reserve/reconcile state machine for the Durable Object: period rollovers, reservation bookkeeping, RESERVATION_TTL_MS reaper (10 min) for reservations whose reconcile never arrived.

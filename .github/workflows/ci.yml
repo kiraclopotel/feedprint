@@ -69,12 +69,11 @@ jobs:
   # The same gates on Linux (added 13 Oct 2026, after an outside rebuild on Linux x86_64 with Node 24.14.0 matched
   # both store packages and found three tests bound to Windows). Two of the three are fixed in the tree (a Chrome mock
   # without removeListener, two hooks committed without the executable bit); the third, a tooling test that hands
-  # Windows-style paths to Node's path functions, is still to be found, which is what this job is for. Until it is
-  # green it reports without failing the run.
+  # Windows-style paths to Node's path functions, was fixed on 14 Oct (a path comparison follows the platform it is
+  # asked about). Both test steps ran green on Linux in the public run of 14 Oct, so a failure here fails the run.
   checks-linux:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
-    continue-on-error: true
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
