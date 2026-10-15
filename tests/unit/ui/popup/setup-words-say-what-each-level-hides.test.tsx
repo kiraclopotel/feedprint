@@ -28,7 +28,9 @@ const LINE: Record<Mode, string> = {
 };
 const ARRIVES: Record<Mode, RegExp> = {
   child: /^A flagged post arrives rephrased\b/,
-  teen: /^A flagged post arrives rephrased\b/,
+  // Calm shows a flagged post as the page drew it until the reading answers (only Silent covers it,
+  // content/protection/child-first-protection.ts), so its sentence says as written (14 Oct 2026, the open board's R063).
+  teen: /^A flagged post arrives as written\b/,
   adult: /^A flagged post arrives as written\b/,
 };
 const DOT: Record<Mode, RegExp> = { child: /\bno dot\b/, teen: /\bgreen dot\b/, adult: /\bred dot\b/ };

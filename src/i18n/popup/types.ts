@@ -199,6 +199,13 @@ export interface PopupStrings {
   // HomeTab already shows, worded for a parent who is already on this screen.
   licenseNotAcceptedPill: string;
   licenseInvalidBodyKeysTab: string;
+  // The relay refused the key because its paid period ended (license_expired): the same fault as a refused key, said
+  // as what it is, with a link to getting a key again (KEY_HELP_URL). The open board's R038, 14 Oct 2026.
+  licenseExpiredTitle: string;
+  licenseExpiredBody: string;
+  licenseExpiredBodyKeysTab: string;
+  licenseExpiredPill: string;
+  licenseRenewLink: string;
   placeholderStored: string;
   show: string;
   /** The PIN show control: its label and tooltip say it works while held. */

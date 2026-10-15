@@ -49,14 +49,23 @@ describe('the AI drawer folds in a real browser', () => {
         expect(Math.max(...await durations(page, '.ai-drawer-chev'))).toBeCloseTo(0.2);
 
         const open = await width(page);
-        await page.$eval('#drawer', (el) => el.classList.add('closed'));
-        await page.waitForTimeout(90);
-        const halfway = await width(page);
-        await page.waitForTimeout(400);
+        // The fold is read at 100 ms of its own clock, not after 90 ms of the machine's: under the full suite's load
+        // the first frame came late and the "halfway" width was still the open card (364 against 362, the 2.5.19
+        // freeze dry run, 15 Oct 2026). Reading the transitions starts them (getAnimations flushes the style), each is
+        // held at 100 ms for the halfway width, then finished for the pill.
+        const halfway = await page.$eval('#drawer', (el) => {
+          el.classList.add('closed');
+          const folds = el.getAnimations();
+          for (const a of folds) { a.pause(); a.currentTime = 100; }
+          const widthFold = folds.some((a) => (a as CSSTransition).transitionProperty === 'width');
+          return { width: el.getBoundingClientRect().width, widthFold };
+        });
+        expect(halfway.widthFold, 'the card has a running width transition to hold').toBe(true);
+        await page.$eval('#drawer', (el) => { for (const a of el.getAnimations()) a.finish(); });
         const pill = await width(page);
         expect(pill).toBeLessThan(open - 40);
-        expect(halfway, `halfway ${halfway} between pill ${pill} and card ${open}`).toBeGreaterThan(pill + 2);
-        expect(halfway).toBeLessThan(open - 2);
+        expect(halfway.width, `halfway ${halfway.width} between pill ${pill} and card ${open}`).toBeGreaterThan(pill + 2);
+        expect(halfway.width).toBeLessThan(open - 2);
         // Closed, it is the pill: rounded, in its own green.
         const look = await page.$eval('#drawer', (el) => {
           const cs = getComputedStyle(el);

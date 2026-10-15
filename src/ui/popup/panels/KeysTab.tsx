@@ -15,8 +15,9 @@ import { useState } from 'react';
 import { KeyUsage } from './HomeTab';
 import { readingRowNames } from './ai/AiCard';
 
-/** The site's help section on the AI reading, which says what a key costs and where to get one. */
-export const KEY_HELP_URL = 'https://feelingwise.org/help#ai-reading';
+import { KEY_HELP_URL } from './status';
+
+export { KEY_HELP_URL };
 
 // ─── License tab ───
 export function KeysTab({
@@ -45,6 +46,7 @@ export function KeysTab({
   // Child. Same PIN modal and grace window as Settings.
   const [pinFor, setPinFor] = useState<'save' | 'remove' | null>(null);
   const revoked = license.tier !== 'free' && probeResult === 'revoked';
+  const expired = license.tier !== 'free' && probeResult === 'expired';
 
   const withParentPin = (action: 'save' | 'remove', run: () => Promise<void>): void => {
     // A snapshot the reader could not confirm has an empty PIN whether or not one exists.
@@ -98,17 +100,17 @@ export function KeysTab({
       <KeyUsage settings={settings} license={license} probeResult={probeResult} />
       <div className="pop-card" style={{ marginTop: 14 }}>
         <div className="key-row">
-          <span className={`key-dot ${license.tier !== 'free' ? (revoked ? 'err' : 'ok') : ''}`} />
+          <span className={`key-dot ${license.tier !== 'free' ? (revoked || expired ? 'err' : 'ok') : ''}`} />
           <div className="key-meta">
             <div className="key-name">{t.licCardName}</div>
             <div className="key-sub">
               {license.tier === 'free'
                 ? t.keySubFree
-                : revoked ? t.licenseInvalidTitle : t.keySubActive}
+                : revoked ? t.licenseInvalidTitle : expired ? t.licenseExpiredTitle : t.keySubActive}
             </div>
             {/* A key held outside Strict says what it covers by the names the rows carry in Settings, so the two screens
                 cannot name the reading's parts differently. */}
-            {license.tier !== 'free' && !revoked && (
+            {license.tier !== 'free' && !revoked && !expired && (
               <ul className="key-rows">
                 {readingRowNames(t).map((name) => <li key={name}>{name}</li>)}
               </ul>
@@ -125,6 +127,7 @@ export function KeysTab({
           {/* The line under the name says the key's state; a pill beside it said it again (his word, 8 Oct 2026).
               Only a refused key keeps its red mark. */}
           {revoked && <span className="key-pill err">{t.licenseNotAcceptedPill}</span>}
+          {expired && <span className="key-pill err">{t.licenseExpiredPill}</span>}
         </div>
         {/* Revoked / unauthorized paid key (POP-5 residual): this tab is the
             one screen a parent opens specifically to check the license, so
@@ -133,6 +136,14 @@ export function KeysTab({
           <div className="pop-bn err" role="alert" style={{ marginTop: 4, marginBottom: 4 }}>
             <div className="ttl"><ShieldAlert size={14} /> {t.licenseInvalidTitle}</div>
             <div className="body">{t.licenseInvalidBodyKeysTab}</div>
+          </div>
+        )}
+        {expired && (
+          <div className="pop-bn err" role="alert" style={{ marginTop: 4, marginBottom: 4 }}>
+            <div className="ttl"><ShieldAlert size={14} /> {t.licenseExpiredTitle}</div>
+            <div className="body">{t.licenseExpiredBodyKeysTab}{' '}
+              <a href={KEY_HELP_URL} target="_blank" rel="noopener noreferrer">{t.licenseRenewLink}</a>
+            </div>
           </div>
         )}
         <div className="in-row">

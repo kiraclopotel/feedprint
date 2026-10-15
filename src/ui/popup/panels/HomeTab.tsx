@@ -23,7 +23,7 @@ import { DescribePage } from '../DescribePage';
 import { sendDomReport } from '../send-dom-report';
 import { receiptsSwitchIds } from './SettingsPanel';
 import type { Platform } from '../../../types/post';
-import { computeAiBannerState } from './status';
+import { KEY_HELP_URL, computeAiBannerState } from './status';
 import { useEffect, useRef, useState } from 'react';
 import { COUNT_UP_MS, POPUP_LIFE, prefersReducedMotion } from '../life';
 
@@ -133,7 +133,7 @@ export function KeyUsage({ settings, license, probeResult = null }: {
   // left the claim it contradicts standing; a correction next to a false
   // headline is the shape this repository keeps meeting. Seen on a real
   // install after a refund revoked its key server-side.
-  const keyRejected = aiBanner === 'revoked';
+  const keyRejected = aiBanner === 'revoked' || aiBanner === 'expired';
   // Effective daily cap: the smaller of the per-tier ceiling and the
   // user-configurable settings.dailyCap. settings.dailyCap can dial DOWN
   // (more conservative) but cannot exceed the tier ceiling. Free tier =
@@ -338,6 +338,15 @@ export function HomeTab({
         <div className="pop-bn err" role="alert">
           <div className="ttl"><ShieldAlert size={14} /> {t.licenseInvalidTitle}</div>
           <div className="body">{t.licenseInvalidBody}</div>
+        </div>
+      )}
+      {/* The paid period ended: the same fault, said as what it is, with the way to get a key again (R038). */}
+      {aiBanner === 'expired' && (
+        <div className="pop-bn err" role="alert">
+          <div className="ttl"><ShieldAlert size={14} /> {t.licenseExpiredTitle}</div>
+          <div className="body">{t.licenseExpiredBody}{' '}
+            <a href={KEY_HELP_URL} target="_blank" rel="noopener noreferrer">{t.licenseRenewLink}</a>
+          </div>
         </div>
       )}
 

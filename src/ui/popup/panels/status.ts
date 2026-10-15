@@ -8,6 +8,10 @@
 import type { ProxyProbeResult } from '../../../ai/client';
 import type { DotState } from './header';
 
+/** The site's help section on the AI reading, which says what a key costs and where to get one. Home links it when a
+ * key has expired, the License tab when there is no key or it has expired; it lives here so neither tab imports the other. */
+export const KEY_HELP_URL = 'https://feelingwise.org/help#ai-reading';
+
 export function computeStatusStates(
   license: { tier: string },
   probeResult: ProxyProbeResult | null = null,
@@ -19,7 +23,7 @@ export function computeStatusStates(
   if (license.tier === 'free') {
     // Free is a plan, not a fault: no licence was bought, so nothing is missing to warn about.
     licenseState = 'free';
-  } else if (probeResult === 'revoked') {
+  } else if (probeResult === 'revoked' || probeResult === 'expired') {
     licenseState = 'err';
   } else if (probeResult === 'ok') {
     licenseState = 'ok';
@@ -40,10 +44,11 @@ export function computeStatusStates(
 //
 //   • 'free'    — no paid key; AI pipeline never runs (existing known trap).
 //   • 'revoked' — paid-shaped key that the proxy rejected (probe = 'revoked').
+//   • 'expired' — the proxy refused the key because its paid period ended (probe = 'expired').
 //   • 'none'    — paid key with an ok / not-yet-returned probe. We assume good
 //                 until proven revoked, matching computeStatusStates — so a
 //                 transient blip or the pre-probe window never false-alarms.
-export type AiBannerState = 'none' | 'free' | 'revoked';
+export type AiBannerState = 'none' | 'free' | 'revoked' | 'expired';
 
 export function computeAiBannerState(
   license: { tier: string },
@@ -51,5 +56,6 @@ export function computeAiBannerState(
 ): AiBannerState {
   if (license.tier === 'free') return 'free';
   if (probeResult === 'revoked') return 'revoked';
+  if (probeResult === 'expired') return 'expired';
   return 'none';
 }

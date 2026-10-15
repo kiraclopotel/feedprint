@@ -12,6 +12,8 @@ Kept as the work lands, so the Updates page and the store blurb are written from
 Three of the changes make a request the 2.5.18 store build never makes, and the Help, Home and Privacy pages are
 updated for them before 2.5.19 ships.
 
+Version 2.5.19 needs Chrome 137 or newer.
+
 ### New outside requests
 
 1. **A signed repair file.** Every six hours, at the Calm and Open levels, with or without a key, Feedprint asks

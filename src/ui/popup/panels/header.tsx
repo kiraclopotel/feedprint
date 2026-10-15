@@ -72,6 +72,7 @@ function StatusDot({
 //
 // The pill states exactly what the probe found, including "it found nothing":
 //   • 'revoked'          → 'err'. The proxy answered and refused the key.
+//   • 'expired'          → 'err'. The proxy refused the key because its paid period ended.
 //   • 'ok'               → 'ok'.  The proxy answered and accepted the key.
 //   • 'unknown'          → 'unchecked'. The probe could not complete. This
 //     used to render green, which meant a parent whose network, DNS or proxy

@@ -59,6 +59,8 @@ const ALLOWED_KEYS = new Set<string>([
   'consentWhatDoesNot',
   // Home's sentence that the videos a person watches are NOT counted: it names video to deny it.
   'homeReadNotCounted',
+  // Silent's sentence that the videos listed on YouTube search pages are NOT checked: it names video to deny it.
+  'levelSentenceChild',
 ]);
 
 describe('the popup makes no claim the build cannot back', () => {

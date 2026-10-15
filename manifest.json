@@ -3,6 +3,7 @@
   "name": "__MSG_receiptsName__",
   "short_name": "__MSG_receiptsShortName__",
   "version": "2.5.18",
+  "minimum_chrome_version": "137",
   "description": "__MSG_receiptsDescription__",
   "default_locale": "en",
   "icons": {

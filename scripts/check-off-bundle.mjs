@@ -101,7 +101,10 @@ if (size > CONTENT_CAP_BYTES) fail('size', `content.js is ${size} bytes, cap ${C
 // Feedprint or a shared page grows it too: the Settings level list and the "Describe this page" page added 2,481 bytes
 // (measured on the built bundle, 367,933 to 370,414) against a cap the bundle already sat 707 bytes under. The cap is
 // set where those deliberate growths fit; a jump of tens of kilobytes still means a shared import pulled something in.
-const POPUP_CAP_BYTES = 368 * 1024;
+// The expired key's card (five strings in four languages and the License tab's pill, the open board's R038, 15 Oct
+// 2026) added 1,851 bytes (376,738 on master 91e58e68 to 378,589), and the cap rises by exactly that. Splitting Off's
+// strings from Feedprint's (R108) is the change that gives room back.
+const POPUP_CAP_BYTES = 368 * 1024 + 1851;
 let popupTotal = 0;
 for (const abs of scripts) {
   if (abs.endsWith(`${sep}content.js`)) continue;

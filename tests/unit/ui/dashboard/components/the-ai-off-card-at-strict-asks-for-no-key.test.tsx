@@ -103,14 +103,14 @@ describe.each(UI_LANGUAGES)('%s: the AI health section with a key', (lang) => {
 });
 
 describe('the Strict lines in English', () => {
-  it('the free line ends by saying a license key and the agreement turn the AI reading on', () => {
-    expect(DASHBOARD_STRINGS.en.opsAiOffStrict.endsWith('Once you add a license key and agree, the AI reading turns on.')).toBe(true);
+  it('the free line ends by saying a license key and the agreement turn Live Rephrase on', () => {
+    expect(DASHBOARD_STRINGS.en.opsAiOffStrict.endsWith('Once you add a license key and agree, Live Rephrase turns on.')).toBe(true);
     expect(DASHBOARD_STRINGS.en.opsAiOffStrict).not.toMatch(/changes nothing/);
   });
 
-  it('the key-holder line says AI is off at Silent for now and that agreeing turns it on', () => {
+  it('the key-holder line says Live Rephrase is off at Silent for now and that agreeing turns it on', () => {
     expect(DASHBOARD_STRINGS.en.opsAiOffStrictKey).toBe(
-      '● AI is OFF at Silent for now. Live Rephrase has your key but no agreement yet, so nothing is sent out and only the built-in harm filter runs. Agreeing turns the AI reading on.',
+      '● Live Rephrase is OFF at Silent for now. Live Rephrase has your key but no agreement yet, so nothing is sent out and only the built-in harm filter runs. Agreeing turns Live Rephrase on.',
     );
   });
 });

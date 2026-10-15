@@ -251,7 +251,9 @@ function noteTextCapReached(cap: ProxyCapPeriod, fingerprint: string): void {
  * tier mismatch); `unknown` = network error / timeout / non-auth HTTP
  * error (no opinion — don't downgrade the UI state on transient failures).
  */
-export type ProxyProbeResult = 'ok' | 'revoked' | 'unknown';
+// 'expired' is a refusal whose code says the paid period ended (license_expired, worker/src/proxy.ts); the popup says
+// expired and how to get a key again, where 'revoked' says the key was not accepted (the open board's R038).
+export type ProxyProbeResult = 'ok' | 'revoked' | 'expired' | 'unknown';
 
 // Cache the probe result so the popup doesn't hammer the proxy on every
 // open. Cleared when the bearer changes (`probeProxy` keys the cache by
@@ -344,7 +346,13 @@ export async function probeProxy(licenseBearer: string): Promise<ProxyProbeResul
       providerName = providerNameFrom(resp.headers?.get?.(PROVIDER_LEGAL_HEADER) ?? null);
       claudeProviderName = providerNameFrom(resp.headers?.get?.(CLAUDE_PROVIDER_LEGAL_HEADER) ?? null);
     }
-    else if (resp.status === 401 || resp.status === 403) result = 'revoked';
+    else if (resp.status === 401 || resp.status === 403) {
+      // The relay's reason, when the body says one; a refusal without a readable body stays a refusal.
+      const code = typeof resp.json === 'function'
+        ? await resp.json().then((b: { error?: { code?: unknown } }) => b?.error?.code, () => undefined)
+        : undefined;
+      result = code === 'license_expired' ? 'expired' : 'revoked';
+    }
     else {
       result = 'unknown';
       bumpCounter(`licenseProbe:status-${resp.status}`);

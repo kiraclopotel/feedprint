@@ -173,6 +173,9 @@ interface LicenseRecord {
   // subscription and review key: those end by cancellation or manual revoke,
   // not by a clock. Set by scripts/mint-trial-license.mjs.
   expires_at?: string;        // ISO 8601
+  // Why the store revoked the key, when it was the store (RevokeReason); absent on a key revoked by the operator, a
+  // refund or a quantity cut, and cleared on reactivation. The tombstone carries the same reason and outranks it.
+  revoke_reason?: RevokeReason;
   // Who holds this key, in the operator's own words ("Jane Doe, Example Daily",
   // "beta tester 3"). Written at mint time and never read by the proxy: it
   // exists so the estate stays attributable from KV alone. Nine review keys
@@ -496,6 +499,18 @@ async function loadLicense(env: Env, key: string): Promise<LicenseRecord | null>
 // newer than the revocation removes it.
 interface RevocationTombstone {
   revoked_at: string;         // ISO 8601, the revocation's lifecycle stamp
+  reason?: RevokeReason;
+}
+
+// Why the store revoked a key (the open board's R038 follow-up, 15 Oct 2026). 'expired': the subscription ended
+// (subscription_expired, or the status expired or unpaid), and the key answers license_expired, so the popup says
+// expired and links to getting a key again. 'stopped': a pause or a payment still being retried (paused, past_due),
+// which "expired" would misdescribe, so the key answers license_revoked; a stopped key whose subscription then ends
+// becomes expired. No reason (the operator, a refund, a quantity cut): license_revoked, never changed by an end.
+type RevokeReason = 'expired' | 'stopped';
+
+function isRevokeReason(v: unknown): v is RevokeReason {
+  return v === 'expired' || v === 'stopped';
 }
 
 function tombstoneKey(licenseKey: string): string {
@@ -579,7 +594,9 @@ async function loadTombstone(env: Env, licenseKey: string): Promise<RevocationTo
   try {
     const parsed = JSON.parse(raw) as Partial<RevocationTombstone>;
     // An unreadable stamp still revokes; it only loses the ordering check.
-    return { revoked_at: typeof parsed.revoked_at === 'string' ? parsed.revoked_at : '' };
+    const tombstone: RevocationTombstone = { revoked_at: typeof parsed.revoked_at === 'string' ? parsed.revoked_at : '' };
+    if (isRevokeReason(parsed.reason)) tombstone.reason = parsed.reason;
+    return tombstone;
   } catch {
     return { revoked_at: '' };
   }
@@ -1068,7 +1085,18 @@ async function authenticate(request: Request, env: Env): Promise<AuthResult> {
   // The tombstone outranks the record: a revoke whose record write was
   // lost to the mirror race, or undone by an out-of-order status flip,
   // still refuses here.
-  if (record.status !== 'active' || await loadTombstone(env, parsed.raw) !== null) {
+  const tombstone = await loadTombstone(env, parsed.raw);
+  if (record.status !== 'active' || tombstone !== null) {
+    // A subscription the store ended says so, as a key past its expires_at does; the tombstone's reason outranks the
+    // record's, as the tombstone itself does.
+    const reason = tombstone !== null ? tombstone.reason : record.revoke_reason;
+    if (reason === 'expired') {
+      return {
+        ok: false,
+        status: 401,
+        body: { error: { message: 'License has expired', code: 'license_expired' } },
+      };
+    }
     return {
       ok: false,
       status: 401,
@@ -1600,6 +1628,117 @@ async function handleEntitlements(request: Request, env: Env): Promise<Response>
     );
   }
   return jsonResponse(signed, 200, origin);
+}
+
+// GET /v1/usage: how many calls the asking key has used today and how many are left before it is refused (the open
+// board's R122, 15 Oct 2026; the drafting key hit its cap mid-batch because nothing could say whether a batch would
+// fit). A key is refused by either cap (reserveUsage, checkCap): the daily calls, or the monthly allowance in
+// token-equivalents, so the calls left are 0 once the month's allowance is spent, whatever the day's count says, and
+// `stopped_by` names the cap that stops it. The numbers are the Durable Object counter's, the one the caps are enforced
+// on; the KV record only when that counter has no state yet (a key not used since the counter shipped, which the
+// counter would seed from the same record). A counter that cannot be read answers 503 usage_unavailable, as a call
+// would be refused then too (reserveUsage 'unavailable'), rather than the record's mirror, which lags by up to 25
+// calls (MIRROR_CALLS_DRIFT). Asking is not a call: the counter is read, never reserved, and only the asking key's.
+//
+// A call is refused when what it holds would pass the month's allowance (the counter's reserve: used + hold > limit),
+// and the hold is an estimate made before the call runs, up to the largest one below. So the month is reported as
+// stopping calls once less than the largest chat hold is left: the answer errs toward less room (a small call may still
+// pass), never toward room a batch would not get. The Claude reading stops earlier, at CLAUDE_MONTHLY_SHARE of the
+// allowance, and is reported on its own; the relay-wide Claude ceiling (reserveClaudeCeiling) is shared by every key
+// and is not this key's to read.
+//
+// The chat hold is measured on the body as the relay forwards it: the body read (at most CHAT_MAX_BODY_BYTES) plus the
+// fields the relay sets on it (model, n, max_tokens). A client that writes its body with JSON.stringify, as the
+// extension and the drafting tool do, gets that body back unchanged when the relay parses and rewrites it; a body
+// written to grow on that rewrite (numbers like 1e20, bytes that are not UTF-8) can hold more than this bound.
+const USAGE_RELAY_ADDED_BYTES = Math.max(
+  ...[...CHAT_MODELS_ALLOWED, CHAT_MODEL].map(
+    model => new TextEncoder().encode(JSON.stringify({ model, n: 1, max_tokens: CHAT_MAX_OUTPUT_TOKENS })).byteLength,
+  ),
+);
+const USAGE_LARGEST_CHAT_HOLD = Math.max(
+  ...[...CHAT_MODELS_ALLOWED, CHAT_MODEL].map(
+    model => chatTokenEquivalents(CHAT_MAX_BODY_BYTES + USAGE_RELAY_ADDED_BYTES, CHAT_MAX_OUTPUT_TOKENS, model),
+  ),
+);
+const USAGE_LARGEST_CLAUDE_HOLD = claudeTokenEquivalents({
+  input_tokens: 0,
+  cache_creation_input_tokens: CHAT_MAX_BODY_BYTES,
+  cache_read_input_tokens: 0,
+  output_tokens: CLAUDE_MAX_OUTPUT_TOKENS,
+});
+
+async function handleUsage(request: Request, env: Env, requireAtomicCounter: boolean): Promise<Response> {
+  const origin = request.headers.get('Origin');
+  const auth = await authenticate(request, env);
+  if (!auth.ok) {
+    return authFailureResponse(auth, origin);
+  }
+  const now = new Date();
+  let daily = { used: auth.record.daily_calls, resetsAt: auth.record.daily_reset_at };
+  let monthly = { used: auth.record.monthly_tokens, resetsAt: auth.record.monthly_reset_at };
+  let source: 'counter' | 'record' = 'record';
+  // Without the counter a call is refused as unavailable (reserveUsage), unless the relay runs the legacy KV path.
+  if (!env.LICENSE_COUNTER && requireAtomicCounter) {
+    return jsonResponse({ error: { message: 'Usage cannot be read right now', code: 'usage_unavailable' } }, 503, origin);
+  }
+  if (env.LICENSE_COUNTER) {
+    try {
+      const seen = await env.LICENSE_COUNTER.getByName(await licenseCounterName(auth.parsed.raw)).inspect();
+      if (seen) {
+        daily = { used: seen.dailyCalls, resetsAt: seen.dailyResetAt };
+        monthly = { used: seen.monthlyTokens, resetsAt: seen.monthlyResetAt };
+        source = 'counter';
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'unknown';
+      console.warn(`[proxy] usage-inspect-failed license=${fingerprint(auth.parsed)} error=${message}`);
+      return jsonResponse(
+        { error: { message: 'Usage cannot be read right now', code: 'usage_unavailable' } },
+        503,
+        origin,
+      );
+    }
+  }
+  // A period that rolled since the last call has not been reset in storage yet: the next call starts it from zero
+  // (license-counter-state.ts resetExpiredPeriods, the same test).
+  const rolled = (at: string) => {
+    const t = new Date(at).getTime();
+    return Number.isNaN(t) || t <= now.getTime();
+  };
+  if (rolled(daily.resetsAt)) daily = { used: 0, resetsAt: nextUtcMidnight(now).toISOString() };
+  if (rolled(monthly.resetsAt)) monthly = { used: 0, resetsAt: nextPeriodStartIso(auth.record.issued_at, now) };
+  // The founder tier is never capped (checkCap), so it has no limit to count down to.
+  const dev = auth.record.tier === 'dev';
+  const dailyLimit = dev ? null : DAILY_CALL_CAP_BY_TIER[auth.record.tier];
+  const monthlyLimit = dev ? null : monthlyTokenCapForTier(auth.record.tier);
+  const monthlyLeft = monthlyLimit === null ? null : Math.max(0, monthlyLimit - monthly.used);
+  const monthSpent = monthlyLeft !== null && monthlyLeft < USAGE_LARGEST_CHAT_HOLD;
+  const dailyLeft = dailyLimit === null ? null : Math.max(0, dailyLimit - daily.used);
+  const stoppedBy = monthSpent ? 'monthly' : dailyLeft === 0 ? 'daily' : null;
+  // The same floor reserveUsage takes for the Claude share.
+  const claudeLimit = monthlyLimit === null ? null : Math.floor(monthlyLimit * CLAUDE_MONTHLY_SHARE);
+  const claudePaused = claudeLimit === null
+    ? null
+    : dailyLeft === 0 || monthly.used + USAGE_LARGEST_CLAUDE_HOLD > claudeLimit;
+  return jsonResponse(
+    {
+      calls_used_today: daily.used,
+      calls_left_today: dailyLeft === null ? null : monthSpent ? 0 : dailyLeft,
+      daily_call_limit: dailyLimit,
+      resets_at: daily.resetsAt,
+      monthly_allowance_used_percent: monthlyLimit === null
+        ? null
+        : Math.min(100, Math.round((monthly.used / monthlyLimit) * 1000) / 10),
+      monthly_allowance_left: monthlyLeft,
+      monthly_resets_at: monthly.resetsAt,
+      stopped_by: stoppedBy,
+      claude_reading_paused: claudePaused,
+      source,
+    },
+    200,
+    origin,
+  );
 }
 
 async function handleModels(request: Request, env: Env): Promise<Response> {
@@ -2280,6 +2419,18 @@ async function clearOwedDelivery(env: Env, subscriptionId: string, sentKeys: str
   );
 }
 
+// An expired subscription has no later event that would re-send its welcome, so the ledger and the address in it
+// go with it: the privacy page holds them until the mail can be sent, and after the end it never can be (the open
+// board's R086, 14 Oct 2026). Only the expiry drops it. A pause, a missed payment, a cancel running to its period
+// end and a refund can all be followed by a reactivation (a subscription refunded on 2026-08-28 stayed "cancelled,
+// expires 28 Sep", SUBSCRIPTION_EVENT_ACTION), and then deliverOwedKeys needs the ledger to get the keys to the
+// buyer; when they end instead, the expiry that ends them is what drops it.
+async function dropOwedDelivery(env: Env, subscriptionId: string, eventName: string): Promise<void> {
+  if ((await env.LICENSES.get(deliveryOwedKey(subscriptionId))) === null) return;
+  await env.LICENSES.delete(deliveryOwedKey(subscriptionId));
+  console.log(`[webhook] ${eventName} sub=${subscriptionId} owed_delivery_dropped: the subscription has expired`);
+}
+
 // Thrown when the keys exist and the person does not have them. The webhook
 // turns it into a non-2xx so the payment provider redelivers: the alternative
 // is answering 200 for a call whose only job it could not finish.
@@ -2505,11 +2656,16 @@ function laterOf(a: string | undefined, b: string | null, fallback: string): str
 }
 
 // Tombstone first: if the record write is lost, the key is still refused.
-async function revokeLicense(env: Env, key: string, record: LicenseRecord, stamp: string | null): Promise<void> {
+async function revokeLicense(
+  env: Env, key: string, record: LicenseRecord, stamp: string | null, reason?: RevokeReason,
+): Promise<void> {
   const revokedAt = laterOf(record.lifecycle_at, stamp, new Date().toISOString());
-  const tombstone: RevocationTombstone = { revoked_at: revokedAt };
+  const tombstone: RevocationTombstone = reason ? { revoked_at: revokedAt, reason } : { revoked_at: revokedAt };
   await env.LICENSES.put(tombstoneKey(key), JSON.stringify(tombstone));
-  const revoked: LicenseRecord = { ...record, status: 'revoked', lifecycle_at: revokedAt };
+  const { revoke_reason: _was, ...rest } = record;
+  const revoked: LicenseRecord = reason
+    ? { ...rest, status: 'revoked', lifecycle_at: revokedAt, revoke_reason: reason }
+    : { ...rest, status: 'revoked', lifecycle_at: revokedAt };
   await env.LICENSES.put(key, JSON.stringify(revoked));
 }
 
@@ -2517,17 +2673,34 @@ async function revokeLicense(env: Env, key: string, record: LicenseRecord, stamp
 // a fresh reactivation cuts a paying customer off until the next event,
 // which is the cheaper mistake. The opposite (a stale reactivation after a
 // revoke) would serve a non-paying key indefinitely.
-async function revokeSubscriptionKeys(env: Env, payload: LSWebhookSubscription, eventName: string): Promise<void> {
+//
+// `reason` is the store's (RevokeReason). An end also reaches the keys a pause or a failed payment already stopped:
+// those were the store's 'stopped', and the subscription is now over. A key revoked any other way is left as it is.
+async function revokeSubscriptionKeys(
+  env: Env, payload: LSWebhookSubscription, eventName: string, reason?: RevokeReason,
+): Promise<void> {
   const subscriptionId = payload.data.id;
   const stamp = eventStamp(payload);
   const licenses = await loadIndexedLicenses(env, subscriptionId);
   let revokedCount = 0;
+  let endedCount = 0;
   for (const { key, record } of licenses) {
-    if (record.status === 'revoked') continue;
-    await revokeLicense(env, key, record, stamp);
+    if (record.status === 'revoked') {
+      if (reason !== 'expired') continue;
+      const tombstone = await loadTombstone(env, key);
+      const was = tombstone !== null ? tombstone.reason : record.revoke_reason;
+      if (was !== 'stopped') continue;
+      await revokeLicense(env, key, record, stamp, 'expired');
+      endedCount++;
+      continue;
+    }
+    await revokeLicense(env, key, record, stamp, reason);
     revokedCount++;
   }
-  console.log(`[webhook] ${eventName} sub=${subscriptionId} revoked=${revokedCount}/${licenses.length}`);
+  console.log(
+    `[webhook] ${eventName} sub=${subscriptionId} revoked=${revokedCount}/${licenses.length}` +
+    (reason ? ` reason=${reason}` : '') + (endedCount > 0 ? ` stopped_now_expired=${endedCount}` : ''),
+  );
 }
 
 // A refund event is "fully refunded" when LS says so on the object itself.
@@ -2680,7 +2853,7 @@ async function reactivateSubscriptionKeys(env: Env, payload: LSWebhookSubscripti
       continue;
     }
     if (revokedByWebhook || record.expires_at !== undefined) reactivated++;
-    const { expires_at: _dropped, ...rest } = record;
+    const { expires_at: _dropped, revoke_reason: _reason, ...rest } = record;
     const revived: LicenseRecord = { ...rest, status: 'active', lifecycle_at: stamp as string };
     await env.LICENSES.put(key, JSON.stringify(revived));
     // Last, so a failure between the two leaves the key refused, not served.
@@ -2784,9 +2957,18 @@ async function applyLifecycleAction(
     case 'cancel_at_period_end':
       await cancelSubscriptionAtPeriodEnd(env, payload, eventName);
       return;
-    case 'revoke':
-      await revokeSubscriptionKeys(env, payload, eventName);
+    case 'revoke': {
+      const status = payload.data.attributes.status;
+      // The subscription ended (expired, or unpaid, which ends the same way) or only stopped (paused, past_due): the
+      // key says which (RevokeReason).
+      const ended = eventName === 'subscription_expired' || status === 'expired' || status === 'unpaid';
+      await revokeSubscriptionKeys(env, payload, eventName, ended ? 'expired' : 'stopped');
+      // Of the revoking events only an expiry is an end; the rest can be resumed (dropOwedDelivery).
+      if (eventName === 'subscription_expired' || status === 'expired') {
+        await dropOwedDelivery(env, payload.data.id, eventName);
+      }
       return;
+    }
     case 'revoke_refunded_invoice':
       await revokeRefundedInvoiceKeys(env, payload, eventName);
       return;
@@ -3320,6 +3502,13 @@ export const __TEST_INTERNAL = {
   resetAuthFailures: (): void => { authFailuresByAddress.clear(); keysThatWorked.clear(); },
   CLAUDE_MONTHLY_SHARE,
   CLAUDE_CEILING_COUNTER_NAME,
+  monthlyTokenCapForTier,
+  USAGE_LARGEST_CHAT_HOLD,
+  USAGE_LARGEST_CLAUDE_HOLD,
+  chatUsageFallbackTokenEquivalents,
+  CHAT_MODELS_ALLOWED,
+  CHAT_MAX_BODY_BYTES,
+  CHAT_MAX_OUTPUT_TOKENS,
   CLAUDE_MONTHLY_USD_CAP_DEFAULT,
 };
 
@@ -3355,6 +3544,9 @@ export async function fetchWorker(
   }
   if (url.pathname === '/v1/models' && request.method === 'GET') {
     return handleModels(request, env);
+  }
+  if (url.pathname === '/v1/usage' && request.method === 'GET') {
+    return handleUsage(request, env, requireAtomicCounter);
   }
   if (url.pathname === '/v1/entitlements' && request.method === 'GET') {
     return handleEntitlements(request, env);

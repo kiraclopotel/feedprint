@@ -37,6 +37,20 @@ describe('the Firefox manifest', () => {
     expect(manifestDrift(chrome, firefox)).toEqual([]);
   });
 
+  it('both Chrome manifests ask for Chrome 137, where a signed repair can be checked, and the Firefox copy leaves the key out', () => {
+    // WebCrypto's Ed25519 is on in Chrome from 137 and in Firefox from 129 (MDN, src/core/repairs/signed.ts); below
+    // that every repair file, the packaged one included, would count for nothing without a word. Firefox reads its own
+    // floor (strict_min_version) and addons.mozilla.org warns on a key it does not know.
+    for (const [file, product] of [['manifest.json', 'receipts'], ['manifest.off.json', 'off']] as const) {
+      const chrome = file === 'manifest.json' ? builtReceipts() : read(file);
+      expect(chrome.minimum_chrome_version).toBe('137');
+      expect(Number(readOverlay(product).gecko.strict_min_version.split('.')[0])).toBeGreaterThanOrEqual(129);
+      const firefox = firefoxManifest(chrome, readOverlay(product));
+      expect(firefox).not.toHaveProperty('minimum_chrome_version');
+      expect(manifestDrift(chrome, firefox)).toEqual([]);
+    }
+  });
+
   it('refuses a background it was not written for', () => {
     expect(() => firefoxManifest({ ...builtReceipts(), background: { service_worker: 'a.js', persistent: false } }, readOverlay('receipts'))).toThrow(/unexpected background/);
   });

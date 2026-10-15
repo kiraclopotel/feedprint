@@ -48,12 +48,14 @@ export function firefoxManifest(chrome, overlay) {
   if (Array.isArray(chrome.permissions)) {
     out.permissions = chrome.permissions.filter((p) => !CHROME_ONLY_PERMISSIONS.includes(p));
   }
+  // Chrome's floor (137, Ed25519 for the signed repairs, src/core/repairs/signed.ts); Firefox has its own, strict_min_version.
+  delete out.minimum_chrome_version;
   out.browser_specific_settings = { gecko: structuredClone(overlay.gecko) };
   return out;
 }
 
 /** The keys a Firefox manifest may differ from Chrome's in; everything else must be equal. */
-const CHANGED_KEYS = new Set(['background', 'permissions', 'browser_specific_settings']);
+const CHANGED_KEYS = new Set(['background', 'permissions', 'browser_specific_settings', 'minimum_chrome_version']);
 
 export function manifestDrift(chrome, firefox) {
   const keys = new Set([...Object.keys(chrome), ...Object.keys(firefox)]);

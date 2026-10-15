@@ -3,7 +3,9 @@
 // A repair file is fetched from our own relay, but the relay is not what is trusted: the signature is. The file is
 // signed offline with an Ed25519 key we hold; the public half is in the package (public-keys.ts), so a copy of the
 // package can check a file with no network and no account. A file whose signature does not verify is ignored, however it
-// arrived. WebCrypto's Ed25519 is in Chrome from version 113.
+// arrived. WebCrypto's Ed25519 is on in Chrome from version 137 and in Firefox from 129 (MDN browser-compat-data,
+// api.SubtleCrypto verify and importKey, read 14 Oct 2026); before 137 Chrome had it only behind a flag, so both
+// manifests ask for Chrome 137.
 
 import { parseRepairPayload, type RepairEnvelope, type RepairFile } from './format';
 

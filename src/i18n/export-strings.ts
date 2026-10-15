@@ -164,7 +164,7 @@ export const I18N: Record<ExportLocale, ExportI18nStrings> = {
     tellsMedia: '{n} media addresses',
     tellsSpan: '{n} hours of timestamps covering {h} different hours of the clock',
     notMeasureBullets:
-      'FeelingWise records the posts it processed, and how its built-in filter, or the AI where a license key turned the AI reading on, classified retained items. It records posts and comments on the feed pages it works on, whether they are public or visible only to the account\'s followers; it never runs on private messages or chats. FeelingWise does NOT measure the user\'s emotional state. FeelingWise does NOT observe real-world relationships, family dynamics, or prior history. FeelingWise interpretations are uncertainty-aware signals; they may be challenged on their own merits.',
+      'FeelingWise records the posts it processed, and how its built-in filter, or Live Rephrase where a license key turned Live Rephrase on, classified retained items. It records posts and comments on the feed pages it works on, whether they are public or visible only to the account\'s followers. It never runs on private messages or chats. FeelingWise does NOT measure the user\'s emotional state. FeelingWise does NOT observe real-world relationships, family dynamics, or prior history. FeelingWise interpretations are uncertainty-aware signals. They may be challenged on their own merits.',
     // ── Observed exposure summary (recomputed in-browser from the embedded records) ──
     exposureHeader: 'Observed exposure summary',
     exposureIntro:
@@ -349,7 +349,7 @@ export const I18N: Record<ExportLocale, ExportI18nStrings> = {
     checkNonce: 'The authority echoed the number this request carried',
     // ── Feed view (readable social-feed rendering of the same records) ──
     feedHeader: 'What was recorded',
-    feedIntro: 'Below is the content FeelingWise recorded, arranged the way it was scrolled. Posts contain their comments; comments contain their replies. The coloured edge shows the Safety Signal Level FeelingWise assigned. These are readings by the built-in filter, or by the AI where a license key turned the AI reading on, not established facts, and can be disputed.',
+    feedIntro: 'Below is the content FeelingWise recorded, arranged the way it was scrolled. Posts contain their comments; comments contain their replies. The coloured edge shows the Safety Signal Level FeelingWise assigned. These are readings by the built-in filter, or by Live Rephrase where a license key turned Live Rephrase on, not established facts, and can be disputed.',
     feedShowMore: 'Show the next {n}',
     feedUnchecked: 'Not yet checked: verification runs when this page opens and stamps each item below when it finishes.',
     feedRemaining: '{n} more not shown yet',
@@ -414,7 +414,7 @@ export const I18N: Record<ExportLocale, ExportI18nStrings> = {
     feedNotAnalyzed: 'FeelingWise observed this but did not classify it.',
     feedBlocked: 'Blocked by a rule of your own.',
     feedReframed: 'FeelingWise replaced this with educational text.',
-    feedSkipped: 'FeelingWise saw this but did not judge it: no rule matched and no AI reading ran.',
+    feedSkipped: 'FeelingWise saw this but did not judge it: no rule matched and Live Rephrase did not read it.',
     feedNoTechnique: 'No technique flagged',
     feedOpinionHeader: 'FeelingWise\'s reading; the signature covers that it was stored, not that it is right',
     feedOpinionNote: 'Each card separates what the software read off the page (author, time, text, link) from what its model made of it (the reading below the text). The signature covers both as stored values; it does not make the reading right. Measured 2026-09-03 for the adult text judge at severity 4 and above, on 500 held-out items: above 89 percent of its flags were right and it found 58.8 percent of the items it should have. Other modes and images or video are unmeasured.',
@@ -452,7 +452,7 @@ export const I18N: Record<ExportLocale, ExportI18nStrings> = {
     feedReconNote: 'This post was not separately recorded - its details are reconstructed from the retained comments beneath it, only so they can be grouped. Each comment has its own verification result above; this grouping header is not a signed record.',
     methodologyHeader: 'How items were identified (criteria & AI instructions)',
     methodologyIntro:
-      'This section carries the exact instructions the AI models receive when a license key has turned the AI reading on, the model identifiers, and the decision thresholds used to classify the records in this file. Instruction texts are rendered verbatim from the software build that produced this export (instructions run in English regardless of interface language).',
+      'This section carries the exact instructions the AI models receive when a license key has turned Live Rephrase on, the model identifiers, and the decision thresholds used to classify the records in this file. Instruction texts are rendered verbatim from the software build that produced this export (instructions run in English regardless of interface language).',
     methodologyModelsLabel: 'AI models',
     methodologyThresholdsLabel: 'Decision thresholds',
     methodologyTopicsLabel: 'Topic label vocabulary',
@@ -783,7 +783,7 @@ export const I18N: Record<ExportLocale, ExportI18nStrings> = {
     tellsMedia: '{n} adrese media',
     tellsSpan: '{n} ore de marcaje temporale acoperind {h} ore diferite ale ceasului',
     notMeasureBullets:
-      'FeelingWise înregistrează postările pe care le-a procesat, precum și modul în care filtrul său încorporat, sau AI-ul acolo unde o cheie de licență a pornit analiza cu AI, a clasificat elementele reținute. Înregistrează postări și comentarii pe paginile de flux pe care funcționează, fie ele publice sau vizibile doar urmăritorilor contului; nu rulează niciodată pe mesaje private sau chat-uri. FeelingWise NU măsoară starea emoțională a utilizatorului. FeelingWise NU observă relațiile din viața reală, dinamica familială sau istoricul anterior. Interpretările FeelingWise sunt semnale care includ un grad de incertitudine și pot fi contestate pe fond.',
+      'FeelingWise înregistrează postările pe care le-a procesat, precum și modul în care filtrul său încorporat, sau Live Rephrase acolo unde o cheie de licență a pornit Live Rephrase, a clasificat elementele reținute. Înregistrează postări și comentarii pe paginile de flux pe care funcționează, fie ele publice sau vizibile doar urmăritorilor contului; nu rulează niciodată pe mesaje private sau chat-uri. FeelingWise NU măsoară starea emoțională a utilizatorului. FeelingWise NU observă relațiile din viața reală, dinamica familială sau istoricul anterior. Interpretările FeelingWise sunt semnale care includ un grad de incertitudine și pot fi contestate pe fond.',
     // ── Sumarul expunerii observate (recalculat în browser din înregistrările incluse) ──
     exposureHeader: 'Sumarul expunerii observate',
     exposureIntro:
@@ -963,7 +963,7 @@ export const I18N: Record<ExportLocale, ExportI18nStrings> = {
     checkNonce: 'Autoritatea a returnat numărul trimis cu cererea',
     // ── Vizualizarea fluxului (aceleași înregistrări, redate ca un flux social) ──
     feedHeader: 'Ce s-a înregistrat',
-    feedIntro: 'Mai jos este conținutul înregistrat de FeelingWise, așezat în ordinea în care a fost derulat. Postările își conțin comentariile; comentariile își conțin răspunsurile. Marginea colorată arată Nivelul Semnalului de Siguranță atribuit de FeelingWise. Acestea sunt citiri ale filtrului încorporat, sau ale AI-ului acolo unde o cheie de licență a pornit analiza cu AI, nu fapte stabilite, și pot fi contestate.',
+    feedIntro: 'Mai jos este conținutul înregistrat de FeelingWise, așezat în ordinea în care a fost derulat. Postările își conțin comentariile; comentariile își conțin răspunsurile. Marginea colorată arată Nivelul Semnalului de Siguranță atribuit de FeelingWise. Acestea sunt citiri ale filtrului încorporat, sau ale Live Rephrase acolo unde o cheie de licență a pornit Live Rephrase, nu fapte stabilite, și pot fi contestate.',
     feedShowMore: 'Arată următoarele {n}',
     feedUnchecked: 'Neverificat încă: verificarea pornește la deschiderea paginii și marchează fiecare element de mai jos când se încheie.',
     feedRemaining: 'încă {n} neafișate',
@@ -1028,7 +1028,7 @@ export const I18N: Record<ExportLocale, ExportI18nStrings> = {
     feedNotAnalyzed: 'FeelingWise a observat acest element, dar nu l-a clasificat.',
     feedBlocked: 'Blocat printr-o regulă proprie.',
     feedReframed: 'FeelingWise a înlocuit acest conținut cu text educațional.',
-    feedSkipped: 'FeelingWise a văzut acest element, dar nu l-a analizat: nicio regulă nu s-a potrivit și nu a rulat o citire AI.',
+    feedSkipped: 'FeelingWise a văzut acest element, dar nu l-a analizat: nicio regulă nu s-a potrivit și Live Rephrase nu l-a citit.',
     feedNoTechnique: 'Nicio tehnică semnalată',
     feedOpinionHeader: 'Interpretarea FeelingWise; semnătura acoperă faptul că a fost stocată, nu că este corectă',
     feedOpinionNote: 'Fiecare card separă ce a citit programul de pe pagină (autor, oră, text, link) de ce a înțeles modelul lui (interpretarea de sub text). Semnătura le acoperă pe amândouă ca valori stocate; nu face interpretarea corectă. Măsurat pe 2026-09-03 pentru judecătorul de text pentru adulți la severitate 4 și peste, pe 500 de elemente păstrate deoparte: peste 89 la sută dintre semnalările lui au fost corecte și a găsit 58,8 la sută dintre elementele pe care trebuia să le găsească. Celelalte moduri și imaginile sau video sunt nemăsurate.',
@@ -1066,7 +1066,7 @@ export const I18N: Record<ExportLocale, ExportI18nStrings> = {
     feedReconNote: 'Această postare nu a fost înregistrată separat; detaliile ei sunt reconstituite din comentariile reținute dedesubt, doar pentru grupare. Fiecare comentariu are propriul rezultat de verificare mai sus; acest antet de grupare nu este o înregistrare semnată.',
     methodologyHeader: 'Cum au fost identificate elementele (criterii și instrucțiuni AI)',
     methodologyIntro:
-      'Această secțiune conține instrucțiunile exacte primite de modelele AI când o cheie de licență a pornit analiza cu AI, identificatorii modelelor și pragurile de decizie folosite pentru a clasifica înregistrările din acest fișier. Textele instrucțiunilor sunt redate verbatim din versiunea de software care a produs acest export (instrucțiunile rulează în limba engleză, indiferent de limba interfeței).',
+      'Această secțiune conține instrucțiunile exacte primite de modelele AI când o cheie de licență pornește Live Rephrase, identificatorii modelelor și pragurile de decizie folosite pentru a clasifica înregistrările din acest fișier. Textele instrucțiunilor sunt redate verbatim din versiunea de software care a produs acest export (instrucțiunile rulează în limba engleză, indiferent de limba interfeței).',
     methodologyModelsLabel: 'Modele AI',
     methodologyThresholdsLabel: 'Praguri de decizie',
     methodologyTopicsLabel: 'Vocabularul etichetelor de subiect',
@@ -1397,7 +1397,7 @@ export const I18N: Record<ExportLocale, ExportI18nStrings> = {
     tellsMedia: '{n} direcciones de medios',
     tellsSpan: '{n} horas de marcas de tiempo que cubren {h} horas distintas del reloj',
     notMeasureBullets:
-      'FeelingWise registra las publicaciones que procesó y cómo su filtro integrado, o la IA donde una clave de licencia activó el análisis con IA, clasificó los elementos conservados. Registra publicaciones y comentarios en las páginas de feed en las que funciona, sean públicas o visibles solo para quienes siguen la cuenta; nunca se ejecuta en mensajes privados ni en chats. FeelingWise NO mide el estado emocional de la persona usuaria. FeelingWise NO observa relaciones del mundo real, dinámicas familiares ni historial previo. Las interpretaciones de FeelingWise son señales conscientes de su propia incertidumbre; se pueden cuestionar por sus propios méritos.',
+      'FeelingWise registra las publicaciones que procesó y cómo su filtro integrado, o Live Rephrase donde una clave de licencia activó Live Rephrase, clasificó los elementos conservados. Registra publicaciones y comentarios en las páginas de feed en las que funciona, sean públicas o visibles solo para quienes siguen la cuenta, y nunca se ejecuta en mensajes privados ni en chats. FeelingWise NO mide el estado emocional de la persona usuaria. FeelingWise NO observa relaciones del mundo real, dinámicas familiares ni historial previo. Las interpretaciones de FeelingWise son señales conscientes de su propia incertidumbre y se pueden cuestionar por sus propios méritos.',
     exposureHeader: 'Resumen de la exposición observada',
     exposureIntro:
       'Las cifras de abajo se recalculan en tu navegador a partir de los registros conservados incrustados en este archivo, los mismos que comprueba el verificador. Describen lo que contiene esta exportación: cuántos elementos se registraron, en qué fechas, qué Nivel de Señal de Seguridad les asignó FeelingWise y qué técnicas aparecieron más. Es un resumen asociativo de lo que se observó. No establece que ninguna plataforma haya apuntado a esta persona, y no descifra ningún algoritmo.',
@@ -1574,7 +1574,7 @@ export const I18N: Record<ExportLocale, ExportI18nStrings> = {
     checkKnownRoot: 'La autoridad emisora es una que esta página reconoce',
     checkNonce: 'La autoridad devolvió el número que llevaba esta petición',
     feedHeader: 'Lo que se registró',
-    feedIntro: 'Abajo está el contenido que registró FeelingWise, ordenado como se fue desplazando. Las publicaciones contienen sus comentarios; los comentarios contienen sus respuestas. El borde de color muestra el Nivel de Señal de Seguridad que asignó FeelingWise. Son lecturas del filtro integrado, o de la IA donde una clave de licencia activó el análisis con IA, no hechos establecidos, y se pueden discutir.',
+    feedIntro: 'Abajo está el contenido que registró FeelingWise, ordenado como se fue desplazando. Las publicaciones contienen sus comentarios; los comentarios contienen sus respuestas. El borde de color muestra el Nivel de Señal de Seguridad que asignó FeelingWise. Son lecturas del filtro integrado, o de Live Rephrase donde una clave de licencia activó Live Rephrase, no hechos establecidos, y se pueden discutir.',
     feedShowMore: 'Mostrar los siguientes {n}',
     feedUnchecked: 'Aún sin comprobar: la verificación se ejecuta al abrir esta página y marca cada elemento de abajo cuando termina.',
     feedRemaining: '{n} más todavía sin mostrar',
@@ -1639,7 +1639,7 @@ export const I18N: Record<ExportLocale, ExportI18nStrings> = {
     feedNotAnalyzed: 'FeelingWise observó esto pero no lo clasificó.',
     feedBlocked: 'Bloqueado por una regla propia.',
     feedReframed: 'FeelingWise reemplazó esto con un texto educativo.',
-    feedSkipped: 'FeelingWise vio esto pero no lo analizó: ninguna regla coincidió y no se ejecutó ninguna lectura de IA.',
+    feedSkipped: 'FeelingWise vio esto pero no lo analizó: ninguna regla coincidió y Live Rephrase no lo leyó.',
     feedNoTechnique: 'Ninguna técnica marcada',
     feedOpinionHeader: 'La lectura de FeelingWise; la firma cubre que se guardó, no que sea correcta',
     feedOpinionNote: 'Cada tarjeta separa lo que el programa leyó de la página (autor, hora, texto, enlace) de lo que su modelo interpretó (la lectura bajo el texto). La firma cubre ambas cosas como valores guardados; no hace correcta la lectura. Medido el 2026-09-03 para el juez de texto para adultos con severidad 4 o más, sobre 500 elementos reservados: más del 89 por ciento de sus marcas fueron correctas y encontró el 58,8 por ciento de los elementos que debía encontrar. Los demás modos y las imágenes o el vídeo no están medidos.',
@@ -1677,7 +1677,7 @@ export const I18N: Record<ExportLocale, ExportI18nStrings> = {
     feedReconNote: 'Esta publicación no se registró por separado: sus datos se reconstruyen a partir de los comentarios conservados debajo, solo para poder agruparlos. Cada comentario tiene su propio resultado de verificación arriba; esta cabecera de agrupación no es un registro firmado.',
     methodologyHeader: 'Cómo se identificaron los elementos (criterios e instrucciones de la IA)',
     methodologyIntro:
-      'Esta sección lleva las instrucciones exactas que reciben los modelos de IA cuando una clave de licencia ha activado el análisis con IA, los identificadores de los modelos y los umbrales de decisión usados para clasificar los registros de este archivo. Los textos de instrucciones se reproducen literalmente de la compilación del software que produjo esta exportación (las instrucciones se ejecutan en inglés, sea cual sea el idioma de la interfaz).',
+      'Esta sección lleva las instrucciones exactas que reciben los modelos de IA cuando una clave de licencia ha activado Live Rephrase, los identificadores de los modelos y los umbrales de decisión usados para clasificar los registros de este archivo. Los textos de instrucciones se reproducen literalmente de la compilación del software que produjo esta exportación (las instrucciones se ejecutan en inglés, sea cual sea el idioma de la interfaz).',
     methodologyModelsLabel: 'Modelos de IA',
     methodologyThresholdsLabel: 'Umbrales de decisión',
     methodologyTopicsLabel: 'Vocabulario de etiquetas de tema',
@@ -2008,7 +2008,7 @@ export const I18N: Record<ExportLocale, ExportI18nStrings> = {
     tellsMedia: '{n} endereços de mídia',
     tellsSpan: '{n} horas de carimbos de tempo cobrindo {h} horas diferentes do relógio',
     notMeasureBullets:
-      'O FeelingWise registra as publicações que processou e como o seu filtro embutido, ou a IA onde uma chave de licença ligou a análise com IA, classificou os itens conservados. Ele registra publicações e comentários nas páginas de feed em que funciona, sejam públicas ou visíveis apenas para quem segue a conta; nunca roda em mensagens privadas ou chats. O FeelingWise NÃO mede o estado emocional de quem usa. O FeelingWise NÃO observa relações do mundo real, dinâmicas familiares nem histórico anterior. As interpretações do FeelingWise são sinais conscientes da própria incerteza; elas podem ser contestadas pelos próprios méritos.',
+      'FeelingWise registra as publicações que processou e como seu filtro embutido, ou Live Rephrase onde uma chave de licença ligou Live Rephrase, classificou os itens conservados. Ele registra publicações e comentários nas páginas de feed em que funciona, sejam públicas ou visíveis apenas para quem segue a conta. Ele nunca roda em mensagens privadas ou chats. FeelingWise NÃO mede o estado emocional de quem usa e NÃO observa relações do mundo real, dinâmicas familiares nem histórico anterior. As interpretações do FeelingWise são sinais conscientes da própria incerteza e podem ser contestadas pelos próprios méritos.',
     exposureHeader: 'Resumo da exposição observada',
     exposureIntro:
       'Os números abaixo são recalculados no seu navegador a partir dos registros conservados embutidos neste arquivo, os mesmos que o verificador confere. Eles descrevem o que esta exportação contém: quantos itens foram registrados, em que datas, que Nível de Sinal de Segurança o FeelingWise atribuiu e quais técnicas apareceram mais. É um resumo associativo do que foi observado. Ele não estabelece que alguma plataforma tenha mirado nesta pessoa, e não decifra nenhum algoritmo.',
@@ -2185,7 +2185,7 @@ export const I18N: Record<ExportLocale, ExportI18nStrings> = {
     checkKnownRoot: 'A autoridade emissora é uma que esta página reconhece',
     checkNonce: 'A autoridade devolveu o número que este pedido trazia',
     feedHeader: 'O que foi registrado',
-    feedIntro: 'Abaixo está o conteúdo que o FeelingWise registrou, arrumado do jeito que foi rolado. As publicações contêm os comentários delas; os comentários contêm as respostas deles. A borda colorida mostra o Nível de Sinal de Segurança que o FeelingWise atribuiu. São leituras do filtro embutido, ou da IA onde uma chave de licença ligou a análise com IA, não fatos estabelecidos, e podem ser contestadas.',
+    feedIntro: 'Abaixo está o conteúdo que o FeelingWise registrou, arrumado do jeito que foi rolado. As publicações contêm os comentários delas. Os comentários contêm as respostas deles. A borda colorida mostra o Nível de Sinal de Segurança que o FeelingWise atribuiu. São leituras do filtro embutido, ou do Live Rephrase onde uma chave de licença ligou o Live Rephrase, não fatos estabelecidos, e podem ser contestadas.',
     feedShowMore: 'Mostrar os próximos {n}',
     feedUnchecked: 'Ainda não conferido: a verificação roda ao abrir esta página e marca cada item abaixo quando termina.',
     feedRemaining: 'mais {n} ainda não mostrados',
@@ -2250,7 +2250,7 @@ export const I18N: Record<ExportLocale, ExportI18nStrings> = {
     feedNotAnalyzed: 'O FeelingWise observou isto mas não classificou.',
     feedBlocked: 'Bloqueado por uma regra sua.',
     feedReframed: 'O FeelingWise substituiu isto por um texto educativo.',
-    feedSkipped: 'O FeelingWise viu isto mas não analisou: nenhuma regra coincidiu e nenhuma leitura de IA foi executada.',
+    feedSkipped: 'O FeelingWise viu isto mas não julgou: nenhuma regra coincidiu e o Live Rephrase não o leu.',
     feedNoTechnique: 'Nenhuma técnica marcada',
     feedOpinionHeader: 'A leitura do FeelingWise; a assinatura cobre que foi guardada, não que está certa',
     feedOpinionNote: 'Cada cartão separa o que o programa leu da página (autor, hora, texto, link) do que o modelo dele entendeu (a leitura abaixo do texto). A assinatura cobre os dois como valores guardados; não torna a leitura certa. Medido em 2026-09-03 para o juiz de texto para adultos com severidade 4 ou mais, em 500 itens reservados: mais de 89 por cento das marcações dele estavam certas e ele achou 58,8 por cento dos itens que devia achar. Os outros modos e imagens ou vídeo não foram medidos.',
@@ -2288,7 +2288,7 @@ export const I18N: Record<ExportLocale, ExportI18nStrings> = {
     feedReconNote: 'Esta publicação não foi registrada separadamente: os dados dela são reconstruídos a partir dos comentários conservados abaixo, só para eles poderem ser agrupados. Cada comentário tem o próprio resultado de verificação acima; este cabeçalho de agrupamento não é um registro assinado.',
     methodologyHeader: 'Como os itens foram identificados (critérios e instruções da IA)',
     methodologyIntro:
-      'Esta seção traz as instruções exatas que os modelos de IA recebem quando uma chave de licença ligou a análise com IA, os identificadores dos modelos e os limiares de decisão usados para classificar os registros deste arquivo. Os textos das instruções são reproduzidos literalmente do build do software que produziu esta exportação (as instruções rodam em inglês, qualquer que seja o idioma da interface).',
+      'Esta seção traz as instruções exatas que os modelos de IA recebem quando você liga o Live Rephrase com uma chave de licença, os identificadores dos modelos e os limiares de decisão usados para classificar os registros deste arquivo. Os textos das instruções são reproduzidos literalmente do build do software que produziu esta exportação (as instruções rodam em inglês, qualquer que seja o idioma da interface).',
     methodologyModelsLabel: 'Modelos de IA',
     methodologyThresholdsLabel: 'Limiares de decisão',
     methodologyTopicsLabel: 'Vocabulário de etiquetas de tema',
